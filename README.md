@@ -1,7 +1,6 @@
-# KB Labs — Product Template
+# KB Labs CLI
 
-This is the **baseline template** for products under the **@kb-labs** namespace.  
-It is designed for multi-package repositories using pnpm workspaces.  
+KB Labs CLI tool for project management and automation. This is part of the **@kb-labs** ecosystem, designed for multi-package repositories using pnpm workspaces.
 
 **Goals:** Fast bootstrap, unified quality rules, simple publishing, and reusable core.
 
@@ -11,8 +10,10 @@ It is designed for multi-package repositories using pnpm workspaces.
 apps/
 ├── demo/                    # Example app / playground
 packages/
-├── package-name/            # Example package (lib/cli/adapter)
-fixtures/                    # Fixtures for snapshot/integration testing
+├── cli/                     # Main CLI package (@kb-labs/cli)
+├── adapters/                # Adapters package (@kb-labs/cli-adapters)
+├── commands/                # Commands package (@kb-labs/cli-commands)
+├── core/                    # Core package (@kb-labs/cli-core)
 docs/
 └── adr/                     # Architecture Decision Records (ADRs)
 ```
@@ -34,14 +35,24 @@ pnpm test        # Run tests
 pnpm lint        # Lint code
 ```
 
+### Using the CLI
+
+```bash
+# Install globally
+npm install -g @kb-labs/cli
+
+# Or use with npx
+npx @kb-labs/cli
+
+# Show available commands
+kb --help
+```
+
 ### Creating a New Package
 
 ```bash
-# Using the CLI tool (recommended)
-pnpm dlx @kb-labs/create-pkg my-new-pkg
-
-# Or manually copy and modify
-cp -r packages/package-name packages/<new-package-name>
+# Copy and modify existing package structure
+cp -r packages/core packages/<new-package-name>
 # Then update metadata and imports
 ```
 
@@ -61,6 +72,15 @@ cp -r packages/package-name packages/<new-package-name>
 | `pnpm ci` | Full CI pipeline (clean, build, check) |
 | `pnpm clean` | Clean build artifacts |
 | `pnpm clean:all` | Clean all node_modules and build artifacts |
+
+## 📦 Packages
+
+| Package | Description |
+|---------|-------------|
+| [@kb-labs/cli](./packages/cli/) | Main CLI package with `kb` command |
+| [@kb-labs/cli-adapters](./packages/adapters/) | File system, environment, and discovery adapters |
+| [@kb-labs/cli-commands](./packages/commands/) | Command implementations |
+| [@kb-labs/cli-core](./packages/core/) | Core framework and utilities |
 
 ## 📋 Development Policies
 

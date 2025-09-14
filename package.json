@@ -1,8 +1,8 @@
 {
-  "name": "@kb-labs/product-template",
+  "name": "@kb-labs/cli",
   "version": "0.1.0",
   "private": true,
-  "description": "KB Labs product template",
+  "description": "KB Labs CLI tool for project management and automation",
   "type": "module",
   "author": {
     "name": "Kirill Baranov",
@@ -11,12 +11,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kirill-baranov/kb-labs-product-template.git"
+    "url": "https://github.com/kirill-baranov/kb-labs-cli.git"
   },
   "bugs": {
-    "url": "https://github.com/kirill-baranov/kb-labs-product-template/issues"
+    "url": "https://github.com/kirill-baranov/kb-labs-cli/issues"
   },
-  "homepage": "https://github.com/kirill-baranov/kb-labs-product-template#readme",
+  "homepage": "https://github.com/kirill-baranov/kb-labs-cli#readme",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -25,7 +25,7 @@
     "// ——— core": "────────────────────────────────────────",
     "build": "pnpm -r run build",
     "build:clean": "pnpm -r run clean && pnpm -r run build",
-    "dev": "pnpm -r --parallel --filter @sentinel/core --filter @sentinel/analytics --filter @sentinel/provider-* --filter @sentinel/cli run dev",
+    "dev": "pnpm -r --parallel --filter @kb-labs/cli-* run dev",
     "// ——— quality": "────────────────────────────────────────",
     "lint": "pnpm -r run lint",
     "lint:fix": "pnpm -r run lint:fix",
@@ -37,8 +37,8 @@
     "ci": "pnpm clean && pnpm build && pnpm check",
     "// ——— cleanup": "────────────────────────────────────────",
     "clean": "pnpm -r run clean",
-    "clean:all": "rimraf node_modules packages/*/node_modules apps/*/node_modules dist .sentinel",
-    "clean:analytics": "rimraf .sentinel/analytics dist/analytics dist/analytics-export"
+    "clean:all": "rimraf node_modules packages/*/node_modules apps/*/node_modules dist",
+    "clean:cli": "rimraf dist/cli dist/adapters dist/commands dist/core"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md,yml,yaml}": [
