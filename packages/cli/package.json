@@ -3,21 +3,38 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
+  "description": "KB Labs CLI tool for project management and automation",
   "bin": { "kb": "dist/kb.js" },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
   "scripts": {
     "clean": "rimraf dist",
     "build": "tsup src/index.ts --format esm --out-dir dist --dts=false --banner.js='#!/usr/bin/env node'",
-    "dev": "tsup src/index.ts --watch --format esm --out-dir dist --dts=false --banner.js='#!/usr/bin/env node'"
+    "dev": "tsup src/index.ts --watch --format esm --out-dir dist --dts=false --banner.js='#!/usr/bin/env node'",
+    "type-check": "tsc -p tsconfig.types.json --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@kb-labs/cli-core": "workspace:*",
+    "@kb-labs/cli-adapters": "workspace:*",
     "@kb-labs/cli-commands": "workspace:*",
-    "@kb-labs/core-sys": "workspace:*",
-    "@kb-labs/shared": "workspace:*"
+    "@kb-labs/cli-core": "workspace:*"
   },
   "devDependencies": {
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
   }
 }

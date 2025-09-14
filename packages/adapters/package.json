@@ -1,7 +1,9 @@
 {
-  "name": "@product-name/package-name",
+  "name": "@kb-labs/cli-adapters",
   "version": "0.1.0",
   "type": "module",
+  "private": true,
+  "description": "Adapters for KB Labs CLI - file system, environment, and discovery utilities",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

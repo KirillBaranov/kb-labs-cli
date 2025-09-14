@@ -103,7 +103,93 @@ importers:
         specifier: ^2.1.4
         version: 2.1.9(@types/node@24.3.3)
 
-  packages/package-name:
+  packages/adapters:
+    dependencies:
+      ajv:
+        specifier: ^8.17.1
+        version: 8.17.1
+      ajv-formats:
+        specifier: ^3.0.1
+        version: 3.0.1(ajv@8.17.1)
+      picomatch:
+        specifier: ^4.0.2
+        version: 4.0.3
+      yaml:
+        specifier: ^2.5.1
+        version: 2.8.1
+    devDependencies:
+      '@types/node':
+        specifier: ^24.3.3
+        version: 24.3.3
+      '@types/picomatch':
+        specifier: ^4
+        version: 4.0.2
+      cpy-cli:
+        specifier: ^4.2.0
+        version: 4.2.0
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(postcss@8.5.6)(typescript@5.9.2)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.2
+      vitest:
+        specifier: ^2.1.4
+        version: 2.1.9(@types/node@24.3.3)
+
+  packages/cli:
+    devDependencies:
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(postcss@8.5.6)(typescript@5.9.2)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.2
+
+  packages/commands:
+    dependencies:
+      ajv:
+        specifier: ^8.17.1
+        version: 8.17.1
+      ajv-formats:
+        specifier: ^3.0.1
+        version: 3.0.1(ajv@8.17.1)
+      picomatch:
+        specifier: ^4.0.2
+        version: 4.0.3
+      yaml:
+        specifier: ^2.5.1
+        version: 2.8.1
+    devDependencies:
+      '@types/node':
+        specifier: ^24.3.3
+        version: 24.3.3
+      '@types/picomatch':
+        specifier: ^4
+        version: 4.0.2
+      cpy-cli:
+        specifier: ^4.2.0
+        version: 4.2.0
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(postcss@8.5.6)(typescript@5.9.2)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.2
+      vitest:
+        specifier: ^2.1.4
+        version: 2.1.9(@types/node@24.3.3)
+
+  packages/core:
     dependencies:
       ajv:
         specifier: ^8.17.1
