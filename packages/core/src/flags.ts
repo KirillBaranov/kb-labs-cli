@@ -24,7 +24,7 @@ export function parseArgs(argv: string[]): { cmdPath: string[]; rest: string[]; 
                 case "--no-color": global.noColor = true; break;
                 case "--debug": global.debug = true; global.logLevel = "debug"; break;
                 case "--verbose": global.verbose = true; global.logLevel = "debug"; break;
-                case "--log-level": global.logLevel = String(args.shift()); break;
+                case "--log-level": global.logLevel = String(args.shift()) as "debug" | "info" | "warn" | "error"; break;
                 case "--profile": global.profile = String(args.shift()); break;
                 case "--profiles-dir": global.profilesDir = String(args.shift()); break;
                 default: {
