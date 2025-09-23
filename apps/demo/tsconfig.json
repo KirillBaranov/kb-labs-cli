@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "@kb-labs/devkit/tsconfig/base.json",
   "compilerOptions": {
     "noEmit": true
   },
