@@ -1,3 +1,5 @@
+import { CliError, CLI_ERROR_CODES } from "@kb-labs/cli-core";
+
 /** Thin helpers around process.env. Use core-config for real config shaping. */
 export function envBool(name: string, def = false): boolean {
     const v = process.env[name];
@@ -7,14 +9,31 @@ export function envBool(name: string, def = false): boolean {
 
 export function envNumber(name: string, def?: number): number | undefined {
     const v = process.env[name];
-    if (v == null) return def;
+    if (v == null) {
+        if (def === undefined) {
+            throw new CliError(CLI_ERROR_CODES.E_ENV_MISSING_VAR, `Required environment variable ${name} is not set`);
+        }
+        return def;
+    }
     const n = Number(v);
-    return Number.isFinite(n) ? n : def;
+    if (!Number.isFinite(n)) {
+        if (def === undefined) {
+            throw new CliError(CLI_ERROR_CODES.E_ENV_MISSING_VAR, `Environment variable ${name} has invalid number value: ${v}`);
+        }
+        return def;
+    }
+    return n;
 }
 
 export function envString(name: string, def?: string): string | undefined {
     const v = process.env[name];
-    return v == null || v === "" ? def : v;
+    if (v == null || v === "") {
+        if (def === undefined) {
+            throw new CliError(CLI_ERROR_CODES.E_ENV_MISSING_VAR, `Required environment variable ${name} is not set`);
+        }
+        return def;
+    }
+    return v;
 }
 
 export function readEnv(prefix?: string): Record<string, string> {
