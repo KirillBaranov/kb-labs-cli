@@ -1,8 +1,11 @@
 {
-  "extends": "./tsconfig.base.json",
+  "extends": "@kb-labs/devkit/tsconfig/node.json",
   "files": [],
   "references": [
-    { "path": "packages/package-name" },
+    { "path": "packages/cli" },
+    { "path": "packages/core" },
+    { "path": "packages/commands" },
+    { "path": "packages/adapters" },
     { "path": "apps/demo" }
   ],
   "compilerOptions": {
