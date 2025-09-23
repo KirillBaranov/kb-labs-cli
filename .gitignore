@@ -64,3 +64,6 @@ packages/*/coverage/
 analytics/
 *.sqlite
 *.db
+
+# Devkit debug
+DEVKIT_SYNC.json
