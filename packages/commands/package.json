@@ -20,13 +20,11 @@
   "sideEffects": false,
   "scripts": {
     "clean": "rimraf dist",
-    "build:js": "tsup --config tsup.config.ts",
-    "build:types": "tsc -p tsconfig.types.json --emitDeclarationOnly",
-    "build": "pnpm clean && pnpm build:js && pnpm build:types",
+    "build": "tsup --config tsup.config.ts",
     "dev": "tsup --config tsup.config.ts --watch",
     "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix",
-    "type-check": "tsc -p tsconfig.types.json --noEmit",
+    "type-check": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {

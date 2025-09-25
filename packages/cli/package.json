@@ -21,12 +21,12 @@
   "sideEffects": false,
   "scripts": {
     "clean": "rimraf dist",
-    "build": "tsup --config tsup.config.ts && tsc -p tsconfig.types.json --emitDeclarationOnly",
+    "build": "tsup --config tsup.config.ts",
     "dev": "tsup --config tsup.config.ts --watch",
     "smoke": "node ./dist/bin.js hello",
     "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix",
-    "type-check": "tsc -p tsconfig.types.json --noEmit",
+    "type-check": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
