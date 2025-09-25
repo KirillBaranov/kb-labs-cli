@@ -31,7 +31,8 @@
     "type-check": "tsc -b tsconfig.tools.json",
     "check": "pnpm lint && pnpm type-check && pnpm test -- --run",
     "sync": "node devkit-sync.mjs",
-    "sync:check": "node devkit-sync.mjs --check"
+    "sync:check": "node devkit-sync.mjs --check",
+    "kb": "node packages/cli/dist/bin.js"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md,yml,yaml}": [
