@@ -1,25 +1,32 @@
 // Core types and interfaces
-export * from "./types/index.js";
-export * from "./command.js";
-export * from "./context.js";
-export * from "./flags.js";
+export * from "./types/index";
+export * from "./command";
+export * from "./context";
+export * from "./flags";
 
 // Error handling
-export * from "./errors.js";
+export * from "./errors";
 
 // I/O and adapters
-export * from "./io/types.js";
+export * from "./io/types";
 
 // Plugins system
-export * from "./plugins/types.js";
+export * from "./plugins/types";
 
 // Presenters
-export * from "./presenter/types.js";
-export * from "./presenter/text.js";
-export * from "./presenter/json.js";
+export * from "./presenter/types";
+export * from "./presenter/text";
+export * from "./presenter/json";
 
 // Telemetry
-export * from "./telemetry/types.js";
+export * from "./telemetry/types";
 
 // Registry
-export * from "./registry.js";
+export * from "./registry";
+
+// Re-export specific functions that are imported by other packages
+export { parseArgs } from "./flags";
+export { mapCliErrorToExitCode, CliError } from "./errors";
+export { createTextPresenter } from "./presenter/text";
+export { createJsonPresenter } from "./presenter/json";
+export { createContext } from "./context";

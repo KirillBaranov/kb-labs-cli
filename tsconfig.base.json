@@ -1,3 +1,17 @@
 {
-  "extends": "@kb-labs/devkit/tsconfig/base.json"
+  "extends": "@kb-labs/devkit/tsconfig/base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@kb-labs/cli-core": ["packages/core/dist"],
+      "@kb-labs/cli-core/*": ["packages/core/dist/*"],
+      "@kb-labs/cli-adapters": ["packages/adapters/dist"],
+      "@kb-labs/cli-adapters/*": ["packages/adapters/dist/*"],
+      "@kb-labs/cli-commands": ["packages/commands/dist"],
+      "@kb-labs/cli-commands/*": ["packages/commands/dist/*"]
+    }
+  }
 }

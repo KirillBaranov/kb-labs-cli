@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@kb-labs/devkit':
         specifier: github:KirillBaranov/kb-labs-devkit#main
-        version: https://codeload.github.com/KirillBaranov/kb-labs-devkit/tar.gz/c814c13b3fdcaed992119062b723f53a1a8cfcff(@typescript-eslint/parser@8.44.0(eslint@9.35.0)(typescript@5.9.2))(eslint@9.35.0)(tsup@8.5.0(postcss@8.5.6)(typescript@5.9.2)(yaml@2.8.1))(typescript-eslint@8.44.0(eslint@9.35.0)(typescript@5.9.2))(typescript@5.9.2)(vitest@3.2.4(@types/node@24.3.3))
+        version: https://codeload.github.com/KirillBaranov/kb-labs-devkit/tar.gz/96be581eaa317d1a1369ee7f62a983bb085659b1(@typescript-eslint/parser@8.44.0(eslint@9.35.0)(typescript@5.9.2))(eslint@9.35.0)(tsup@8.5.0(postcss@8.5.6)(typescript@5.9.2)(yaml@2.8.1))(typescript-eslint@8.44.0(eslint@9.35.0)(typescript@5.9.2))(typescript@5.9.2)(vitest@3.2.4(@types/node@24.3.3))
       zod:
         specifier: ^4.1.5
         version: 4.1.8
@@ -150,6 +150,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@kb-labs/cli-adapters':
+        specifier: workspace:*
+        version: link:../adapters
       zod:
         specifier: ^4.1.5
         version: 4.1.8
@@ -603,8 +606,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@kb-labs/devkit@https://codeload.github.com/KirillBaranov/kb-labs-devkit/tar.gz/c814c13b3fdcaed992119062b723f53a1a8cfcff':
-    resolution: {tarball: https://codeload.github.com/KirillBaranov/kb-labs-devkit/tar.gz/c814c13b3fdcaed992119062b723f53a1a8cfcff}
+  '@kb-labs/devkit@https://codeload.github.com/KirillBaranov/kb-labs-devkit/tar.gz/96be581eaa317d1a1369ee7f62a983bb085659b1':
+    resolution: {tarball: https://codeload.github.com/KirillBaranov/kb-labs-devkit/tar.gz/96be581eaa317d1a1369ee7f62a983bb085659b1}
     version: 0.1.0
     engines: {node: '>=20.0.0', pnpm: '>=9.11.0'}
     peerDependencies:
@@ -3183,7 +3186,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@kb-labs/devkit@https://codeload.github.com/KirillBaranov/kb-labs-devkit/tar.gz/c814c13b3fdcaed992119062b723f53a1a8cfcff(@typescript-eslint/parser@8.44.0(eslint@9.35.0)(typescript@5.9.2))(eslint@9.35.0)(tsup@8.5.0(postcss@8.5.6)(typescript@5.9.2)(yaml@2.8.1))(typescript-eslint@8.44.0(eslint@9.35.0)(typescript@5.9.2))(typescript@5.9.2)(vitest@3.2.4(@types/node@24.3.3))':
+  '@kb-labs/devkit@https://codeload.github.com/KirillBaranov/kb-labs-devkit/tar.gz/96be581eaa317d1a1369ee7f62a983bb085659b1(@typescript-eslint/parser@8.44.0(eslint@9.35.0)(typescript@5.9.2))(eslint@9.35.0)(tsup@8.5.0(postcss@8.5.6)(typescript@5.9.2)(yaml@2.8.1))(typescript-eslint@8.44.0(eslint@9.35.0)(typescript@5.9.2))(typescript@5.9.2)(vitest@3.2.4(@types/node@24.3.3))':
     dependencies:
       eslint: 9.35.0
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.35.0)
