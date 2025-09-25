@@ -1,6 +1,7 @@
-import baseConfig from '@kb-labs/devkit/tsup/node.js'
+import config from '@kb-labs/devkit/tsup/node.js'
 
 export default {
-  ...baseConfig,
+  ...config,
   entry: { index: "src/index.ts" },
+  clean: false
 }
