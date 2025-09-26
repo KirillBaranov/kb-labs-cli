@@ -2,11 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
-      - '**/*.md'
-      - '**/.vscode/**'
-      - '**/.idea/**'
+      - "**/*.md"
+      - "**/.vscode/**"
+      - "**/.idea/**"
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch: {}
@@ -22,4 +22,4 @@ jobs:
   ci:
     uses: KirillBaranov/kb-labs-devkit/.github/workflows/ci.yml@main
     with:
-      node-version: '20'
+      node-version: "20"
