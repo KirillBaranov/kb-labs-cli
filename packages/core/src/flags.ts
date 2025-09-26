@@ -6,6 +6,8 @@ export type GlobalFlags = {
   noColor?: boolean;
   verbose?: boolean;
   debug?: boolean;
+  help?: boolean;
+  version?: boolean;
 };
 
 export function parseArgs(argv: string[]): {
@@ -30,6 +32,12 @@ export function parseArgs(argv: string[]): {
       switch (a) {
         case "--json":
           global.json = true;
+          break;
+        case "--help":
+          global.help = true;
+          break;
+        case "--version":
+          global.version = true;
           break;
         case "--no-color":
           global.noColor = true;
