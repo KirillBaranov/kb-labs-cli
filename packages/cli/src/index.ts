@@ -1,6 +1,10 @@
 import { parseArgs } from "@kb-labs/cli-core";
 import { CliError, mapCliErrorToExitCode } from "@kb-labs/cli-core";
-import { createTextPresenter, createJsonPresenter, createContext } from "@kb-labs/cli-core";
+import {
+  createTextPresenter,
+  createJsonPresenter,
+  createContext,
+} from "@kb-labs/cli-core";
 import { findCommand, registerBuiltinCommands } from "@kb-labs/cli-commands";
 
 export async function run(argv: string[]): Promise<number | void> {
@@ -13,8 +17,14 @@ export async function run(argv: string[]): Promise<number | void> {
   const cmd = findCommand(cmdPath);
   if (!cmd) {
     const msg = `Unknown command: ${cmdPath.join(" ") || "(none)"}`;
-    if (global.json) presenter.json({ ok: false, error: { code: "CMD_NOT_FOUND", message: msg } });
-    else presenter.error(msg);
+    if (global.json) {
+      presenter.json({
+        ok: false,
+        error: { code: "CMD_NOT_FOUND", message: msg },
+      });
+    } else {
+      presenter.error(msg);
+    }
     return 1;
   }
 
@@ -22,18 +32,29 @@ export async function run(argv: string[]): Promise<number | void> {
 
   try {
     const code = await cmd.run(ctx, rest, { ...global, ...flagsObj });
-    if (typeof code === "number") return code;
+    if (typeof code === "number") {
+      return code;
+    }
   } catch (e: any) {
     if (e instanceof CliError) {
       const exitCode = mapCliErrorToExitCode(e.code);
       const msg = `${e.code}: ${e.message}`;
-      if (global.json) presenter.json({ ok: false, error: { code: e.code, message: e.message } });
-      else presenter.error(msg);
+      if (global.json) {
+        presenter.json({
+          ok: false,
+          error: { code: e.code, message: e.message },
+        });
+      } else {
+        presenter.error(msg);
+      }
       return exitCode;
     }
     const msg = String(e?.message || e);
-    if (global.json) presenter.json({ ok: false, error: { message: msg } });
-    else presenter.error(msg);
+    if (global.json) {
+      presenter.json({ ok: false, error: { message: msg } });
+    } else {
+      presenter.error(msg);
+    }
     return 1;
   }
 }

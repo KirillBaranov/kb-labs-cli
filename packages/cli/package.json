@@ -4,7 +4,9 @@
   "type": "module",
   "private": true,
   "description": "KB Labs CLI tool for project management and automation",
-  "bin": { "kb": "dist/bin.js" },
+  "bin": {
+    "kb": "dist/bin.js"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -35,6 +37,7 @@
     "@kb-labs/cli-core": "workspace:*"
   },
   "devDependencies": {
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "vitest": "^3.2.4"
   }
 }
