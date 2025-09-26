@@ -14,6 +14,56 @@ export async function run(argv: string[]): Promise<number | void> {
 
   const presenter = global.json ? createJsonPresenter() : createTextPresenter();
 
+  // Handle global --help flag
+  if (global.help) {
+    if (global.json) {
+      presenter.json({
+        ok: true,
+        help: {
+          usage: "kb [command] [options]",
+          commands: [
+            { name: "hello", description: "Print a friendly greeting" },
+            { name: "version", description: "Show CLI version" },
+            { name: "diagnose", description: "Diagnose project health and configuration" },
+            { name: "init-profile", description: "Initialize a new profile configuration" }
+          ],
+          globalOptions: [
+            { name: "--help", description: "Show help information" },
+            { name: "--version", description: "Show CLI version" },
+            { name: "--json", description: "Output in JSON format" }
+          ]
+        }
+      });
+    } else {
+      presenter.write("KB Labs CLI - Project management and automation tool\n");
+      presenter.write("\nUsage: kb [command] [options]\n");
+      presenter.write("\nCommands:\n");
+      presenter.write("  hello         Print a friendly greeting\n");
+      presenter.write("  version       Show CLI version\n");
+      presenter.write("  diagnose      Diagnose project health and configuration\n");
+      presenter.write("  init-profile  Initialize a new profile configuration\n");
+      presenter.write("\nGlobal Options:\n");
+      presenter.write("  --help        Show help information\n");
+      presenter.write("  --version     Show CLI version\n");
+      presenter.write("  --json        Output in JSON format\n");
+    }
+    return 0;
+  }
+
+  // Handle global --version flag
+  if (global.version) {
+    const version = process.env.CLI_VERSION || "0.1.0";
+    if (global.json) {
+      presenter.json({
+        ok: true,
+        version: version
+      });
+    } else {
+      presenter.write(version);
+    }
+    return 0;
+  }
+
   const cmd = findCommand(cmdPath);
   if (!cmd) {
     const msg = `Unknown command: ${cmdPath.join(" ") || "(none)"}`;
