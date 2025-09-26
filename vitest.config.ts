@@ -8,6 +8,7 @@ export default defineConfig({
     include: ["packages/**/src/**/*.spec.ts", "packages/**/src/**/*.test.ts"],
     coverage: {
       ...nodePreset.test?.coverage,
+      enabled: true,
       exclude: [
         "**/dist/**",
         "**/fixtures/**",
@@ -26,6 +27,12 @@ export default defineConfig({
         "**/types/**",
         // devkit scripts
         "scripts/devkit-sync.mjs",
+        // CLI bin files (executable entry points)
+        "**/bin.ts",
+        "**/bin.js",
+        // test files and directories
+        "**/tests/**",
+        "**/test/**",
       ],
     },
   },
