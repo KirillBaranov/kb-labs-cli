@@ -24,17 +24,17 @@ This package provides adapters and utilities for the KB Labs CLI, including:
 ### File System
 
 ```typescript
-import { FileAdapter } from '@kb-labs/cli-adapters';
+import { FileAdapter } from "@kb-labs/cli-adapters";
 
 // File operations
-const content = await FileAdapter.read('path/to/file');
-await FileAdapter.write('path/to/file', content);
+const content = await FileAdapter.read("path/to/file");
+await FileAdapter.write("path/to/file", content);
 ```
 
 ### Environment
 
 ```typescript
-import { EnvAdapter } from '@kb-labs/cli-adapters';
+import { EnvAdapter } from "@kb-labs/cli-adapters";
 
 // Environment operations
 const env = EnvAdapter.getEnvironment();
@@ -44,7 +44,7 @@ const repo = EnvAdapter.getRepository();
 ### Discovery
 
 ```typescript
-import { PackageDiscovery } from '@kb-labs/cli-adapters';
+import { PackageDiscovery } from "@kb-labs/cli-adapters";
 
 // Package discovery
 const packages = await PackageDiscovery.findPackages();
