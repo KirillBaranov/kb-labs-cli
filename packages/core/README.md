@@ -38,7 +38,7 @@ This package provides the core framework and utilities for the KB Labs CLI tool.
 ### Command Framework
 
 ```typescript
-import { Command, Context } from '@kb-labs/cli-core';
+import { Command, Context } from "@kb-labs/cli-core";
 
 class MyCommand extends Command {
   async execute(context: Context) {
@@ -50,7 +50,7 @@ class MyCommand extends Command {
 ### Context
 
 ```typescript
-import { Context } from '@kb-labs/cli-core';
+import { Context } from "@kb-labs/cli-core";
 
 // Access context in commands
 const config = context.config;
@@ -60,18 +60,18 @@ const flags = context.flags;
 ### Error Handling
 
 ```typescript
-import { CLIError } from '@kb-labs/cli-core';
+import { CLIError } from "@kb-labs/cli-core";
 
-throw new CLIError('Something went wrong');
+throw new CLIError("Something went wrong");
 ```
 
 ### Presentation
 
 ```typescript
-import { TextPresenter, JsonPresenter } from '@kb-labs/cli-core';
+import { TextPresenter, JsonPresenter } from "@kb-labs/cli-core";
 
 const presenter = new TextPresenter();
-presenter.info('Information message');
+presenter.info("Information message");
 ```
 
 ## Development

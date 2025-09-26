@@ -1,6 +1,6 @@
 export interface Presenter {
-    isTTY: boolean;
-    write(line: string): void;
-    error(line: string): void;
-    json(payload: unknown): void;
+  isTTY: boolean;
+  write(line: string): void;
+  error(line: string): void;
+  json(payload: unknown): void;
 }

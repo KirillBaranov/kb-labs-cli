@@ -4,6 +4,8 @@ import type { CliCommand } from "./command";
 export const registry: CliCommand[] = [];
 
 export function findCommand(path: string[]): CliCommand | undefined {
-    const dotted = path.join("."); // "init.profile"
-    return registry.find(c => c.name === dotted || c.name.split(" ")[0] === path[0]);
+  const dotted = path.join("."); // "init.profile"
+  return registry.find(
+    (c) => c.name === dotted || c.name.split(" ")[0] === path[0],
+  );
 }
