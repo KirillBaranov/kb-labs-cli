@@ -2,7 +2,7 @@
 
 **Date:** 2025-09-13  
 **Status:** Accepted  
-**Deciders:** KB Labs Team  
+**Deciders:** KB Labs Team
 
 ## Context
 
@@ -24,10 +24,12 @@ Products in KB Labs often require multiple internal packages. Without strict bou
 ## Consequences
 
 **Positive:**
+
 - Prevents tight coupling
 - Core remains minimal and reusable
 - Easier to extract packages as standalone OSS later
 
 **Negative:**
+
 - Requires discipline to maintain boundaries
 - More complex dependency management

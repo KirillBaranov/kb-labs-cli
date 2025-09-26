@@ -2,7 +2,7 @@
 
 **Date:** 2025-09-13  
 **Status:** Accepted  
-**Deciders:** KB Labs Team  
+**Deciders:** KB Labs Team
 
 ## Context
 
@@ -28,11 +28,13 @@ KB Labs products are designed to be reusable across different stacks, domains, a
 ## Consequences
 
 **Positive:**
+
 - Easier to onboard contributors: they extend via plugins instead of modifying the core
 - Ensures product consistency: every KB Labs product has the same extensibility model
 - Avoids long-term lock-in
 
 **Negative:**
+
 - Core complexity increases slightly
 - Additional abstraction layer to maintain
 

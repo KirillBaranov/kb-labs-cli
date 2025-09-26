@@ -2,7 +2,7 @@
 
 **Date:** 2025-09-13  
 **Status:** Accepted  
-**Deciders:** KB Labs Team  
+**Deciders:** KB Labs Team
 
 ## Context
 
@@ -25,10 +25,12 @@ The KB Labs ecosystem must stay consistent, while still allowing individual prod
 ## Consequences
 
 **Positive:**
+
 - Predictable updates across ecosystem
 - Users know when breaking changes occur
 - Easy adoption of multiple products without fear of hidden breakage
 
 **Negative:**
+
 - Requires careful coordination for major releases
 - More complex release automation setup

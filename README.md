@@ -58,29 +58,29 @@ cp -r packages/core packages/<new-package-name>
 
 ## 🛠️ Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `pnpm dev` | Start development mode for all packages |
-| `pnpm build` | Build all packages |
-| `pnpm build:clean` | Clean and build all packages |
-| `pnpm test` | Run all tests |
-| `pnpm test:watch` | Run tests in watch mode |
-| `pnpm lint` | Lint all code |
-| `pnpm lint:fix` | Fix linting issues |
-| `pnpm type-check` | TypeScript type checking |
-| `pnpm check` | Run lint, type-check, and tests |
-| `pnpm ci` | Full CI pipeline (clean, build, check) |
-| `pnpm clean` | Clean build artifacts |
-| `pnpm clean:all` | Clean all node_modules and build artifacts |
+| Script             | Description                                |
+| ------------------ | ------------------------------------------ |
+| `pnpm dev`         | Start development mode for all packages    |
+| `pnpm build`       | Build all packages                         |
+| `pnpm build:clean` | Clean and build all packages               |
+| `pnpm test`        | Run all tests                              |
+| `pnpm test:watch`  | Run tests in watch mode                    |
+| `pnpm lint`        | Lint all code                              |
+| `pnpm lint:fix`    | Fix linting issues                         |
+| `pnpm type-check`  | TypeScript type checking                   |
+| `pnpm check`       | Run lint, type-check, and tests            |
+| `pnpm ci`          | Full CI pipeline (clean, build, check)     |
+| `pnpm clean`       | Clean build artifacts                      |
+| `pnpm clean:all`   | Clean all node_modules and build artifacts |
 
 ## 📦 Packages
 
-| Package | Description |
-|---------|-------------|
-| [@kb-labs/cli](./packages/cli/) | Main CLI package with `kb` command |
+| Package                                       | Description                                      |
+| --------------------------------------------- | ------------------------------------------------ |
+| [@kb-labs/cli](./packages/cli/)               | Main CLI package with `kb` command               |
 | [@kb-labs/cli-adapters](./packages/adapters/) | File system, environment, and discovery adapters |
-| [@kb-labs/cli-commands](./packages/commands/) | Command implementations |
-| [@kb-labs/cli-core](./packages/core/) | Core framework and utilities |
+| [@kb-labs/cli-commands](./packages/commands/) | Command implementations                          |
+| [@kb-labs/cli-core](./packages/core/)         | Core framework and utilities                     |
 
 ## 📋 Development Policies
 

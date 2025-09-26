@@ -1,6 +1,6 @@
 # Contributing Guide
 
-Thanks for considering a contribution to **KB Labs** projects!  
+Thanks for considering a contribution to **KB Labs** projects!
 
 ---
 
