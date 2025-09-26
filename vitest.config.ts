@@ -1,33 +1,32 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from "vitest/config";
+import nodePreset from "@kb-labs/devkit/vitest/node.js";
 
 export default defineConfig({
+  ...nodePreset,
   test: {
-    globals: true,
-    include: [
-      'packages/**/src/**/*.spec.ts',
-      'packages/**/src/**/*.test.ts',
-    ],
-    environment: 'node',
-    testTimeout: 20000,
-
+    ...nodePreset.test,
+    include: ["packages/**/src/**/*.spec.ts", "packages/**/src/**/*.test.ts"],
     coverage: {
-      provider: 'v8',
-      all: true,
-      reportsDirectory: './coverage',
-      reporter: ['text', 'json', 'html'],
-      thresholds: {
-        statements: 60,
-        lines: 60,
-        branches: 72,
-        functions: 79,
-      },
+      ...nodePreset.test?.coverage,
       exclude: [
-        '**/dist/**',
-        '**/fixtures/**',
-        '**/__tests__/**',
-        '**/*.spec.*',
-        '**/*.test.*',
+        "**/dist/**",
+        "**/fixtures/**",
+        "**/__tests__/**",
+        "**/*.spec.*",
+        "**/*.test.*",
+        // non-source and config files
+        "eslint.config.js",
+        "**/vitest.config.ts",
+        "**/tsup.config.ts",
+        "**/tsconfig*.json",
+        "apps/**",
+        // barrel files / types
+        "**/index.ts",
+        "**/types.ts",
+        "**/types/**",
+        // devkit scripts
+        "scripts/devkit-sync.mjs",
       ],
     },
   },
-})
+});

@@ -6,5 +6,7 @@
     { "path": "packages/commands" },
     { "path": "packages/adapters" },
     { "path": "apps/demo" }
-  ]
+  ],
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "composite": true, "noEmit": true }
 }

@@ -1,18 +1,16 @@
 {
-  "extends": "@kb-labs/devkit/tsconfig/node.json",
-  "files": [],
-  "references": [
-    { "path": "packages/cli" },
-    { "path": "packages/core" },
-    { "path": "packages/commands" },
-    { "path": "packages/adapters" },
-    { "path": "apps/demo" }
-  ],
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "composite": false,
-    "declaration": false,
-    "declarationMap": false,
-    "emitDeclarationOnly": false,
-    "noEmit": true
-  }
+    "noEmit": true,
+    "composite": false
+  },
+  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+  "exclude": [
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/coverage/**",
+    "**/tsup.config.ts",
+    "**/vitest.config.ts",
+    "apps/**"
+  ]
 }
