@@ -1,7 +1,11 @@
-export type CommandRun = (ctx: any, argv: string[], flags: Record<string, any>) => Promise<number | void> | number | void;
+export type CommandRun = (
+  ctx: any,
+  argv: string[],
+  flags: Record<string, any>,
+) => Promise<number | void> | number | void;
 
 export interface Command {
-  name: string;                 // 'hello' | 'init.profile' | 'diagnose'
+  name: string; // 'hello' | 'init.profile' | 'diagnose'
   describe?: string;
   aliases?: string[];
   run: CommandRun;

@@ -5,13 +5,19 @@ class InMemoryRegistry implements CommandRegistry {
 
   register(cmd: Command): void {
     this.byName.set(cmd.name, cmd);
-    for (const a of cmd.aliases || []) this.byName.set(a, cmd);
+    for (const a of cmd.aliases || []) {
+      this.byName.set(a, cmd);
+    }
   }
-  has(name: string): boolean { return this.byName.has(name); }
+  has(name: string): boolean {
+    return this.byName.has(name);
+  }
   get(nameOrPath: string | string[]): Command | undefined {
     const key = Array.isArray(nameOrPath) ? nameOrPath.join(".") : nameOrPath;
     // поддержка составных имён вида "init.profile"
-    if (this.byName.has(key)) return this.byName.get(key);
+    if (this.byName.has(key)) {
+      return this.byName.get(key);
+    }
     // поддержка пути ["init","profile"] => пробуем "init.profile"
     if (Array.isArray(nameOrPath)) {
       const dot = nameOrPath.join(".");

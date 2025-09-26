@@ -7,6 +7,8 @@ export const diagnose: Command = {
     const repoRoot = ctx?.repoRoot ?? process.cwd();
     ctx.presenter.write(`node=${process.version}`);
     ctx.presenter.write(`repoRoot=${repoRoot}`);
-    if (ctx?.logger?.info) ctx.logger.info("[diagnose] ok");
+    if (ctx?.logger?.info) {
+      ctx.logger.info("[diagnose] ok");
+    }
   },
 };

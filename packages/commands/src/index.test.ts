@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from "vitest";
 
-describe('Commands', () => {
-  it('should be importable', () => {
-    expect(() => import('./index.ts')).not.toThrow()
-  })
-})
+describe("Commands", () => {
+  it("should be importable", () => {
+    expect(() => import("./index")).not.toThrow();
+  });
+});

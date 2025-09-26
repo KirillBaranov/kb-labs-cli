@@ -4,7 +4,9 @@
   "type": "module",
   "private": true,
   "description": "Command implementations for KB Labs CLI",
-  "bin": { "kb": "./dist/bin.js" },
+  "bin": {
+    "kb": "./dist/bin.js"
+  },
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -35,6 +37,7 @@
     "@types/node": "^24.3.3",
     "@types/picomatch": "^4",
     "cpy-cli": "^4.2.0",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "vitest": "^3.2.4"
   }
 }
