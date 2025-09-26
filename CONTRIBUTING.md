@@ -14,7 +14,8 @@ pnpm dev
 ## Guidelines
 
 - **Coding style**: follow ESLint + Prettier rules. Run `pnpm lint` before pushing.
-- **Testing**: cover all changes with Vitest. Run `pnpm test`.
+- **Testing**: cover all changes with Vitest. Run `pnpm test` and ensure 90%+ coverage.
+- **Test structure**: organize tests in `__tests__` directories at the same level as source files.
 - **Commits**: use clear, conventional messages (e.g., `feat: add X`, `fix: correct Y`).
 - **ADRs**: for architectural changes, add a new record in `docs/adr`.
 
@@ -79,6 +80,48 @@ Commands should support both text and JSON output:
 - JSON mode: Use `ctx.presenter.json()` for structured output
 - The `--json` flag is handled automatically by the CLI framework
 
+## Testing Guidelines
+
+### Test Coverage Requirements
+- **Minimum coverage**: 90% for statements, branches, functions, and lines
+- **Current coverage**: 94.61% (exceeds requirements)
+- **Coverage is enforced**: CI will fail if coverage drops below 90%
+
+### Test Structure
+- Place tests in `__tests__` directories at the same level as source files
+- Use descriptive test names and group related tests with `describe` blocks
+- Test both success and error scenarios
+- Mock external dependencies appropriately
+
+### Running Tests
+```bash
+# Run all tests
+pnpm test
+
+# Run tests with coverage
+pnpm test -- --coverage
+
+# Run tests in watch mode
+pnpm test:watch
+```
+
+### Test Examples
+```typescript
+import { describe, it, expect, vi } from "vitest";
+import { myFunction } from "../my-module";
+
+describe("myFunction", () => {
+  it("should handle success case", () => {
+    const result = myFunction("input");
+    expect(result).toBe("expected-output");
+  });
+
+  it("should handle error case", () => {
+    expect(() => myFunction("invalid")).toThrow("Error message");
+  });
+});
+```
+
 ---
 
 ## Pull requests
@@ -86,4 +129,5 @@ Commands should support both text and JSON output:
 1. Fork the repo and create a feature branch.
 2. Make your changes.
 3. Run `pnpm check` (lint + type-check + tests).
-4. Submit a PR with a clear description of your changes.
+4. Ensure test coverage remains above 90% with `pnpm test -- --coverage`.
+5. Submit a PR with a clear description of your changes.

@@ -122,7 +122,8 @@ cp -r packages/core packages/<new-package-name>
 ## 📋 Development Policies
 
 - **Code Style:** ESLint + Prettier, TypeScript strict mode
-- **Testing:** Vitest with fixtures for integration testing
+- **Testing:** Vitest with comprehensive test coverage (94.61%+ required)
+- **Test Structure:** Organized in `__tests__` directories with unit and integration tests
 - **Versioning:** SemVer with automated releases through Changesets
 - **Architecture:** Document decisions in ADRs (see `docs/adr/`)
 
