@@ -44,9 +44,46 @@ npm install -g @kb-labs/cli
 # Or use with npx
 npx @kb-labs/cli
 
-# Show available commands
+# Show help
 kb --help
+
+# Show version
+kb --version
+
+# Run commands
+kb hello
+kb version
+kb diagnose
+kb init-profile
+
+# JSON output
+kb hello --json
+kb version --json
 ```
+
+#### Available Commands
+
+| Command | Description | Exit Code |
+|---------|-------------|-----------|
+| `hello` | Print a friendly greeting | 0 |
+| `version` | Show CLI version | 0 |
+| `diagnose` | Diagnose project health and configuration | 0 |
+| `init-profile` | Initialize a new profile configuration | 0 |
+
+#### Global Options
+
+| Option | Description |
+|--------|-------------|
+| `--help` | Show help information |
+| `--version` | Show CLI version |
+| `--json` | Output in JSON format |
+
+#### Exit Codes
+
+| Code | Description |
+|------|-------------|
+| 0 | Success |
+| 1 | General error (unknown command, validation error, etc.) |
 
 ### Creating a New Package
 
