@@ -22,16 +22,28 @@
     "packages/*"
   ],
   "scripts": {
+    "devkit:sync": "node scripts/devkit-sync.mjs",
+    "devkit:check": "node scripts/devkit-sync.mjs --check",
+    "devkit:force": "node scripts/devkit-sync.mjs --force",
+    "devkit:help": "node scripts/devkit-sync.mjs --help",
+    "postinstall": "pnpm -s devkit:sync || true",
+    "// ——— core": "────────────────────────────────────────",
     "build": "pnpm -r run build",
     "dev": "pnpm -r --parallel --filter @kb-labs/cli-* run dev",
+    "// ——— quality": "────────────────────────────────────────",
     "lint": "pnpm -r run lint",
     "lint:fix": "pnpm -r run lint:fix",
     "test": "vitest run",
     "test:watch": "vitest",
     "type-check": "tsc -b tsconfig.tools.json",
+    "// ——— ci/qa": "────────────────────────────────────────",
     "check": "pnpm lint && pnpm type-check && pnpm test -- --run",
     "sync": "node devkit-sync.mjs",
     "sync:check": "node devkit-sync.mjs --check",
+    "// ——— cleanup": "────────────────────────────────────────",
+    "clean": "pnpm -r run clean",
+    "clean:all": "rimraf node_modules packages/*/node_modules apps/*/node_modules dist",
+    "// ——— cli": "────────────────────────────────────────",
     "kb": "node packages/cli/dist/bin.js"
   },
   "lint-staged": {
