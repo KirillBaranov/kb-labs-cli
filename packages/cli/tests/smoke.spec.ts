@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { run } from "../src/index.js";
+import { run } from "../src/index";
 
 describe("CLI Smoke Tests", () => {
   let consoleLogSpy: any;
@@ -126,7 +126,10 @@ describe("CLI Smoke Tests", () => {
 
         expect(exitCode).toBeUndefined(); // undefined means success (0)
         expect(consoleLogSpy).toHaveBeenCalledWith(
-          expect.stringContaining("Diagnostic information")
+          expect.stringMatching(/^node=v\d+\.\d+\.\d+$/)
+        );
+        expect(consoleLogSpy).toHaveBeenCalledWith(
+          expect.stringMatching(/^repoRoot=.+$/)
         );
       });
 
@@ -135,27 +138,30 @@ describe("CLI Smoke Tests", () => {
 
         expect(exitCode).toBeUndefined(); // undefined means success (0)
         expect(consoleLogSpy).toHaveBeenCalledWith(
-          expect.stringContaining('{"ok":true,"diagnostic":')
+          expect.stringMatching(/^\{.*"ok":true.*"message":"node=v\d+\.\d+\.\d+".*\}$/)
+        );
+        expect(consoleLogSpy).toHaveBeenCalledWith(
+          expect.stringMatching(/^\{.*"ok":true.*"message":"repoRoot=.+".*\}$/)
         );
       });
     });
 
     describe("init-profile command", () => {
       it("should run init-profile command in text mode", async () => {
-        const exitCode = await run(["init-profile"]);
+        const exitCode = await run(["init.profile"]);
 
         expect(exitCode).toBeUndefined(); // undefined means success (0)
         expect(consoleLogSpy).toHaveBeenCalledWith(
-          expect.stringContaining("Profile initialized")
+          expect.stringContaining("Initialized profile: frontend (draft)")
         );
       });
 
       it("should run init-profile command in JSON mode", async () => {
-        const exitCode = await run(["init-profile", "--json"]);
+        const exitCode = await run(["init.profile", "--json"]);
 
         expect(exitCode).toBeUndefined(); // undefined means success (0)
         expect(consoleLogSpy).toHaveBeenCalledWith(
-          expect.stringContaining('{"ok":true,"message":"Profile initialized"')
+          expect.stringContaining('{"ok":true,"message":"Initialized profile: frontend (draft)"')
         );
       });
     });
