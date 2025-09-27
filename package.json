@@ -24,6 +24,7 @@
   "scripts": {
     "// ——— devkit": "────────────────────────────────────────",
     "devkit:sync": "node scripts/devkit-sync.mjs",
+    "devkit:sync:ci": "node scripts/devkit-sync.mjs --ci-only",
     "devkit:check": "node scripts/devkit-sync.mjs --check",
     "devkit:force": "node scripts/devkit-sync.mjs --force",
     "devkit:help": "node scripts/devkit-sync.mjs --help",
