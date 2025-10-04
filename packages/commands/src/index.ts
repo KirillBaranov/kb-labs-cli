@@ -11,3 +11,4 @@ export { hello } from "./commands/hello";
 export { version } from "./commands/version";
 export { diagnose } from "./commands/diagnose";
 export { initProfile } from "./commands/init-profile";
+export { ProfilesValidateCommand, ProfilesResolveCommand } from "./commands/profiles";

@@ -1,5 +1,5 @@
 {
-  "name": "@kb-labs/cli",
+  "name": "@kb-labs/cli-bin",
   "version": "0.1.0",
   "type": "module",
   "private": true,
@@ -29,7 +29,8 @@
     "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "profiles:resolve:smoke": "tsx src/smoke/profiles-resolve.ts"
   },
   "dependencies": {
     "@kb-labs/cli-adapters": "workspace:*",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "rimraf": "^6.0.1",
+    "tsx": "^4.19.2",
     "vitest": "^3.2.4"
   }
 }

@@ -7,6 +7,9 @@ import {
 } from "@kb-labs/cli-core";
 import { findCommand, registerBuiltinCommands } from "@kb-labs/cli-commands";
 
+// Re-export runtime functionality including profiles
+export * from "./runtime";
+
 export async function run(argv: string[]): Promise<number | void> {
   // Auto-register builtin commands
   registerBuiltinCommands();
@@ -25,7 +28,9 @@ export async function run(argv: string[]): Promise<number | void> {
             { name: "hello", description: "Print a friendly greeting" },
             { name: "version", description: "Show CLI version" },
             { name: "diagnose", description: "Diagnose project health and configuration" },
-            { name: "init-profile", description: "Initialize a new profile configuration" }
+            { name: "init-profile", description: "Initialize a new profile configuration" },
+            { name: "profiles:validate", description: "Validate a profile configuration" },
+            { name: "profiles:resolve", description: "Resolve a profile configuration" }
           ],
           globalOptions: [
             { name: "--help", description: "Show help information" },
@@ -42,6 +47,8 @@ export async function run(argv: string[]): Promise<number | void> {
       presenter.write("  version       Show CLI version\n");
       presenter.write("  diagnose      Diagnose project health and configuration\n");
       presenter.write("  init-profile  Initialize a new profile configuration\n");
+      presenter.write("  profiles:validate  Validate a profile configuration\n");
+      presenter.write("  profiles:resolve   Resolve a profile configuration\n");
       presenter.write("\nGlobal Options:\n");
       presenter.write("  --help        Show help information\n");
       presenter.write("  --version     Show CLI version\n");
