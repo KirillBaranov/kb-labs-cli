@@ -3,7 +3,7 @@ import { hello } from "./commands/hello";
 import { version } from "./commands/version";
 import { diagnose } from "./commands/diagnose";
 import { initProfile } from "./commands/init-profile";
-import { ProfilesValidateCommand, ProfilesResolveCommand } from "./commands/profiles";
+import { ProfilesValidateCommand, ProfilesResolveCommand, profilesInit } from "./commands/profiles";
 
 let _registered = false;
 
@@ -19,4 +19,5 @@ export function registerBuiltinCommands() {
   registry.register(initProfile);
   registry.register(new ProfilesValidateCommand());
   registry.register(new ProfilesResolveCommand());
+  registry.register(profilesInit);
 }

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schemas.kb-labs.dev/profile/profile.schema.json",
+  "name": "web",
+  "kind": "review",
+  "scope": "repo",
+  "version": "1.0.0",
+  "extends": [
+    "@kb-labs/profile-web-core@^1"
+  ],
+  "overrides": [],
+  "products": {
+    "review": {
+      "enabled": true
+    }
+  },
+  "metadata": {}
+}

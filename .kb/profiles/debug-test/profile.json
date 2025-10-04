@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schemas.kb-labs.dev/profile/profile.schema.json",
+  "name": "debug-test",
+  "kind": "assistant",
+  "scope": "repo",
+  "version": "1.0.0",
+  "extends": [],
+  "overrides": [],
+  "products": {
+    "assistant": {
+      "enabled": true
+    }
+  },
+  "metadata": {}
+}
