@@ -1,4 +1,4 @@
 // Re-export all profile commands
-export { ProfilesValidateCommand } from './validate';
-export { ProfilesResolveCommand } from './resolve';
+export { profilesValidate } from './validate';
+export { profilesResolve } from './resolve';
 export { profilesInit } from './init';

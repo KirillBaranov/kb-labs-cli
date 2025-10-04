@@ -1,4 +1,4 @@
-import type { CliCommand, CliContext } from "@kb-labs/cli-core";
+import type { Command } from "../../types";
 
 // Simple mock profile data for demonstration
 interface MockProfile {
@@ -32,34 +32,21 @@ function createMockProfile(name: string): MockProfile {
   };
 }
 
-export class ProfilesResolveCommand implements CliCommand {
-  name = "profiles:resolve";
-  description = "Resolve a profile configuration";
+export const profilesResolve: Command = {
+  name: "profiles:resolve",
+  describe: "Resolve a profile configuration",
 
-  flags = {
-    name: {
-      type: "string",
-      default: "default",
-      description: "Profile name to resolve",
-    },
-    product: {
-      type: "string",
-      description: "Specific product configuration to extract",
-    },
-    json: {
-      type: "boolean",
-      default: false,
-      description: "Output result in JSON format",
-    },
-    "no-cache": {
-      type: "boolean",
-      default: false,
-      description: "Disable caching and force fresh resolution",
-    },
-  };
+  async run(ctx, argv, flags) {
+    const defaultFlags = {
+      name: "default",
+      product: undefined,
+      json: false,
+      "no-cache": false,
+    };
 
-  async run(ctx: CliContext, argv: string[], flags: Record<string, unknown>): Promise<number> {
-    const { name, product, json, "no-cache": noCache } = flags;
+    // Merge with provided flags
+    const finalFlags = { ...defaultFlags, ...flags };
+    const { name, product, json, "no-cache": noCache } = finalFlags;
 
     try {
       // Create mock profile for demonstration
@@ -153,4 +140,4 @@ export class ProfilesResolveCommand implements CliCommand {
       return 1;
     }
   }
-}
+};

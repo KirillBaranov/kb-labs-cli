@@ -1,4 +1,4 @@
-import type { CliCommand, CliContext } from "@kb-labs/cli-core";
+import type { Command } from "../../types";
 
 // Simple mock profile data for demonstration
 interface MockProfile {
@@ -29,30 +29,20 @@ function createMockProfile(name: string, strict: boolean): MockProfile {
   };
 }
 
-export class ProfilesValidateCommand implements CliCommand {
-  name = "profiles:validate";
-  description = "Validate a profile configuration";
+export const profilesValidate: Command = {
+  name: "profiles:validate",
+  describe: "Validate a profile configuration",
 
-  flags = {
-    name: {
-      type: "string",
-      default: "default",
-      description: "Profile name to validate",
-    },
-    strict: {
-      type: "boolean",
-      default: true,
-      description: "Use strict validation mode",
-    },
-    json: {
-      type: "boolean",
-      default: false,
-      description: "Output result in JSON format",
-    },
-  };
+  async run(ctx, argv, flags) {
+    const defaultFlags = {
+      name: "default",
+      strict: true,
+      json: false,
+    };
 
-  async run(ctx: CliContext, argv: string[], flags: Record<string, unknown>): Promise<number> {
-    const { name, strict, json } = flags;
+    // Merge with provided flags
+    const finalFlags = { ...defaultFlags, ...flags };
+    const { name, strict, json } = finalFlags;
 
     try {
       // Create mock profile for demonstration
@@ -107,4 +97,4 @@ export class ProfilesValidateCommand implements CliCommand {
       return 1; // Other errors
     }
   }
-}
+};

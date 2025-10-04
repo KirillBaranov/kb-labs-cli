@@ -1,28 +1,22 @@
 import { describe, it, expect } from 'vitest';
-import { ProfilesValidateCommand } from '@kb-labs/cli-commands';
+import { profilesValidate } from '@kb-labs/cli-commands';
 
 describe('profiles validate smoke test', () => {
-  it('should create ProfilesValidateCommand instance', () => {
-    const cmd = new ProfilesValidateCommand();
-    expect(cmd.name).toBe('profiles:validate');
-    expect(cmd.description).toBe('Validate a profile configuration');
-    expect(cmd.flags).toBeDefined();
-    expect(cmd.flags.name).toBeDefined();
-    expect(cmd.flags.strict).toBeDefined();
-    expect(cmd.flags.json).toBeDefined();
+  it('should create profilesValidate command instance', () => {
+    expect(profilesValidate.name).toBe('profiles:validate');
+    expect(profilesValidate.describe).toBe('Validate a profile configuration');
+    expect(typeof profilesValidate.run).toBe('function');
   });
 
-  it('should have correct flag defaults', () => {
-    const cmd = new ProfilesValidateCommand();
-    expect(cmd.flags.name.default).toBe('default');
-    expect(cmd.flags.strict.default).toBe(true);
-    expect(cmd.flags.json.default).toBe(false);
+  it('should be a valid command object', () => {
+    expect(profilesValidate).toHaveProperty('name');
+    expect(profilesValidate).toHaveProperty('describe');
+    expect(profilesValidate).toHaveProperty('run');
   });
 
-  it('should accept --help flag', () => {
-    const cmd = new ProfilesValidateCommand();
-    expect(cmd.flags).toHaveProperty('name');
-    expect(cmd.flags).toHaveProperty('strict');
-    expect(cmd.flags).toHaveProperty('json');
+  it('should have correct command properties', () => {
+    expect(profilesValidate.name).toBeDefined();
+    expect(profilesValidate.describe).toBeDefined();
+    expect(profilesValidate.run).toBeDefined();
   });
 });
