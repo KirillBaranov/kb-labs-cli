@@ -59,7 +59,7 @@
     ]
   },
   "dependencies": {
-    "@kb-labs/devkit": "workspace:*",
+    "@kb-labs/devkit": "github:KirillBaranov/kb-labs-devkit#main",
     "zod": "^4.1.5"
   },
   "devDependencies": {
