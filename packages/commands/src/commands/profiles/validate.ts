@@ -1,33 +1,9 @@
 import type { Command } from "../../types";
 
-// Simple mock profile data for demonstration
-interface MockProfile {
-  name: string;
-  kind: string;
-  scope: string;
-  products: Record<string, any>;
-  files: string[];
-  meta?: Record<string, any>;
-}
-
-function createMockProfile(name: string, strict: boolean): MockProfile {
-  return {
-    name,
-    kind: 'project',
-    scope: 'local',
-    products: {
-      'example-product': {
-        config: 'example-config',
-        enabled: true
-      }
-    },
-    files: ['package.json', 'README.md'],
-    meta: {
-      resolveTime: Date.now(),
-      strict
-    }
-  };
-}
+// Import real utilities from core packages
+import { resolveConfig } from "@kb-labs/core-config";
+import { createProfileServiceFromConfig, ProfileService } from "@kb-labs/core-profiles";
+import { getLogger } from "@kb-labs/core-sys";
 
 export const profilesValidate: Command = {
   name: "profiles:validate",
@@ -45,28 +21,55 @@ export const profilesValidate: Command = {
     const { name, strict, json } = finalFlags;
 
     try {
-      // Create mock profile for demonstration
-      const resolved = createMockProfile(name as string, strict as boolean);
+      const logger = getLogger('profiles-validate');
+
+      logger.debug('Starting profile validation', {
+        name,
+        strict,
+        cwd: process.cwd()
+      });
+
+      // Load configuration
+      const configResult = resolveConfig({
+        defaults: {
+          profiles: {
+            rootDir: '.kb/profiles',
+            defaultName: 'default',
+            strict: true
+          }
+        }
+      });
+
+      // Create profile service
+      const service = createProfileServiceFromConfig(configResult.value.profiles, process.cwd());
+
+      // Resolve profile with validation
+      const result = await service.resolve({
+        name: name as string,
+        strict: strict as boolean
+      });
 
       if (json) {
+        // JSON output
         ctx.presenter.json({
           ok: true,
           profile: {
-            name: resolved.name,
-            kind: resolved.kind,
-            scope: resolved.scope,
-            products: Object.keys(resolved.products),
-            filesCount: resolved.files.length,
+            name: result.name,
+            kind: result.kind,
+            scope: result.scope,
+            products: Object.keys(result.products || {}),
+            filesCount: result.files?.length || 0
           },
-          meta: resolved.meta,
+          meta: result.meta
         });
       } else {
+        // Success output
         ctx.presenter.write("✅ Profile valid\n");
-        ctx.presenter.write(`   Name: ${resolved.name}\n`);
-        ctx.presenter.write(`   Kind: ${resolved.kind}\n`);
-        ctx.presenter.write(`   Scope: ${resolved.scope}\n`);
-        ctx.presenter.write(`   Products: ${Object.keys(resolved.products).join(", ")}\n`);
-        ctx.presenter.write(`   Files: ${resolved.files.length}\n`);
+        ctx.presenter.write(`\n   Name: ${result.name}\n`);
+        ctx.presenter.write(`   Kind: ${result.kind}\n`);
+        ctx.presenter.write(`   Scope: ${result.scope}\n`);
+        ctx.presenter.write(`   Products: ${Object.keys(result.products || {}).join(", ")}\n`);
+        ctx.presenter.write(`   Files: ${result.files?.length || 0}\n`);
       }
 
       return 0;

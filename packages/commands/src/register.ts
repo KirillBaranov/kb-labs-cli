@@ -3,7 +3,9 @@ import { hello } from "./commands/hello";
 import { version } from "./commands/version";
 import { diagnose } from "./commands/diagnose";
 import { initProfile } from "./commands/init-profile";
-import { profilesValidate, profilesResolve, profilesInit } from "./commands/profiles";
+// TODO: Re-enable when @kb-labs/core-* dependencies are available
+// import { profilesValidate, profilesResolve, profilesInit } from "./commands/profiles";
+import { devlinkPlan, devlinkApply, devlinkFreeze, devlinkLockApply, devlinkUndo, devlinkStatus } from "./commands/devlink";
 
 let _registered = false;
 
@@ -17,7 +19,14 @@ export function registerBuiltinCommands() {
   registry.register(version);
   registry.register(diagnose);
   registry.register(initProfile);
-  registry.register(profilesValidate);
-  registry.register(profilesResolve);
-  registry.register(profilesInit);
+  // TODO: Re-enable when @kb-labs/core-* dependencies are available
+  // registry.register(profilesValidate);
+  // registry.register(profilesResolve);
+  // registry.register(profilesInit);
+  registry.register(devlinkPlan);
+  registry.register(devlinkApply);
+  registry.register(devlinkFreeze);
+  registry.register(devlinkLockApply);
+  registry.register(devlinkUndo);
+  registry.register(devlinkStatus);
 }

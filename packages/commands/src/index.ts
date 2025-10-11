@@ -11,4 +11,6 @@ export { hello } from "./commands/hello";
 export { version } from "./commands/version";
 export { diagnose } from "./commands/diagnose";
 export { initProfile } from "./commands/init-profile";
-export { profilesValidate, profilesResolve, profilesInit } from "./commands/profiles";
+// TODO: Re-enable when @kb-labs/core-* dependencies are available
+// export { profilesValidate, profilesResolve, profilesInit } from "./commands/profiles";
+export { devlinkPlan, devlinkApply, devlinkFreeze, devlinkLockApply, devlinkUndo, devlinkStatus } from "./commands/devlink";

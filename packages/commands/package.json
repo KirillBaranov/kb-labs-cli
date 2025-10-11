@@ -32,7 +32,8 @@
   },
   "dependencies": {
     "@kb-labs/cli-core": "workspace:*",
-    "@kb-labs/cli-adapters": "workspace:*"
+    "@kb-labs/cli-adapters": "workspace:*",
+    "@kb-labs/devlink-core": "link:../../../../kb-labs-devlink/packages/core"
   },
   "devDependencies": {
     "@types/node": "^24.3.3",

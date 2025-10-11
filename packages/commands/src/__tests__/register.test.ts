@@ -19,7 +19,7 @@ describe("registerBuiltinCommands", () => {
   it("should register all builtin commands", () => {
     registerBuiltinCommands();
 
-    expect(mockRegister).toHaveBeenCalledTimes(4);
+    expect(mockRegister).toHaveBeenCalledTimes(7);
 
     // Check that all expected commands are registered
     const registeredCommands = mockRegister.mock.calls.map(call => call[0]);

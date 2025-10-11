@@ -1,36 +1,9 @@
 import type { Command } from "../../types";
 
-// Simple mock profile data for demonstration
-interface MockProfile {
-  name: string;
-  kind: string;
-  scope: string;
-  products: Record<string, any>;
-  files: string[];
-  meta?: Record<string, any>;
-}
-
-function createMockProfile(name: string): MockProfile {
-  return {
-    name,
-    kind: 'project',
-    scope: 'local',
-    products: {
-      'example-product': {
-        config: 'example-config',
-        enabled: true
-      },
-      'test-product': {
-        config: 'test-config',
-        enabled: false
-      }
-    },
-    files: ['package.json', 'README.md'],
-    meta: {
-      resolveTime: Date.now()
-    }
-  };
-}
+// Import real utilities from core packages
+import { resolveConfig } from "@kb-labs/core-config";
+import { createProfileServiceFromConfig, ProfileService } from "@kb-labs/core-profiles";
+import { getLogger } from "@kb-labs/core-sys";
 
 export const profilesResolve: Command = {
   name: "profiles:resolve",
@@ -49,70 +22,84 @@ export const profilesResolve: Command = {
     const { name, product, json, "no-cache": noCache } = finalFlags;
 
     try {
-      // Create mock profile for demonstration
-      const resolved = createMockProfile(name as string);
+      const logger = getLogger('profiles-resolve');
 
-      // If specific product requested, extract it
-      let result: any = resolved;
+      logger.debug('Starting profile resolution', {
+        name,
+        product,
+        noCache,
+        cwd: process.cwd()
+      });
+
+      // Load configuration
+      const configResult = resolveConfig({
+        defaults: {
+          profiles: {
+            rootDir: '.kb/profiles',
+            defaultName: 'default',
+            strict: true
+          }
+        }
+      });
+
+      // Create profile service
+      const service = createProfileServiceFromConfig(configResult.value.profiles, process.cwd());
+
+      // Resolve profile (cached or fresh)
+      const result = noCache
+        ? await service.resolve({ name: name as string, product: product as string })
+        : await service.resolveCached({ name: name as string, product: product as string });
+
+      let output: any = result;
+
+      // If specific product requested, filter to that product
       if (product && typeof product === 'string') {
-        if (!(product in resolved.products)) {
-          const errorMsg = `Product '${product}' not found in profile '${resolved.name}'`;
-
+        if (!result.products || !(product in result.products)) {
           if (json) {
             ctx.presenter.json({
               ok: false,
-              error: {
-                message: errorMsg,
-                availableProducts: Object.keys(resolved.products),
-              },
+              error: `Product '${product}' not found in profile '${result.name}'`,
+              availableProducts: Object.keys(result.products || {})
             });
           } else {
-            ctx.presenter.error(`❌ ${errorMsg}\n`);
-            ctx.presenter.error(`   Available products: ${Object.keys(resolved.products).join(", ")}\n`);
+            ctx.presenter.error(`❌ Product '${product}' not found in profile '${result.name}'\n`);
+            ctx.presenter.error(`\n   Available products: ${Object.keys(result.products || {}).join(", ")}\n`);
           }
           return 1;
         }
 
-        result = {
+        const productConfig = service.getProductConfig(result, product);
+        output = {
           product,
-          config: resolved.products[product as string],
+          config: productConfig,
           profile: {
-            name: resolved.name,
-            kind: resolved.kind,
-            scope: resolved.scope,
+            name: result.name,
+            kind: result.kind,
+            scope: result.scope
           },
+          meta: result.meta
         };
       }
 
       if (json) {
         ctx.presenter.json({
           ok: true,
-          ...result,
-          meta: resolved.meta,
+          ...output
         });
       } else {
-        // Human-readable summary
-        if (product) {
-          ctx.presenter.write(`📦 Product: ${product}\n`);
-          ctx.presenter.write(`📋 Profile: ${resolved.name} (${resolved.kind}, ${resolved.scope})\n`);
-          ctx.presenter.write(`⚙️  Configuration:\n`);
-          ctx.presenter.write(JSON.stringify(result.config, null, 2));
-          ctx.presenter.write("\n");
-        } else {
-          ctx.presenter.write("📋 Profile Summary\n");
-          ctx.presenter.write("==================\n");
-          ctx.presenter.write(`Name: ${resolved.name}\n`);
-          ctx.presenter.write(`Kind: ${resolved.kind}\n`);
-          ctx.presenter.write(`Scope: ${resolved.scope}\n`);
-          ctx.presenter.write(`Products: ${Object.keys(resolved.products).join(", ")}\n`);
-          ctx.presenter.write(`Files: ${resolved.files.length}\n`);
+        ctx.presenter.write("📋 Profile Summary\n");
+        ctx.presenter.write("==================\n");
+        ctx.presenter.write(`\nName: ${result.name}\n`);
+        ctx.presenter.write(`Kind: ${result.kind}\n`);
+        ctx.presenter.write(`Scope: ${result.scope}\n`);
+        ctx.presenter.write(`Products: ${Object.keys(result.products || {}).join(", ")}\n`);
+        ctx.presenter.write(`Files: ${result.files?.length || 0}\n`);
 
-          if (resolved.meta) {
-            ctx.presenter.write("\n📊 Metadata:\n");
-            for (const [key, value] of Object.entries(resolved.meta)) {
-              ctx.presenter.write(`${key}: ${value}\n`);
-            }
-          }
+        if (result.meta) {
+          ctx.presenter.write(`\n📊 Metadata:\n`);
+          Object.entries(result.meta).forEach(([key, value]) => {
+            ctx.presenter.write(`${key}: ${value}\n`);
+          });
         }
       }
 

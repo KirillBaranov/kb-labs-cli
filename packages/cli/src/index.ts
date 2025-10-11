@@ -7,9 +7,6 @@ import {
 } from "@kb-labs/cli-core";
 import { findCommand, registerBuiltinCommands } from "@kb-labs/cli-commands";
 
-// Re-export runtime functionality including profiles
-export * from "./runtime";
-
 export async function run(argv: string[]): Promise<number | void> {
   // Auto-register builtin commands
   registerBuiltinCommands();
