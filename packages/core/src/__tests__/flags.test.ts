@@ -215,4 +215,78 @@ describe("parseArgs", () => {
       flagsObj: {},
     });
   });
+
+  it("should parse flags with = syntax", () => {
+    const result = parseArgs(["hello", "--name=world", "--count=5"]);
+
+    expect(result).toEqual({
+      cmdPath: ["hello"],
+      rest: [],
+      global: {},
+      flagsObj: {
+        name: "world",
+        count: "5",
+      },
+    });
+  });
+
+  it("should parse flags with = syntax containing commas", () => {
+    const result = parseArgs(["devlink:plan", "--allow=pkg-a,pkg-b,pkg-c"]);
+
+    expect(result).toEqual({
+      cmdPath: ["devlink:plan"],
+      rest: [],
+      global: {},
+      flagsObj: {
+        allow: "pkg-a,pkg-b,pkg-c",
+      },
+    });
+  });
+
+  it("should parse mixed flag syntax", () => {
+    const result = parseArgs([
+      "command",
+      "--flag1=value1",
+      "--flag2",
+      "value2",
+      "--bool-flag",
+    ]);
+
+    expect(result).toEqual({
+      cmdPath: ["command"],
+      rest: [],
+      global: {},
+      flagsObj: {
+        flag1: "value1",
+        flag2: "value2",
+        "bool-flag": true,
+      },
+    });
+  });
+
+  it("should handle = in flag value correctly", () => {
+    const result = parseArgs(["command", "--equation=a=b+c"]);
+
+    expect(result).toEqual({
+      cmdPath: ["command"],
+      rest: [],
+      global: {},
+      flagsObj: {
+        equation: "a=b+c",
+      },
+    });
+  });
+
+  it("should handle empty value after =", () => {
+    const result = parseArgs(["command", "--flag="]);
+
+    expect(result).toEqual({
+      cmdPath: ["command"],
+      rest: [],
+      global: {},
+      flagsObj: {
+        flag: "",
+      },
+    });
+  });
 });

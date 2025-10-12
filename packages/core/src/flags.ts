@@ -65,12 +65,25 @@ export function parseArgs(argv: string[]): {
           break;
         default: {
           // generic key/value or boolean
-          const key = a.replace(/^--/, "");
-          const maybe = args[0];
-          if (!maybe || String(maybe).startsWith("-")) {
-            flagsObj[key] = true;
+          // Support both --flag=value and --flag value syntax
+          const stripped = a.replace(/^--/, "");
+
+          if (stripped.includes("=")) {
+            // --flag=value syntax
+            const [key, ...valueParts] = stripped.split("=");
+            if (key) {
+              const value = valueParts.join("="); // rejoin in case value contains =
+              flagsObj[key] = value;
+            }
           } else {
-            flagsObj[key] = args.shift();
+            // --flag value or --flag (boolean) syntax
+            const key = stripped;
+            const maybe = args[0];
+            if (!maybe || String(maybe).startsWith("-")) {
+              flagsObj[key] = true;
+            } else {
+              flagsObj[key] = args.shift();
+            }
           }
         }
       }
