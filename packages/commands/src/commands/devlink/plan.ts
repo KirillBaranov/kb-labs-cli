@@ -11,10 +11,17 @@ export const devlinkPlan: Command = {
       mode: "local",
       policy: undefined,
       json: false,
+      roots: undefined,
+      allow: undefined,
+      deny: undefined,
+      "force-local": undefined,
+      "force-npm": undefined,
     };
 
     const finalFlags = { ...defaultFlags, ...flags };
-    const { mode, policy, json } = finalFlags;
+    const { mode, policy, json, roots, allow, deny } = finalFlags;
+    const forceLocal = finalFlags["force-local"];
+    const forceNpm = finalFlags["force-npm"];
 
     try {
       const rootDir = process.cwd();
@@ -25,41 +32,85 @@ export const devlinkPlan: Command = {
         throw new Error(`Invalid mode: ${mode}. Must be one of: ${validModes.join(", ")}`);
       }
 
+      // Parse roots (comma-separated absolute paths)
+      let rootsParsed: string[] | undefined;
+      if (roots && typeof roots === 'string') {
+        const rootsStr = roots as string;
+        if (rootsStr.trim()) {
+          rootsParsed = rootsStr.split(',').map((r: string) => r.trim()).filter(Boolean);
+        }
+      }
+
+      // Parse policy flags (CSV → string[])
+      const parseCsv = (value: unknown): string[] | undefined => {
+        if (!value || typeof value !== 'string') { return undefined; }
+        const str = value as string;
+        if (!str.trim()) { return undefined; }
+        return str.split(',').map((s: string) => s.trim()).filter(Boolean);
+      };
+
+      const allowParsed = parseCsv(allow);
+      const denyParsed = parseCsv(deny);
+      const forceLocalParsed = parseCsv(forceLocal);
+      const forceNpmParsed = parseCsv(forceNpm);
+
+      // Build policy object
+      const policyObject: any = {};
+      if (allowParsed) { policyObject.allow = allowParsed; }
+      if (denyParsed) { policyObject.deny = denyParsed; }
+      if (forceLocalParsed) { policyObject.forceLocal = forceLocalParsed; }
+      if (forceNpmParsed) { policyObject.forceNpm = forceNpmParsed; }
+
+      const hasPolicyFlags = Object.keys(policyObject).length > 0;
+
       // Call scanAndPlan
       const startTime = Date.now();
       const result = await scanAndPlan({
         rootDir,
         mode: mode as "local" | "workspace" | "auto",
-        policy: policy as string | undefined,
+        ...(hasPolicyFlags && { policy: policyObject }),
+        ...(rootsParsed && { roots: rootsParsed }),
       });
       const duration = Date.now() - startTime;
 
-      // Save plan to last-plan.json
-      const planPath = await writeLastPlan(result, rootDir);
+      // Save plan to last-plan.json (save just the plan, not the whole result)
+      const planPath = await writeLastPlan(result.plan, rootDir);
 
-      // Check for cycles
-      const hasCycles = result.plan?.cycles && result.plan.cycles.length > 0;
-      const hasWarnings = hasCycles;
+      // Check for cycles and deny-hits in diagnostics
+      const hasCycles = (result.plan?.graph?.cycles && result.plan.graph.cycles.length > 0) ||
+        result.diagnostics?.some((d: string) => d.toLowerCase().includes('cycle')) ||
+        false;
+      const hasDenyHit = result.diagnostics?.some((d: string) =>
+        d.toLowerCase().includes('deny') || d.toLowerCase().includes('denied')
+      ) || false;
+      const hasWarnings = hasCycles || hasDenyHit;
+
+      // Check for empty plan with diagnostics
+      const hasEmptyPlan = (!result.plan?.actions || result.plan.actions.length === 0) &&
+        (result.diagnostics && result.diagnostics.length > 0);
+      const isEmptyPlanWarning = hasEmptyPlan;
 
       if (json) {
         // JSON output
         ctx.presenter.json({
           ok: result.ok,
           plan: result.plan,
-          timings: {
-            duration,
-            scanDuration: result.timings?.scanDuration,
-            planDuration: result.timings?.planDuration,
-          },
+          timings: result.timings,
+          diagnostics: result.diagnostics,
           meta: {
             planPath,
             mode,
-            policy: policy || null,
+            policy: hasPolicyFlags ? policyObject : null,
+            ...(rootsParsed && { roots: rootsParsed }),
+            ...(hasEmptyPlan && { emptyPlan: true }),
+            roots: result.plan?.index?.packages ? Object.keys(result.plan.index.packages).length : 0,
+            packages: result.plan?.graph?.nodes?.length || 0,
+            actions: result.plan?.actions?.length || 0,
           },
           ...(hasCycles && {
-            warnings: result.plan.cycles.map((cycle: any) => ({
+            warnings: (result.plan?.graph?.cycles || []).map((cycle: string[]) => ({
               type: "cycle",
-              message: `Dependency cycle detected: ${cycle.path?.join(" → ") || "unknown"}`,
+              message: `Dependency cycle detected: ${cycle.join(" → ")}`,
               cycle,
             })),
           }),
@@ -69,17 +120,51 @@ export const devlinkPlan: Command = {
         ctx.presenter.write("🔍 DevLink Plan\n");
         ctx.presenter.write("===============\n\n");
 
-        if (result.plan?.items && result.plan.items.length > 0) {
-          // Convert plan items to table rows
-          const rows = result.plan.items.map((item: any) => ({
-            target: item.target || "N/A",
-            dep: item.dependency || item.dep || "N/A",
-            kind: item.kind || item.type || "N/A",
-            reason: item.reason || item.why || "N/A",
+        // Print auto-discovered roots when no --roots flag was used
+        if (!rootsParsed && result.plan?.index?.packages) {
+          const packages = Object.values(result.plan.index.packages);
+          const uniqueRoots = new Set<string>();
+          for (const pkg of packages) {
+            if (pkg.dir) {
+              // Extract repo root (simplified - assumes packages are under a common root)
+              const parts = pkg.dir.split('/');
+              if (parts.length > 3) {
+                uniqueRoots.add(parts.slice(0, parts.length - 2).join('/'));
+              }
+            }
+          }
+          if (uniqueRoots.size > 0) {
+            ctx.presenter.write(`🌳 Auto-discovered roots:\n`);
+            for (const root of Array.from(uniqueRoots).sort()) {
+              ctx.presenter.write(`   • ${root}\n`);
+            }
+            ctx.presenter.write('\n');
+          }
+        }
+
+        // Print policy summary if any policy flags were set
+        if (hasPolicyFlags) {
+          const policyParts: string[] = [];
+          if (allowParsed) { policyParts.push(`allow=[${allowParsed.join(', ')}]`); }
+          if (denyParsed) { policyParts.push(`deny=[${denyParsed.join(', ')}]`); }
+          if (forceLocalParsed) { policyParts.push(`forceLocal=[${forceLocalParsed.join(', ')}]`); }
+          if (forceNpmParsed) { policyParts.push(`forceNpm=[${forceNpmParsed.join(', ')}]`); }
+          ctx.presenter.write(`📋 Policy: ${policyParts.join(' ')}\n\n`);
+        }
+
+        if (result.plan?.actions && result.plan.actions.length > 0) {
+          // Convert plan actions to table rows
+          const rows = result.plan.actions.map((action: any) => ({
+            target: action.target || "N/A",
+            dep: action.dep || action.dependency || "N/A",
+            kind: action.kind || "N/A",
+            reason: action.reason || "N/A",
           }));
 
           ctx.presenter.write(printTable(rows));
-          ctx.presenter.write(`\nTotal items: ${result.plan.items.length}\n`);
+          ctx.presenter.write(`\nTotal actions: ${result.plan.actions.length}\n`);
+        } else if (hasEmptyPlan) {
+          ctx.presenter.write("⚠️  No operations planned (diagnostics present).\n");
         } else {
           ctx.presenter.write("No operations planned.\n");
         }
@@ -87,21 +172,33 @@ export const devlinkPlan: Command = {
         // Show cycles warning
         if (hasCycles) {
           ctx.presenter.write("\n⚠️  Warning: Dependency cycles detected:\n");
-          for (const cycle of result.plan.cycles) {
-            const path = cycle.path?.join(" → ") || "unknown";
+          const cycles = result.plan?.graph?.cycles || [];
+          for (const cycle of cycles) {
+            const path = cycle.join(" → ");
             ctx.presenter.write(`   • ${path}\n`);
           }
         }
 
+        // Show diagnostics if any
+        if (result.diagnostics && result.diagnostics.length > 0) {
+          ctx.presenter.write("\n📝 Diagnostics:\n");
+          for (const diag of result.diagnostics) {
+            ctx.presenter.write(`   • ${diag}\n`);
+          }
+        }
+
         ctx.presenter.write(`\n📁 Plan saved to: ${planPath}\n`);
+        if (rootsParsed && rootsParsed.length > 0) {
+          ctx.presenter.write(`🌳 Additional roots: ${rootsParsed.join(', ')}\n`);
+        }
         ctx.presenter.write(`⏱️  Duration: ${duration}ms\n`);
       }
 
-      // Exit codes: 0 if ok, 2 if warnings, 1 if errors
+      // Exit codes: 0 if ok, 2 if warnings/empty plan with diagnostics, 1 if errors
       if (!result.ok) {
         return 1;
       }
-      if (hasWarnings) {
+      if (hasWarnings || isEmptyPlanWarning) {
         return 2;
       }
       return 0;

@@ -11,33 +11,53 @@ export const devlinkApply: Command = {
       "dry-run": false,
       json: false,
       "from-stdin": false,
+      "from-file": undefined,
+      yes: false,
     };
 
     const finalFlags = { ...defaultFlags, ...flags };
-    const { "dry-run": dryRun, json, "from-stdin": fromStdin } = finalFlags;
+    const { "dry-run": dryRun, json, "from-stdin": fromStdin, "from-file": fromFile, yes } = finalFlags;
 
     try {
       const rootDir = process.cwd();
 
-      // Read plan from stdin or last-plan.json
+      // Read plan from stdin, file, or last-plan.json
       let plan: any;
       if (fromStdin) {
         plan = await readPlanFromStdin();
+      } else if (fromFile) {
+        const fs = await import('fs/promises');
+        const content = await fs.readFile(fromFile as string, 'utf-8');
+        plan = JSON.parse(content);
       } else {
         plan = await readLastPlan(rootDir);
       }
 
       // Apply the plan
       const startTime = Date.now();
-      const result = await apply(plan, { dryRun: dryRun as boolean });
+      const result = await apply(plan, {
+        dryRun: dryRun as boolean,
+        yes: yes as boolean,
+      });
       const duration = Date.now() - startTime;
 
-      // Calculate summary
+      // Calculate summary from new result structure (defensive checks)
+      const executed = result.executed || [];
+      const skipped = result.skipped || [];
+      const errors = result.errors || [];
+      const diagnostics = result.diagnostics || [];
+      const warnings = result.warnings || [];
+
       const summary: ResultSummary = {
-        executed: result.results?.filter((r: any) => r.status === "executed" || r.status === "success").length || 0,
-        skipped: result.results?.filter((r: any) => r.status === "skipped").length || 0,
-        errors: result.results?.filter((r: any) => r.status === "error" || r.status === "failed").length || 0,
+        executed: executed.length,
+        skipped: skipped.length,
+        errors: errors.length,
       };
+
+      // Check for empty plan with diagnostics
+      const hasEmptyActions = executed.length === 0 && skipped.length === 0 && errors.length === 0;
+      const hasDiagnostics = diagnostics.length > 0;
+      const isEmptyPlanWarning = hasEmptyActions && hasDiagnostics;
 
       if (json) {
         // JSON output
@@ -45,7 +65,17 @@ export const devlinkApply: Command = {
           ok: result.ok,
           dryRun,
           summary,
-          results: result.results,
+          executed,
+          skipped,
+          errors,
+          diagnostics,
+          warnings,
+          meta: {
+            executedCount: summary.executed,
+            skippedCount: summary.skipped,
+            errorCount: summary.errors,
+            ...(isEmptyPlanWarning && { emptyPlan: true }),
+          },
           timings: {
             duration,
           },
@@ -59,21 +89,66 @@ export const devlinkApply: Command = {
         }
         ctx.presenter.write("=====================\n");
 
-        if (result.results && result.results.length > 0) {
-          ctx.presenter.write("\nOperations:\n");
-          for (const item of result.results) {
-            const status = item.status === "executed" || item.status === "success" ? "✓" :
-              item.status === "skipped" ? "⊘" : "✗";
-            const target = item.target || item.package || "N/A";
-            const action = item.action || item.kind || "N/A";
-            ctx.presenter.write(`  ${status} ${target}: ${action}\n`);
+        // Display executed actions grouped by kind
+        if (executed.length > 0) {
+          // Group by kind for better UX
+          const byKind = new Map<string, typeof executed>();
+          for (const action of executed) {
+            const kind = action.kind || "unknown";
+            if (!byKind.has(kind)) {
+              byKind.set(kind, []);
+            }
+            byKind.get(kind)!.push(action);
+          }
 
-            if (item.error) {
-              ctx.presenter.write(`     Error: ${item.error}\n`);
+          ctx.presenter.write("\nExecuted:\n");
+          for (const [kind, actions] of Array.from(byKind.entries()).sort()) {
+            ctx.presenter.write(`  ${kind} (${actions.length}):\n`);
+            for (const action of actions) {
+              ctx.presenter.write(`    ✓ ${action.target}\n`);
             }
           }
-        } else {
-          ctx.presenter.write("\nNo operations to apply.\n");
+        }
+
+        // Display skipped actions
+        if (skipped.length > 0) {
+          ctx.presenter.write("\nSkipped:\n");
+          for (const action of skipped) {
+            ctx.presenter.write(`  ⊘ ${action.target}: ${action.kind}\n`);
+          }
+        }
+
+        // Display errors
+        if (errors.length > 0) {
+          ctx.presenter.write("\nErrors:\n");
+          for (const err of errors) {
+            ctx.presenter.write(`  ✗ ${err.action.target}: ${err.action.kind}\n`);
+            ctx.presenter.write(`     Error: ${err.error}\n`);
+          }
+        }
+
+        if (hasEmptyActions) {
+          if (isEmptyPlanWarning) {
+            ctx.presenter.write("\n⚠️  No operations to apply (diagnostics present).\n");
+          } else {
+            ctx.presenter.write("\nNo operations to apply.\n");
+          }
+        }
+
+        // Display diagnostics if present
+        if (diagnostics.length > 0) {
+          ctx.presenter.write("\nDiagnostics:\n");
+          for (const diag of diagnostics) {
+            ctx.presenter.write(`  ℹ ${diag}\n`);
+          }
+        }
+
+        // Display warnings if present
+        if (warnings.length > 0) {
+          ctx.presenter.write("\nWarnings:\n");
+          for (const warn of warnings) {
+            ctx.presenter.write(`  ⚠ ${warn}\n`);
+          }
         }
 
         ctx.presenter.write(formatSummary(summary));
@@ -84,9 +159,16 @@ export const devlinkApply: Command = {
         }
       }
 
-      // Exit codes: 0 if ok and no errors, 1 if errors
+      // Exit codes: 0 if ok and no errors, 2 if empty plan/warnings, 1 if errors
       if (!result.ok || summary.errors > 0) {
         return 1;
+      }
+      // Check if operation was cancelled due to preflight
+      const wasCancelled = diagnostics.some((d: string) =>
+        d.toLowerCase().includes('cancelled') || d.toLowerCase().includes('uncommitted')
+      );
+      if (isEmptyPlanWarning || wasCancelled) {
+        return 2;
       }
       return 0;
     } catch (error: any) {

@@ -8,24 +8,45 @@ export const devlinkStatus: Command = {
   async run(ctx, argv, flags) {
     const defaultFlags = {
       json: false,
+      roots: undefined,
     };
 
     const finalFlags = { ...defaultFlags, ...flags };
-    const { json } = finalFlags;
+    const { json, roots } = finalFlags;
 
     try {
       const rootDir = process.cwd();
 
+      // Parse roots (comma-separated absolute paths)
+      let rootsParsed: string[] | undefined;
+      if (roots && typeof roots === 'string') {
+        const rootsStr = roots as string;
+        if (rootsStr.trim()) {
+          rootsParsed = rootsStr.split(',').map((r: string) => r.trim()).filter(Boolean);
+        }
+      }
+
       // Get status
       const startTime = Date.now();
-      const result = await status({ rootDir });
+      const result = await status({
+        rootDir,
+        ...(rootsParsed && { roots: rootsParsed }),
+      } as any);
       const duration = Date.now() - startTime;
 
       if (json) {
         // JSON output
         ctx.presenter.json({
-          ok: result.ok,
-          status: result.status,
+          ok: true,
+          packages: result.packages,
+          links: result.links,
+          unknown: result.unknown,
+          entries: result.entries,
+          meta: {
+            packages: result.packages,
+            links: result.links,
+            unknown: result.unknown,
+          },
           timings: {
             duration,
           },
@@ -35,67 +56,38 @@ export const devlinkStatus: Command = {
         ctx.presenter.write("📊 DevLink Status\n");
         ctx.presenter.write("=================\n\n");
 
-        if (result.status) {
-          // Show aggregate status
-          const st = result.status;
+        // Show aggregate status
+        ctx.presenter.write(`Total packages: ${result.packages}\n`);
+        ctx.presenter.write(`Linked dependencies: ${result.links}\n`);
+        ctx.presenter.write(`Unknown status: ${result.unknown}\n`);
 
-          if (st.linked !== undefined) {
-            ctx.presenter.write(`Linked packages: ${st.linked}\n`);
-          }
-          if (st.unlinked !== undefined) {
-            ctx.presenter.write(`Unlinked packages: ${st.unlinked}\n`);
-          }
-          if (st.total !== undefined) {
-            ctx.presenter.write(`Total packages: ${st.total}\n`);
-          }
+        // Show detailed entries if available
+        if (result.entries && result.entries.length > 0) {
+          ctx.presenter.write("\nDependencies:\n");
 
-          // Show detailed items if available
-          if (st.items && st.items.length > 0) {
-            ctx.presenter.write("\nPackages:\n");
-            for (const item of st.items) {
-              const statusIcon = item.linked ? "🔗" : "⚪";
-              const name = item.name || item.package || "N/A";
-              const state = item.linked ? "linked" : "unlinked";
-              ctx.presenter.write(`  ${statusIcon} ${name}: ${state}\n`);
-
-              if (item.path) {
-                ctx.presenter.write(`     Path: ${item.path}\n`);
-              }
+          // Group entries by consumer
+          const byConsumer = new Map<string, typeof result.entries>();
+          for (const entry of result.entries) {
+            if (!byConsumer.has(entry.consumer)) {
+              byConsumer.set(entry.consumer, []);
             }
+            byConsumer.get(entry.consumer)!.push(entry);
           }
 
-          // Show diagnostics if available
-          if (st.diagnostics && st.diagnostics.length > 0) {
-            ctx.presenter.write("\n⚠️  Diagnostics:\n");
-            for (const diag of st.diagnostics) {
-              const level = diag.level || "info";
-              const icon = level === "error" ? "✗" : level === "warn" ? "⚠" : "ℹ";
-              ctx.presenter.write(`  ${icon} ${diag.message}\n`);
+          for (const [consumer, deps] of byConsumer) {
+            ctx.presenter.write(`\n  ${consumer}:\n`);
+            for (const dep of deps) {
+              const icon = dep.source === "yalc" ? "🔗" :
+                dep.source === "workspace" ? "📦" :
+                  dep.source === "npm" ? "📡" : "❓";
+              ctx.presenter.write(`    ${icon} ${dep.dep} (${dep.source})\n`);
             }
           }
         } else {
-          ctx.presenter.write("No status information available.\n");
+          ctx.presenter.write("\nNo dependencies tracked.\n");
         }
 
         ctx.presenter.write(`\n⏱️  Duration: ${duration}ms\n`);
-      }
-
-      // Exit codes: 0 if ok, 2 if warnings, 1 if errors
-      if (!result.ok) {
-        return 1;
-      }
-
-      // Check for warnings in diagnostics
-      if (result.status?.diagnostics && result.status.diagnostics.length > 0) {
-        const hasErrors = result.status.diagnostics.some((d: any) => d.level === "error");
-        const hasWarnings = result.status.diagnostics.some((d: any) => d.level === "warn");
-
-        if (hasErrors) {
-          return 1;
-        }
-        if (hasWarnings) {
-          return 2;
-        }
       }
 
       return 0;

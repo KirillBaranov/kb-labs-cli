@@ -9,12 +9,11 @@ export const devlinkFreeze: Command = {
   async run(ctx, argv, flags) {
     const defaultFlags = {
       pin: "caret",
-      "lock-file": undefined,
       json: false,
     };
 
     const finalFlags = { ...defaultFlags, ...flags };
-    const { pin, "lock-file": lockFileFlag, json } = finalFlags;
+    const { pin, json } = finalFlags;
 
     try {
       const rootDir = process.cwd();
@@ -31,13 +30,13 @@ export const devlinkFreeze: Command = {
       // Freeze the plan
       const startTime = Date.now();
       const result = await freeze(plan, {
-        lockFile: lockFileFlag as string | undefined,
+        cwd: rootDir,
         pin: pin as "exact" | "caret",
       });
       const duration = Date.now() - startTime;
 
-      // Get lock file path
-      const lockFilePath = result.lockFile || getLockFilePath(rootDir, lockFileFlag as string | undefined);
+      // Get lock file path from result
+      const lockFilePath = result.lockPath;
 
       if (json) {
         // JSON output
@@ -45,21 +44,38 @@ export const devlinkFreeze: Command = {
           ok: result.ok,
           lockFile: lockFilePath,
           pin,
+          diagnostics: result.diagnostics,
+          meta: {
+            lockPath: lockFilePath,
+            ...(result.meta || {}),
+          },
           timings: {
             duration,
           },
-          meta: result.meta || {},
         });
       } else {
         // Human-readable output
         ctx.presenter.write("🔒 DevLink Freeze\n");
         ctx.presenter.write("=================\n\n");
 
-        ctx.presenter.write(`✓ Lock file created: ${lockFilePath}\n`);
+        ctx.presenter.write(`✓ Lock file created\n`);
+        ctx.presenter.write(`  Path: ${lockFilePath}\n`);
         ctx.presenter.write(`  Pin mode: ${pin}\n`);
 
-        if (result.meta?.itemsCount !== undefined) {
-          ctx.presenter.write(`  Items locked: ${result.meta.itemsCount}\n`);
+        // Count frozen packages from plan if available
+        if (plan?.actions) {
+          const frozenCount = plan.actions.length;
+          ctx.presenter.write(`  Frozen packages: ${frozenCount}\n`);
+        } else if (result.meta?.itemsCount !== undefined) {
+          ctx.presenter.write(`  Frozen packages: ${result.meta.itemsCount}\n`);
+        }
+
+        // Display diagnostics if present
+        if (result.diagnostics && result.diagnostics.length > 0) {
+          ctx.presenter.write(`\n⚠️  Diagnostics:\n`);
+          for (const diag of result.diagnostics) {
+            ctx.presenter.write(`   • ${diag}\n`);
+          }
         }
 
         ctx.presenter.write(`\n⏱️  Duration: ${duration}ms\n`);
