@@ -19,8 +19,8 @@ describe("registerBuiltinCommands", () => {
   it("should register all builtin commands", () => {
     registerBuiltinCommands();
 
-    // 4 base commands + 6 devlink commands = 10
-    expect(mockRegister).toHaveBeenCalledTimes(10);
+    // 4 base commands + 7 devlink commands = 11
+    expect(mockRegister).toHaveBeenCalledTimes(11);
 
     // Check that all expected commands are registered
     const registeredCommands = mockRegister.mock.calls.map(call => call[0]);
@@ -39,6 +39,7 @@ describe("registerBuiltinCommands", () => {
     expect(commandNames).toContain("devlink:lock:apply");
     expect(commandNames).toContain("devlink:undo");
     expect(commandNames).toContain("devlink:status");
+    expect(commandNames).toContain("devlink:about");
   });
 
   it("should not register commands multiple times", () => {
