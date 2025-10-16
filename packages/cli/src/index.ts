@@ -12,7 +12,7 @@ export async function run(argv: string[]): Promise<number | void> {
   registerBuiltinCommands();
   const { cmdPath, rest, global, flagsObj } = parseArgs(argv);
 
-  const presenter = global.json ? createJsonPresenter() : createTextPresenter();
+  const presenter = global.json ? createJsonPresenter() : createTextPresenter(global.quiet);
 
   // Handle global --help flag
   if (global.help) {
@@ -28,12 +28,20 @@ export async function run(argv: string[]): Promise<number | void> {
             { name: "init-profile", description: "Initialize a new profile configuration" },
             { name: "profiles:validate", description: "Validate a profile configuration" },
             { name: "profiles:resolve", description: "Resolve a profile configuration" },
-            { name: "profiles:init", description: "Initialize a new profile configuration" }
+            { name: "profiles:init", description: "Initialize a new profile configuration" },
+            { name: "devlink:plan", description: "Scan and plan DevLink operations" },
+            { name: "devlink:apply", description: "Apply DevLink plan" },
+            { name: "devlink:freeze", description: "Freeze DevLink plan to lock file" },
+            { name: "devlink:lock:apply", description: "Apply DevLink lock file" },
+            { name: "devlink:undo", description: "Undo DevLink operations" },
+            { name: "devlink:status", description: "Show DevLink status" },
+            { name: "devlink:about", description: "Show information about DevLink" }
           ],
           globalOptions: [
             { name: "--help", description: "Show help information" },
             { name: "--version", description: "Show CLI version" },
-            { name: "--json", description: "Output in JSON format" }
+            { name: "--json", description: "Output in JSON format" },
+            { name: "--quiet", description: "Suppress detailed output, show only summary and warnings" }
           ]
         }
       });
@@ -48,10 +56,18 @@ export async function run(argv: string[]): Promise<number | void> {
       presenter.write("  profiles:validate  Validate a profile configuration\n");
       presenter.write("  profiles:resolve   Resolve a profile configuration\n");
       presenter.write("  profiles:init      Initialize a new profile configuration\n");
+      presenter.write("  devlink:plan  Scan and plan DevLink operations\n");
+      presenter.write("  devlink:apply Apply DevLink plan\n");
+      presenter.write("  devlink:freeze    Freeze DevLink plan to lock file\n");
+      presenter.write("  devlink:lock:apply Apply DevLink lock file\n");
+      presenter.write("  devlink:undo  Undo DevLink operations\n");
+      presenter.write("  devlink:status Show DevLink status\n");
+      presenter.write("  devlink:about Show information about DevLink\n");
       presenter.write("\nGlobal Options:\n");
       presenter.write("  --help        Show help information\n");
       presenter.write("  --version     Show CLI version\n");
       presenter.write("  --json        Output in JSON format\n");
+      presenter.write("  --quiet       Suppress detailed output, show only summary and warnings\n");
     }
     return 0;
   }
