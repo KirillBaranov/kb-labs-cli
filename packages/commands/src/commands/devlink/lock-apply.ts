@@ -1,6 +1,7 @@
 import type { Command } from "../../types";
 import { applyLockFile } from "@kb-labs/devlink-core";
-import { getLockFilePath, formatSummary, type ResultSummary } from "./helpers";
+import { getLockFilePath, formatSummary, formatFooter, formatPreflightDiagnostics, type ResultSummary } from "./helpers";
+import { colors, createLoader } from "@kb-labs/cli-core";
 
 export const devlinkLockApply: Command = {
   name: "devlink:lock:apply",
@@ -19,13 +20,36 @@ export const devlinkLockApply: Command = {
     try {
       const rootDir = process.cwd();
 
+      // Create loader for long operations
+      const loader = createLoader({
+        enabled: !json && !ctx.presenter.isQuiet && ctx.presenter.isTTY
+      });
+
       // Apply lock file
       const startTime = Date.now();
-      const result = await applyLockFile({
-        rootDir,
-        dryRun: dryRun as boolean,
-        yes: yes as boolean,
-      });
+      let result;
+
+      try {
+        if (!json && !ctx.presenter.isQuiet && ctx.presenter.isTTY) {
+          loader.start("Applying lock file...");
+        }
+
+        result = await applyLockFile({
+          rootDir,
+          dryRun: dryRun as boolean,
+          yes: yes as boolean,
+        });
+
+        if (!json && !ctx.presenter.isQuiet && ctx.presenter.isTTY) {
+          loader.stop(result.ok, `Completed in ${Date.now() - startTime}ms`);
+        }
+      } catch (error) {
+        if (!json && !ctx.presenter.isQuiet && ctx.presenter.isTTY) {
+          loader.stop(false, "Failed");
+        }
+        throw error;
+      }
+
       const duration = Date.now() - startTime;
 
       // Calculate summary from new result structure (defensive checks)
@@ -59,35 +83,36 @@ export const devlinkLockApply: Command = {
       } else {
         // Human-readable output
         if (dryRun) {
-          ctx.presenter.write("🔍 DevLink Lock Apply (Dry Run)\n");
+          ctx.presenter.write(colors.cyan(colors.bold("🔍 DevLink Lock Apply (Dry Run)")) + "\n");
         } else {
-          ctx.presenter.write("🔒 DevLink Lock Apply\n");
+          ctx.presenter.write(colors.cyan(colors.bold("🔒 DevLink Lock Apply")) + "\n");
         }
-        ctx.presenter.write("=========================\n");
+        ctx.presenter.write(colors.dim("=========================") + "\n");
 
-        ctx.presenter.write(`\n📁 Root: ${rootDir}\n`);
+        ctx.presenter.write(`\n${colors.cyan('📁 Root:')} ${colors.dim(rootDir)}\n`);
 
         // Display executed items
         if (executed.length > 0) {
-          ctx.presenter.write("\nExecuted:\n");
+          ctx.presenter.write("\n" + colors.bold("Executed:") + "\n");
           for (const item of executed) {
-            ctx.presenter.write(`  ✓ ${item}\n`);
+            ctx.presenter.write(`  ${colors.green('✓')} ${item}\n`);
           }
         }
 
-        // Display diagnostics if present
+        // Display diagnostics if present with enhanced formatting
         if (diagnostics.length > 0) {
-          ctx.presenter.write("\nDiagnostics:\n");
-          for (const diag of diagnostics) {
-            ctx.presenter.write(`  ! ${diag}\n`);
-          }
+          const wasCancelled = diagnostics.some((d: string) =>
+            d.toLowerCase().includes('cancelled') || d.toLowerCase().includes('uncommitted')
+          );
+          const wasForced = yes as boolean;
+          ctx.presenter.write(formatPreflightDiagnostics(diagnostics, wasCancelled, wasForced));
         }
 
         // Display warnings if present
         if (warnings.length > 0) {
-          ctx.presenter.write("\nWarnings:\n");
+          ctx.presenter.write("\n" + colors.yellow("Warnings:") + "\n");
           for (const warn of warnings) {
-            ctx.presenter.write(`  ⚠ ${warn}\n`);
+            ctx.presenter.write(`  ${colors.yellow('⚠')} ${colors.dim(warn)}\n`);
           }
         }
 
@@ -96,10 +121,15 @@ export const devlinkLockApply: Command = {
         }
 
         ctx.presenter.write(formatSummary(summary));
-        ctx.presenter.write(`⏱️  Duration: ${duration}ms\n`);
+
+        // Add footer
+        const hasWarnings = warnings.length > 0 || diagnostics.some((d: string) =>
+          d.toLowerCase().includes('cancelled') || d.toLowerCase().includes('uncommitted')
+        );
+        ctx.presenter.write(formatFooter(summary, duration, hasWarnings));
 
         if (dryRun) {
-          ctx.presenter.write("\n💡 This was a dry run. Use without --dry-run to apply changes.\n");
+          ctx.presenter.write(colors.dim("\n💡 This was a dry run. Use without --dry-run to apply changes.") + "\n");
         }
       }
 
