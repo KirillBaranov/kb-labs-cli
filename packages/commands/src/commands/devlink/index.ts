@@ -5,4 +5,5 @@ export { devlinkFreeze } from './freeze';
 export { devlinkLockApply } from './lock-apply';
 export { devlinkUndo } from './undo';
 export { devlinkStatus } from './status';
+export { devlinkAbout } from './about';
 
