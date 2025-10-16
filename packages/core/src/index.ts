@@ -17,6 +17,8 @@ export * from "./plugins/types";
 export * from "./presenter/types";
 export * from "./presenter/text";
 export * from "./presenter/json";
+export * from "./presenter/colors";
+export * from "./presenter/loader";
 
 // Telemetry
 export * from "./telemetry/types";
@@ -29,4 +31,5 @@ export { parseArgs } from "./flags";
 export { mapCliErrorToExitCode, CliError } from "./errors";
 export { createTextPresenter } from "./presenter/text";
 export { createJsonPresenter } from "./presenter/json";
+export { createLoader } from "./presenter/loader";
 export { createContext } from "./context";
