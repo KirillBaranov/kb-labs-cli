@@ -1,5 +1,6 @@
 import type { Command } from "../../types";
 import { status } from "@kb-labs/devlink-core";
+import { colors } from "@kb-labs/cli-core";
 
 export const devlinkStatus: Command = {
   name: "devlink:status",
@@ -53,17 +54,17 @@ export const devlinkStatus: Command = {
         });
       } else {
         // Human-readable output
-        ctx.presenter.write("📊 DevLink Status\n");
-        ctx.presenter.write("=================\n\n");
+        ctx.presenter.write(colors.cyan(colors.bold("📊 DevLink Status")) + "\n");
+        ctx.presenter.write(colors.dim("=================") + "\n\n");
 
         // Show aggregate status
-        ctx.presenter.write(`Total packages: ${result.packages}\n`);
-        ctx.presenter.write(`Linked dependencies: ${result.links}\n`);
-        ctx.presenter.write(`Unknown status: ${result.unknown}\n`);
+        ctx.presenter.write(`${colors.cyan('Total packages:')} ${result.packages}\n`);
+        ctx.presenter.write(`${colors.cyan('Linked dependencies:')} ${result.links}\n`);
+        ctx.presenter.write(`${colors.cyan('Unknown status:')} ${result.unknown}\n`);
 
         // Show detailed entries if available
         if (result.entries && result.entries.length > 0) {
-          ctx.presenter.write("\nDependencies:\n");
+          ctx.presenter.write("\n" + colors.bold("Dependencies:") + "\n");
 
           // Group entries by consumer
           const byConsumer = new Map<string, typeof result.entries>();
@@ -75,19 +76,22 @@ export const devlinkStatus: Command = {
           }
 
           for (const [consumer, deps] of byConsumer) {
-            ctx.presenter.write(`\n  ${consumer}:\n`);
+            ctx.presenter.write(`\n  ${colors.cyan(consumer)}:\n`);
             for (const dep of deps) {
               const icon = dep.source === "yalc" ? "🔗" :
                 dep.source === "workspace" ? "📦" :
                   dep.source === "npm" ? "📡" : "❓";
-              ctx.presenter.write(`    ${icon} ${dep.dep} (${dep.source})\n`);
+              const sourceColor = dep.source === "yalc" ? colors.green :
+                dep.source === "workspace" ? colors.blue :
+                  dep.source === "npm" ? colors.yellow : colors.dim;
+              ctx.presenter.write(`    ${icon} ${dep.dep} ${colors.dim('(' + sourceColor(dep.source) + ')')}\n`);
             }
           }
         } else {
           ctx.presenter.write("\nNo dependencies tracked.\n");
         }
 
-        ctx.presenter.write(`\n⏱️  Duration: ${duration}ms\n`);
+        ctx.presenter.write(`\n${colors.dim('⏱️  Duration:')} ${colors.dim(`${duration}ms`)}\n`);
       }
 
       return 0;

@@ -1,6 +1,7 @@
 import type { Command } from "../../types";
 import { scanAndPlan } from "@kb-labs/devlink-core";
-import { writeLastPlan, printTable } from "./helpers.js";
+import { writeLastPlan, printTable, formatFooter } from "./helpers";
+import { colors } from "@kb-labs/cli-core";
 
 export const devlinkPlan: Command = {
   name: "devlink:plan",
@@ -117,8 +118,8 @@ export const devlinkPlan: Command = {
         });
       } else {
         // Human-readable output
-        ctx.presenter.write("🔍 DevLink Plan\n");
-        ctx.presenter.write("===============\n\n");
+        ctx.presenter.write(colors.cyan(colors.bold("🔍 DevLink Plan")) + "\n");
+        ctx.presenter.write(colors.dim("===============") + "\n\n");
 
         // Print auto-discovered roots when no --roots flag was used
         if (!rootsParsed && result.plan?.index?.packages) {
@@ -134,9 +135,9 @@ export const devlinkPlan: Command = {
             }
           }
           if (uniqueRoots.size > 0) {
-            ctx.presenter.write(`🌳 Auto-discovered roots:\n`);
+            ctx.presenter.write(colors.cyan(`🌳 Auto-discovered roots:`) + "\n");
             for (const root of Array.from(uniqueRoots).sort()) {
-              ctx.presenter.write(`   • ${root}\n`);
+              ctx.presenter.write(`   • ${colors.dim(root)}\n`);
             }
             ctx.presenter.write('\n');
           }
@@ -149,7 +150,7 @@ export const devlinkPlan: Command = {
           if (denyParsed) { policyParts.push(`deny=[${denyParsed.join(', ')}]`); }
           if (forceLocalParsed) { policyParts.push(`forceLocal=[${forceLocalParsed.join(', ')}]`); }
           if (forceNpmParsed) { policyParts.push(`forceNpm=[${forceNpmParsed.join(', ')}]`); }
-          ctx.presenter.write(`📋 Policy: ${policyParts.join(' ')}\n\n`);
+          ctx.presenter.write(colors.cyan(`📋 Policy: `) + colors.dim(policyParts.join(' ')) + "\n\n");
         }
 
         if (result.plan?.actions && result.plan.actions.length > 0) {
@@ -162,36 +163,39 @@ export const devlinkPlan: Command = {
           }));
 
           ctx.presenter.write(printTable(rows));
-          ctx.presenter.write(`\nTotal actions: ${result.plan.actions.length}\n`);
+          ctx.presenter.write(`\n${colors.bold('Total actions:')} ${result.plan.actions.length}\n`);
         } else if (hasEmptyPlan) {
-          ctx.presenter.write("⚠️  No operations planned (diagnostics present).\n");
+          ctx.presenter.write(colors.yellow("⚠️  No operations planned (diagnostics present).") + "\n");
         } else {
           ctx.presenter.write("No operations planned.\n");
         }
 
         // Show cycles warning
         if (hasCycles) {
-          ctx.presenter.write("\n⚠️  Warning: Dependency cycles detected:\n");
+          ctx.presenter.write("\n" + colors.yellow("⚠️  Warning: Dependency cycles detected:") + "\n");
           const cycles = result.plan?.graph?.cycles || [];
           for (const cycle of cycles) {
             const path = cycle.join(" → ");
-            ctx.presenter.write(`   • ${path}\n`);
+            ctx.presenter.write(`   • ${colors.dim(path)}\n`);
           }
         }
 
         // Show diagnostics if any
         if (result.diagnostics && result.diagnostics.length > 0) {
-          ctx.presenter.write("\n📝 Diagnostics:\n");
+          ctx.presenter.write("\n" + colors.cyan("📝 Diagnostics:") + "\n");
           for (const diag of result.diagnostics) {
-            ctx.presenter.write(`   • ${diag}\n`);
+            ctx.presenter.write(`   • ${colors.dim(diag)}\n`);
           }
         }
 
-        ctx.presenter.write(`\n📁 Plan saved to: ${planPath}\n`);
+        ctx.presenter.write(`\n${colors.cyan('📁 Plan saved to:')} ${colors.dim(planPath)}\n`);
         if (rootsParsed && rootsParsed.length > 0) {
-          ctx.presenter.write(`🌳 Additional roots: ${rootsParsed.join(', ')}\n`);
+          ctx.presenter.write(`${colors.cyan('🌳 Additional roots:')} ${colors.dim(rootsParsed.join(', '))}\n`);
         }
-        ctx.presenter.write(`⏱️  Duration: ${duration}ms\n`);
+
+        // Add footer
+        const summary = { executed: result.plan?.actions?.length || 0, skipped: 0, errors: 0 };
+        ctx.presenter.write(formatFooter(summary, duration, hasWarnings));
       }
 
       // Exit codes: 0 if ok, 2 if warnings/empty plan with diagnostics, 1 if errors

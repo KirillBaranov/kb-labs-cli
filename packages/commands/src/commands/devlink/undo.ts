@@ -1,6 +1,7 @@
 import type { Command } from "../../types";
 import { undo } from "@kb-labs/devlink-core";
-import type { ResultSummary } from "./helpers";
+import { formatFooter, formatPreflightDiagnostics, type ResultSummary } from "./helpers";
+import { colors } from "@kb-labs/cli-core";
 
 export const devlinkUndo: Command = {
   name: "devlink:undo",
@@ -56,39 +57,44 @@ export const devlinkUndo: Command = {
       } else {
         // Human-readable output
         if (dryRun) {
-          ctx.presenter.write("🔍 DevLink Undo (Dry Run)\n");
+          ctx.presenter.write(colors.cyan(colors.bold("🔍 DevLink Undo (Dry Run)")) + "\n");
         } else {
-          ctx.presenter.write("↩️  DevLink Undo\n");
+          ctx.presenter.write(colors.cyan(colors.bold("↩️  DevLink Undo")) + "\n");
         }
-        ctx.presenter.write("===================\n");
+        ctx.presenter.write(colors.dim("===================") + "\n");
 
         // Show reverted count
         if (result.reverted > 0) {
-          ctx.presenter.write(`\n✓ Reverted ${result.reverted} operation(s)\n`);
+          ctx.presenter.write(`\n${colors.green('✓')} Reverted ${result.reverted} operation(s)\n`);
         } else {
           ctx.presenter.write("\nNo operations to undo.\n");
         }
 
-        // Display diagnostics if present
+        // Display diagnostics if present with enhanced formatting
         if (diagnostics.length > 0) {
-          ctx.presenter.write("\nDiagnostics:\n");
-          for (const diag of diagnostics) {
-            ctx.presenter.write(`  ! ${diag}\n`);
-          }
+          const wasCancelled = diagnostics.some((d: string) =>
+            d.toLowerCase().includes('cancelled') || d.toLowerCase().includes('uncommitted')
+          );
+          const wasForced = yes as boolean;
+          ctx.presenter.write(formatPreflightDiagnostics(diagnostics, wasCancelled, wasForced));
         }
 
         // Display warnings if present
         if (warnings.length > 0) {
-          ctx.presenter.write("\nWarnings:\n");
+          ctx.presenter.write("\n" + colors.yellow("Warnings:") + "\n");
           for (const warn of warnings) {
-            ctx.presenter.write(`  ⚠ ${warn}\n`);
+            ctx.presenter.write(`  ${colors.yellow('⚠')} ${colors.dim(warn)}\n`);
           }
         }
 
-        ctx.presenter.write(`\n⏱️  Duration: ${duration}ms\n`);
+        // Add footer
+        const hasWarnings = warnings.length > 0 || diagnostics.some((d: string) =>
+          d.toLowerCase().includes('cancelled') || d.toLowerCase().includes('uncommitted')
+        );
+        ctx.presenter.write(formatFooter(summary, duration, hasWarnings));
 
         if (dryRun) {
-          ctx.presenter.write("\n💡 This was a dry run. Use without --dry-run to undo changes.\n");
+          ctx.presenter.write(colors.dim("\n💡 This was a dry run. Use without --dry-run to undo changes.") + "\n");
         }
       }
 

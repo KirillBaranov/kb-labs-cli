@@ -1,6 +1,7 @@
 import type { Command } from "../../types";
 import { freeze } from "@kb-labs/devlink-core";
-import { readLastPlan, getLockFilePath } from "./helpers";
+import { readLastPlan, getLockFilePath, formatFooter } from "./helpers";
+import { colors } from "@kb-labs/cli-core";
 
 export const devlinkFreeze: Command = {
   name: "devlink:freeze",
@@ -55,30 +56,33 @@ export const devlinkFreeze: Command = {
         });
       } else {
         // Human-readable output
-        ctx.presenter.write("🔒 DevLink Freeze\n");
-        ctx.presenter.write("=================\n\n");
+        ctx.presenter.write(colors.cyan(colors.bold("🔒 DevLink Freeze")) + "\n");
+        ctx.presenter.write(colors.dim("=================") + "\n\n");
 
-        ctx.presenter.write(`✓ Lock file created\n`);
-        ctx.presenter.write(`  Path: ${lockFilePath}\n`);
-        ctx.presenter.write(`  Pin mode: ${pin}\n`);
+        ctx.presenter.write(`${colors.green('✓')} Lock file created\n`);
+        ctx.presenter.write(`  ${colors.cyan('Path:')} ${colors.dim(lockFilePath)}\n`);
+        ctx.presenter.write(`  ${colors.cyan('Pin mode:')} ${colors.dim(pin)}\n`);
 
         // Count frozen packages from plan if available
         if (plan?.actions) {
           const frozenCount = plan.actions.length;
-          ctx.presenter.write(`  Frozen packages: ${frozenCount}\n`);
+          ctx.presenter.write(`  ${colors.cyan('Frozen packages:')} ${frozenCount}\n`);
         } else if (result.meta?.itemsCount !== undefined) {
-          ctx.presenter.write(`  Frozen packages: ${result.meta.itemsCount}\n`);
+          ctx.presenter.write(`  ${colors.cyan('Frozen packages:')} ${result.meta.itemsCount}\n`);
         }
 
         // Display diagnostics if present
         if (result.diagnostics && result.diagnostics.length > 0) {
-          ctx.presenter.write(`\n⚠️  Diagnostics:\n`);
+          ctx.presenter.write(`\n${colors.yellow('⚠️  Diagnostics:')}\n`);
           for (const diag of result.diagnostics) {
-            ctx.presenter.write(`   • ${diag}\n`);
+            ctx.presenter.write(`   • ${colors.dim(diag)}\n`);
           }
         }
 
-        ctx.presenter.write(`\n⏱️  Duration: ${duration}ms\n`);
+        // Add footer
+        const summary = { executed: plan?.actions?.length || result.meta?.itemsCount || 0, skipped: 0, errors: 0 };
+        const hasWarnings = result.diagnostics && result.diagnostics.length > 0;
+        ctx.presenter.write(formatFooter(summary, duration, hasWarnings));
       }
 
       return result.ok ? 0 : 1;
