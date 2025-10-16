@@ -66,3 +66,8 @@ analytics/
 
 # Devkit debug
 DEVKIT_SYNC.json
+
+# ───────────────
+# DevLink specific
+# ───────────────
+.kb/devlink/backups/
