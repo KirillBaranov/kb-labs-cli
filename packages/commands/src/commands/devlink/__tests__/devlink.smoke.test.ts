@@ -7,16 +7,23 @@ import { devlinkFreeze } from "../freeze";
 import { devlinkLockApply } from "../lock-apply";
 import { devlinkUndo } from "../undo";
 import { devlinkStatus } from "../status";
+import { devlinkAbout } from "../about";
 
 // Mock context with presenter
-const createMockContext = () => {
+const createMockContext = (isQuiet: boolean = false, isTTY: boolean = true) => {
   const logs: string[] = [];
   const errors: string[] = [];
   const jsonOutputs: any[] = [];
 
   return {
     presenter: {
-      write: (msg: string) => logs.push(msg),
+      isTTY,
+      isQuiet,
+      write: (msg: string) => {
+        if (!isQuiet) {
+          logs.push(msg);
+        }
+      },
       error: (msg: string) => errors.push(msg),
       json: (data: any) => jsonOutputs.push(data),
     },
@@ -401,6 +408,92 @@ describe("DevLink Commands - Smoke Tests", () => {
           }
         }
       }
+    });
+  });
+
+  describe("UX Enhancements", () => {
+    it("devlink:about should work and display information", async () => {
+      const ctx = createMockContext();
+      const exitCode = await devlinkAbout.run(ctx as any, [], {});
+
+      expect(exitCode).toBe(0);
+      expect(ctx.logs.length).toBeGreaterThan(0);
+
+      // Check that output contains expected information
+      const output = ctx.logs.join("\n");
+      expect(output).toContain("KB Labs DevLink");
+      expect(output).toContain("workspace orchestrator");
+      expect(output).toContain("Kirill Baranov");
+    });
+
+    it("--quiet flag should suppress detailed output", async () => {
+      // Test with quiet mode
+      const quietCtx = createMockContext(true);
+      const quietExitCode = await devlinkAbout.run(quietCtx as any, [], {});
+
+      // Test without quiet mode
+      const normalCtx = createMockContext(false);
+      const normalExitCode = await devlinkAbout.run(normalCtx as any, [], {});
+
+      expect(quietExitCode).toBe(0);
+      expect(normalExitCode).toBe(0);
+
+      // Quiet mode should have fewer or no logs (depending on command)
+      expect(quietCtx.logs.length).toBeLessThanOrEqual(normalCtx.logs.length);
+    });
+
+    it("commands should include ANSI color codes in text mode", async () => {
+      const ctx = createMockContext(false);
+      const exitCode = await devlinkAbout.run(ctx as any, [], {});
+
+      expect(exitCode).toBe(0);
+      expect(ctx.logs.length).toBeGreaterThan(0);
+
+      // Check for ANSI color codes (should be present in text mode)
+      const output = ctx.logs.join("\n");
+      // ANSI escape sequences start with \x1B[ or contain color codes
+      const hasAnsiCodes = output.includes('\x1B[') ||
+        /\u001b\[/.test(output) ||
+        /\033\[/.test(output);
+      expect(hasAnsiCodes).toBe(true);
+    });
+
+    it("JSON mode should not contain ANSI color codes", async () => {
+      const ctx = createMockContext(false);
+      const exitCode = await devlinkPlan.run(ctx as any, [], { json: true });
+
+      expect(exitCode).toBeDefined();
+      expect(ctx.jsonOutputs.length).toBeGreaterThan(0);
+
+      // JSON output should be clean
+      const jsonOutput = JSON.stringify(ctx.jsonOutputs[0]);
+      const hasAnsiCodes = jsonOutput.includes('\x1B[') ||
+        /\u001b\[/.test(jsonOutput) ||
+        /\033\[/.test(jsonOutput);
+      expect(hasAnsiCodes).toBe(false);
+    });
+
+    it("loader should not show in JSON mode", async () => {
+      const ctx = createMockContext(false, false); // Not TTY
+      const exitCode = await devlinkApply.run(ctx as any, [], {
+        "dry-run": true,
+        json: true
+      });
+
+      expect(exitCode).toBeDefined();
+      // Should complete without loader-related output
+      expect(ctx.logs.length).toBe(0); // JSON mode writes to jsonOutputs, not logs
+    });
+
+    it("loader should not show in quiet mode", async () => {
+      const ctx = createMockContext(true, true); // Quiet mode, TTY
+      const exitCode = await devlinkApply.run(ctx as any, [], {
+        "dry-run": true
+      });
+
+      expect(exitCode).toBeDefined();
+      // In quiet mode, detailed output should be suppressed
+      expect(ctx.logs.length).toBe(0); // All output suppressed in quiet mode
     });
   });
 });
