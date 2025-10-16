@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import { join, dirname } from "path";
+import { colors } from "@kb-labs/cli-core";
 
 /**
  * Ensure directory exists
@@ -147,10 +148,51 @@ export interface ResultSummary {
 }
 
 export function formatSummary(summary: ResultSummary): string {
-  let output = '\nSummary:\n';
-  output += `  ✓ Executed: ${summary.executed}\n`;
-  output += `  ⊘ Skipped:  ${summary.skipped}\n`;
-  output += `  ✗ Errors:   ${summary.errors}\n`;
+  let output = '\n' + colors.bold('Summary:') + '\n';
+  output += `  ${colors.green('✓')} Executed: ${summary.executed}\n`;
+  output += `  ${colors.yellow('⊘')} Skipped:  ${summary.skipped}\n`;
+  output += `  ${colors.red('✗')} Errors:   ${summary.errors}\n`;
+  return output;
+}
+
+/**
+ * Format footer message based on operation results
+ */
+export function formatFooter(summary: ResultSummary, duration: number, hasWarnings: boolean = false): string {
+  if (summary.errors > 0) {
+    return `\n${colors.red('✗')} ${colors.red('Completed with errors.')}\n`;
+  }
+
+  if (hasWarnings || summary.skipped > 0) {
+    return `\n${colors.yellow('⚠')} ${colors.yellow('Completed with warnings.')} ⏱ ${colors.dim(`${duration}ms`)}\n`;
+  }
+
+  return `\n${colors.green('🌟')} ${colors.green('All operations completed successfully!')} ⏱ ${colors.dim(`${duration}ms`)}\n`;
+}
+
+/**
+ * Format preflight diagnostics with enhanced display
+ */
+export function formatPreflightDiagnostics(diagnostics: string[], wasCancelled: boolean = false, wasForced: boolean = false): string {
+  if (diagnostics.length === 0) {
+    return "";
+  }
+
+  let output = "";
+
+  if (wasCancelled && !wasForced) {
+    output += `\n${colors.yellow('✋')} ${colors.yellow('Operation cancelled by preflight checks')}\n`;
+  } else if (wasForced) {
+    output += `\n${colors.green('Proceeding anyway due to --yes flag.')} ${colors.dim('(green)')}\n`;
+  }
+
+  output += `\n${colors.cyan('📝 Diagnostics:')}\n`;
+  for (const diag of diagnostics) {
+    // Format file paths in diagnostics
+    const formattedDiag = diag.replace(/\/[^\s]+/g, (path) => colors.dim(path));
+    output += `   • ${colors.dim(formattedDiag)}\n`;
+  }
+
   return output;
 }
 
