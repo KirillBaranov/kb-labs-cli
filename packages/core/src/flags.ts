@@ -8,6 +8,7 @@ export type GlobalFlags = {
   debug?: boolean;
   help?: boolean;
   version?: boolean;
+  quiet?: boolean;
 };
 
 export function parseArgs(argv: string[]): {
@@ -41,6 +42,9 @@ export function parseArgs(argv: string[]): {
           break;
         case "--no-color":
           global.noColor = true;
+          break;
+        case "--quiet":
+          global.quiet = true;
           break;
         case "--debug":
           global.debug = true;

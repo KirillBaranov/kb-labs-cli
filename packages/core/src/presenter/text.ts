@@ -1,10 +1,15 @@
 import type { Presenter } from "./types";
 
-export function createTextPresenter(): Presenter {
+export function createTextPresenter(isQuiet: boolean = false): Presenter {
   const isTTY = process.stdout.isTTY === true;
   return {
     isTTY,
-    write: (line) => console.log(line),
+    isQuiet,
+    write: (line) => {
+      if (!isQuiet) {
+        console.log(line);
+      }
+    },
     error: (line) => console.error(line),
     json: (payload) => console.log(JSON.stringify(payload)),
   };
