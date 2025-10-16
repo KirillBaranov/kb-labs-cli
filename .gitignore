@@ -70,4 +70,5 @@ DEVKIT_SYNC.json
 # ───────────────
 # DevLink specific
 # ───────────────
+.kb/devlink
 .kb/devlink/backups/
