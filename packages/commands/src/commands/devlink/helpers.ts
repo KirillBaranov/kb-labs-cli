@@ -171,6 +171,13 @@ export function formatFooter(summary: ResultSummary, duration: number, hasWarnin
 }
 
 /**
+ * Format footer for cancelled operations
+ */
+export function formatCancelledFooter(duration: number): string {
+  return `\n${colors.yellow('⚠')} ${colors.yellow('Cancelled by preflight.')} ⏱ ${colors.dim(`${duration}ms`)}\n`;
+}
+
+/**
  * Format preflight diagnostics with enhanced display
  */
 export function formatPreflightDiagnostics(diagnostics: string[], wasCancelled: boolean = false, wasForced: boolean = false): string {

@@ -1,6 +1,6 @@
 import type { Command } from "../../types";
 import { apply } from "@kb-labs/devlink-core";
-import { readLastPlan, readPlanFromStdin, formatSummary, formatFooter, formatPreflightDiagnostics, type ResultSummary } from "./helpers.js";
+import { readLastPlan, readPlanFromStdin, formatSummary, formatFooter, formatCancelledFooter, formatPreflightDiagnostics, type ResultSummary } from "./helpers.js";
 import { colors, createLoader } from "@kb-labs/cli-core";
 
 export const devlinkApply: Command = {
@@ -71,6 +71,11 @@ export const devlinkApply: Command = {
       const errors = result.errors || [];
       const diagnostics = result.diagnostics || [];
       const warnings = result.warnings || [];
+
+      // Check if operation was cancelled due to preflight
+      const wasCancelled = diagnostics.some((d: string) =>
+        d.toLowerCase().includes('cancelled') || d.toLowerCase().includes('uncommitted')
+      );
 
       const summary: ResultSummary = {
         executed: executed.length,
@@ -178,11 +183,13 @@ export const devlinkApply: Command = {
 
         ctx.presenter.write(formatSummary(summary));
 
-        // Add footer
-        const hasWarnings = warnings.length > 0 || diagnostics.some((d: string) =>
-          d.toLowerCase().includes('cancelled') || d.toLowerCase().includes('uncommitted')
-        );
-        ctx.presenter.write(formatFooter(summary, duration, hasWarnings));
+        // Add appropriate footer
+        if (wasCancelled) {
+          ctx.presenter.write(formatCancelledFooter(duration));
+        } else {
+          const hasWarnings = warnings.length > 0;
+          ctx.presenter.write(formatFooter(summary, duration, hasWarnings));
+        }
 
         if (dryRun) {
           ctx.presenter.write(colors.dim("\n💡 This was a dry run. Use without --dry-run to apply changes.") + "\n");
@@ -193,10 +200,6 @@ export const devlinkApply: Command = {
       if (!result.ok || summary.errors > 0) {
         return 1;
       }
-      // Check if operation was cancelled due to preflight
-      const wasCancelled = diagnostics.some((d: string) =>
-        d.toLowerCase().includes('cancelled') || d.toLowerCase().includes('uncommitted')
-      );
       if (isEmptyPlanWarning || wasCancelled) {
         return 2;
       }
