@@ -5,7 +5,7 @@ export const devlinkAbout: Command = {
   name: "devlink:about",
   describe: "Show information about DevLink",
 
-  async run(ctx, argv, flags) {
+  async run(ctx) {
     try {
       // Read version from package.json
       let version = "0.1.0-beta";
