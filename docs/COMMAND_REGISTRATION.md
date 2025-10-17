@@ -385,3 +385,144 @@ If you have existing commands using the old format, follow these steps:
 5. **Test both formats** work correctly
 
 This ensures a smooth transition while maintaining full backward compatibility.
+
+## JSON Support Pattern
+
+All commands automatically support the global `--json` flag through centralized CLI handling.
+
+### Simple Commands (Return Payload)
+
+For simple commands that output structured data, return an object from your command:
+
+```typescript
+export const myCommand: Command = {
+  name: "my-command",
+  describe: "Does something useful",
+  async run(ctx, argv, flags) {
+    const result = doSomething();
+    
+    if (flags.json) {
+      // Return payload - CLI will wrap it in { ok: true, data: ... }
+      return { result, timestamp: Date.now() };
+    } else {
+      // Text mode - use presenter
+      ctx.presenter.write(`Result: ${result}`);
+      return 0;
+    }
+  }
+};
+```
+
+The CLI will automatically wrap your return value:
+```json
+{
+  "ok": true,
+  "data": {
+    "result": "...",
+    "timestamp": 1234567890
+  }
+}
+```
+
+### Complex Commands (Manual JSON Control)
+
+For commands with complex output or streaming needs, call `presenter.json()` directly and set `ctx.sentJSON = true`:
+
+```typescript
+export const complexCommand: Command = {
+  name: "complex",
+  describe: "Complex operation",
+  async run(ctx, argv, flags) {
+    const result = await doComplexOperation();
+    
+    if (flags.json) {
+      ctx.presenter.json({
+        ok: result.success,
+        data: result.data,
+        meta: {
+          duration: result.duration,
+          warnings: result.warnings,
+        },
+        timings: result.timings,
+      });
+      ctx.sentJSON = true;  // Tell CLI we handled JSON output
+      return result.success ? 0 : 1;
+    } else {
+      // Text mode rendering
+      renderTextOutput(ctx, result);
+      return result.success ? 0 : 1;
+    }
+  }
+};
+```
+
+### Warnings and Diagnostics
+
+Use `ctx.diagnostics` array to collect warnings that should appear in JSON output:
+
+```typescript
+async run(ctx, argv, flags) {
+  if (someWarningCondition) {
+    ctx.diagnostics.push("Warning: something deprecated");
+  }
+  
+  if (flags.json) {
+    return { status: "ok" };  // CLI adds warnings automatically
+  } else {
+    ctx.presenter.warn("Warning: something deprecated");
+    ctx.presenter.write("Status: ok");
+    return 0;
+  }
+}
+```
+
+### Error Handling
+
+Errors are automatically handled by the CLI layer. Throw `CliError` for structured errors:
+
+```typescript
+import { CliError, CLI_ERROR_CODES } from "@kb-labs/cli-core";
+
+async run(ctx, argv, flags) {
+  if (invalidInput) {
+    throw new CliError(
+      CLI_ERROR_CODES.E_INVALID_FLAGS,
+      "Invalid input provided",
+      { field: "name", value: input }
+    );
+  }
+  // ...
+}
+```
+
+In JSON mode, this automatically outputs:
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "E_INVALID_FLAGS",
+    "message": "Invalid input provided",
+    "details": {
+      "field": "name",
+      "value": "..."
+    }
+  }
+}
+```
+
+### Presenter Methods
+
+The `Presenter` interface provides:
+
+- `write(line)` - Output text (no-op in JSON mode)
+- `warn(line)` - Output warning (collected in ctx.diagnostics in JSON mode)
+- `error(line)` - Output error (used for non-exception errors)
+- `json(payload)` - Direct JSON output (for complex commands)
+
+### Best Practices
+
+1. **Always check `flags.json`** - Commands must handle both modes
+2. **Keep it simple** - Prefer returning payload over manual JSON control
+3. **Consistent structure** - Use same field names across similar commands
+4. **No side effects in JSON mode** - Don't write files or modify state without user confirmation
+5. **Return proper exit codes** - 0 for success, non-zero for errors

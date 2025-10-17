@@ -1,5 +1,50 @@
 # Command Registration Quick Reference
 
+## Global Flags
+
+All commands support these global flags:
+
+- `--json` - Output results in JSON format
+- `--quiet` - Suppress non-essential output
+- `--help` - Show command help
+- `--version` - Show CLI version
+
+### JSON Mode
+
+When `--json` is used, commands will output structured JSON:
+
+```bash
+kb hello --json
+# {"ok":true,"data":{"message":"Hello, KB Labs!"}}
+
+kb devlink plan --json
+# {"ok":true,"plan":{...},"timings":{...}}
+```
+
+All JSON output follows this schema:
+
+**Success:**
+```typescript
+{
+  ok: true,
+  data: any,              // Command-specific data
+  warnings?: string[],    // Optional warnings
+}
+```
+
+**Error:**
+```typescript
+{
+  ok: false,
+  error: {
+    code?: string,        // Error code (e.g., "E_INVALID_FLAGS")
+    message: string,      // Human-readable error
+    details?: any,        // Optional error details
+  },
+  warnings?: string[],    // Optional warnings
+}
+```
+
 ## File Structure
 
 ```
@@ -135,11 +180,30 @@ export { mysubcommand as myproductMysubcommand };
 
 ### JSON Output
 
+**Simple commands (recommended):**
 ```typescript
 if (flags.json) {
-  ctx.presenter.json({ ok: true, data: result });
+  // Return payload - CLI will wrap it automatically
+  return { result, timestamp: Date.now() };
 } else {
   ctx.presenter.write("Human readable output");
+  return 0;
+}
+```
+
+**Complex commands:**
+```typescript
+if (flags.json) {
+  ctx.presenter.json({
+    ok: true,
+    data: result,
+    meta: { duration, warnings }
+  });
+  ctx.sentJSON = true;  // Tell CLI we handled JSON
+  return 0;
+} else {
+  ctx.presenter.write("Human readable output");
+  return 0;
 }
 ```
 
@@ -192,9 +256,12 @@ pnpm kb myproduct --help
 
 ## Exit Codes
 
+Unified exit code system across all commands:
+
 - `0` - Success
-- `1` - Error
-- `2` - Warning (e.g., dry run, validation issues)
+- `1` - Generic error
+- `2` - Preflight cancelled (user cancelled operation)
+- `3` - Invalid flags (validation error)
 
 ## Best Practices
 
