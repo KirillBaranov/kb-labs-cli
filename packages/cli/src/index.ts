@@ -91,27 +91,55 @@ export async function run(argv: string[]): Promise<number | void> {
   const ctx = await createContext({ presenter });
 
   try {
-    const code = await cmd.run(ctx, rest, { ...global, ...flagsObj });
-    if (typeof code === "number") {
-      return code;
+    const result = await cmd.run(ctx, rest, { ...global, ...flagsObj });
+
+    // Централизованная обработка результата
+    if (global.json) {
+      if (!ctx.sentJSON) {
+        // Команда не вызвала presenter.json() - оборачиваем сами
+        presenter.json({
+          ok: true,
+          data: result ?? null,
+          ...(ctx.diagnostics?.length > 0 && { warnings: ctx.diagnostics }),
+        });
+      }
+      // Если ctx.sentJSON === true, команда сама вывела JSON
     }
+
+    // Возвращаем exit code
+    if (typeof result === 'number') {
+      return result;
+    }
+    return 0;
+
   } catch (e: any) {
     if (e instanceof CliError) {
       const exitCode = mapCliErrorToExitCode(e.code);
-      const msg = `${e.code}: ${e.message}`;
+
       if (global.json) {
         presenter.json({
           ok: false,
-          error: { code: e.code, message: e.message },
+          error: {
+            code: e.code,
+            message: e.message,
+            ...(e.details && { details: e.details }),
+          },
+          ...(ctx.diagnostics?.length > 0 && { warnings: ctx.diagnostics }),
         });
       } else {
-        presenter.error(msg);
+        presenter.error(`${e.code}: ${e.message}`);
       }
       return exitCode;
     }
+
+    // Generic error
     const msg = String(e?.message || e);
     if (global.json) {
-      presenter.json({ ok: false, error: { message: msg } });
+      presenter.json({
+        ok: false,
+        error: { message: msg },
+        ...(ctx.diagnostics?.length > 0 && { warnings: ctx.diagnostics }),
+      });
     } else {
       presenter.error(msg);
     }
