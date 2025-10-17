@@ -5,69 +5,41 @@ import {
   createJsonPresenter,
   createContext,
 } from "@kb-labs/cli-core";
-import { findCommand, registerBuiltinCommands } from "@kb-labs/cli-commands";
+import { findCommand, registerBuiltinCommands, renderGroupHelp, renderGlobalHelp, registry, type CommandGroup, type Command } from "@kb-labs/cli-commands";
+
+function normalizeCmdPath(argvCmd: string[]): string[] {
+  if (argvCmd.length === 1 && argvCmd[0]?.includes(":")) {
+    const parts = argvCmd[0].split(":");
+    if (parts.length >= 2 && parts[0] && parts[1]) {
+      return [parts[0], parts[1]];
+    }
+  }
+  return argvCmd;
+}
 
 export async function run(argv: string[]): Promise<number | void> {
   // Auto-register builtin commands
   registerBuiltinCommands();
   const { cmdPath, rest, global, flagsObj } = parseArgs(argv);
 
+  // Normalize command path for legacy support
+  const normalizedCmdPath = normalizeCmdPath(cmdPath);
+
   const presenter = global.json ? createJsonPresenter() : createTextPresenter(global.quiet);
 
   // Handle global --help flag
   if (global.help) {
     if (global.json) {
+      // For JSON mode, preserve existing behavior - don't show group help
       presenter.json({
-        ok: true,
-        help: {
-          usage: "kb [command] [options]",
-          commands: [
-            { name: "hello", description: "Print a friendly greeting" },
-            { name: "version", description: "Show CLI version" },
-            { name: "diagnose", description: "Diagnose project health and configuration" },
-            { name: "init-profile", description: "Initialize a new profile configuration" },
-            { name: "profiles:validate", description: "Validate a profile configuration" },
-            { name: "profiles:resolve", description: "Resolve a profile configuration" },
-            { name: "profiles:init", description: "Initialize a new profile configuration" },
-            { name: "devlink:plan", description: "Scan and plan DevLink operations" },
-            { name: "devlink:apply", description: "Apply DevLink plan" },
-            { name: "devlink:freeze", description: "Freeze DevLink plan to lock file" },
-            { name: "devlink:lock:apply", description: "Apply DevLink lock file" },
-            { name: "devlink:undo", description: "Undo DevLink operations" },
-            { name: "devlink:status", description: "Show DevLink status" },
-            { name: "devlink:about", description: "Show information about DevLink" }
-          ],
-          globalOptions: [
-            { name: "--help", description: "Show help information" },
-            { name: "--version", description: "Show CLI version" },
-            { name: "--json", description: "Output in JSON format" },
-            { name: "--quiet", description: "Suppress detailed output, show only summary and warnings" }
-          ]
-        }
+        ok: false,
+        error: { code: "CMD_NOT_FOUND", message: "Use text mode for help display" },
       });
     } else {
-      presenter.write("KB Labs CLI - Project management and automation tool\n");
-      presenter.write("\nUsage: kb [command] [options]\n");
-      presenter.write("\nCommands:\n");
-      presenter.write("  hello         Print a friendly greeting\n");
-      presenter.write("  version       Show CLI version\n");
-      presenter.write("  diagnose      Diagnose project health and configuration\n");
-      presenter.write("  init-profile  Initialize a new profile configuration\n");
-      presenter.write("  profiles:validate  Validate a profile configuration\n");
-      presenter.write("  profiles:resolve   Resolve a profile configuration\n");
-      presenter.write("  profiles:init      Initialize a new profile configuration\n");
-      presenter.write("  devlink:plan  Scan and plan DevLink operations\n");
-      presenter.write("  devlink:apply Apply DevLink plan\n");
-      presenter.write("  devlink:freeze    Freeze DevLink plan to lock file\n");
-      presenter.write("  devlink:lock:apply Apply DevLink lock file\n");
-      presenter.write("  devlink:undo  Undo DevLink operations\n");
-      presenter.write("  devlink:status Show DevLink status\n");
-      presenter.write("  devlink:about Show information about DevLink\n");
-      presenter.write("\nGlobal Options:\n");
-      presenter.write("  --help        Show help information\n");
-      presenter.write("  --version     Show CLI version\n");
-      presenter.write("  --json        Output in JSON format\n");
-      presenter.write("  --quiet       Suppress detailed output, show only summary and warnings\n");
+      // Use new help generator for text mode
+      const groups = registry.listGroups();
+      const standalone = registry.list().filter(cmd => !cmd.category);
+      presenter.write(renderGlobalHelp(groups, standalone));
     }
     return 0;
   }
@@ -86,9 +58,9 @@ export async function run(argv: string[]): Promise<number | void> {
     return 0;
   }
 
-  const cmd = findCommand(cmdPath);
+  const cmd = findCommand(normalizedCmdPath);
   if (!cmd) {
-    const msg = `Unknown command: ${cmdPath.join(" ") || "(none)"}`;
+    const msg = `Unknown command: ${normalizedCmdPath.join(" ") || "(none)"}`;
     if (global.json) {
       presenter.json({
         ok: false,
@@ -98,6 +70,22 @@ export async function run(argv: string[]): Promise<number | void> {
       presenter.error(msg);
     }
     return 1;
+  }
+
+  // Handle group commands (show group help)
+  if ('commands' in cmd) {
+    const group = cmd as CommandGroup;
+    if (global.json) {
+      // In JSON mode, don't show group help - return error as before
+      presenter.json({
+        ok: false,
+        error: { code: "CMD_NOT_FOUND", message: `Group '${group.name}' requires a subcommand` },
+      });
+    } else {
+      // Show group help in text mode
+      presenter.write(renderGroupHelp(group));
+    }
+    return 0;
   }
 
   const ctx = await createContext({ presenter });
