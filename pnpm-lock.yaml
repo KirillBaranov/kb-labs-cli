@@ -171,9 +171,9 @@ importers:
 
   packages/core:
     dependencies:
-      '@kb-labs/cli-adapters':
-        specifier: workspace:*
-        version: link:../adapters
+      colorette:
+        specifier: ^2.0.20
+        version: 2.0.20
       zod:
         specifier: ^4.1.5
         version: 4.1.8
