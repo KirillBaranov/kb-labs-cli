@@ -2,7 +2,7 @@ export type CommandRun = (
   ctx: any,
   argv: string[],
   flags: Record<string, any>,
-) => Promise<number | void> | number | void;
+) => Promise<number | void | unknown> | number | void | unknown;
 
 export interface FlagDefinition {
   name: string;                    // "dry-run", "mode", "json"
