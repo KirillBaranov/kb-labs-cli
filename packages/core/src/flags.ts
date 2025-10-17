@@ -94,9 +94,7 @@ export function parseArgs(argv: string[]): {
     } else {
       cmdPath.push(String(args.shift()));
       // поддерживаем команды из 1–2 слов: e.g. "init", "init", "profile"
-      if (cmdPath.length === 2) {
-        break;
-      }
+      // НЕ останавливаем обработку после команды, чтобы обрабатывать флаги
     }
   }
   const rest = args;
