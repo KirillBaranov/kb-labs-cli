@@ -8,8 +8,16 @@ export const hello: Command = {
   examples: [
     "kb hello"
   ],
-  async run(ctx) {
+  async run(ctx, argv, flags) {
     const who = ctx?.user ?? "KB Labs";
-    ctx.presenter.write(`Hello, ${who}!`);
+    const message = `Hello, ${who}!`;
+
+    if (flags.json) {
+      // Простая команда - возвращаем payload, CLI обернет
+      return { message };
+    } else {
+      ctx.presenter.write(message);
+      return 0;
+    }
   },
 };

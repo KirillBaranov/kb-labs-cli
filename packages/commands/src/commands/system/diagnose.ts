@@ -8,12 +8,22 @@ export const diagnose: Command = {
   examples: [
     "kb diagnose"
   ],
-  async run(ctx) {
+  async run(ctx, argv, flags) {
     const repoRoot = ctx?.repoRoot ?? process.cwd();
-    ctx.presenter.write(`node=${process.version}`);
-    ctx.presenter.write(`repoRoot=${repoRoot}`);
-    if (ctx?.logger?.info) {
-      ctx.logger.info("[diagnose] ok");
+    const nodeVersion = process.version;
+
+    if (flags.json) {
+      return {
+        node: nodeVersion,
+        repoRoot,
+      };
+    } else {
+      ctx.presenter.write(`node=${nodeVersion}`);
+      ctx.presenter.write(`repoRoot=${repoRoot}`);
+      if (ctx?.logger?.info) {
+        ctx.logger.info("[diagnose] ok");
+      }
+      return 0;
     }
   },
 };

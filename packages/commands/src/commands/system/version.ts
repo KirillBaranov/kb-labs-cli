@@ -8,8 +8,15 @@ export const version: Command = {
   examples: [
     "kb version"
   ],
-  run(ctx) {
+  run(ctx, argv, flags) {
     const v = ctx?.cliVersion ?? ctx?.env?.CLI_VERSION ?? "0.0.0";
-    ctx.presenter.write(String(v));
+    const version = String(v);
+
+    if (flags.json) {
+      return { version };
+    } else {
+      ctx.presenter.write(version);
+      return 0;
+    }
   },
 };
