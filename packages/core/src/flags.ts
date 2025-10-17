@@ -1,3 +1,5 @@
+import { CliError, CLI_ERROR_CODES } from "./errors";
+
 export type GlobalFlags = {
   json?: boolean;
   logLevel?: "debug" | "info" | "warn" | "error";
@@ -10,6 +12,32 @@ export type GlobalFlags = {
   version?: boolean;
   quiet?: boolean;
 };
+
+export function validateCommandFlags(
+  flags: Record<string, unknown>,
+  schema: Array<{ name: string; type: string; choices?: string[] }>
+): void {
+  for (const def of schema) {
+    const value = flags[def.name];
+    if (value === undefined) { continue; }
+
+    // Type validation
+    if (def.type === "boolean" && typeof value !== "boolean") {
+      throw new CliError(
+        CLI_ERROR_CODES.E_INVALID_FLAGS,
+        `Flag --${def.name} must be a boolean`
+      );
+    }
+
+    // Choice validation
+    if (def.choices && !def.choices.includes(String(value))) {
+      throw new CliError(
+        CLI_ERROR_CODES.E_INVALID_FLAGS,
+        `Invalid value for --${def.name}: ${value}. Must be one of: ${def.choices.join(", ")}`
+      );
+    }
+  }
+}
 
 export function parseArgs(argv: string[]): {
   cmdPath: string[];

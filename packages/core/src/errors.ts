@@ -4,16 +4,30 @@ export const CLI_ERROR_CODES = {
   E_ENV_MISSING_VAR: "E_ENV_MISSING_VAR",
   E_DISCOVERY_CONFIG: "E_DISCOVERY_CONFIG",
   E_TELEMETRY_EMIT: "E_TELEMETRY_EMIT",
+  E_INVALID_FLAGS: "E_INVALID_FLAGS",
+  E_PREFLIGHT_CANCELLED: "E_PREFLIGHT_CANCELLED",
 } as const;
 
 export type CliErrorCode =
   (typeof CLI_ERROR_CODES)[keyof typeof CLI_ERROR_CODES];
 
+/**
+ * Standard CLI exit codes (unified across all commands)
+ * 0 = Success
+ * 1 = Generic error (runtime, validation, etc.)
+ * 2 = Preflight cancelled (git dirty, confirmation declined)
+ * 3 = Invalid flags (bad flag values, missing required flags)
+ */
 export const EXIT_CODES = {
-  GENERIC: 1, // generic runtime/software error
-  IO: 74, // EX_IOERR per sysexits.h
-  SOFTWARE: 70, // EX_SOFTWARE per sysexits.h
-  CONFIG: 78, // EX_CONFIG per sysexits.h
+  SUCCESS: 0,
+  ERROR: 1,               // Generic errors, runtime failures
+  PREFLIGHT_CANCELLED: 2, // User declined, git dirty check failed
+  INVALID_FLAGS: 3,       // Flag validation errors
+
+  // Legacy sysexits.h codes (kept for compatibility)
+  IO: 74,                 // EX_IOERR
+  SOFTWARE: 70,           // EX_SOFTWARE
+  CONFIG: 78,             // EX_CONFIG
 } as const;
 
 const ERROR_CODE_SET: Set<CliErrorCode> = new Set(
@@ -22,6 +36,12 @@ const ERROR_CODE_SET: Set<CliErrorCode> = new Set(
 
 export const mapCliErrorToExitCode = (code: CliErrorCode): number => {
   switch (code) {
+    case CLI_ERROR_CODES.E_INVALID_FLAGS:
+      return EXIT_CODES.INVALID_FLAGS;
+
+    case CLI_ERROR_CODES.E_PREFLIGHT_CANCELLED:
+      return EXIT_CODES.PREFLIGHT_CANCELLED;
+
     case CLI_ERROR_CODES.E_DISCOVERY_CONFIG:
     case CLI_ERROR_CODES.E_ENV_MISSING_VAR:
       return EXIT_CODES.CONFIG;
@@ -35,7 +55,7 @@ export const mapCliErrorToExitCode = (code: CliErrorCode): number => {
       return EXIT_CODES.SOFTWARE;
 
     default:
-      return EXIT_CODES.GENERIC;
+      return EXIT_CODES.ERROR;
   }
 };
 
@@ -60,9 +80,16 @@ export function isCliError(err: unknown): err is CliError {
   if (!err || typeof err !== "object") {
     return false;
   }
-  const e = err as { code?: unknown };
+  // Check if it's an instance of CliError
+  if (err instanceof CliError) {
+    return true;
+  }
+  // For backwards compatibility, also check if it has the right structure
+  const e = err as { code?: unknown; name?: string };
   return (
-    typeof e.code === "string" && ERROR_CODE_SET.has(e.code as CliErrorCode)
+    e.name === "CliError" &&
+    typeof e.code === "string" &&
+    ERROR_CODE_SET.has(e.code as CliErrorCode)
   );
 }
 
