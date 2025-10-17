@@ -110,9 +110,27 @@ function createProfileTemplate(
   return template;
 }
 
-export const profilesInit: Command = {
-  name: "profiles:init",
+export const init: Command = {
+  name: "init",
+  category: "profiles",
   describe: "Initialize a new profile configuration",
+  longDescription: "Creates a new profile configuration file with specified kind, scope, and optional preset",
+  aliases: ["profiles:init"],
+  flags: [
+    { name: "name", type: "string", default: "default", description: "Profile name" },
+    { name: "kind", type: "string", choices: ["review", "tests", "docs", "assistant", "composite"], default: "composite", description: "Profile kind" },
+    { name: "scope", type: "string", choices: ["repo", "package", "dir"], default: "repo", description: "Profile scope" },
+    { name: "preset", type: "string", description: "Preset to extend" },
+    { name: "yes", type: "boolean", description: "Skip confirmation prompts" },
+    { name: "dry-run", type: "boolean", description: "Show what would be created without making changes" },
+    { name: "json", type: "boolean", description: "Output in JSON format" }
+  ],
+  examples: [
+    "kb profiles init",
+    "kb profiles init --name=production --kind=review",
+    "kb profiles init --scope=package --preset=typescript",
+    "kb profiles init --dry-run"
+  ],
 
   async run(ctx, argv, flags) {
     const defaultFlags = {
