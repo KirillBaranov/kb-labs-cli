@@ -5,7 +5,7 @@ export * from "./context";
 export * from "./flags";
 
 // Error handling
-export * from "./errors";
+export { EXIT_CODES, CLI_ERROR_CODES, CliError, mapCliErrorToExitCode } from "./errors";
 
 // I/O and adapters
 export * from "./io/types";
@@ -27,9 +27,5 @@ export * from "./telemetry/types";
 export * from "./registry";
 
 // Re-export specific functions that are imported by other packages
-export { parseArgs } from "./flags";
-export { mapCliErrorToExitCode, CliError } from "./errors";
-export { createTextPresenter } from "./presenter/text";
-export { createJsonPresenter } from "./presenter/json";
 export { createLoader } from "./presenter/loader";
 export { createContext } from "./context";
