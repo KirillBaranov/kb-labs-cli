@@ -5,12 +5,20 @@ export function createTextPresenter(isQuiet: boolean = false): Presenter {
   return {
     isTTY,
     isQuiet,
+    isJSON: false,                                   // NEW
     write: (line) => {
       if (!isQuiet) {
         console.log(line);
       }
     },
+    warn: (line) => {                               // NEW
+      if (!isQuiet) {
+        console.warn(line);
+      }
+    },
     error: (line) => console.error(line),
-    json: (payload) => console.log(JSON.stringify(payload)),
+    json: (_payload) => {
+      throw new Error("json() called in text mode");
+    },
   };
 }

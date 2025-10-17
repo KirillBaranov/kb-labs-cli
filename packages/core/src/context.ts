@@ -36,6 +36,8 @@ export interface CliContext {
   env: NodeJS.ProcessEnv;
   profile?: Profile; // команды могут просить профиль отдельно
   config?: Record<string, any>; // конфигурация
+  diagnostics: string[];     // NEW: собираем WARN/INFO для JSON
+  sentJSON?: boolean;        // NEW: флаг что команда сама вывела JSON
 }
 
 export async function createContext({
@@ -57,5 +59,7 @@ export async function createContext({
     config,
     repoRoot,
     env: process.env,
+    diagnostics: [],         // NEW
+    sentJSON: false,        // NEW
   };
 }

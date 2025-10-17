@@ -4,17 +4,20 @@ import { createTextPresenter } from "../text";
 describe("TextPresenter", () => {
   let consoleLogSpy: any;
   let consoleErrorSpy: any;
+  let consoleWarnSpy: any;
   let originalIsTTY: boolean;
 
   beforeEach(() => {
     consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => { });
     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => { });
+    consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
     originalIsTTY = process.stdout.isTTY;
   });
 
   afterEach(() => {
     consoleLogSpy?.mockRestore();
     consoleErrorSpy?.mockRestore();
+    consoleWarnSpy?.mockRestore();
     process.stdout.isTTY = originalIsTTY;
   });
 
@@ -33,6 +36,11 @@ describe("TextPresenter", () => {
       expect(presenter.isTTY).toBe(false);
     });
 
+    it("should have isJSON set to false", () => {
+      const presenter = createTextPresenter();
+      expect(presenter.isJSON).toBe(false);
+    });
+
     it("should write to console.log", () => {
       const presenter = createTextPresenter();
       presenter.write("Hello, world!");
@@ -47,15 +55,28 @@ describe("TextPresenter", () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith("Error message");
     });
 
-    it("should write JSON to console.log", () => {
+    it("should write warnings to console.warn", () => {
       const presenter = createTextPresenter();
-      const payload = { message: "Hello", count: 42 };
-      presenter.json(payload);
+      presenter.warn("Warning message");
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(JSON.stringify(payload));
+      expect(consoleWarnSpy).toHaveBeenCalledWith("Warning message");
     });
 
-    it("should handle complex JSON payloads", () => {
+    it("should not write warnings when quiet", () => {
+      const presenter = createTextPresenter(true);
+      presenter.warn("Warning message");
+
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+    });
+
+    it("should throw error when json() is called in text mode", () => {
+      const presenter = createTextPresenter();
+      const payload = { message: "Hello", count: 42 };
+
+      expect(() => presenter.json(payload)).toThrow("json() called in text mode");
+    });
+
+    it("should throw error for complex JSON payloads in text mode", () => {
       const presenter = createTextPresenter();
       const payload = {
         ok: true,
@@ -63,9 +84,8 @@ describe("TextPresenter", () => {
           users: [{ id: 1, name: "John" }]
         }
       };
-      presenter.json(payload);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(JSON.stringify(payload));
+      expect(() => presenter.json(payload)).toThrow("json() called in text mode");
     });
   });
 });
