@@ -1,0 +1,24 @@
+import { registry } from "./registry";
+import { hello } from "../commands/system/hello";
+import { version } from "../commands/system/version";
+import { diagnose } from "../commands/system/diagnose";
+import { devlinkGroup } from "../commands/devlink";
+// import { profilesGroup } from "../commands/profiles";
+
+let _registered = false;
+
+export function registerBuiltinCommands() {
+  if (_registered) {
+    return;
+  }
+  _registered = true;
+
+  // Register command groups
+  registry.registerGroup(devlinkGroup);
+  // registry.registerGroup(profilesGroup); // TODO: Re-enable when @kb-labs/core-* dependencies are available
+
+  // Standalone commands
+  registry.register(hello);
+  registry.register(version);
+  registry.register(diagnose);
+}
