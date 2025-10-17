@@ -1,6 +1,7 @@
 import type { Command } from "../../types";
 import { promises as fs } from "fs";
-import { join, dirname } from "path";
+import { join } from "path";
+import { validateCommandFlags, CliError, mapCliErrorToExitCode } from "@kb-labs/cli-core";
 
 // Profile types
 type ProfileKind = "review" | "tests" | "docs" | "assistant" | "composite";
@@ -164,17 +165,15 @@ export const init: Command = {
     };
 
     try {
-      // Validate inputs
-      const validKinds: ProfileKind[] = ["review", "tests", "docs", "assistant", "composite"];
-      const validScopes: ProfileScope[] = ["repo", "package", "dir"];
-
-      if (!validKinds.includes(kind as ProfileKind)) {
-        throw new Error(`Invalid kind: ${kind}. Must be one of: ${validKinds.join(", ")}`);
-      }
-
-      if (!validScopes.includes(scope as ProfileScope)) {
-        throw new Error(`Invalid scope: ${scope}. Must be one of: ${validScopes.join(", ")}`);
-      }
+      // Validate flags using the new validation system
+      const flagSchema = [
+        { name: "kind", type: "string", choices: ["review", "tests", "docs", "assistant", "composite"] },
+        { name: "scope", type: "string", choices: ["repo", "package", "dir"] },
+        { name: "json", type: "boolean" },
+        { name: "dry-run", type: "boolean" },
+        { name: "yes", type: "boolean" },
+      ];
+      validateCommandFlags(finalFlags, flagSchema);
 
       const profileName = name as string;
       const profileKind = kind as ProfileKind;
@@ -295,6 +294,10 @@ export const init: Command = {
         }
       }
 
+      // Return appropriate exit code based on error type
+      if (error instanceof CliError) {
+        return mapCliErrorToExitCode(error.code);
+      }
       return 1;
     }
   }

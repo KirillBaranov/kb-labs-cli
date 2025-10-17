@@ -136,10 +136,8 @@ export const validate: Command = {
       }
 
       // Return appropriate exit code based on error type
-      if (error.name === 'SchemaValidationError' || error.name === 'ProfileSchemaError') {
-        return 2; // Schema validation errors
-      }
-      return 1; // Other errors
+      // All validation errors should return 1
+      return 1;
     }
   }
 };

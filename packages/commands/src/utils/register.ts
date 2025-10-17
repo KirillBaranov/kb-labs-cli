@@ -3,7 +3,7 @@ import { hello } from "../commands/system/hello";
 import { version } from "../commands/system/version";
 import { diagnose } from "../commands/system/diagnose";
 import { devlinkGroup } from "../commands/devlink";
-// import { profilesGroup } from "../commands/profiles";
+import { profilesGroup } from "../commands/profiles";
 
 let _registered = false;
 
@@ -15,7 +15,7 @@ export function registerBuiltinCommands() {
 
   // Register command groups
   registry.registerGroup(devlinkGroup);
-  // registry.registerGroup(profilesGroup); // TODO: Re-enable when @kb-labs/core-* dependencies are available
+  registry.registerGroup(profilesGroup);
 
   // Standalone commands
   registry.register(hello);
