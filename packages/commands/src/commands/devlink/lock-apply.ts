@@ -98,6 +98,7 @@ export const lockApply: Command = {
             duration,
           },
         });
+        ctx.sentJSON = true;  // NEW: помечаем что JSON уже отправлен
       } else {
         // Human-readable output
         if (dryRun) {

@@ -64,6 +64,7 @@ export const status: Command = {
             duration,
           },
         });
+        ctx.sentJSON = true;  // NEW: помечаем что JSON уже отправлен
       } else {
         // Human-readable output
         ctx.presenter.write(colors.cyan(colors.bold("📊 DevLink Status")) + "\n");

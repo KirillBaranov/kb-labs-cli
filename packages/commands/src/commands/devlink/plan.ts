@@ -1,7 +1,7 @@
 import type { Command } from "../../types";
 import { scanAndPlan } from "@kb-labs/devlink-core";
 import { writeLastPlan, printTable, formatFooter } from "./helpers";
-import { colors } from "@kb-labs/cli-core";
+import { colors, validateCommandFlags, CliError, mapCliErrorToExitCode } from "@kb-labs/cli-core";
 
 export const plan: Command = {
   name: "plan",
@@ -39,18 +39,20 @@ export const plan: Command = {
     };
 
     const finalFlags = { ...defaultFlags, ...flags };
-    const { mode, policy, json, roots, allow, deny } = finalFlags;
+    const { mode, json, roots, allow, deny } = finalFlags;
     const forceLocal = finalFlags["force-local"];
     const forceNpm = finalFlags["force-npm"];
 
     try {
       const rootDir = process.cwd();
 
-      // Validate mode
-      const validModes = ["local", "workspace", "auto"];
-      if (!validModes.includes(mode as string)) {
-        throw new Error(`Invalid mode: ${mode}. Must be one of: ${validModes.join(", ")}`);
-      }
+      // Validate flags using the new validation system
+      const flagSchema = [
+        { name: "mode", type: "string", choices: ["local", "workspace", "auto"] },
+        { name: "json", type: "boolean" },
+        { name: "dry-run", type: "boolean" },
+      ];
+      validateCommandFlags(finalFlags, flagSchema);
 
       // Parse roots (comma-separated absolute paths)
       let rootsParsed: string[] | undefined;
@@ -108,7 +110,7 @@ export const plan: Command = {
       // Check for empty plan with diagnostics
       const hasEmptyPlan = (!result.plan?.actions || result.plan.actions.length === 0) &&
         (result.diagnostics && result.diagnostics.length > 0);
-      const isEmptyPlanWarning = hasEmptyPlan;
+      const _isEmptyPlanWarning = hasEmptyPlan;
 
       if (json) {
         // JSON output
@@ -135,6 +137,7 @@ export const plan: Command = {
             })),
           }),
         });
+        ctx.sentJSON = true;  // NEW: помечаем что JSON уже отправлен
       } else {
         // Human-readable output
         ctx.presenter.write(colors.cyan(colors.bold("🔍 DevLink Plan")) + "\n");
@@ -217,12 +220,9 @@ export const plan: Command = {
         ctx.presenter.write(formatFooter(summary, duration, hasWarnings));
       }
 
-      // Exit codes: 0 if ok, 2 if warnings/empty plan with diagnostics, 1 if errors
+      // Exit codes: 0=ok, 1=errors (remove exit code 2 for warnings)
       if (!result.ok) {
         return 1;
-      }
-      if (hasWarnings || isEmptyPlanWarning) {
-        return 2;
       }
       return 0;
     } catch (error: any) {
@@ -243,6 +243,10 @@ export const plan: Command = {
         }
       }
 
+      // Return appropriate exit code based on error type
+      if (error instanceof CliError) {
+        return mapCliErrorToExitCode(error.code);
+      }
       return 1;
     }
   },
