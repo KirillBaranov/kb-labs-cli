@@ -1,9 +1,17 @@
-// Re-export all DevLink commands
-export { devlinkPlan } from './plan';
-export { devlinkApply } from './apply';
-export { devlinkFreeze } from './freeze';
-export { devlinkLockApply } from './lock-apply';
-export { devlinkUndo } from './undo';
-export { devlinkStatus } from './status';
-export { devlinkAbout } from './about';
+import type { CommandGroup } from "../../types";
+import { plan } from './plan';
+import { apply } from './apply';
+import { freeze } from './freeze';
+import { lockApply } from './lock-apply';
+import { undo } from './undo';
+import { status } from './status';
+import { about } from './about';
 
+export const devlinkGroup: CommandGroup = {
+  name: "devlink",
+  describe: "Workspace linking and dependency management",
+  commands: [plan, apply, freeze, lockApply, undo, status, about]
+};
+
+// Back-compat re-exports (so external imports won't break)
+export { plan as devlinkPlan, apply as devlinkApply, freeze as devlinkFreeze, lockApply as devlinkLockApply, undo as devlinkUndo, status as devlinkStatus, about as devlinkAbout };

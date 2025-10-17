@@ -3,9 +3,28 @@ import { scanAndPlan } from "@kb-labs/devlink-core";
 import { writeLastPlan, printTable, formatFooter } from "./helpers";
 import { colors } from "@kb-labs/cli-core";
 
-export const devlinkPlan: Command = {
-  name: "devlink:plan",
+export const plan: Command = {
+  name: "plan",
+  category: "devlink",
   describe: "Scan and plan DevLink operations",
+  longDescription: "Scans workspace for packages and creates a linking plan based on dependencies and configuration",
+  aliases: ["devlink:plan"],
+  flags: [
+    { name: "mode", type: "string", choices: ["local", "workspace", "auto"], default: "local", description: "Discovery mode for package resolution" },
+    { name: "json", type: "boolean", description: "Output in JSON format" },
+    { name: "roots", type: "string", description: "Comma-separated workspace roots" },
+    { name: "allow", type: "string", description: "Comma-separated list of allowed packages" },
+    { name: "deny", type: "string", description: "Comma-separated list of denied packages" },
+    { name: "force-local", type: "string", description: "Comma-separated list of packages to force local resolution" },
+    { name: "force-npm", type: "string", description: "Comma-separated list of packages to force npm resolution" },
+    { name: "policy", type: "string", description: "Policy file path" }
+  ],
+  examples: [
+    "kb devlink plan",
+    "kb devlink plan --mode=workspace",
+    "kb devlink plan --roots=/path/to/repo1,/path/to/repo2",
+    "kb devlink plan --json"
+  ],
 
   async run(ctx, argv, flags) {
     const defaultFlags = {

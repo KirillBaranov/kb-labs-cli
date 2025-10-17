@@ -3,9 +3,22 @@ import { applyLockFile } from "@kb-labs/devlink-core";
 import { getLockFilePath, formatSummary, formatFooter, formatCancelledFooter, formatPreflightDiagnostics, type ResultSummary } from "./helpers";
 import { colors, createLoader } from "@kb-labs/cli-core";
 
-export const devlinkLockApply: Command = {
-  name: "devlink:lock:apply",
+export const lockApply: Command = {
+  name: "lock-apply",
+  category: "devlink",
   describe: "Apply DevLink lock file",
+  longDescription: "Applies a previously frozen DevLink lock file to restore exact dependency versions",
+  aliases: ["devlink:lock:apply"],
+  flags: [
+    { name: "dry-run", type: "boolean", description: "Show what would be done without making changes" },
+    { name: "json", type: "boolean", description: "Output in JSON format" },
+    { name: "yes", type: "boolean", description: "Skip confirmation prompts" }
+  ],
+  examples: [
+    "kb devlink lock-apply",
+    "kb devlink lock-apply --dry-run",
+    "kb devlink lock-apply --yes"
+  ],
 
   async run(ctx, argv, flags) {
     const defaultFlags = {

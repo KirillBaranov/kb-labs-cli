@@ -1,11 +1,24 @@
 import type { Command } from "../../types";
-import { undo } from "@kb-labs/devlink-core";
+import { undo as undoOperations } from "@kb-labs/devlink-core";
 import { formatFooter, formatPreflightDiagnostics, type ResultSummary } from "./helpers";
 import { colors } from "@kb-labs/cli-core";
 
-export const devlinkUndo: Command = {
-  name: "devlink:undo",
+export const undo: Command = {
+  name: "undo",
+  category: "devlink",
   describe: "Undo DevLink operations",
+  longDescription: "Reverts previously applied DevLink operations to restore original state",
+  aliases: ["devlink:undo"],
+  flags: [
+    { name: "dry-run", type: "boolean", description: "Show what would be undone without making changes" },
+    { name: "json", type: "boolean", description: "Output in JSON format" },
+    { name: "yes", type: "boolean", description: "Skip confirmation prompts" }
+  ],
+  examples: [
+    "kb devlink undo",
+    "kb devlink undo --dry-run",
+    "kb devlink undo --yes"
+  ],
 
   async run(ctx, argv, flags) {
     const defaultFlags = {
@@ -22,7 +35,7 @@ export const devlinkUndo: Command = {
 
       // Call undo with required rootDir
       const startTime = Date.now();
-      const result = await undo({
+      const result = await undoOperations({
         rootDir,
         dryRun: dryRun as boolean,
         yes: yes as boolean,

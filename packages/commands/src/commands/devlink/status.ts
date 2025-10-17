@@ -1,10 +1,22 @@
 import type { Command } from "../../types";
-import { status } from "@kb-labs/devlink-core";
+import { status as getStatus } from "@kb-labs/devlink-core";
 import { colors } from "@kb-labs/cli-core";
 
-export const devlinkStatus: Command = {
-  name: "devlink:status",
+export const status: Command = {
+  name: "status",
+  category: "devlink",
   describe: "Show DevLink status",
+  longDescription: "Displays current DevLink status including linked packages and their sources",
+  aliases: ["devlink:status"],
+  flags: [
+    { name: "json", type: "boolean", description: "Output in JSON format" },
+    { name: "roots", type: "string", description: "Comma-separated workspace roots" }
+  ],
+  examples: [
+    "kb devlink status",
+    "kb devlink status --json",
+    "kb devlink status --roots=/path/to/repo1,/path/to/repo2"
+  ],
 
   async run(ctx, argv, flags) {
     const defaultFlags = {
@@ -29,7 +41,7 @@ export const devlinkStatus: Command = {
 
       // Get status
       const startTime = Date.now();
-      const result = await status({
+      const result = await getStatus({
         rootDir,
         ...(rootsParsed && { roots: rootsParsed }),
       } as any);

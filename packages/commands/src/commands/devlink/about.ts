@@ -1,9 +1,15 @@
 import type { Command } from "../../types";
 import { colors } from "@kb-labs/cli-core";
 
-export const devlinkAbout: Command = {
-  name: "devlink:about",
+export const about: Command = {
+  name: "about",
+  category: "devlink",
   describe: "Show information about DevLink",
+  longDescription: "Displays version and information about the DevLink tool",
+  aliases: ["devlink:about"],
+  examples: [
+    "kb devlink about"
+  ],
 
   async run(ctx) {
     try {

@@ -1,11 +1,23 @@
 import type { Command } from "../../types";
-import { freeze } from "@kb-labs/devlink-core";
+import { freeze as freezePlan } from "@kb-labs/devlink-core";
 import { readLastPlan, getLockFilePath, formatFooter } from "./helpers";
 import { colors } from "@kb-labs/cli-core";
 
-export const devlinkFreeze: Command = {
-  name: "devlink:freeze",
+export const freeze: Command = {
+  name: "freeze",
+  category: "devlink",
   describe: "Freeze DevLink plan to lock file",
+  longDescription: "Creates a lock file from the current DevLink plan to ensure reproducible builds",
+  aliases: ["devlink:freeze"],
+  flags: [
+    { name: "pin", type: "string", choices: ["exact", "caret"], default: "caret", description: "Version pinning strategy" },
+    { name: "json", type: "boolean", description: "Output in JSON format" }
+  ],
+  examples: [
+    "kb devlink freeze",
+    "kb devlink freeze --pin=exact",
+    "kb devlink freeze --json"
+  ],
 
   async run(ctx, argv, flags) {
     const defaultFlags = {
@@ -30,7 +42,7 @@ export const devlinkFreeze: Command = {
 
       // Freeze the plan
       const startTime = Date.now();
-      const result = await freeze(plan, {
+      const result = await freezePlan(plan, {
         cwd: rootDir,
         pin: pin as "exact" | "caret",
       });

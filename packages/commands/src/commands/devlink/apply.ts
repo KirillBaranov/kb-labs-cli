@@ -1,11 +1,27 @@
 import type { Command } from "../../types";
-import { apply } from "@kb-labs/devlink-core";
+import { apply as applyPlan } from "@kb-labs/devlink-core";
 import { readLastPlan, readPlanFromStdin, formatSummary, formatFooter, formatCancelledFooter, formatPreflightDiagnostics, type ResultSummary } from "./helpers.js";
 import { colors, createLoader } from "@kb-labs/cli-core";
 
-export const devlinkApply: Command = {
-  name: "devlink:apply",
+export const apply: Command = {
+  name: "apply",
+  category: "devlink",
   describe: "Apply DevLink plan",
+  longDescription: "Applies a previously generated DevLink plan to create or update workspace links",
+  aliases: ["devlink:apply"],
+  flags: [
+    { name: "dry-run", type: "boolean", description: "Show what would be done without making changes" },
+    { name: "json", type: "boolean", description: "Output in JSON format" },
+    { name: "from-stdin", type: "boolean", description: "Read plan from stdin" },
+    { name: "from-file", type: "string", description: "Read plan from specified file" },
+    { name: "yes", type: "boolean", description: "Skip confirmation prompts" }
+  ],
+  examples: [
+    "kb devlink apply",
+    "kb devlink apply --dry-run",
+    "kb devlink apply --yes",
+    "kb devlink apply --from-file=plan.json"
+  ],
 
   async run(ctx, argv, flags) {
     const defaultFlags = {
@@ -48,7 +64,7 @@ export const devlinkApply: Command = {
           loader.start("Applying operations...");
         }
 
-        result = await apply(plan, {
+        result = await applyPlan(plan, {
           dryRun: dryRun as boolean,
           yes: yes as boolean,
         });
