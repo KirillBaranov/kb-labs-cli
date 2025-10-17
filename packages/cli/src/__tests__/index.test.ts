@@ -5,6 +5,11 @@ import { run } from "../index";
 vi.mock("@kb-labs/cli-commands", () => ({
   findCommand: vi.fn(),
   registerBuiltinCommands: vi.fn(),
+  renderGlobalHelp: vi.fn(() => "Mock help text"),
+  registry: {
+    listGroups: vi.fn(() => []),
+    list: vi.fn(() => []),
+  },
 }));
 
 // Mock the core module
@@ -152,7 +157,7 @@ describe("CLI run function", () => {
 
       const result = await run(["hello"]);
 
-      expect(result).toBeUndefined();
+      expect(result).toBe(0);
       expect(mockCommand.run).toHaveBeenCalled();
     });
 

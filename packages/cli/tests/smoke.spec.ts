@@ -36,7 +36,7 @@ describe("CLI Smoke Tests", () => {
 
       expect(exitCode).toBe(0);
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('{"ok":true,"help":{')
+        expect.stringContaining('{"ok":false,"error":{"code":"CMD_NOT_FOUND","message":"Use text mode for help display"}}')
       );
     });
 
@@ -84,7 +84,7 @@ describe("CLI Smoke Tests", () => {
       it("should run hello command in text mode", async () => {
         const exitCode = await run(["hello"]);
 
-        expect(exitCode).toBeUndefined(); // undefined means success (0)
+        expect(exitCode).toBe(0); // 0 means success
         expect(consoleLogSpy).toHaveBeenCalledWith(
           expect.stringContaining("Hello, KB Labs!")
         );
@@ -93,9 +93,9 @@ describe("CLI Smoke Tests", () => {
       it("should run hello command in JSON mode", async () => {
         const exitCode = await run(["hello", "--json"]);
 
-        expect(exitCode).toBeUndefined(); // undefined means success (0)
+        expect(exitCode).toBe(0); // 0 means success
         expect(consoleLogSpy).toHaveBeenCalledWith(
-          expect.stringContaining('{"ok":true,"message":"Hello, KB Labs!"}')
+          expect.stringContaining('{"ok":true,"data":{"message":"Hello, KB Labs!"}}')
         );
       });
     });
@@ -104,7 +104,7 @@ describe("CLI Smoke Tests", () => {
       it("should run version command in text mode", async () => {
         const exitCode = await run(["version"]);
 
-        expect(exitCode).toBeUndefined(); // undefined means success (0)
+        expect(exitCode).toBe(0); // 0 means success
         expect(consoleLogSpy).toHaveBeenCalledWith(
           expect.stringMatching(/^\d+\.\d+\.\d+$/)
         );
@@ -113,9 +113,9 @@ describe("CLI Smoke Tests", () => {
       it("should run version command in JSON mode", async () => {
         const exitCode = await run(["version", "--json"]);
 
-        expect(exitCode).toBeUndefined(); // undefined means success (0)
+        expect(exitCode).toBe(0); // 0 means success
         expect(consoleLogSpy).toHaveBeenCalledWith(
-          expect.stringMatching(/"ok":true,"message":"\d+\.\d+\.\d+"/)
+          expect.stringMatching(/"ok":true,"data":{"version":"\d+\.\d+\.\d+"}/)
         );
       });
     });
@@ -124,7 +124,7 @@ describe("CLI Smoke Tests", () => {
       it("should run diagnose command in text mode", async () => {
         const exitCode = await run(["diagnose"]);
 
-        expect(exitCode).toBeUndefined(); // undefined means success (0)
+        expect(exitCode).toBe(0); // 0 means success
         expect(consoleLogSpy).toHaveBeenCalledWith(
           expect.stringMatching(/^node=v\d+\.\d+\.\d+$/)
         );
@@ -136,32 +136,32 @@ describe("CLI Smoke Tests", () => {
       it("should run diagnose command in JSON mode", async () => {
         const exitCode = await run(["diagnose", "--json"]);
 
-        expect(exitCode).toBeUndefined(); // undefined means success (0)
+        expect(exitCode).toBe(0); // 0 means success
         expect(consoleLogSpy).toHaveBeenCalledWith(
-          expect.stringMatching(/^\{.*"ok":true.*"message":"node=v\d+\.\d+\.\d+".*\}$/)
+          expect.stringMatching(/^\{.*"ok":true.*"data":\{.*"node":"v\d+\.\d+\.\d+".*\}$/)
         );
         expect(consoleLogSpy).toHaveBeenCalledWith(
-          expect.stringMatching(/^\{.*"ok":true.*"message":"repoRoot=.+".*\}$/)
+          expect.stringMatching(/^\{.*"ok":true.*"data":\{.*"repoRoot":".+".*\}$/)
         );
       });
     });
 
     describe("init-profile command", () => {
       it("should run init-profile command in text mode", async () => {
-        const exitCode = await run(["init.profile"]);
+        const exitCode = await run(["profiles", "init"]);
 
-        expect(exitCode).toBeUndefined(); // undefined means success (0)
+        expect(exitCode).toBe(0); // 0 means success
         expect(consoleLogSpy).toHaveBeenCalledWith(
-          expect.stringContaining("Initialized profile: frontend (draft)")
+          expect.stringContaining("✅ Profile created successfully")
         );
       });
 
       it("should run init-profile command in JSON mode", async () => {
-        const exitCode = await run(["init.profile", "--json"]);
+        const exitCode = await run(["profiles", "init", "--json"]);
 
-        expect(exitCode).toBeUndefined(); // undefined means success (0)
+        expect(exitCode).toBe(0); // 0 means success
         expect(consoleLogSpy).toHaveBeenCalledWith(
-          expect.stringContaining('{"ok":true,"message":"Initialized profile: frontend (draft)"')
+          expect.stringContaining('{"ok":true,"created":')
         );
       });
     });

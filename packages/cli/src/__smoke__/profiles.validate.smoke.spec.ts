@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { profilesValidate } from '@kb-labs/cli-commands';
+import { run } from '../index';
 
 describe('profiles validate smoke test', () => {
   it('should create profilesValidate command instance', () => {
-    expect(profilesValidate.name).toBe('profiles:validate');
+    expect(profilesValidate.name).toBe('validate');
     expect(profilesValidate.describe).toBe('Validate a profile configuration');
     expect(typeof profilesValidate.run).toBe('function');
   });
@@ -18,5 +19,10 @@ describe('profiles validate smoke test', () => {
     expect(profilesValidate.name).toBeDefined();
     expect(profilesValidate.describe).toBeDefined();
     expect(profilesValidate.run).toBeDefined();
+  });
+
+  it('should return exit code 0 for successful validation', async () => {
+    const code = await run(['profiles:validate']);
+    expect(code).toBe(0);
   });
 });
