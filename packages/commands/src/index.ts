@@ -4,13 +4,12 @@
  * This package does not handle parsing argv/logging/exit.
  */
 export * from "./types";
-export { registry, findCommand } from "./registry";
-export { registerBuiltinCommands } from "./register";
+export { registry, findCommand } from "./utils/registry";
+export { registerBuiltinCommands } from "./utils/register";
+export * from "./utils/help-generator";
 
-export { hello } from "./commands/hello";
-export { version } from "./commands/version";
-export { diagnose } from "./commands/diagnose";
-export { initProfile } from "./commands/init-profile";
-// TODO: Re-enable when @kb-labs/core-* dependencies are available
-// export { profilesValidate, profilesResolve, profilesInit } from "./commands/profiles";
+export { hello } from "./commands/system/hello";
+export { version } from "./commands/system/version";
+export { diagnose } from "./commands/system/diagnose";
+export { profilesValidate, profilesResolve, profilesInit } from "./commands/profiles";
 export { devlinkPlan, devlinkApply, devlinkFreeze, devlinkLockApply, devlinkUndo, devlinkStatus } from "./commands/devlink";
