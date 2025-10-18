@@ -101,6 +101,14 @@ export const apply: Command = {
 
       const duration = Date.now() - startTime;
 
+      // Show install hint if manifests were changed
+      if (result.needsInstall && !dryRun && !json) {
+        // Count unique manifests
+        const uniqueManifests = new Set(result.manifestPatches?.map(p => p.manifestPath) || []);
+        const hint = uniqueManifests.size > 1 ? "pnpm -w install" : "pnpm install";
+        ctx.presenter.write("\n" + colors.yellow(`💡 Run \`${hint}\` to update node_modules\n`));
+      }
+
       // Calculate summary from new result structure (defensive checks)
       const executed = result.executed || [];
       const skipped = result.skipped || [];

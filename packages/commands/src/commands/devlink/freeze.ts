@@ -11,6 +11,9 @@ export const freeze: Command = {
   aliases: ["devlink:freeze"],
   flags: [
     { name: "pin", type: "string", choices: ["exact", "caret"], default: "caret", description: "Version pinning strategy" },
+    { name: "dry-run", type: "boolean", description: "Show what would be frozen without making changes" },
+    { name: "replace", type: "boolean", description: "Replace entire lock file instead of merging" },
+    { name: "prune", type: "boolean", description: "Remove lock entries not in current plan" },
     { name: "json", type: "boolean", description: "Output in JSON format" }
   ],
   examples: [
@@ -23,10 +26,13 @@ export const freeze: Command = {
     const defaultFlags = {
       pin: "caret",
       json: false,
+      "dry-run": false,
+      replace: false,
+      prune: false,
     };
 
     const finalFlags = { ...defaultFlags, ...flags };
-    const { pin, json } = finalFlags;
+    const { pin, json, "dry-run": dryRun, replace, prune } = finalFlags;
 
     try {
       const rootDir = process.cwd();
@@ -45,6 +51,9 @@ export const freeze: Command = {
       const result = await freezePlan(plan, {
         cwd: rootDir,
         pin: pin as "exact" | "caret",
+        dryRun: dryRun as boolean,
+        replace: replace as boolean,
+        prune: prune as boolean,
       });
       const duration = Date.now() - startTime;
 
@@ -80,8 +89,8 @@ export const freeze: Command = {
         if (plan?.actions) {
           const frozenCount = plan.actions.length;
           ctx.presenter.write(`  ${colors.cyan('Frozen packages:')} ${frozenCount}\n`);
-        } else if (result.meta?.itemsCount !== undefined) {
-          ctx.presenter.write(`  ${colors.cyan('Frozen packages:')} ${result.meta.itemsCount}\n`);
+        } else if (result.meta?.packagesCount !== undefined) {
+          ctx.presenter.write(`  ${colors.cyan('Frozen packages:')} ${result.meta.packagesCount}\n`);
         }
 
         // Display diagnostics if present
@@ -93,7 +102,7 @@ export const freeze: Command = {
         }
 
         // Add footer
-        const summary = { executed: plan?.actions?.length || result.meta?.itemsCount || 0, skipped: 0, errors: 0 };
+        const summary = { executed: plan?.actions?.length || result.meta?.packagesCount || 0, skipped: 0, errors: 0 };
         const hasWarnings = result.diagnostics && result.diagnostics.length > 0;
         ctx.presenter.write(formatFooter(summary, duration, hasWarnings));
       }
