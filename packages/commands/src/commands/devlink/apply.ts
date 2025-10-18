@@ -40,14 +40,34 @@ export const apply: Command = {
 
       // Read plan from stdin, file, or last-plan.json
       let plan: any;
-      if (fromStdin) {
-        plan = await readPlanFromStdin();
-      } else if (fromFile) {
-        const fs = await import('fs/promises');
-        const content = await fs.readFile(fromFile as string, 'utf-8');
-        plan = JSON.parse(content);
-      } else {
-        plan = await readLastPlan(rootDir);
+      try {
+        if (fromStdin) {
+          plan = await readPlanFromStdin();
+        } else if (fromFile) {
+          const fs = await import('fs/promises');
+          const content = await fs.readFile(fromFile as string, 'utf-8');
+          plan = JSON.parse(content);
+        } else {
+          plan = await readLastPlan(rootDir);
+        }
+      } catch (planError: any) {
+        // Handle missing plan file specifically
+        if (planError.message?.includes('No plan found')) {
+          if (json) {
+            ctx.presenter.json({
+              ok: false,
+              error: {
+                message: planError.message,
+                code: "PLAN_NOT_FOUND",
+              },
+            });
+          } else {
+            ctx.presenter.error("❌ Apply failed\n");
+            ctx.presenter.error(`   Error: ${planError.message}\n`);
+          }
+          return 1; // Exit code 1 for missing plan file
+        }
+        throw planError; // Re-throw other errors
       }
 
       // Create loader for long operations

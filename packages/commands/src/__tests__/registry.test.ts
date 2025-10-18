@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { registry, findCommand } from "../registry";
+import { registry, findCommand } from "../utils/registry";
 import type { Command } from "../types";
 
 describe("Command Registry", () => {

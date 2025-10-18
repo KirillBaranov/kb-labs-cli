@@ -122,7 +122,7 @@ export async function run(argv: string[]): Promise<number | void> {
           error: {
             code: e.code,
             message: e.message,
-            ...(e.details && { details: e.details }),
+            ...(e.details != null && { details: e.details }),
           },
           ...(ctx.diagnostics?.length > 0 && { warnings: ctx.diagnostics }),
         });

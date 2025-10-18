@@ -220,10 +220,18 @@ export const plan: Command = {
         ctx.presenter.write(formatFooter(summary, duration, hasWarnings));
       }
 
-      // Exit codes: 0=ok, 1=errors (remove exit code 2 for warnings)
+      // Exit codes: 0=ok, 1=errors, 2=deny-hit (policy violations)
       if (!result.ok) {
         return 1;
       }
+
+      // Check for deny-hit diagnostics (policy violations)
+      if (result.diagnostics && result.diagnostics.some((d: string) =>
+        d.toLowerCase().includes('deny') || d.toLowerCase().includes('denied')
+      )) {
+        return 2;
+      }
+
       return 0;
     } catch (error: any) {
       if (json) {

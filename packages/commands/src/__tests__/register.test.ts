@@ -1,16 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { registerBuiltinCommands } from "../register";
-import { registry } from "../registry";
+import { registerBuiltinCommands } from "../utils/register";
+import { registry } from "../utils/registry";
 
 // Mock the registry to avoid side effects
-vi.mock("../registry", () => ({
+vi.mock("../utils/registry", () => ({
   registry: {
     register: vi.fn(),
+    registerGroup: vi.fn(),
   },
 }));
 
 describe("registerBuiltinCommands", () => {
   const mockRegister = vi.mocked(registry.register);
+  const mockRegisterGroup = vi.mocked(registry.registerGroup);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -19,38 +21,36 @@ describe("registerBuiltinCommands", () => {
   it("should register all builtin commands", () => {
     registerBuiltinCommands();
 
-    // 4 base commands + 7 devlink commands = 11
-    expect(mockRegister).toHaveBeenCalledTimes(11);
+    // Should register 2 groups (devlink and profiles) + 3 standalone commands
+    expect(mockRegisterGroup).toHaveBeenCalledTimes(2);
+    expect(mockRegister).toHaveBeenCalledTimes(3);
 
-    // Check that all expected commands are registered
+    // Check that groups are registered
+    const registeredGroups = mockRegisterGroup.mock.calls.map(call => call[0]);
+    const groupNames = registeredGroups.map(group => group.name);
+    expect(groupNames).toContain("devlink");
+    expect(groupNames).toContain("profiles");
+
+    // Check that standalone commands are registered
     const registeredCommands = mockRegister.mock.calls.map(call => call[0]);
     const commandNames = registeredCommands.map(cmd => cmd.name);
-
-    // Base commands
     expect(commandNames).toContain("hello");
     expect(commandNames).toContain("version");
     expect(commandNames).toContain("diagnose");
-    expect(commandNames).toContain("init.profile");
-
-    // DevLink commands
-    expect(commandNames).toContain("devlink:plan");
-    expect(commandNames).toContain("devlink:apply");
-    expect(commandNames).toContain("devlink:freeze");
-    expect(commandNames).toContain("devlink:lock:apply");
-    expect(commandNames).toContain("devlink:undo");
-    expect(commandNames).toContain("devlink:status");
-    expect(commandNames).toContain("devlink:about");
   });
 
   it("should not register commands multiple times", () => {
     registerBuiltinCommands();
-    const firstCallCount = mockRegister.mock.calls.length;
+    const firstRegisterCount = mockRegister.mock.calls.length;
+    const firstRegisterGroupCount = mockRegisterGroup.mock.calls.length;
 
     registerBuiltinCommands();
-    const secondCallCount = mockRegister.mock.calls.length;
+    const secondRegisterCount = mockRegister.mock.calls.length;
+    const secondRegisterGroupCount = mockRegisterGroup.mock.calls.length;
 
     // Should not register again due to _registered flag
-    expect(secondCallCount).toBe(firstCallCount);
+    expect(secondRegisterCount).toBe(firstRegisterCount);
+    expect(secondRegisterGroupCount).toBe(firstRegisterGroupCount);
   });
 
   it("should register commands without errors", () => {
