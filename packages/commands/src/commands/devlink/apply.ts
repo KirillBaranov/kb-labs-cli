@@ -148,6 +148,11 @@ export const apply: Command = {
             skippedCount: summary.skipped,
             errorCount: summary.errors,
             ...(isEmptyPlanWarning && { emptyPlan: true }),
+            ...(result.meta && {
+              backupTimestamp: result.meta.backupTimestamp,
+              backupHasLock: result.meta.backupHasLock,
+              backupManifestsCount: result.meta.backupManifestsCount,
+            }),
           },
           timings: {
             duration,
@@ -206,6 +211,16 @@ export const apply: Command = {
             ctx.presenter.write("\n" + colors.yellow("⚠️  No operations to apply (diagnostics present).") + "\n");
           } else {
             ctx.presenter.write("\nNo operations to apply.\n");
+          }
+        }
+
+        // Display backup info
+        if (result.meta?.backupTimestamp && !dryRun) {
+          ctx.presenter.write(`\n${colors.dim("📦 Backup:")} ${result.meta.backupTimestamp}\n`);
+          if (result.meta.backupHasLock) {
+            ctx.presenter.write(`   ${colors.green("✓")} lock + ${result.meta.backupManifestsCount || 0} manifests\n`);
+          } else {
+            ctx.presenter.write(`   ${colors.dim("•")} ${result.meta.backupManifestsCount || 0} manifests\n`);
           }
         }
 
