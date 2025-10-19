@@ -151,19 +151,11 @@ function formatDryRun(result: DryRunResult, ctx: any, jsonMode: boolean): void {
 /**
  * kb devlink watch command
  */
-export const watch: Command = {
+export const watchCommand: Command = {
   name: "watch",
   describe: "Watch providers and rebuild/refresh consumers on changes",
-  longDescription: "Monitors provider packages for changes, automatically rebuilds them, and refreshes dependent consumers in real-time",
   category: "devlink",
   aliases: ["devlink:watch"],
-  examples: [
-    "kb devlink watch",
-    "kb devlink watch --mode local",
-    "kb devlink watch --providers '@kb-labs/*'",
-    "kb devlink watch --dry-run",
-    "kb devlink watch --json"
-  ],
   flags: [
     {
       name: "mode",
@@ -214,52 +206,20 @@ export const watch: Command = {
   ],
 
   async run(ctx, argv, flags) {
-    const defaultFlags = {
-      mode: undefined,
-      providers: undefined,
-      consumers: undefined,
-      debounce: undefined,
-      concurrency: undefined,
-      "no-build": false,
-      "exit-on-error": false,
-      "dry-run": false,
-      json: false,
-    };
-
-    const finalFlags = { ...defaultFlags, ...flags };
-    const {
-      mode,
-      providers,
-      consumers,
-      debounce,
-      concurrency,
-      "no-build": noBuild,
-      "exit-on-error": exitOnError,
-      "dry-run": dryRun,
-      json,
-    } = finalFlags;
-
     const rootDir = process.cwd();
-
-    // Normalize providers and consumers to arrays
-    const providersArray = providers 
-      ? (Array.isArray(providers) ? providers : [providers])
-      : undefined;
-    const consumersArray = consumers
-      ? (Array.isArray(consumers) ? consumers : [consumers])
-      : undefined;
+    const jsonMode = flags.json === true || ctx.global.json === true;
 
     const options: WatchOptions = {
       rootDir,
-      mode: mode as "auto" | "local" | "yalc" | undefined,
-      providers: providersArray as string[] | undefined,
-      consumers: consumersArray as string[] | undefined,
-      debounce: debounce as number | undefined,
-      concurrency: concurrency as number | undefined,
-      noBuild,
-      exitOnError,
-      dryRun,
-      json,
+      mode: flags.mode as "auto" | "local" | "yalc" | undefined,
+      providers: flags.providers as string[] | undefined,
+      consumers: flags.consumers as string[] | undefined,
+      debounce: flags.debounce as number | undefined,
+      concurrency: flags.concurrency as number | undefined,
+      noBuild: flags["no-build"] === true,
+      exitOnError: flags["exit-on-error"] === true,
+      dryRun: flags["dry-run"] === true,
+      json: jsonMode,
     };
 
     try {
@@ -268,14 +228,14 @@ export const watch: Command = {
       // Handle dry-run result
       if (options.dryRun) {
         watcher.once("dryrun", (result: DryRunResult) => {
-          formatDryRun(result, ctx, json);
+          formatDryRun(result, ctx, jsonMode);
         });
         return 0;
       }
 
       // Handle watch events
       watcher.on("event", (event: WatchEvent) => {
-        if (json) {
+        if (jsonMode) {
           formatJsonEvent(event, ctx);
         } else {
           formatHumanEvent(event, ctx);
@@ -284,7 +244,7 @@ export const watch: Command = {
 
       // Graceful shutdown on Ctrl+C
       const shutdown = async () => {
-        if (!json) {
+        if (!jsonMode) {
           ctx.presenter.write("\n" + colors.dim("Shutting down...") + "\n");
         }
         await watcher.stop();
@@ -301,7 +261,7 @@ export const watch: Command = {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       
-      if (json) {
+      if (jsonMode) {
         ctx.presenter.json({
           ok: false,
           error: {
