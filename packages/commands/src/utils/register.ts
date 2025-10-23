@@ -4,6 +4,7 @@ import { version } from "../commands/system/version";
 import { diagnose } from "../commands/system/diagnose";
 import { devlinkGroup } from "../commands/devlink";
 import { profilesGroup } from "../commands/profiles";
+import { bundleGroup } from "../commands/bundle";
 
 let _registered = false;
 
@@ -16,6 +17,7 @@ export function registerBuiltinCommands() {
   // Register command groups
   registry.registerGroup(devlinkGroup);
   registry.registerGroup(profilesGroup);
+  registry.registerGroup(bundleGroup);
 
   // Standalone commands
   registry.register(hello);

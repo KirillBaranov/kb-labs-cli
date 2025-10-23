@@ -31,9 +31,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@kb-labs/cli-core": "workspace:*",
-    "@kb-labs/cli-adapters": "workspace:*",
-    "@kb-labs/devlink-core": "link:../../../../kb-labs-devlink/packages/core"
+    "@kb-labs/cli-core": "link:../core",
+    "@kb-labs/cli-adapters": "link:../adapters",
+    "@kb-labs/devlink-core": "link:../../../kb-labs-devlink/packages/core",
+    "@kb-labs/core-bundle": "link:../../../kb-labs-core/packages/bundle"
   },
   "devDependencies": {
     "@types/node": "^24.3.3",

@@ -13,3 +13,4 @@ export { version } from "./commands/system/version";
 export { diagnose } from "./commands/system/diagnose";
 export { profilesValidate, profilesResolve, profilesInit } from "./commands/profiles";
 export { devlinkPlan, devlinkApply, devlinkFreeze, devlinkLockApply, devlinkUndo, devlinkStatus } from "./commands/devlink";
+export { bundlePrint, bundleExplain } from "./commands/bundle";
