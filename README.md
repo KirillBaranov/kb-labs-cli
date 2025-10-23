@@ -68,7 +68,11 @@ kb version --json
 | `hello` | Print a friendly greeting | 0 |
 | `version` | Show CLI version | 0 |
 | `diagnose` | Diagnose project health and configuration | 0 |
-| `init-profile` | Initialize a new profile configuration | 0 |
+| `init` | Initialize complete KB Labs workspace | 0/1/2 |
+| `init workspace` | Initialize workspace configuration file | 0/1/2 |
+| `init profile` | Initialize or link a profile | 0/1 |
+| `init policy` | Add policy scaffold to workspace config | 0/1 |
+| `init-profile` | (Legacy) Initialize a new profile configuration | 0 |
 
 #### Global Options
 
@@ -84,6 +88,113 @@ kb version --json
 |------|-------------|
 | 0 | Success |
 | 1 | General error (unknown command, validation error, etc.) |
+| 2 | Conflict or path validation error (use --force to override) |
+
+### Init Commands
+
+KB Labs provides workspace initialization commands to set up your project.
+
+#### kb init --yes
+
+Initialize a complete KB Labs workspace with one command:
+
+```bash
+# Quick start with defaults
+kb init --yes
+
+# What gets created:
+# - kb-labs.config.yaml (workspace config)
+# - .kb/profiles/node-ts-lib/ (local profile scaffold)
+# - .kb/ai-review/ai-review.config.json (product config)
+# - .kb/lock.json (lockfile with versions)
+```
+
+#### Options
+
+```bash
+kb init [options]
+
+Options:
+  --yes                      Use defaults without prompts
+  --dry-run                  Preview changes without writing files
+  --force                    Overwrite existing files
+  --format <yaml|json>       Config file format (default: yaml)
+  --profile-key <key>        Profile key (default: default)
+  --profile-ref <ref>        Profile reference (npm or local path)
+  --products <list>          Comma-separated products (default: aiReview)
+  --preset <ref>             Org preset to extend
+  --policy-bundle <name>     Policy bundle name
+  --json                     Output in JSON format
+```
+
+#### Examples
+
+```bash
+# Initialize with defaults
+kb init --yes
+
+# Initialize with custom profile
+kb init --profile-ref @kb-labs/profile-node-ts@^1.0.0
+
+# Initialize multiple products
+kb init --products aiReview,devlink --yes
+
+# Preview changes without writing
+kb init --dry-run --yes
+
+# JSON format config
+kb init --format json --yes
+```
+
+#### Sub-commands
+
+```bash
+# Initialize only workspace config
+kb init workspace --format yaml --products aiReview
+
+# Initialize only profile
+kb init profile --profile-key default --scaffold-local-profile
+
+# Add policy scaffold
+kb init policy --bundle-name default
+```
+
+#### What Gets Created
+
+```
+workspace/
+├── kb-labs.config.yaml          # Workspace configuration
+├── .kb/
+│   ├── lock.json               # Lockfile with dependencies
+│   ├── profiles/
+│   │   └── node-ts-lib/
+│   │       ├── profile.json    # Profile manifest
+│   │       ├── defaults/
+│   │       │   └── ai-review.json
+│   │       └── artifacts/
+│   │           └── ai-review/
+│   │               ├── rules.yml
+│   │               └── prompts/
+│   │                   └── review.md
+│   └── ai-review/
+│       └── ai-review.config.json
+└── .gitignore                   # Updated with KB Labs entries
+```
+
+#### Next Steps
+
+After initialization:
+
+```bash
+# Print bundle configuration
+kb bundle print --product aiReview
+
+# Validate profile
+kb profiles validate
+
+# Check system status
+kb diagnose
+```
 
 ### Creating a New Package
 
