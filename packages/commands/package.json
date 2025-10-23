@@ -34,7 +34,10 @@
     "@kb-labs/cli-core": "link:../core",
     "@kb-labs/cli-adapters": "link:../adapters",
     "@kb-labs/devlink-core": "link:../../../kb-labs-devlink/packages/core",
-    "@kb-labs/core-bundle": "link:../../../kb-labs-core/packages/bundle"
+    "@kb-labs/core-bundle": "link:../../../kb-labs-core/packages/bundle",
+    "@kb-labs/core-config": "link:../../../kb-labs-core/packages/config",
+    "@kb-labs/core-profiles": "link:../../../kb-labs-core/packages/profiles",
+    "@kb-labs/core-policy": "link:../../../kb-labs-core/packages/policy"
   },
   "devDependencies": {
     "@types/node": "^24.3.3",
