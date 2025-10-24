@@ -466,7 +466,7 @@ describe("DevLink Commands - Smoke Tests", () => {
       // ANSI escape sequences start with \x1B[ or contain color codes
       const hasAnsiCodes = output.includes('\x1B[') ||
         /\u001b\[/.test(output) ||
-        /\033\[/.test(output);
+        /\x1b\[/.test(output);
 
       // In test environment, colors might be disabled due to NO_COLOR or non-TTY
       // So we check that the command works and produces output, regardless of colors
@@ -491,7 +491,7 @@ describe("DevLink Commands - Smoke Tests", () => {
       const jsonOutput = JSON.stringify(ctx.jsonOutputs[0]);
       const hasAnsiCodes = jsonOutput.includes('\x1B[') ||
         /\u001b\[/.test(jsonOutput) ||
-        /\033\[/.test(jsonOutput);
+        /\x1b\[/.test(jsonOutput);
       expect(hasAnsiCodes).toBe(false);
     });
 

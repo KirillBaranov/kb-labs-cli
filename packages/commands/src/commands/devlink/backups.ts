@@ -103,9 +103,9 @@ export const backups: Command = {
           ctx.presenter.json({
             ok: true,
             action: "prune",
-            removed: result.removed.map((b) => b.timestamp),
-            kept: result.kept.map((b) => b.timestamp),
-            protected: result.skippedProtected.map((b) => b.timestamp),
+            removed: result.removed.map((b: any) => b.timestamp),
+            kept: result.kept.map((b: any) => b.timestamp),
+            protected: result.skippedProtected.map((b: any) => b.timestamp),
             dryRun,
           });
           ctx.sentJSON = true;

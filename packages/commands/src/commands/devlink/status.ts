@@ -82,7 +82,7 @@ function formatHumanReport(report: StatusReport, ctx: any): void {
   ctx.presenter.write("\n" + colors.bold("🔒 Lock") + "\n");
   if (lock.exists) {
     const sourcesStr = Object.entries(lock.sources)
-      .filter(([, count]) => count > 0)
+      .filter(([, count]) => (count as number) > 0)
       .map(([source, count]) => `${source} ${count}`)
       .join(colors.dim(" • "));
     

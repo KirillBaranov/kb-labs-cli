@@ -148,9 +148,9 @@ export const plan: Command = {
           const packages = Object.values(result.plan.index.packages);
           const uniqueRoots = new Set<string>();
           for (const pkg of packages) {
-            if (pkg.dir) {
+            if ((pkg as any).dir) {
               // Extract repo root (simplified - assumes packages are under a common root)
-              const parts = pkg.dir.split('/');
+              const parts = (pkg as any).dir.split('/');
               if (parts.length > 3) {
                 uniqueRoots.add(parts.slice(0, parts.length - 2).join('/'));
               }

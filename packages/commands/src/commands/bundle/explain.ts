@@ -72,7 +72,7 @@ export const explain: Command = {
         if (!layers[step.layer]) {
           layers[step.layer] = [];
         }
-        layers[step.layer].push(step);
+        layers[step.layer]!.push(step);
       }
 
       // Display each layer

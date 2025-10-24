@@ -108,7 +108,7 @@ export const print: Command = {
         if (artifactKeys.length > 0) {
           for (const key of artifactKeys) {
             const patterns = bundle.artifacts.summary[key];
-            ctx.presenter.write(`  ${key}: ${patterns.length} pattern(s)\n`);
+            ctx.presenter.write(`  ${key}: ${patterns?.length || 0} pattern(s)\n`);
           }
         } else {
           ctx.presenter.write("  (no artifacts)\n");
