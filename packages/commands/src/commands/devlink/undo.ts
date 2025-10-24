@@ -49,7 +49,7 @@ export const undo: Command = {
       const summary: ResultSummary = {
         executed: result.reverted || 0,
         skipped: 0,
-        errors: diagnostics.filter(d => !d.toLowerCase().includes("operation cancelled")).length,
+        errors: diagnostics.filter((d: any) => !d.toLowerCase().includes("operation cancelled")).length,
       };
 
       if (json) {
