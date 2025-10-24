@@ -261,7 +261,7 @@ export const status: Command = {
 
       // CI mode: exit with code 2 if error-level warnings
       if (ci) {
-        const hasErrors = report.warnings.some((w) => w.severity === "error");
+        const hasErrors = report.warnings.some((w: any) => w.severity === "error");
         if (hasErrors) {
           return 2;
         }
