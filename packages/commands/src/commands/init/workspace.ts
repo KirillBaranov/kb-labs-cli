@@ -8,7 +8,7 @@ import { initWorkspaceConfig, type ProductId, getExitCode, KbError } from '@kb-l
 
 export const setupWorkspace: Command = {
   name: 'workspace',
-  category: 'setup',
+  category: 'init',
   describe: 'Setup workspace configuration file',
   flags: [
     { name: 'format', type: 'string', choices: ['yaml', 'json'], default: 'yaml' },

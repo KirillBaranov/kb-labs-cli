@@ -9,7 +9,7 @@ import { type ProductId, getExitCode, KbError } from '@kb-labs/core-config';
 
 export const setupProfile: Command = {
   name: 'profile',
-  category: 'setup',
+  category: 'init',
   describe: 'Setup or link a profile',
   flags: [
     { name: 'profile-key', type: 'string', default: 'default' },

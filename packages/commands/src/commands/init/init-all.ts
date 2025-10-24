@@ -9,7 +9,7 @@ import { getExitCode, KbError } from '@kb-labs/core-config';
 
 export const setupAll: Command = {
   name: 'setup',
-  category: 'workspace',
+  category: 'init',
   describe: 'Setup KB Labs workspace with config, profiles, and lockfile',
   longDescription: 'Sets up a complete KB Labs workspace with configuration file, profile scaffold, policy template, and lockfile',
   flags: [

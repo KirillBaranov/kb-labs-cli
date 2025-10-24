@@ -90,9 +90,9 @@ kb version --json
 | 1 | General error (unknown command, validation error, etc.) |
 | 2 | Conflict or path validation error (use --force to override) |
 
-### Setup Commands
+### Init Commands
 
-KB Labs provides workspace setup commands to configure your project.
+KB Labs provides workspace initialization commands to configure your project.
 
 #### kb setup --yes
 
@@ -150,13 +150,13 @@ kb setup --format json --yes
 
 ```bash
 # Initialize only workspace config
-kb setup workspace --format yaml --products aiReview
+kb init workspace --format yaml --products aiReview
 
 # Initialize only profile
-kb setup profile --profile-key default --scaffold-local-profile
+kb init profile --profile-key default --scaffold-local-profile
 
 # Add policy scaffold
-kb setup policy --bundle-name default
+kb init policy --bundle-name default
 ```
 
 #### What Gets Created
