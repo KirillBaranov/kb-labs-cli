@@ -7,9 +7,9 @@ import type { Command } from '../../types';
 import { initPolicy as coreInitPolicy } from '@kb-labs/core-policy';
 import { getExitCode, KbError } from '@kb-labs/core-config';
 
-export const initPolicy: Command = {
+export const setupPolicy: Command = {
   name: 'policy',
-  category: 'init',
+  category: 'setup',
   describe: 'Add policy scaffold to workspace config',
   flags: [
     { name: 'bundle-name', type: 'string', default: 'default' },

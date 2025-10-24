@@ -16,4 +16,4 @@ export { devlinkPlan, devlinkApply, devlinkFreeze, devlinkLockApply, devlinkUndo
 export { bundlePrint, bundleExplain } from "./commands/bundle";
 
 // Init commands
-export { initAll, initWorkspace, initProfile, initPolicy } from "./commands/init";
+export { setupAll, setupWorkspace, setupProfile, setupPolicy } from "./commands/init";

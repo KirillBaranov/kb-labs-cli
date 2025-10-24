@@ -4,11 +4,11 @@
  */
 
 import type { CommandGroup } from '../types';
-import { initAll, initWorkspace, initProfile, initPolicy } from './init';
+import { setupAll, setupWorkspace, setupProfile, setupPolicy } from './init';
 
-export const initGroup: CommandGroup = {
-  name: 'init',
-  describe: 'Initialize KB Labs workspace components',
-  commands: [initAll, initWorkspace, initProfile, initPolicy],
+export const setupGroup: CommandGroup = {
+  name: 'setup',
+  describe: 'Setup KB Labs workspace components',
+  commands: [setupAll, setupWorkspace, setupProfile, setupPolicy],
 };
 

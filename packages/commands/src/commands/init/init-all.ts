@@ -7,10 +7,10 @@ import type { Command } from '../../types';
 import { initAll as coreInitAll, type ProductId } from '@kb-labs/core-bundle';
 import { getExitCode, KbError } from '@kb-labs/core-config';
 
-export const initAll: Command = {
-  name: 'init',
+export const setupAll: Command = {
+  name: 'setup',
   category: 'workspace',
-  describe: 'Initialize KB Labs workspace with config, profiles, and lockfile',
+  describe: 'Setup KB Labs workspace with config, profiles, and lockfile',
   longDescription: 'Sets up a complete KB Labs workspace with configuration file, profile scaffold, policy template, and lockfile',
   flags: [
     { name: 'yes', type: 'boolean', description: 'Use defaults without prompts' },
@@ -25,10 +25,10 @@ export const initAll: Command = {
     { name: 'json', type: 'boolean', description: 'Output in JSON format' },
   ],
   examples: [
-    'kb init --yes',
-    'kb init --format json --products aiReview,devlink',
-    'kb init --profile-ref @kb-labs/profile-node-ts@^1.0.0',
-    'kb init --dry-run',
+    'kb setup --yes',
+    'kb setup --format json --products aiReview,devlink',
+    'kb setup --profile-ref @kb-labs/profile-node-ts@^1.0.0',
+    'kb setup --dry-run',
   ],
   
   async run(ctx, argv, flags) {

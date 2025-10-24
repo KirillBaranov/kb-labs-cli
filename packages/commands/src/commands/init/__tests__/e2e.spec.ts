@@ -9,7 +9,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { initAll as coreInitAll } from '@kb-labs/core-bundle';
 
-describe('kb init --yes (e2e)', () => {
+describe('kb setup --yes (e2e)', () => {
   let tmpDir: string;
   
   beforeEach(async () => {
@@ -22,7 +22,7 @@ describe('kb init --yes (e2e)', () => {
   });
   
   it('initializes complete workspace from empty directory', async () => {
-    // Simulate: kb init --yes
+    // Simulate: kb setup --yes
     const result = await coreInitAll({
       cwd: tmpDir,
       format: 'yaml',

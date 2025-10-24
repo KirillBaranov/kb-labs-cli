@@ -6,10 +6,10 @@
 import type { Command } from '../../types';
 import { initWorkspaceConfig, type ProductId, getExitCode, KbError } from '@kb-labs/core-config';
 
-export const initWorkspace: Command = {
+export const setupWorkspace: Command = {
   name: 'workspace',
-  category: 'init',
-  describe: 'Initialize workspace configuration file',
+  category: 'setup',
+  describe: 'Setup workspace configuration file',
   flags: [
     { name: 'format', type: 'string', choices: ['yaml', 'json'], default: 'yaml' },
     { name: 'products', type: 'string', description: 'Comma-separated product IDs' },

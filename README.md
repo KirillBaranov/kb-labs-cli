@@ -54,7 +54,7 @@ kb --version
 kb hello
 kb version
 kb diagnose
-kb init-profile
+kb setup profile
 
 # JSON output
 kb hello --json
@@ -90,17 +90,17 @@ kb version --json
 | 1 | General error (unknown command, validation error, etc.) |
 | 2 | Conflict or path validation error (use --force to override) |
 
-### Init Commands
+### Setup Commands
 
-KB Labs provides workspace initialization commands to set up your project.
+KB Labs provides workspace setup commands to configure your project.
 
-#### kb init --yes
+#### kb setup --yes
 
-Initialize a complete KB Labs workspace with one command:
+Setup a complete KB Labs workspace with one command:
 
 ```bash
 # Quick start with defaults
-kb init --yes
+kb setup --yes
 
 # What gets created:
 # - kb-labs.config.yaml (workspace config)
@@ -112,7 +112,7 @@ kb init --yes
 #### Options
 
 ```bash
-kb init [options]
+kb setup [options]
 
 Options:
   --yes                      Use defaults without prompts
@@ -131,32 +131,32 @@ Options:
 
 ```bash
 # Initialize with defaults
-kb init --yes
+kb setup --yes
 
 # Initialize with custom profile
-kb init --profile-ref @kb-labs/profile-node-ts@^1.0.0
+kb setup --profile-ref @kb-labs/profile-node-ts@^1.0.0
 
 # Initialize multiple products
-kb init --products aiReview,devlink --yes
+kb setup --products aiReview,devlink --yes
 
 # Preview changes without writing
-kb init --dry-run --yes
+kb setup --dry-run --yes
 
 # JSON format config
-kb init --format json --yes
+kb setup --format json --yes
 ```
 
 #### Sub-commands
 
 ```bash
 # Initialize only workspace config
-kb init workspace --format yaml --products aiReview
+kb setup workspace --format yaml --products aiReview
 
 # Initialize only profile
-kb init profile --profile-key default --scaffold-local-profile
+kb setup profile --profile-key default --scaffold-local-profile
 
 # Add policy scaffold
-kb init policy --bundle-name default
+kb setup policy --bundle-name default
 ```
 
 #### What Gets Created

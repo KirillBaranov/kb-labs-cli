@@ -3,8 +3,8 @@
  * Init command exports
  */
 
-export { initAll } from './init-all';
-export { initWorkspace } from './workspace';
-export { initProfile } from './profile';
-export { initPolicy } from './policy';
+export { setupAll } from './init-all';
+export { setupWorkspace } from './workspace';
+export { setupProfile } from './profile';
+export { setupPolicy } from './policy';
 

@@ -7,10 +7,10 @@ import type { Command } from '../../types';
 import { initProfile as coreInitProfile } from '@kb-labs/core-profiles';
 import { type ProductId, getExitCode, KbError } from '@kb-labs/core-config';
 
-export const initProfile: Command = {
+export const setupProfile: Command = {
   name: 'profile',
-  category: 'init',
-  describe: 'Initialize or link a profile',
+  category: 'setup',
+  describe: 'Setup or link a profile',
   flags: [
     { name: 'profile-key', type: 'string', default: 'default' },
     { name: 'profile-ref', type: 'string', description: 'Profile reference (npm or local path)' },
