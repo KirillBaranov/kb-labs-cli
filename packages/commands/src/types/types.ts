@@ -41,4 +41,9 @@ export interface CommandRegistry extends CommandLookup {
   registerGroup(group: CommandGroup): void;
   has(name: string): boolean;
   listGroups(): CommandGroup[];
+  
+  // New: Manifest support
+  registerManifest?: (cmd: any) => void; // any to avoid circular dependency with registry types
+  getManifest?: (id: string) => any;
+  listManifests?: () => any[];
 }
