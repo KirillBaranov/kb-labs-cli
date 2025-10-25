@@ -6,6 +6,7 @@ import { devlinkGroup } from "../commands/devlink";
 import { profilesGroup } from "../commands/profiles";
 import { bundleGroup } from "../commands/bundle";
 import { initGroup } from "../commands/init-group";
+import { mindGroup } from "../commands/mind-group";
 
 let _registered = false;
 
@@ -20,6 +21,7 @@ export function registerBuiltinCommands() {
   registry.registerGroup(devlinkGroup);
   registry.registerGroup(profilesGroup);
   registry.registerGroup(bundleGroup);
+  registry.registerGroup(mindGroup);
 
   // Standalone commands
   registry.register(hello);

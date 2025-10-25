@@ -15,5 +15,8 @@ export { profilesValidate, profilesResolve, profilesInit } from "./commands/prof
 export { devlinkPlan, devlinkApply, devlinkFreeze, devlinkLockApply, devlinkUndo, devlinkStatus } from "./commands/devlink";
 export { bundlePrint, bundleExplain } from "./commands/bundle";
 
+// Mind commands
+export { mindInit, mindUpdate, mindPack, mindFeed } from "./commands/mind";
+
 // Init commands
 export { setupAll, setupWorkspace, setupProfile, setupPolicy } from "./commands/init";

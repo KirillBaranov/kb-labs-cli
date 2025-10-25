@@ -31,13 +31,16 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@kb-labs/cli-core": "link:../core",
-    "@kb-labs/cli-adapters": "link:../adapters",
-    "@kb-labs/devlink-core": "link:../../../kb-labs-devlink/packages/core",
-    "@kb-labs/core-bundle": "link:../../../kb-labs-core/packages/bundle",
-    "@kb-labs/core-config": "link:../../../kb-labs-core/packages/config",
-    "@kb-labs/core-profiles": "link:../../../kb-labs-core/packages/profiles",
-    "@kb-labs/core-policy": "link:../../../kb-labs-core/packages/policy"
+    "@kb-labs/cli-core": "workspace:*",
+    "@kb-labs/cli-adapters": "workspace:*",
+    "@kb-labs/devlink-core": "workspace:*",
+    "@kb-labs/core-bundle": "workspace:*",
+    "@kb-labs/core-config": "workspace:*",
+    "@kb-labs/core-profiles": "workspace:*",
+    "@kb-labs/core-policy": "workspace:*",
+    "@kb-labs/mind-core": "workspace:*",
+    "@kb-labs/mind-indexer": "workspace:*",
+    "@kb-labs/mind-pack": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.3.3",
