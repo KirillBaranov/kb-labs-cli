@@ -4,7 +4,7 @@
  * This package does not handle parsing argv/logging/exit.
  */
 export * from "./types";
-export { registry, findCommand } from "./utils/registry";
+export { registry, findCommand, type ProductGroup } from "./utils/registry";
 export { registerBuiltinCommands } from "./utils/register";
 export * from "./utils/help-generator";
 
@@ -15,8 +15,8 @@ export { profilesValidate, profilesResolve, profilesInit } from "./commands/prof
 export { devlinkPlan, devlinkApply, devlinkFreeze, devlinkLockApply, devlinkUndo, devlinkStatus } from "./commands/devlink";
 export { bundlePrint, bundleExplain } from "./commands/bundle";
 
-// Mind commands
-export { mindInit, mindUpdate, mindPack, mindFeed } from "./commands/mind";
+// Mind commands - temporarily disabled until packages are linked
+// export { mindInit, mindUpdate, mindPack, mindFeed } from "./commands/mind";
 
 // Init commands
 export { setupAll, setupWorkspace, setupProfile, setupPolicy } from "./commands/init";

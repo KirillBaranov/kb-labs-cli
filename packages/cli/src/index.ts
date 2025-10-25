@@ -5,7 +5,7 @@ import {
   createJsonPresenter,
   createContext,
 } from "@kb-labs/cli-core";
-import { findCommand, registerBuiltinCommands, renderGroupHelp, renderGlobalHelp, registry, type CommandGroup, type Command } from "@kb-labs/cli-commands";
+import { findCommand, registerBuiltinCommands, renderGroupHelp, renderGlobalHelp, renderGlobalHelpNew, renderProductHelp, registry, type CommandGroup, type Command } from "@kb-labs/cli-commands";
 
 function normalizeCmdPath(argvCmd: string[]): string[] {
   if (argvCmd.length === 1 && argvCmd[0]?.includes(":")) {
@@ -18,8 +18,8 @@ function normalizeCmdPath(argvCmd: string[]): string[] {
 }
 
 export async function run(argv: string[]): Promise<number | void> {
-  // Auto-register builtin commands
-  registerBuiltinCommands();
+  // Auto-register builtin commands (now async)
+  await registerBuiltinCommands();
   const { cmdPath, rest, global, flagsObj } = parseArgs(argv);
 
   // Normalize command path for legacy support
@@ -28,7 +28,7 @@ export async function run(argv: string[]): Promise<number | void> {
   const presenter = global.json ? createJsonPresenter() : createTextPresenter(global.quiet);
 
   // Handle global --help flag
-  if (global.help) {
+  if (global.help && cmdPath.length === 0) {
     if (global.json) {
       // For JSON mode, preserve existing behavior - don't show group help
       presenter.json({
@@ -37,9 +37,7 @@ export async function run(argv: string[]): Promise<number | void> {
       });
     } else {
       // Use new help generator for text mode
-      const groups = registry.listGroups();
-      const standalone = registry.list().filter(cmd => !cmd.category);
-      presenter.write(renderGlobalHelp(groups, standalone));
+      presenter.write(renderGlobalHelpNew(registry));
     }
     return 0;
   }
@@ -59,6 +57,23 @@ export async function run(argv: string[]): Promise<number | void> {
   }
 
   const cmd = findCommand(normalizedCmdPath);
+  
+  // Handle product-level help (for groups from manifests) - check before cmd existence
+  if (cmdPath.length === 1 && cmdPath[0]) {
+    const productCommands = registry.getCommandsByGroup(cmdPath[0]);
+    if (productCommands.length > 0) {
+      if (global.json) {
+        presenter.json({
+          ok: false,
+          error: { code: "CMD_NOT_FOUND", message: `Product '${cmdPath[0]}' requires a subcommand` },
+        });
+      } else {
+        presenter.write(renderProductHelp(cmdPath[0], productCommands));
+      }
+      return 0;
+    }
+  }
+  
   if (!cmd) {
     const msg = `Unknown command: ${normalizedCmdPath.join(" ") || "(none)"}`;
     if (global.json) {
