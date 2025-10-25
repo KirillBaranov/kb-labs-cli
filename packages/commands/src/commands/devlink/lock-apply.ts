@@ -8,7 +8,6 @@ export const lockApply: Command = {
   category: "devlink",
   describe: "Apply DevLink lock file",
   longDescription: "Applies a previously frozen DevLink lock file to restore exact dependency versions",
-  aliases: ["devlink:lock:apply"],
   flags: [
     { name: "dry-run", type: "boolean", description: "Show what would be done without making changes" },
     { name: "json", type: "boolean", description: "Output in JSON format" },

@@ -8,7 +8,6 @@ export const freeze: Command = {
   category: "devlink",
   describe: "Freeze DevLink plan to lock file",
   longDescription: "Creates a lock file from the current DevLink plan to ensure reproducible builds",
-  aliases: ["devlink:freeze"],
   flags: [
     { name: "pin", type: "string", choices: ["exact", "caret"], default: "caret", description: "Version pinning strategy" },
     { name: "dry-run", type: "boolean", description: "Show what would be frozen without making changes" },

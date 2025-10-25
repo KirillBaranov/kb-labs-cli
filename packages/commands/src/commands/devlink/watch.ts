@@ -178,7 +178,6 @@ export const watch: Command = {
   describe: "Watch providers and rebuild/refresh consumers on changes",
   longDescription: "Monitors provider packages for changes, automatically rebuilds them, and refreshes dependent consumers in real-time",
   category: "devlink",
-  aliases: ["devlink:watch"],
   examples: [
     "kb devlink watch",
     "kb devlink watch --mode local",

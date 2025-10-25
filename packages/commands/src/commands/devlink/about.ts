@@ -6,7 +6,6 @@ export const about: Command = {
   category: "devlink",
   describe: "Show information about DevLink",
   longDescription: "Displays version and information about the DevLink tool",
-  aliases: ["devlink:about"],
   examples: [
     "kb devlink about"
   ],

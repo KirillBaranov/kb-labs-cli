@@ -208,7 +208,6 @@ export const status: Command = {
   category: "devlink",
   describe: "Show DevLink status",
   longDescription: "Displays comprehensive DevLink status including mode, lock stats, manifest diff, health warnings, and suggestions",
-  aliases: ["devlink:status"],
   flags: [
     { name: "json", type: "boolean", description: "Output in JSON format" },
     { name: "short", type: "boolean", description: "Compact one-line output" },

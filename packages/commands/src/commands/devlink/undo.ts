@@ -8,7 +8,6 @@ export const undo: Command = {
   category: "devlink",
   describe: "Undo DevLink operations",
   longDescription: "Reverts previously applied DevLink operations to restore original state",
-  aliases: ["devlink:undo"],
   flags: [
     { name: "dry-run", type: "boolean", description: "Show what would be undone without making changes" },
     { name: "json", type: "boolean", description: "Output in JSON format" },

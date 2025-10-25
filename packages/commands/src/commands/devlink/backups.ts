@@ -7,7 +7,6 @@ export const backups: Command = {
   category: "devlink",
   describe: "Manage DevLink backups",
   longDescription: "List, validate, prune, and manage DevLink backups",
-  aliases: ["devlink:backups"],
   flags: [
     { name: "json", type: "boolean", description: "Output in JSON format" },
     { name: "type", type: "string", description: "Filter by type: freeze|apply", choices: ["freeze", "apply"] },

@@ -8,7 +8,6 @@ export const apply: Command = {
   category: "devlink",
   describe: "Apply DevLink plan",
   longDescription: "Applies a previously generated DevLink plan to create or update workspace links",
-  aliases: ["devlink:apply"],
   flags: [
     { name: "dry-run", type: "boolean", description: "Show what would be done without making changes" },
     { name: "json", type: "boolean", description: "Output in JSON format" },

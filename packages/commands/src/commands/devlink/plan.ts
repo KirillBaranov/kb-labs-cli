@@ -8,7 +8,6 @@ export const plan: Command = {
   category: "devlink",
   describe: "Scan and plan DevLink operations",
   longDescription: "Scans workspace for packages and creates a linking plan based on dependencies and configuration",
-  aliases: ["devlink:plan"],
   flags: [
     { name: "mode", type: "string", choices: ["local", "workspace", "auto"], default: "local", description: "Discovery mode for package resolution" },
     { name: "json", type: "boolean", description: "Output in JSON format" },
