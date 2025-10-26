@@ -1,6 +1,6 @@
 # ADR-0007: System Commands UX/UI Unification
 
-**Date:** 2025-01-27  
+**Date:** 2025-10-27  
 **Status:** Accepted  
 **Deciders:** KB Labs Team
 
