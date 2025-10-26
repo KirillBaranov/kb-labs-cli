@@ -97,9 +97,11 @@ function validateManifestStructure(manifest: any): void {
   }
   
   // Validate flags if present
-  if (manifest.flags) {
+  if (manifest.flags && Array.isArray(manifest.flags) && manifest.id) {
     for (const flag of manifest.flags) {
-      validateFlagDef(flag, manifest.id);
+      if (flag && typeof flag === 'object' && flag.name) {
+        validateFlagDef(flag, manifest.id as string);
+      }
     }
   }
 }
@@ -114,6 +116,10 @@ function checkWorkspaceCollision(
 ): void {
   // If both are from workspace, that's a hard error
   if (currentSource === 'workspace' && existing.source === 'workspace') {
+    // Log detailed information about the collision
+    log('error', `Command ID collision detected for "${manifest.id}"`);
+    log('error', `  Existing: ${JSON.stringify(existing.manifest)}`);
+    log('error', `  Current: ${JSON.stringify(manifest)}`);
     throw new Error(
       `Command ID collision: "${manifest.id}" is exported by multiple workspace packages. ` +
       `This is not allowed. Please rename one of the commands.`
@@ -136,7 +142,7 @@ export function registerManifests(
   // Sort: builtin > workspace > node_modules
   const sorted = [...discoveryResults].sort((a, b) => {
     const order: Record<string, number> = { builtin: 0, workspace: 1, node_modules: 2 };
-    return order[a.source] - order[b.source];
+    return (order[a.source] || 999) - (order[b.source] || 999);
   });
   
   for (const result of sorted) {
@@ -155,8 +161,8 @@ export function registerManifests(
       const cmd: RegisteredCommand = {
         manifest,
         available: availability.available,
-        unavailableReason: availability.reason,
-        hint: availability.hint,
+        unavailableReason: availability.available ? undefined : availability.reason,
+        hint: availability.available ? undefined : availability.hint,
         source: result.source,
         shadowed: false,
       };

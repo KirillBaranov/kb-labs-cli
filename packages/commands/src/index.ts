@@ -12,7 +12,7 @@ export { hello } from "./commands/system/hello";
 export { version } from "./commands/system/version";
 export { diagnose } from "./commands/system/diagnose";
 export { profilesValidate, profilesResolve, profilesInit } from "./commands/profiles";
-export { devlinkPlan, devlinkApply, devlinkFreeze, devlinkLockApply, devlinkUndo, devlinkStatus } from "./commands/devlink";
+// export { devlinkPlan, devlinkApply, devlinkFreeze, devlinkLockApply, devlinkUndo, devlinkStatus } from "./commands/devlink"; // Removed - using plugin system
 export { bundlePrint, bundleExplain } from "./commands/bundle";
 
 // Mind commands - temporarily disabled until packages are linked

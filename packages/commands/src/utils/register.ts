@@ -3,10 +3,11 @@ import { hello } from "../commands/system/hello";
 import { version } from "../commands/system/version";
 import { diagnose } from "../commands/system/diagnose";
 import { pluginsList } from "../commands/system/plugins-list";
-import { discoverManifests } from "../registry/discover.js";
-import { registerManifests } from "../registry/register.js";
+import pluginsCacheClear from "../builtins/plugins-cache-clear";
+import { discoverManifests } from "../registry/discover";
+import { registerManifests } from "../registry/register";
 import { log } from "./logger.js";
-import { devlinkGroup } from "../commands/devlink";
+// import { devlinkGroup } from "../commands/devlink"; // Removed - using plugin system
 import { profilesGroup } from "../commands/profiles";
 import { bundleGroup } from "../commands/bundle";
 import { initGroup } from "../commands/init-group";
@@ -32,6 +33,7 @@ export async function registerBuiltinCommands() {
   registry.register(version);
   registry.register(diagnose);
   registry.register(pluginsList);
+  registry.register(pluginsCacheClear);
   
   // Discover and register manifest-based commands from workspace/node_modules
   try {

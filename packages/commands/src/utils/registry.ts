@@ -5,8 +5,14 @@ import type { RegisteredCommand } from "../registry/types.js";
  * Convert RegisteredCommand to Command-like object for compatibility
  */
 function manifestToCommand(registered: RegisteredCommand): Command {
+  // For manifest-based commands, use the full ID as the name
+  // This allows commands like "devlink:plan" to be found as "devlink plan"
+  const name = registered.manifest.id.includes(':') 
+    ? registered.manifest.id.replace(':', ' ')
+    : registered.manifest.id;
+    
   return {
-    name: registered.manifest.id.split(':')[1] || registered.manifest.id,
+    name,
     category: registered.manifest.group,
     describe: registered.manifest.describe,
     longDescription: registered.manifest.longDescription,
@@ -84,7 +90,10 @@ class InMemoryRegistry implements CommandRegistry {
     
     // Register as Command for compatibility
     const commandAdapter = manifestToCommand(cmd);
+    
+    // Register with both original ID and converted name for compatibility
     this.byName.set(cmd.manifest.id, commandAdapter);
+    this.byName.set(commandAdapter.name, commandAdapter);
     
     // Register aliases in byName only (not in manifests)
     if (cmd.manifest.aliases) {

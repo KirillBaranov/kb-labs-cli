@@ -1,12 +1,9 @@
 {
-  "name": "@kb-labs/cli-commands",
+  "name": "@kb-labs/mind-core",
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "description": "Command implementations for KB Labs CLI",
-  "bin": {
-    "kb": "./dist/bin.js"
-  },
+  "description": "Core contracts, errors, and utilities for KB Labs Mind",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -14,6 +11,9 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
+  },
+  "kb": {
+    "commandsManifest": "./dist/cli.manifest.js"
   },
   "files": [
     "dist",
@@ -28,20 +28,13 @@
     "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
-  "dependencies": {
-    "@kb-labs/cli-core": "workspace:*",
-    "@kb-labs/cli-adapters": "workspace:*",
-    "ajv": "^8.17.1",
-    "yaml": "^2.5.1",
-    "glob": "^11.0.0"
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
   },
-  "devDependencies": {
-    "@types/node": "^24.3.3",
-    "@types/picomatch": "^4",
-    "cpy-cli": "^4.2.0",
-    "rimraf": "^6.0.1",
-    "vitest": "^3.2.4"
-  }
+  "packageManager": "pnpm@9.11.0",
+  "yalcSig": "b0dc0a16f09563cbdea5392f60fca92f"
 }

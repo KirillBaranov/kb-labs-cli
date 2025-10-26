@@ -1,818 +1,905 @@
 {
-  "ok": true,
-  "plan": {
-    "rootDir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli",
-    "mode": "local",
-    "actions": [
+  "rootDir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli",
+  "mode": "local",
+  "actions": [
+    {
+      "target": "@kb-labs/cli",
+      "dep": "@actions/core",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli",
+      "dep": "@actions/github",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli",
+      "dep": "@kb-labs/devkit",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli",
+      "dep": "@types/node",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli",
+      "dep": "@types/picomatch",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli",
+      "dep": "@vitest/coverage-v8",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli",
+      "dep": "better-sqlite3",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli",
+      "dep": "colorette",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli",
+      "dep": "prettier",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli",
+      "dep": "rimraf",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli",
+      "dep": "tsup",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli",
+      "dep": "typescript",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli",
+      "dep": "vite",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli",
+      "dep": "vitest",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli",
+      "dep": "zod",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-adapters",
+      "dep": "@kb-labs/cli-core",
+      "kind": "link-local",
+      "reason": "mode=local"
+    },
+    {
+      "target": "@kb-labs/cli-adapters",
+      "dep": "@types/node",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-adapters",
+      "dep": "@types/picomatch",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-adapters",
+      "dep": "ajv",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-adapters",
+      "dep": "ajv-formats",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-adapters",
+      "dep": "cpy-cli",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-adapters",
+      "dep": "picomatch",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-adapters",
+      "dep": "rimraf",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-adapters",
+      "dep": "vitest",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-adapters",
+      "dep": "yaml",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-bin",
+      "dep": "@kb-labs/cli-adapters",
+      "kind": "link-local",
+      "reason": "mode=local"
+    },
+    {
+      "target": "@kb-labs/cli-bin",
+      "dep": "@kb-labs/cli-commands",
+      "kind": "link-local",
+      "reason": "mode=local"
+    },
+    {
+      "target": "@kb-labs/cli-bin",
+      "dep": "@kb-labs/cli-core",
+      "kind": "link-local",
+      "reason": "mode=local"
+    },
+    {
+      "target": "@kb-labs/cli-bin",
+      "dep": "@kb-labs/mind-adapters",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-bin",
+      "dep": "@kb-labs/mind-core",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-bin",
+      "dep": "@kb-labs/mind-indexer",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-bin",
+      "dep": "@kb-labs/mind-pack",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-bin",
+      "dep": "rimraf",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-bin",
+      "dep": "tsx",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-bin",
+      "dep": "vitest",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-commands",
+      "dep": "@kb-labs/cli-adapters",
+      "kind": "link-local",
+      "reason": "mode=local"
+    },
+    {
+      "target": "@kb-labs/cli-commands",
+      "dep": "@kb-labs/cli-core",
+      "kind": "link-local",
+      "reason": "mode=local"
+    },
+    {
+      "target": "@kb-labs/cli-commands",
+      "dep": "@kb-labs/core-bundle",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-commands",
+      "dep": "@kb-labs/core-config",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-commands",
+      "dep": "@kb-labs/core-policy",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-commands",
+      "dep": "@kb-labs/core-profiles",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-commands",
+      "dep": "@kb-labs/devlink-core",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-commands",
+      "dep": "@types/node",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-commands",
+      "dep": "@types/picomatch",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-commands",
+      "dep": "cpy-cli",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-commands",
+      "dep": "rimraf",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-commands",
+      "dep": "vitest",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-core",
+      "dep": "@types/node",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-core",
+      "dep": "@types/picomatch",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-core",
+      "dep": "colorette",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-core",
+      "dep": "cpy-cli",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-core",
+      "dep": "rimraf",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-core",
+      "dep": "vitest",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@kb-labs/cli-core",
+      "dep": "zod",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@product-name/demo",
+      "dep": "@typescript-eslint/eslint-plugin",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@product-name/demo",
+      "dep": "@typescript-eslint/parser",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@product-name/demo",
+      "dep": "eslint",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@product-name/demo",
+      "dep": "eslint-config-prettier",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@product-name/demo",
+      "dep": "eslint-plugin-import",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@product-name/demo",
+      "dep": "eslint-plugin-unused-imports",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@product-name/demo",
+      "dep": "typescript",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@product-name/demo",
+      "dep": "vite",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    },
+    {
+      "target": "@product-name/demo",
+      "dep": "vitest",
+      "kind": "use-npm",
+      "reason": "mode=local but provider not local, fallback to npm"
+    }
+  ],
+  "graph": {
+    "nodes": [
+      "@kb-labs/cli",
+      "@kb-labs/cli-adapters",
+      "@kb-labs/cli-bin",
+      "@kb-labs/cli-commands",
+      "@kb-labs/cli-core",
+      "@product-name/demo"
+    ],
+    "edges": [
       {
-        "target": "@kb-labs/cli",
-        "dep": "@actions/core",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "@kb-labs/devkit",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli",
-        "dep": "@actions/github",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "zod",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli",
-        "dep": "@kb-labs/devkit",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "@actions/core",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli",
-        "dep": "@types/node",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "@actions/github",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli",
-        "dep": "@types/picomatch",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "@types/node",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli",
-        "dep": "@vitest/coverage-v8",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "@types/picomatch",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli",
-        "dep": "better-sqlite3",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "@vitest/coverage-v8",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli",
-        "dep": "colorette",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "better-sqlite3",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli",
-        "dep": "prettier",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "colorette",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli",
-        "dep": "rimraf",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "prettier",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli",
-        "dep": "tsup",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "rimraf",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli",
-        "dep": "typescript",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "tsup",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli",
-        "dep": "vite",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "typescript",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli",
-        "dep": "vitest",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "vite",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli",
-        "dep": "zod",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli",
+        "to": "vitest",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli-adapters",
-        "dep": "@kb-labs/cli-core",
-        "kind": "link-local",
-        "reason": "mode=local"
+        "from": "@kb-labs/cli-adapters",
+        "to": "ajv",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-adapters",
-        "dep": "@types/node",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-adapters",
+        "to": "ajv-formats",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-adapters",
-        "dep": "@types/picomatch",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-adapters",
+        "to": "picomatch",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-adapters",
-        "dep": "ajv",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-adapters",
+        "to": "yaml",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-adapters",
-        "dep": "ajv-formats",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-adapters",
+        "to": "@kb-labs/cli-core",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-adapters",
-        "dep": "cpy-cli",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-adapters",
+        "to": "@types/node",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli-adapters",
-        "dep": "picomatch",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-adapters",
+        "to": "@types/picomatch",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli-adapters",
-        "dep": "rimraf",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-adapters",
+        "to": "cpy-cli",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli-adapters",
-        "dep": "vitest",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-adapters",
+        "to": "rimraf",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli-adapters",
-        "dep": "yaml",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-adapters",
+        "to": "vitest",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli-bin",
-        "dep": "@kb-labs/cli-adapters",
-        "kind": "link-local",
-        "reason": "mode=local"
+        "from": "@kb-labs/cli-bin",
+        "to": "@kb-labs/cli-adapters",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-bin",
-        "dep": "@kb-labs/cli-commands",
-        "kind": "link-local",
-        "reason": "mode=local"
+        "from": "@kb-labs/cli-bin",
+        "to": "@kb-labs/cli-commands",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-bin",
-        "dep": "@kb-labs/cli-core",
-        "kind": "link-local",
-        "reason": "mode=local"
+        "from": "@kb-labs/cli-bin",
+        "to": "@kb-labs/cli-core",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-bin",
-        "dep": "rimraf",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-bin",
+        "to": "@kb-labs/mind-core",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-bin",
-        "dep": "tsx",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-bin",
+        "to": "@kb-labs/mind-indexer",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-bin",
-        "dep": "vitest",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-bin",
+        "to": "@kb-labs/mind-pack",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-commands",
-        "dep": "@kb-labs/cli-adapters",
-        "kind": "link-local",
-        "reason": "mode=local"
+        "from": "@kb-labs/cli-bin",
+        "to": "@kb-labs/mind-adapters",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-commands",
-        "dep": "@kb-labs/cli-core",
-        "kind": "link-local",
-        "reason": "mode=local"
+        "from": "@kb-labs/cli-bin",
+        "to": "rimraf",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli-commands",
-        "dep": "@kb-labs/devlink-core",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-bin",
+        "to": "tsx",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli-commands",
-        "dep": "@types/node",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-bin",
+        "to": "vitest",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli-commands",
-        "dep": "@types/picomatch",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-commands",
+        "to": "@kb-labs/cli-core",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-commands",
-        "dep": "cpy-cli",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-commands",
+        "to": "@kb-labs/cli-adapters",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-commands",
-        "dep": "rimraf",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-commands",
+        "to": "@kb-labs/devlink-core",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-commands",
-        "dep": "vitest",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-commands",
+        "to": "@kb-labs/core-bundle",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-core",
-        "dep": "@kb-labs/cli-adapters",
-        "kind": "link-local",
-        "reason": "mode=local"
+        "from": "@kb-labs/cli-commands",
+        "to": "@kb-labs/core-config",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-core",
-        "dep": "@types/node",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-commands",
+        "to": "@kb-labs/core-profiles",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-core",
-        "dep": "@types/picomatch",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-commands",
+        "to": "@kb-labs/core-policy",
+        "type": "dep"
       },
       {
-        "target": "@kb-labs/cli-core",
-        "dep": "cpy-cli",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-commands",
+        "to": "@types/node",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli-core",
-        "dep": "rimraf",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-commands",
+        "to": "@types/picomatch",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli-core",
-        "dep": "vitest",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-commands",
+        "to": "cpy-cli",
+        "type": "dev"
       },
       {
-        "target": "@kb-labs/cli-core",
-        "dep": "zod",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-commands",
+        "to": "rimraf",
+        "type": "dev"
       },
       {
-        "target": "@product-name/demo",
-        "dep": "@typescript-eslint/eslint-plugin",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-commands",
+        "to": "vitest",
+        "type": "dev"
       },
       {
-        "target": "@product-name/demo",
-        "dep": "@typescript-eslint/parser",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-core",
+        "to": "colorette",
+        "type": "dep"
       },
       {
-        "target": "@product-name/demo",
-        "dep": "eslint",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-core",
+        "to": "zod",
+        "type": "dep"
       },
       {
-        "target": "@product-name/demo",
-        "dep": "eslint-config-prettier",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-core",
+        "to": "@types/node",
+        "type": "dev"
       },
       {
-        "target": "@product-name/demo",
-        "dep": "eslint-plugin-import",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-core",
+        "to": "@types/picomatch",
+        "type": "dev"
       },
       {
-        "target": "@product-name/demo",
-        "dep": "eslint-plugin-unused-imports",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-core",
+        "to": "cpy-cli",
+        "type": "dev"
       },
       {
-        "target": "@product-name/demo",
-        "dep": "typescript",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-core",
+        "to": "rimraf",
+        "type": "dev"
       },
       {
-        "target": "@product-name/demo",
-        "dep": "vite",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@kb-labs/cli-core",
+        "to": "vitest",
+        "type": "dev"
       },
       {
-        "target": "@product-name/demo",
-        "dep": "vitest",
-        "kind": "use-npm",
-        "reason": "mode=local but provider not local, fallback to npm"
+        "from": "@product-name/demo",
+        "to": "@typescript-eslint/eslint-plugin",
+        "type": "dev"
+      },
+      {
+        "from": "@product-name/demo",
+        "to": "@typescript-eslint/parser",
+        "type": "dev"
+      },
+      {
+        "from": "@product-name/demo",
+        "to": "eslint",
+        "type": "dev"
+      },
+      {
+        "from": "@product-name/demo",
+        "to": "eslint-config-prettier",
+        "type": "dev"
+      },
+      {
+        "from": "@product-name/demo",
+        "to": "eslint-plugin-import",
+        "type": "dev"
+      },
+      {
+        "from": "@product-name/demo",
+        "to": "eslint-plugin-unused-imports",
+        "type": "dev"
+      },
+      {
+        "from": "@product-name/demo",
+        "to": "typescript",
+        "type": "dev"
+      },
+      {
+        "from": "@product-name/demo",
+        "to": "vite",
+        "type": "dev"
+      },
+      {
+        "from": "@product-name/demo",
+        "to": "vitest",
+        "type": "dev"
       }
     ],
-    "graph": {
-      "nodes": [
-        "@kb-labs/cli",
-        "@kb-labs/cli-adapters",
-        "@kb-labs/cli-bin",
-        "@kb-labs/cli-commands",
-        "@kb-labs/cli-core",
-        "@product-name/demo"
-      ],
-      "edges": [
-        {
-          "from": "@kb-labs/cli",
-          "to": "@kb-labs/devkit",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli",
-          "to": "zod",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli",
-          "to": "@actions/core",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli",
-          "to": "@actions/github",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli",
-          "to": "@types/node",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli",
-          "to": "@types/picomatch",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli",
-          "to": "@vitest/coverage-v8",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli",
-          "to": "better-sqlite3",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli",
-          "to": "colorette",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli",
-          "to": "prettier",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli",
-          "to": "rimraf",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli",
-          "to": "tsup",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli",
-          "to": "typescript",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli",
-          "to": "vite",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli",
-          "to": "vitest",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-adapters",
-          "to": "ajv",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli-adapters",
-          "to": "ajv-formats",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli-adapters",
-          "to": "picomatch",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli-adapters",
-          "to": "yaml",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli-adapters",
-          "to": "@kb-labs/cli-core",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli-adapters",
-          "to": "@types/node",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-adapters",
-          "to": "@types/picomatch",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-adapters",
-          "to": "cpy-cli",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-adapters",
-          "to": "rimraf",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-adapters",
-          "to": "vitest",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-bin",
-          "to": "@kb-labs/cli-adapters",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli-bin",
-          "to": "@kb-labs/cli-commands",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli-bin",
-          "to": "@kb-labs/cli-core",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli-bin",
-          "to": "rimraf",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-bin",
-          "to": "tsx",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-bin",
-          "to": "vitest",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-commands",
-          "to": "@kb-labs/cli-core",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli-commands",
-          "to": "@kb-labs/cli-adapters",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli-commands",
-          "to": "@kb-labs/devlink-core",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli-commands",
-          "to": "@types/node",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-commands",
-          "to": "@types/picomatch",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-commands",
-          "to": "cpy-cli",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-commands",
-          "to": "rimraf",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-commands",
-          "to": "vitest",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-core",
-          "to": "@kb-labs/cli-adapters",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli-core",
-          "to": "zod",
-          "type": "dep"
-        },
-        {
-          "from": "@kb-labs/cli-core",
-          "to": "@types/node",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-core",
-          "to": "@types/picomatch",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-core",
-          "to": "cpy-cli",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-core",
-          "to": "rimraf",
-          "type": "dev"
-        },
-        {
-          "from": "@kb-labs/cli-core",
-          "to": "vitest",
-          "type": "dev"
-        },
-        {
-          "from": "@product-name/demo",
-          "to": "@typescript-eslint/eslint-plugin",
-          "type": "dev"
-        },
-        {
-          "from": "@product-name/demo",
-          "to": "@typescript-eslint/parser",
-          "type": "dev"
-        },
-        {
-          "from": "@product-name/demo",
-          "to": "eslint",
-          "type": "dev"
-        },
-        {
-          "from": "@product-name/demo",
-          "to": "eslint-config-prettier",
-          "type": "dev"
-        },
-        {
-          "from": "@product-name/demo",
-          "to": "eslint-plugin-import",
-          "type": "dev"
-        },
-        {
-          "from": "@product-name/demo",
-          "to": "eslint-plugin-unused-imports",
-          "type": "dev"
-        },
-        {
-          "from": "@product-name/demo",
-          "to": "typescript",
-          "type": "dev"
-        },
-        {
-          "from": "@product-name/demo",
-          "to": "vite",
-          "type": "dev"
-        },
-        {
-          "from": "@product-name/demo",
-          "to": "vitest",
-          "type": "dev"
-        }
-      ],
-      "cycles": [
-        [
-          "@kb-labs/cli-adapters",
-          "@kb-labs/cli-core"
-        ]
-      ],
-      "topological": [
-        "@kb-labs/cli",
-        "@kb-labs/cli-bin",
-        "@product-name/demo",
-        "@kb-labs/devkit",
-        "@actions/core",
-        "@actions/github",
-        "@vitest/coverage-v8",
-        "better-sqlite3",
-        "colorette",
-        "prettier",
-        "tsup",
-        "@kb-labs/cli-commands",
-        "tsx",
-        "@typescript-eslint/eslint-plugin",
-        "@typescript-eslint/parser",
-        "eslint",
-        "eslint-config-prettier",
-        "eslint-plugin-import",
-        "eslint-plugin-unused-imports",
-        "typescript",
-        "vite",
-        "@kb-labs/devlink-core"
-      ]
-    },
-    "index": {
-      "rootDir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli",
-      "packages": {
-        "@kb-labs/cli": {
-          "manifest": {},
+    "cycles": [],
+    "topological": [
+      "@kb-labs/cli",
+      "@kb-labs/cli-bin",
+      "@product-name/demo",
+      "@kb-labs/devkit",
+      "@actions/core",
+      "@actions/github",
+      "@vitest/coverage-v8",
+      "better-sqlite3",
+      "prettier",
+      "tsup",
+      "@kb-labs/cli-commands",
+      "@kb-labs/mind-core",
+      "@kb-labs/mind-indexer",
+      "@kb-labs/mind-pack",
+      "@kb-labs/mind-adapters",
+      "tsx",
+      "@typescript-eslint/eslint-plugin",
+      "@typescript-eslint/parser",
+      "eslint",
+      "eslint-config-prettier",
+      "eslint-plugin-import",
+      "eslint-plugin-unused-imports",
+      "typescript",
+      "vite",
+      "@kb-labs/cli-adapters",
+      "@kb-labs/devlink-core",
+      "@kb-labs/core-bundle",
+      "@kb-labs/core-config",
+      "@kb-labs/core-profiles",
+      "@kb-labs/core-policy",
+      "ajv",
+      "ajv-formats",
+      "picomatch",
+      "yaml",
+      "@kb-labs/cli-core",
+      "colorette",
+      "zod",
+      "@types/node",
+      "@types/picomatch",
+      "cpy-cli",
+      "rimraf",
+      "vitest"
+    ]
+  },
+  "index": {
+    "rootDir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli",
+    "packages": {
+      "@kb-labs/cli": {
+        "manifest": {},
+        "name": "@kb-labs/cli",
+        "version": "0.1.0",
+        "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli",
+        "private": true,
+        "pkg": {
           "name": "@kb-labs/cli",
-          "version": "0.1.0",
-          "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli",
-          "private": true,
-          "pkg": {
-            "name": "@kb-labs/cli",
-            "version": "0.1.0"
-          }
-        },
-        "@kb-labs/cli-adapters": {
-          "manifest": {},
-          "name": "@kb-labs/cli-adapters",
-          "version": "0.1.0",
-          "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/adapters",
-          "private": true,
-          "pkg": {
-            "name": "@kb-labs/cli-adapters",
-            "version": "0.1.0"
-          }
-        },
-        "@kb-labs/cli-bin": {
-          "manifest": {},
-          "name": "@kb-labs/cli-bin",
-          "version": "0.1.0",
-          "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/cli",
-          "private": true,
-          "pkg": {
-            "name": "@kb-labs/cli-bin",
-            "version": "0.1.0"
-          }
-        },
-        "@kb-labs/cli-commands": {
-          "manifest": {},
-          "name": "@kb-labs/cli-commands",
-          "version": "0.1.0",
-          "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/commands",
-          "private": true,
-          "pkg": {
-            "name": "@kb-labs/cli-commands",
-            "version": "0.1.0"
-          }
-        },
-        "@kb-labs/cli-core": {
-          "manifest": {},
-          "name": "@kb-labs/cli-core",
-          "version": "0.1.0",
-          "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/core",
-          "private": true,
-          "pkg": {
-            "name": "@kb-labs/cli-core",
-            "version": "0.1.0"
-          }
-        },
-        "@product-name/demo": {
-          "manifest": {},
-          "name": "@product-name/demo",
-          "version": "0.1.0",
-          "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/apps/demo",
-          "private": true,
-          "pkg": {
-            "name": "@product-name/demo",
-            "version": "0.1.0"
-          }
+          "version": "0.1.0"
         }
       },
-      "byDir": {
-        "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli": {
-          "manifest": {},
-          "name": "@kb-labs/cli",
-          "version": "0.1.0",
-          "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli",
-          "private": true,
-          "pkg": {
-            "name": "@kb-labs/cli",
-            "version": "0.1.0"
-          }
-        },
-        "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/adapters": {
-          "manifest": {},
+      "@kb-labs/cli-adapters": {
+        "manifest": {},
+        "name": "@kb-labs/cli-adapters",
+        "version": "0.1.0",
+        "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/adapters",
+        "private": true,
+        "pkg": {
           "name": "@kb-labs/cli-adapters",
-          "version": "0.1.0",
-          "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/adapters",
-          "private": true,
-          "pkg": {
-            "name": "@kb-labs/cli-adapters",
-            "version": "0.1.0"
-          }
-        },
-        "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/cli": {
-          "manifest": {},
+          "version": "0.1.0"
+        }
+      },
+      "@kb-labs/cli-bin": {
+        "manifest": {},
+        "name": "@kb-labs/cli-bin",
+        "version": "0.1.0",
+        "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/cli",
+        "private": true,
+        "pkg": {
           "name": "@kb-labs/cli-bin",
-          "version": "0.1.0",
-          "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/cli",
-          "private": true,
-          "pkg": {
-            "name": "@kb-labs/cli-bin",
-            "version": "0.1.0"
-          }
-        },
-        "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/commands": {
-          "manifest": {},
+          "version": "0.1.0"
+        }
+      },
+      "@kb-labs/cli-commands": {
+        "manifest": {},
+        "name": "@kb-labs/cli-commands",
+        "version": "0.1.0",
+        "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/commands",
+        "private": true,
+        "pkg": {
           "name": "@kb-labs/cli-commands",
-          "version": "0.1.0",
-          "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/commands",
-          "private": true,
-          "pkg": {
-            "name": "@kb-labs/cli-commands",
-            "version": "0.1.0"
-          }
-        },
-        "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/core": {
-          "manifest": {},
+          "version": "0.1.0"
+        }
+      },
+      "@kb-labs/cli-core": {
+        "manifest": {},
+        "name": "@kb-labs/cli-core",
+        "version": "0.1.0",
+        "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/core",
+        "private": true,
+        "pkg": {
           "name": "@kb-labs/cli-core",
-          "version": "0.1.0",
-          "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/core",
-          "private": true,
-          "pkg": {
-            "name": "@kb-labs/cli-core",
-            "version": "0.1.0"
-          }
-        },
-        "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/apps/demo": {
-          "manifest": {},
+          "version": "0.1.0"
+        }
+      },
+      "@product-name/demo": {
+        "manifest": {},
+        "name": "@product-name/demo",
+        "version": "0.1.0",
+        "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/apps/demo",
+        "private": true,
+        "pkg": {
           "name": "@product-name/demo",
-          "version": "0.1.0",
-          "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/apps/demo",
-          "private": true,
-          "pkg": {
-            "name": "@product-name/demo",
-            "version": "0.1.0"
-          }
+          "version": "0.1.0"
         }
       }
     },
-    "policy": {
-      "allow": [],
-      "deny": [],
-      "forceLocal": [],
-      "forceNpm": [],
-      "pin": "caret",
-      "prerelease": "allow",
-      "upgrade": "none"
-    },
-    "diagnostics": [
-      "Dependency cycles detected: 1 cycle(s)"
-    ]
+    "byDir": {
+      "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli": {
+        "manifest": {},
+        "name": "@kb-labs/cli",
+        "version": "0.1.0",
+        "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli",
+        "private": true,
+        "pkg": {
+          "name": "@kb-labs/cli",
+          "version": "0.1.0"
+        }
+      },
+      "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/adapters": {
+        "manifest": {},
+        "name": "@kb-labs/cli-adapters",
+        "version": "0.1.0",
+        "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/adapters",
+        "private": true,
+        "pkg": {
+          "name": "@kb-labs/cli-adapters",
+          "version": "0.1.0"
+        }
+      },
+      "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/cli": {
+        "manifest": {},
+        "name": "@kb-labs/cli-bin",
+        "version": "0.1.0",
+        "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/cli",
+        "private": true,
+        "pkg": {
+          "name": "@kb-labs/cli-bin",
+          "version": "0.1.0"
+        }
+      },
+      "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/commands": {
+        "manifest": {},
+        "name": "@kb-labs/cli-commands",
+        "version": "0.1.0",
+        "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/commands",
+        "private": true,
+        "pkg": {
+          "name": "@kb-labs/cli-commands",
+          "version": "0.1.0"
+        }
+      },
+      "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/core": {
+        "manifest": {},
+        "name": "@kb-labs/cli-core",
+        "version": "0.1.0",
+        "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/core",
+        "private": true,
+        "pkg": {
+          "name": "@kb-labs/cli-core",
+          "version": "0.1.0"
+        }
+      },
+      "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/apps/demo": {
+        "manifest": {},
+        "name": "@product-name/demo",
+        "version": "0.1.0",
+        "dir": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/apps/demo",
+        "private": true,
+        "pkg": {
+          "name": "@product-name/demo",
+          "version": "0.1.0"
+        }
+      }
+    }
   },
-  "diagnostics": [
-    "Dependency cycles detected: 1 cycle(s)",
-    "Dependency cycles detected: 1 cycle(s)"
-  ],
-  "timings": {
-    "discovery": 3,
-    "graph": 0,
-    "policy": 0,
-    "plan": 8,
-    "total": 13
-  }
+  "policy": {
+    "allow": [],
+    "deny": [],
+    "forceLocal": [],
+    "forceNpm": [],
+    "pin": "caret",
+    "prerelease": "allow",
+    "upgrade": "none"
+  },
+  "diagnostics": []
 }

@@ -22,9 +22,14 @@ export async function runCommand(
   argv: string[],
   flags: Record<string, any>
 ): Promise<number> {
+  // LAZY EVALUATION PIPELINE:
+  // Stage 1: Check availability (resolve only, no imports)
+  // Stage 2: Load command module (actual import happens here)
+  // Stage 3: Execute command
+  
   // Check availability
   if (!cmd.available) {
-    // JSON mode: structured response
+    // JSON mode: structured response with exact spec format
     if (flags.json) {
       ctx.presenter.json({
         ok: false,
@@ -49,7 +54,7 @@ export async function runCommand(
     return 2;
   }
   
-  // Load command module
+  // Stage 2: Load command module (actual import happens here)
   let mod: any;
   try {
     mod = await cmd.manifest.loader();
@@ -72,7 +77,7 @@ export async function runCommand(
     }
   }
   
-  // Execute command
+  // Stage 3: Execute command
   try {
     const result = await mod.run(ctx, argv, allFlags);
     return typeof result === 'number' ? result : 0;

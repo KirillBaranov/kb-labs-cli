@@ -57,12 +57,20 @@ export interface GlobalFlags {
   version?: boolean;
 }
 
+export interface PackageCacheEntry {
+  version: string;           // From package.json
+  manifestHash: string;      // SHA256 of manifest file
+  manifestPath: string;
+  pkgJsonMtime: number;
+  manifestMtime: number;
+  result: DiscoveryResult;
+}
+
 export interface CacheFile {
   version: string;           // Node version
   cliVersion: string;        // CLI version
   timestamp: number;
-  mtimes: Record<string, number>;
-  results: DiscoveryResult[];
+  packages: Record<string, PackageCacheEntry>;  // Changed from flat structure
 }
 
 export type AvailabilityCheck = 

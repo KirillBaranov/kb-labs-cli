@@ -6,14 +6,29 @@
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { promises as fs } from 'node:fs';
+import { statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { glob } from 'glob';
-import type { CommandManifest, DiscoveryResult, CacheFile } from './types.js';
+import type { CommandManifest, DiscoveryResult, CacheFile, PackageCacheEntry } from './types.js';
 import { log } from '../utils/logger.js';
 import { toPosixPath } from '../utils/path.js';
 
-const MANIFEST_LOAD_TIMEOUT = 1500; // ms
+// Constants
+const MANIFEST_LOAD_TIMEOUT = 1500; // 1.5 seconds
+
+/**
+ * Compute SHA256 hash of manifest file content
+ */
+async function computeManifestHash(manifestPath: string): Promise<string> {
+  try {
+    const content = await fs.readFile(manifestPath, 'utf8');
+    return createHash('sha256').update(content).digest('hex');
+  } catch {
+    return 'unknown';
+  }
+}
 
 /**
  * Load manifest with timeout protection
@@ -100,7 +115,7 @@ function validateUniqueIds(manifests: CommandManifest[], pkgName: string): void 
 }
 
 /**
- * Discover commands from workspace packages
+ * Discover commands from workspace packages with parallel loading
  */
 async function discoverWorkspace(cwd: string): Promise<DiscoveryResult[]> {
   const workspaceYaml = path.join(cwd, 'pnpm-workspace.yaml');
@@ -111,10 +126,15 @@ async function discoverWorkspace(cwd: string): Promise<DiscoveryResult[]> {
     throw new Error('Invalid pnpm-workspace.yaml: missing packages array');
   }
   
-  const results: DiscoveryResult[] = [];
+  // First pass: collect all package info
+  const packageInfos: Array<{pkgRoot: string, pkg: any, manifestPath: string}> = [];
   
   for (const pattern of parsed.packages) {
-    const pkgDirs = await glob(pattern, { cwd, absolute: false });
+    const pkgDirs = await glob(pattern, { 
+      cwd, 
+      absolute: false,
+      ignore: ['.kb/**', 'node_modules/**', '**/node_modules/**'] // Ignore .kb, node_modules
+    });
     
     for (const dir of pkgDirs) {
       const pkgRoot = path.join(cwd, dir);
@@ -122,28 +142,53 @@ async function discoverWorkspace(cwd: string): Promise<DiscoveryResult[]> {
       
       if (pkg?.kb?.commandsManifest) {
         const manifestPath = path.join(pkgRoot, pkg.kb.commandsManifest);
-        try {
-          const manifests = await loadManifestWithTimeout(manifestPath, pkg.name);
-          if (manifests.length > 0) {
-            validateUniqueIds(manifests, pkg.name);
-            results.push({
-              manifests,
-              source: 'workspace',
-              packageName: pkg.name,
-              manifestPath: toPosixPath(manifestPath),
-              pkgRoot: toPosixPath(pkgRoot),
-            });
-          }
-        } catch (err: any) {
-          // Skip if cannot require ES Module - this happens when trying to require() an ESM file
-          // The manifest will be loaded as an ESM module in a normal workflow
-          if (err.message.includes('Cannot require() ES Module')) {
-            log('debug', `Skipping ESM manifest from ${pkg.name}: ${err.message}`);
-          } else {
-            log('warn', `Failed to load manifest from ${pkg.name}: ${err.message}`);
-          }
-        }
+        packageInfos.push({ pkgRoot, pkg, manifestPath });
       }
+    }
+  }
+  
+  // Second pass: load all manifests in parallel
+  const loadPromises = packageInfos.map(async ({ pkgRoot, pkg, manifestPath }) => {
+    try {
+      const manifests = await loadManifestWithTimeout(manifestPath, pkg.name);
+      if (manifests.length > 0) {
+        validateUniqueIds(manifests, pkg.name);
+        return {
+          manifests,
+          source: 'workspace' as const,
+          packageName: pkg.name,
+          manifestPath: toPosixPath(manifestPath),
+          pkgRoot: toPosixPath(pkgRoot),
+        };
+      }
+      return null;
+    } catch (err: any) {
+      // Skip if cannot require ES Module - this happens when trying to require() an ESM file
+      // The manifest will be loaded as an ESM module in a normal workflow
+      if (err.message.includes('Cannot require() ES Module')) {
+        log('debug', `Skipping ESM manifest from ${pkg.name}: ${err.message}`);
+      } else {
+        log('warn', JSON.stringify({
+          code: 'DISCOVERY_MANIFEST_LOAD_FAIL',
+          packageName: pkg.name,
+          manifestPath: toPosixPath(manifestPath),
+          errorCode: err.code || 'UNKNOWN',
+          errorMessage: err.message,
+          hint: err.message.includes('Cannot find package') 
+            ? 'Run: kb devlink apply && pnpm -w build'
+            : 'Check manifest syntax and dependencies'
+        }));
+      }
+      return null;
+    }
+  });
+  
+  const settledResults = await Promise.allSettled(loadPromises);
+  const results: DiscoveryResult[] = [];
+  
+  for (const settled of settledResults) {
+    if (settled.status === 'fulfilled' && settled.value) {
+      results.push(settled.value);
     }
   }
   
@@ -177,14 +222,16 @@ async function discoverCurrentPackage(cwd: string): Promise<DiscoveryResult | nu
 }
 
 /**
- * Discover commands from node_modules/@kb-labs/*
+ * Discover commands from node_modules/@kb-labs/* with parallel loading
  */
 async function discoverNodeModules(cwd: string): Promise<DiscoveryResult[]> {
   const nmDir = path.join(cwd, 'node_modules', '@kb-labs');
   
   try {
     const dirs = await fs.readdir(nmDir, { withFileTypes: true });
-    const results: DiscoveryResult[] = [];
+    
+    // First pass: collect all package info
+    const packageInfos: Array<{pkgRoot: string, pkg: any, manifestPath: string}> = [];
     
     for (const dir of dirs.filter(d => d.isDirectory())) {
       const pkgRoot = path.join(nmDir, dir.name);
@@ -192,21 +239,46 @@ async function discoverNodeModules(cwd: string): Promise<DiscoveryResult[]> {
       
       if (pkg?.kb?.commandsManifest) {
         const manifestPath = path.join(pkgRoot, pkg.kb.commandsManifest);
-        try {
-          const manifests = await loadManifestWithTimeout(manifestPath, pkg.name);
-          if (manifests.length > 0) {
-            validateUniqueIds(manifests, pkg.name);
-            results.push({
-              manifests,
-              source: 'node_modules',
-              packageName: pkg.name,
-              manifestPath: toPosixPath(manifestPath),
-              pkgRoot: toPosixPath(pkgRoot),
-            });
-          }
-        } catch (err: any) {
-          log('warn', `Failed to load manifest from ${pkg.name}: ${err.message}`);
+        packageInfos.push({ pkgRoot, pkg, manifestPath });
+      }
+    }
+    
+    // Second pass: load all manifests in parallel
+    const loadPromises = packageInfos.map(async ({ pkgRoot, pkg, manifestPath }) => {
+      try {
+        const manifests = await loadManifestWithTimeout(manifestPath, pkg.name);
+        if (manifests.length > 0) {
+          validateUniqueIds(manifests, pkg.name);
+          return {
+            manifests,
+            source: 'node_modules' as const,
+            packageName: pkg.name,
+            manifestPath: toPosixPath(manifestPath),
+            pkgRoot: toPosixPath(pkgRoot),
+          };
         }
+        return null;
+      } catch (err: any) {
+        log('warn', JSON.stringify({
+          code: 'DISCOVERY_MANIFEST_LOAD_FAIL',
+          packageName: pkg.name,
+          manifestPath: toPosixPath(manifestPath),
+          errorCode: err.code || 'UNKNOWN',
+          errorMessage: err.message,
+          hint: err.message.includes('Cannot find package') 
+            ? 'Run: kb devlink apply && pnpm -w build'
+            : 'Check manifest syntax and dependencies'
+        }));
+        return null;
+      }
+    });
+    
+    const settledResults = await Promise.allSettled(loadPromises);
+    const results: DiscoveryResult[] = [];
+    
+    for (const settled of settledResults) {
+      if (settled.status === 'fulfilled' && settled.value) {
+        results.push(settled.value);
       }
     }
     
@@ -218,25 +290,23 @@ async function discoverNodeModules(cwd: string): Promise<DiscoveryResult[]> {
 
 /**
  * Deduplicate manifests (workspace > node_modules)
+ * Also deduplicate by package path to avoid duplicate workspace packages
  */
 function deduplicateManifests(all: DiscoveryResult[]): DiscoveryResult[] {
-  const byId = new Map<string, DiscoveryResult>();
+  const byPackageName = new Map<string, DiscoveryResult>();
   
+  // First, deduplicate by package name (keeping only one version of each package)
   for (const result of all) {
-    for (const manifest of result.manifests) {
-      const existing = byId.get(manifest.id);
-      if (existing) {
-        // Workspace wins over node_modules
-        if (result.source === 'workspace' && existing.source === 'node_modules') {
-          byId.set(manifest.id, result);
-        }
-      } else {
-        byId.set(manifest.id, result);
-      }
+    const existing = byPackageName.get(result.packageName);
+    if (!existing) {
+      byPackageName.set(result.packageName, result);
+    } else if (result.source === 'workspace' && existing.source !== 'workspace') {
+      // Workspace wins over node_modules
+      byPackageName.set(result.packageName, result);
     }
   }
   
-  return Array.from(byId.values());
+  return Array.from(byPackageName.values());
 }
 
 /**
@@ -247,7 +317,19 @@ async function loadCache(cwd: string): Promise<CacheFile | null> {
   
   try {
     const content = await fs.readFile(cachePath, 'utf8');
-    const cache = JSON.parse(content) as CacheFile;
+    const cache = JSON.parse(content) as any;
+    
+    // Handle old cache format (with mtimes and results)
+    if (cache.mtimes && cache.results) {
+      log('debug', 'Old cache format detected, ignoring');
+      return null;
+    }
+    
+    // Validate new cache format
+    if (!cache.packages) {
+      log('debug', 'Invalid cache format, ignoring');
+      return null;
+    }
     
     // Validate version compatibility
     if (cache.version !== process.version) {
@@ -261,84 +343,71 @@ async function loadCache(cwd: string): Promise<CacheFile | null> {
       return null;
     }
     
-    return cache;
+    return cache as CacheFile;
   } catch {
     return null; // Cache doesn't exist or is corrupt
   }
 }
 
 /**
- * Check if cache is stale
+ * Check if cache is stale for a specific package
  */
-function isCacheStale(cache: CacheFile, cwd: string): boolean {
+function isPackageCacheStale(entry: PackageCacheEntry): boolean {
   const now = Date.now();
   
-  // TTL: 60 seconds
-  if (now - cache.timestamp > 60_000) {
-    log('debug', 'Cache expired (TTL)');
+  // TTL: 60 seconds (skip TTL check for builtin commands)
+  const cacheAge = entry.result.source === 'builtin' ? 0 : now - entry.pkgJsonMtime;
+  if (cacheAge > 60_000) {
+    log('debug', 'Package cache expired (TTL)');
     return true;
   }
   
-  // Check all tracked files
-  for (const [filePath, oldMtime] of Object.entries(cache.mtimes)) {
-    try {
-      const stat = fs.statSync(filePath);
-      if (stat.mtimeMs > oldMtime) {
-        log('debug', `Cache invalidated: ${filePath} changed`);
-        return true;
-      }
-    } catch {
-      log('debug', `Cache invalidated: ${filePath} deleted`);
+  // Check manifest file mtime
+  try {
+    const stat = statSync(entry.manifestPath);
+    if (stat.mtimeMs > entry.manifestMtime) {
+      log('debug', `Package cache invalidated: ${entry.manifestPath} changed`);
       return true;
     }
+  } catch {
+    log('debug', `Package cache invalidated: ${entry.manifestPath} deleted`);
+    return true;
   }
   
   return false;
 }
 
 /**
- * Save cache file
+ * Save cache file with per-package structure
  */
 async function saveCache(cwd: string, results: DiscoveryResult[]): Promise<void> {
   const cachePath = path.join(cwd, '.kb', 'cache', 'cli-manifests.json');
   await fs.mkdir(path.dirname(cachePath), { recursive: true });
   
-  const mtimes: Record<string, number> = {};
+  const packages: Record<string, PackageCacheEntry> = {};
   
-  // Track workspace file
-  const workspaceYaml = path.join(cwd, 'pnpm-workspace.yaml');
-  try {
-    const stat = await fs.stat(workspaceYaml);
-    mtimes[toPosixPath(workspaceYaml)] = stat.mtimeMs;
-  } catch {}
-  
-  // Track root package.json
-  const rootPkg = path.join(cwd, 'package.json');
-  try {
-    const stat = await fs.stat(rootPkg);
-    mtimes[toPosixPath(rootPkg)] = stat.mtimeMs;
-  } catch {}
-  
-  // Track pnpm modules metadata
-  const pnpmModules = path.join(cwd, 'node_modules', '.modules.yaml');
-  try {
-    const stat = await fs.stat(pnpmModules);
-    mtimes[toPosixPath(pnpmModules)] = stat.mtimeMs;
-  } catch {}
-  
-  // Track each manifest and package.json
+  // Process each result into package cache entries
   for (const result of results) {
     try {
-      // Convert back to native path for fs operations
-      const nativeManifestPath = result.manifestPath.split('/').join(path.sep);
-      const stat = await fs.stat(nativeManifestPath);
-      mtimes[result.manifestPath] = stat.mtimeMs;
+      const manifestHash = await computeManifestHash(result.manifestPath);
       
+      // Get package.json mtime
       const pkgJsonPath = path.join(result.pkgRoot.split('/').join(path.sep), 'package.json');
       const pkgStat = await fs.stat(pkgJsonPath);
-      mtimes[toPosixPath(pkgJsonPath)] = pkgStat.mtimeMs;
+      
+      // Get manifest mtime
+      const manifestStat = await fs.stat(result.manifestPath.split('/').join(path.sep));
+      
+      packages[result.packageName] = {
+        version: '0.1.0', // TODO: Extract from package.json
+        manifestHash,
+        manifestPath: result.manifestPath,
+        pkgJsonMtime: pkgStat.mtimeMs,
+        manifestMtime: manifestStat.mtimeMs,
+        result,
+      };
     } catch (err: any) {
-      log('debug', `Failed to track mtime for ${result.manifestPath}: ${err.message}`);
+      log('debug', `Failed to cache package ${result.packageName}: ${err.message}`);
     }
   }
   
@@ -346,8 +415,7 @@ async function saveCache(cwd: string, results: DiscoveryResult[]): Promise<void>
     version: process.version,
     cliVersion: process.env.CLI_VERSION || '0.1.0',
     timestamp: Date.now(),
-    mtimes,
-    results,
+    packages,
   };
   
   try {
@@ -365,9 +433,18 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
   // Check cache first
   if (!noCache) {
     const cached = await loadCache(cwd);
-    if (cached && !isCacheStale(cached, cwd)) {
+    if (cached) {
       log('debug', 'Using cached manifests');
-      return cached.results;
+      // Filter out stale packages and return fresh ones
+      const freshResults: DiscoveryResult[] = [];
+      for (const [pkgName, entry] of Object.entries(cached.packages)) {
+        if (!isPackageCacheStale(entry)) {
+          freshResults.push(entry.result);
+        }
+      }
+      if (freshResults.length > 0) {
+        return freshResults;
+      }
     }
   }
   

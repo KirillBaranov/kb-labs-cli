@@ -206,11 +206,14 @@ export function renderGlobalHelpNew(registry: any): string {
       'init': '🚀',
     };
     
+    // Calculate max product name length for alignment
+    const maxProductNameLength = Math.max(...products.map((p: ProductGroup) => p.name.length), 12);
+    
     for (const product of products.sort((a: ProductGroup, b: ProductGroup) => a.name.localeCompare(b.name))) {
       const emoji = emojiMap[product.name] || '📦';
       const availableCount = product.commands.filter((c: RegisteredCommand) => c.available && !c.shadowed).length;
       const badge = availableCount > 0 ? colors.green(`✓ ${availableCount}`) : colors.dim("0");
-      lines.push(`  ${emoji} ${colors.cyan(product.name.padEnd(12))}  ${colors.dim(product.describe || product.name)}  ${badge}`);
+      lines.push(`  ${emoji} ${colors.cyan(product.name.padEnd(maxProductNameLength))}  ${colors.dim(product.describe || product.name)}  ${badge}`);
     }
     lines.push("");
   }
@@ -220,8 +223,11 @@ export function renderGlobalHelpNew(registry: any): string {
     lines.push(colors.bold("⚙️  System Commands:"));
     lines.push("");
     
+    // Calculate max command name length for alignment
+    const maxCommandNameLength = Math.max(...standalone.map((c: Command) => c.name.length), 12);
+    
     for (const cmd of standalone.sort((a: Command, b: Command) => a.name.localeCompare(b.name))) {
-      lines.push(`  ${colors.cyan(cmd.name.padEnd(12))}  ${colors.dim(cmd.describe)}`);
+      lines.push(`  ${colors.cyan(cmd.name.padEnd(maxCommandNameLength))}  ${colors.dim(cmd.describe)}`);
     }
     lines.push("");
   }
@@ -229,10 +235,20 @@ export function renderGlobalHelpNew(registry: any): string {
   // Show global options
   lines.push(colors.bold("Global Options:"));
   lines.push("");
-  lines.push(`  ${colors.cyan("--help".padEnd(12))}  ${colors.dim("Show help information")}`);
-  lines.push(`  ${colors.cyan("--version".padEnd(12))}  ${colors.dim("Show CLI version")}`);
-  lines.push(`  ${colors.cyan("--json".padEnd(12))}  ${colors.dim("Output in JSON format")}`);
-  lines.push(`  ${colors.cyan("--quiet".padEnd(12))}  ${colors.dim("Suppress detailed output")}`);
+  
+  const globalOptions = [
+    { name: "--help", desc: "Show help information" },
+    { name: "--version", desc: "Show CLI version" },
+    { name: "--json", desc: "Output in JSON format" },
+    { name: "--quiet", desc: "Suppress detailed output" }
+  ];
+  
+  // Calculate max option name length for alignment
+  const maxOptionNameLength = Math.max(...globalOptions.map(o => o.name.length), 12);
+  
+  for (const option of globalOptions) {
+    lines.push(`  ${colors.cyan(option.name.padEnd(maxOptionNameLength))}  ${colors.dim(option.desc)}`);
+  }
   lines.push("");
   
   // Next Steps

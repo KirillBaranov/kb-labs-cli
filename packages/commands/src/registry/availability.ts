@@ -1,6 +1,8 @@
 /**
  * @kb-labs/cli-commands/registry
  * Dependency availability checking with ESM support
+ * 
+ * IMPORTANT: Only resolve, never import() - imports happen in loader()
  */
 
 import { createRequire } from 'node:module';
@@ -19,6 +21,7 @@ const __dirname = path.dirname(__filename);
 /**
  * Resolve a package from a specific directory
  * Uses paths option to search from cwd, not from CLI package
+ * IMPORTANT: Only resolve, never import() - imports happen in loader()
  */
 function resolveFromCwd(spec: string, cwd: string): string {
   // Try resolving from multiple locations
