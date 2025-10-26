@@ -437,7 +437,7 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
       log('debug', 'Using cached manifests');
       // Filter out stale packages and return fresh ones
       const freshResults: DiscoveryResult[] = [];
-      for (const [pkgName, entry] of Object.entries(cached.packages)) {
+      for (const [_pkgName, entry] of Object.entries(cached.packages)) {
         if (!isPackageCacheStale(entry)) {
           freshResults.push(entry.result);
         }
@@ -453,7 +453,7 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
   try {
     workspace = await discoverWorkspace(cwd);
     log('info', `Discovered ${workspace.length} workspace packages with CLI manifests`);
-  } catch (err: any) {
+  } catch (_err: any) {
     // No pnpm-workspace.yaml - fallback to current package + node_modules
     log('info', 'No workspace file found, checking current package');
     

@@ -33,7 +33,7 @@ function manifestToCommand(registered: RegisteredCommand): Command {
           return 2;
         }
         ctx.presenter.warn(`${registered.manifest.id} unavailable: ${registered.unavailableReason}`);
-        if (registered.hint) ctx.presenter.info(registered.hint);
+        if (registered.hint) {ctx.presenter.info(registered.hint);}
         return 2;
       }
       

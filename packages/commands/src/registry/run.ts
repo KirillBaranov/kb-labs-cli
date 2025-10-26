@@ -46,10 +46,10 @@ export async function runCommand(
     if (verbose) {
       ctx.presenter.warn(`Command unavailable: ${cmd.manifest.id}`);
       ctx.presenter.warn(`Reason: ${cmd.unavailableReason}`);
-      if (cmd.hint) ctx.presenter.info(`Hint: ${cmd.hint}`);
+      if (cmd.hint) {ctx.presenter.info(`Hint: ${cmd.hint}`);}
     } else {
       ctx.presenter.warn(`${cmd.manifest.id} unavailable: ${cmd.unavailableReason}`);
-      if (cmd.hint) ctx.presenter.info(cmd.hint);
+      if (cmd.hint) {ctx.presenter.info(cmd.hint);}
     }
     return 2;
   }

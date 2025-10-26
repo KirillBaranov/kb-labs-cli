@@ -9,7 +9,7 @@ export type LogLevel = typeof LOG_LEVELS[number];
 let cachedLogLevel: LogLevel | null = null;
 
 export function getLogLevel(): LogLevel {
-  if (cachedLogLevel) return cachedLogLevel;
+  if (cachedLogLevel) {return cachedLogLevel;}
   
   const level = (process.env.KB_LOG_LEVEL || 'warn').toLowerCase();
   cachedLogLevel = LOG_LEVELS.includes(level as LogLevel) ? (level as LogLevel) : 'warn';

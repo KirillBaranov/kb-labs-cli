@@ -1,9 +1,8 @@
 import type { Command, CommandGroup } from "../types";
 import type { RegisteredCommand } from "../registry/types.js";
 import type { ProductGroup } from "./registry.js";
-import { registry } from "./registry.js";
 import { colors } from "@kb-labs/cli-core";
-import { box, keyValue, formatTiming, TimingTracker } from "@kb-labs/shared-cli-ui";
+import { box, formatTiming, TimingTracker } from "@kb-labs/shared-cli-ui";
 
 export function renderGroupHelp(group: CommandGroup): string {
   const lines: string[] = [];
@@ -392,7 +391,7 @@ function groupCommands(commands: RegisteredCommand[]): Array<{ name: string; com
   }));
 }
 
-function renderTextHelp(commands: RegisteredCommand[], options: { onlyAvailable?: boolean }): string {
+function renderTextHelp(commands: RegisteredCommand[], _options: { onlyAvailable?: boolean }): string {
   const lines: string[] = [];
   
   lines.push(colors.cyan(colors.bold("KB Labs CLI")) + " - Project management and automation tool");

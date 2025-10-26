@@ -32,7 +32,7 @@ function resolveFromCwd(spec: string, cwd: string): string {
     try {
       const result = req.resolve(spec, { paths: [searchPath] });
       return result;
-    } catch (e: any) {
+    } catch (_e: any) {
       // Try next path
     }
   }
@@ -74,12 +74,12 @@ export function checkRequires(manifest: CommandManifest, cwd = process.cwd()): A
           ? dep.slice(1).split('/')
           : [dep];
         
-        if (parts.length === 0) continue;
+        if (parts.length === 0) {continue;}
         
         const scope = parts.length >= 2 ? parts[0] : '';
         const packageName = parts.length >= 2 ? parts[1] : parts[0];
         
-        if (!packageName) continue;
+        if (!packageName) {continue;}
         
         // Try to find the package.json
         const cliRoot = path.resolve(__dirname, '../../..');
