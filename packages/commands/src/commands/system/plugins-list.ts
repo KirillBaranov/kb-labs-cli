@@ -3,8 +3,9 @@
  */
 
 import type { Command } from "../../types/types.js";
+import type { RegisteredCommand } from '../../registry/types.js';
 import { registry } from "../../utils/registry.js";
-import { colors } from "@kb-labs/cli-core";
+import { box, keyValue, formatTiming, TimingTracker, safeSymbols, safeColors } from "@kb-labs/shared-cli-ui";
 
 export const pluginsList: Command = {
   name: "plugins",
@@ -25,124 +26,140 @@ export const pluginsList: Command = {
   ],
 
   async run(ctx, argv, flags) {
-    const manifests = registry.listManifests();
-    const productGroups = registry.listProductGroups();
+    const tracker = new TimingTracker();
+    const jsonMode = !!flags.json;
     
-    if (flags.json) {
-      // JSON output with all fields
-      const output = manifests.map(cmd => ({
-        id: cmd.manifest.id,
-        aliases: cmd.manifest.aliases || [],
-        group: cmd.manifest.group,
-        describe: cmd.manifest.describe,
-        source: cmd.source,
-        shadowed: cmd.shadowed,
-        available: cmd.available,
-        ...(cmd.unavailableReason && { reason: cmd.unavailableReason }),
-        ...(cmd.hint && { hint: cmd.hint }),
-      }));
+    try {
+      tracker.checkpoint('discover');
       
-      ctx.presenter.json({
-        ok: true,
-        commands: output,
-        total: output.length,
-        available: output.filter(c => c.available).length,
-        unavailable: output.filter(c => !c.available).length,
-        shadowed: output.filter(c => c.shadowed).length,
-        products: productGroups.length,
-      });
-      return 0;
-    }
-    
-    // Text output - grouped by products
-    const lines: string[] = [];
-    
-    lines.push(colors.cyan(colors.bold("🔍 KB Labs CLI Plugins Discovery")));
-    lines.push("");
-    
-    // Summary section
-    const available = manifests.filter(c => c.available && !c.shadowed).length;
-    const unavailable = manifests.filter(c => !c.available).length;
-    const shadowed = manifests.filter(c => c.shadowed).length;
-    const total = manifests.length;
-    
-    lines.push(colors.bold("Summary:"));
-    lines.push(`  Total: ${total} commands in ${productGroups.length} products`);
-    lines.push(`  ${colors.green(`✓ Available: ${available}`)}`);
-    if (unavailable > 0) {
-      lines.push(`  ${colors.red(`✗ Unavailable: ${unavailable}`)}`);
-    }
-    if (shadowed > 0) {
-      lines.push(`  ${colors.yellow(`⚠ Shadowed: ${shadowed}`)}`);
-    }
-    lines.push("");
-    
-    // Products section
-    lines.push(colors.bold("📦 Products:"));
-    lines.push("");
-    
-    // Emoji map for products
-    const emojiMap: Record<string, string> = {
-      'devlink': '🔗',
-      'profiles': '📋',
-      'mind': '🧠',
-      'bundle': '📦',
-      'init': '🚀',
-    };
-    
-    for (const product of productGroups.sort((a, b) => a.name.localeCompare(b.name))) {
-      const emoji = emojiMap[product.name] || '📦';
-      const availableCount = product.commands.filter(c => c.available && !c.shadowed).length;
-      const unavailableCount = product.commands.filter(c => !c.available || c.shadowed).length;
+      const manifests = registry.listManifests();
+      const productGroups = registry.listProductGroups();
       
-      lines.push(`  ${emoji} ${colors.cyan(colors.bold(product.name))}`);
-      lines.push(`    ${colors.green(`✓ ${availableCount} available`)}${unavailableCount > 0 ? colors.dim(` | ✗ ${unavailableCount} unavailable`) : ''}`);
+      const totalTime = tracker.total();
       
-      // Show commands for this product (deduplicate by ID)
-      const uniqueCommands = new Map<string, RegisteredCommand>();
-      for (const cmd of product.commands) {
-        if (!uniqueCommands.has(cmd.manifest.id)) {
-          uniqueCommands.set(cmd.manifest.id, cmd);
-        }
+      if (jsonMode) {
+        // JSON output with all fields
+        const output = manifests.map(cmd => ({
+          id: cmd.manifest.id,
+          aliases: cmd.manifest.aliases || [],
+          group: cmd.manifest.group,
+          describe: cmd.manifest.describe,
+          source: cmd.source,
+          shadowed: cmd.shadowed,
+          available: cmd.available,
+          ...(cmd.unavailableReason && { reason: cmd.unavailableReason }),
+          ...(cmd.hint && { hint: cmd.hint }),
+        }));
+        
+        ctx.presenter.json({
+          ok: true,
+          commands: output,
+          total: output.length,
+          available: output.filter(c => c.available).length,
+          unavailable: output.filter(c => !c.available).length,
+          shadowed: output.filter(c => c.shadowed).length,
+          products: productGroups.length,
+          timing: totalTime,
+        });
+        return 0;
       }
       
-      const sortedCmds = Array.from(uniqueCommands.values()).sort((a, b) => a.manifest.id.localeCompare(b.manifest.id));
+      // Text output - grouped by products
+      const available = manifests.filter(c => c.available && !c.shadowed).length;
+      const unavailable = manifests.filter(c => !c.available).length;
+      const shadowed = manifests.filter(c => c.shadowed).length;
+      const total = manifests.length;
       
-      for (const cmd of sortedCmds) {
-        const status = cmd.available && !cmd.shadowed ? colors.green("✓") : 
-                       cmd.shadowed ? colors.yellow("⚠") : 
-                       colors.red("✗");
+      // Summary section
+      const summary = keyValue({
+        'Total': `${total} commands in ${productGroups.length} products`,
+        'Available': `${available}`,
+        'Unavailable': unavailable > 0 ? `${unavailable}` : 'none',
+        'Shadowed': shadowed > 0 ? `${shadowed}` : 'none',
+      });
+      
+      // Products section
+      const productLines: string[] = [];
+      
+      // Emoji map for products
+      const emojiMap: Record<string, string> = {
+        'devlink': '🔗',
+        'profiles': '📋',
+        'mind': '🧠',
+        'bundle': '📦',
+        'init': '🚀',
+        'policy': '📜',
+      };
+      
+      for (const product of productGroups.sort((a, b) => a.name.localeCompare(b.name))) {
+        const emoji = emojiMap[product.name] || '📦';
+        const availableCount = product.commands.filter(c => c.available && !c.shadowed).length;
+        const unavailableCount = product.commands.filter(c => !c.available || c.shadowed).length;
         
-        const statusText = cmd.shadowed ? " (shadowed)" : "";
-        const sourceBadge = colors.dim(`[${cmd.source}]`);
+        productLines.push(`${emoji} ${safeColors.info(safeColors.bold(product.name))}`);
+        productLines.push(`  ${availableCount > 0 ? safeSymbols.success : safeSymbols.error} ${availableCount} available${unavailableCount > 0 ? safeColors.dim(` | ${safeSymbols.error} ${unavailableCount} unavailable`) : ''}`);
         
-        lines.push(`    ${status} ${colors.cyan(cmd.manifest.id.padEnd(25))} ${sourceBadge} ${statusText}`);
-        
-        // Show reason for unavailable/shadowed
-        if (!cmd.available && cmd.unavailableReason) {
-          lines.push(`      ${colors.red(`Reason: ${cmd.unavailableReason}`)}`);
-          if (cmd.hint) {
-            lines.push(`      ${colors.yellow(`Hint: ${cmd.hint}`)}`);
+        // Show commands for this product (deduplicate by ID)
+        const uniqueCommands = new Map<string, RegisteredCommand>();
+        for (const cmd of product.commands) {
+          if (!uniqueCommands.has(cmd.manifest.id)) {
+            uniqueCommands.set(cmd.manifest.id, cmd);
           }
         }
-        if (cmd.shadowed && cmd.source === 'node_modules') {
-          lines.push(`      ${colors.dim(`Shadowed by workspace version`)}`);
+        
+        const sortedCmds = Array.from(uniqueCommands.values()).sort((a, b) => a.manifest.id.localeCompare(b.manifest.id));
+        
+        for (const cmd of sortedCmds) {
+          const status = cmd.available && !cmd.shadowed ? safeSymbols.success : 
+                         cmd.shadowed ? safeSymbols.warning : 
+                         safeSymbols.error;
+          
+          const statusText = cmd.shadowed ? safeColors.dim(' (shadowed)') : '';
+          const sourceBadge = safeColors.dim(`[${cmd.source}]`);
+          
+          productLines.push(`    ${status} ${safeColors.info(cmd.manifest.id.padEnd(25))} ${sourceBadge}${statusText}`);
+          
+          // Show reason for unavailable/shadowed
+          if (!cmd.available && cmd.unavailableReason) {
+            productLines.push(`      ${safeColors.error(`Reason: ${cmd.unavailableReason}`)}`);
+            if (cmd.hint) {
+              productLines.push(`      ${safeColors.warning(`Hint: ${cmd.hint}`)}`);
+            }
+          }
+          if (cmd.shadowed && cmd.source === 'node_modules') {
+            productLines.push(`      ${safeColors.dim('Shadowed by workspace version')}`);
+          }
         }
+        
+        productLines.push('');
       }
       
-      lines.push("");
+      const sections = [
+        safeColors.bold('Summary:'),
+        ...summary,
+        '',
+        safeColors.bold('Products:'),
+        ...productLines,
+        safeColors.bold('Next Steps:'),
+        `  ${safeColors.info('kb <product> --help')}  ${safeColors.dim('Explore product commands')}`,
+        `  ${safeColors.info('kb plugins --json')}  ${safeColors.dim('Get machine-readable output')}`,
+        '',
+        safeColors.dim(`Discovery: ${formatTiming(totalTime)}`),
+      ];
+      
+      const output = box('KB Labs CLI Plugins', sections);
+      ctx.presenter.write(output);
+      
+      return 0;
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      if (jsonMode) {
+        ctx.presenter.json({ ok: false, error: errorMessage, timing: tracker.total() });
+      } else {
+        ctx.presenter.error(errorMessage);
+      }
+      return 1;
     }
-    
-    // Next Steps
-    lines.push(colors.bold("Next Steps:"));
-    lines.push("");
-    lines.push(`  ${colors.cyan("kb <product> --help")}  ${colors.dim("Explore product commands")}`);
-    lines.push(`  ${colors.cyan("kb plugins --json")}  ${colors.dim("Get machine-readable output")}`);
-    lines.push("");
-    
-    ctx.presenter.write(lines.join("\n"));
-    
-    return 0;
   },
 };
 
