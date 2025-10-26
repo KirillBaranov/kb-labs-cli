@@ -5,4 +5,4 @@ packages:
   - "../kb-labs-mind"
   - "../kb-labs-mind/packages/*"
   - "../kb-labs-shared/packages/*"
-  - "../kb-labs-devlink/packages/*"
+  - "../kb-labs-core/packages/*"
