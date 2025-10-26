@@ -5,7 +5,7 @@ import {
   createJsonPresenter,
   createContext,
 } from "@kb-labs/cli-core";
-import { findCommand, registerBuiltinCommands, renderGroupHelp, renderGlobalHelp, renderGlobalHelpNew, renderProductHelp, registry, type CommandGroup, type Command } from "@kb-labs/cli-commands";
+import { findCommand, registerBuiltinCommands, renderGroupHelp, renderProductHelp, renderGlobalHelpNew, registry, type CommandGroup } from "@kb-labs/cli-commands";
 
 function normalizeCmdPath(argvCmd: string[]): string[] {
   if (argvCmd.length === 1 && argvCmd[0]?.includes(":")) {

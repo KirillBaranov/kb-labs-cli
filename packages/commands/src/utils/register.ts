@@ -8,10 +8,10 @@ import { discoverManifests } from "../registry/discover";
 import { registerManifests } from "../registry/register";
 import { log } from "./logger.js";
 // import { devlinkGroup } from "../commands/devlink"; // Removed - using plugin system
-import { profilesGroup } from "../commands/profiles";
-import { bundleGroup } from "../commands/bundle";
-import { initGroup } from "../commands/init-group";
-// import { mindGroup } from "../commands/mind-group";
+// import { profilesGroup } from "../commands/profiles"; // Removed - using plugin system
+// import { bundleGroup } from "../commands/bundle"; // Removed - using plugin system
+// import { initGroup } from "../commands/init-group"; // Removed - using plugin system
+// import { mindGroup } from "../commands/mind-group"; // Removed - using plugin system
 
 let _registered = false;
 
@@ -22,11 +22,11 @@ export async function registerBuiltinCommands() {
   _registered = true;
 
   // Register command groups
-  // registry.registerGroup(initGroup);
+  // registry.registerGroup(initGroup); // Removed - using plugin system
   // registry.registerGroup(devlinkGroup); // Using plugin system instead
-  // registry.registerGroup(profilesGroup);
-  registry.registerGroup(bundleGroup);
-  // registry.registerGroup(mindGroup);
+  // registry.registerGroup(profilesGroup); // Removed - using plugin system
+  // registry.registerGroup(bundleGroup); // Removed - using plugin system
+  // registry.registerGroup(mindGroup); // Removed - using plugin system
 
   // Standalone commands
   registry.register(hello);
