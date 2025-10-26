@@ -17,6 +17,7 @@ describe('renderHelp', () => {
     },
     available: true,
     source: 'workspace',
+    shadowed: false,
     ...overrides,
   });
 

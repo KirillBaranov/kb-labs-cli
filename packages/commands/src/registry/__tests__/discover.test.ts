@@ -2,9 +2,8 @@
  * Tests for manifest discovery with mixed CJS/ESM loading
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { discoverManifests } from '../discover.js';
-import type { CommandManifest } from '../types.js';
 
 // Mock dependencies
 vi.mock('node:fs/promises', () => ({
@@ -68,8 +67,9 @@ describe('discoverManifests', () => {
     const results = await discoverManifests('/test/cwd', false);
     
     expect(results).toHaveLength(1);
-    expect(results[0].source).toBe('workspace');
-    expect(results[0].packageName).toBe('@kb-labs/test-package');
+    expect(results[0]).toBeDefined();
+    expect(results[0]!.source).toBe('workspace');
+    expect(results[0]!.packageName).toBe('@kb-labs/test-package');
   });
 
   it('should fallback to current package when no workspace file', async () => {
@@ -98,8 +98,9 @@ describe('discoverManifests', () => {
     const results = await discoverManifests('/test/cwd', false);
     
     expect(results).toHaveLength(1);
-    expect(results[0].source).toBe('workspace');
-    expect(results[0].packageName).toBe('@kb-labs/current-package');
+    expect(results[0]).toBeDefined();
+    expect(results[0]!.source).toBe('workspace');
+    expect(results[0]!.packageName).toBe('@kb-labs/current-package');
   });
 
   it('should discover node_modules packages', async () => {
@@ -114,7 +115,7 @@ describe('discoverManifests', () => {
 
     // Mock node_modules directory
     vi.mocked(readdir).mockResolvedValueOnce([
-      { name: 'test-package', isDirectory: () => true },
+      { name: 'test-package', isDirectory: () => true } as any,
     ]);
 
     // Mock package.json in node_modules
@@ -137,8 +138,9 @@ describe('discoverManifests', () => {
     const results = await discoverManifests('/test/cwd', false);
     
     expect(results).toHaveLength(1);
-    expect(results[0].source).toBe('node_modules');
-    expect(results[0].packageName).toBe('@kb-labs/test-package');
+    expect(results[0]).toBeDefined();
+    expect(results[0]!.source).toBe('node_modules');
+    expect(results[0]!.packageName).toBe('@kb-labs/test-package');
   });
 
   it('should handle manifest load timeout', async () => {

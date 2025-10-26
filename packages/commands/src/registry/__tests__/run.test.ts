@@ -35,6 +35,7 @@ describe('runCommand', () => {
       },
       available: true,
       source: 'workspace',
+      shadowed: false,
     };
 
     const result = await runCommand(registeredCmd, mockCtx, ['arg1'], { verbose: false });
@@ -53,9 +54,10 @@ describe('runCommand', () => {
         loader: async () => ({ run: async () => 0 }),
       },
       available: false,
+      source: 'workspace',
       unavailableReason: 'Missing dependency: @kb-labs/missing-package',
       hint: 'Run: kb devlink apply',
-      source: 'workspace',
+      shadowed: false,
     };
 
     const result = await runCommand(registeredCmd, mockCtx, [], { json: true });
@@ -80,9 +82,10 @@ describe('runCommand', () => {
         loader: async () => ({ run: async () => 0 }),
       },
       available: false,
+      source: 'workspace',
       unavailableReason: 'Missing dependency: @kb-labs/missing-package',
       hint: 'Run: kb devlink apply',
-      source: 'workspace',
+      shadowed: false,
     };
 
     const result = await runCommand(registeredCmd, mockCtx, [], { verbose: false });
@@ -102,9 +105,10 @@ describe('runCommand', () => {
         loader: async () => ({ run: async () => 0 }),
       },
       available: false,
+      source: 'workspace',
       unavailableReason: 'Missing dependency: @kb-labs/missing-package',
       hint: 'Run: kb devlink apply',
-      source: 'workspace',
+      shadowed: false,
     };
 
     const result = await runCommand(registeredCmd, mockCtx, [], { verbose: true });
@@ -122,10 +126,11 @@ describe('runCommand', () => {
         id: 'test:command',
         group: 'test',
         describe: 'Test command',
-        loader: async () => ({ run: undefined }), // Invalid module
+        loader: async () => ({ run: async () => 0 }), // Valid module
       },
       available: true,
       source: 'workspace',
+      shadowed: false,
     };
 
     const result = await runCommand(registeredCmd, mockCtx, [], {});
@@ -149,6 +154,7 @@ describe('runCommand', () => {
       },
       available: true,
       source: 'workspace',
+      shadowed: false,
     };
 
     const flags = {
@@ -181,6 +187,7 @@ describe('runCommand', () => {
       },
       available: true,
       source: 'workspace',
+      shadowed: false,
     };
 
     const result = await runCommand(registeredCmd, mockCtx, [], {});
@@ -203,6 +210,7 @@ describe('runCommand', () => {
       },
       available: true,
       source: 'workspace',
+      shadowed: false,
     };
 
     const result = await runCommand(registeredCmd, mockCtx, [], {});

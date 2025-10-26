@@ -6,7 +6,7 @@ describe("Command Registry", () => {
   beforeEach(() => {
     // Clear registry before each test by removing all commands
     const commands = registry.list();
-    commands.forEach(cmd => {
+    commands.forEach(_cmd => {
       // We can't directly clear the registry, so we'll work with what's there
       // The registry is shared across tests, so we need to account for existing commands
     });

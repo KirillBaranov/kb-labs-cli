@@ -2,7 +2,7 @@
  * Tests for availability checking with ESM-safe resolve
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { checkRequires } from '../availability.js';
 import type { CommandManifest } from '../types.js';
 

@@ -24,9 +24,9 @@ describe('registerManifests', () => {
     vi.clearAllMocks();
   });
 
-  it('should register manifests with availability check', () => {
-    const { checkRequires } = require('../availability.js');
-    checkRequires.mockReturnValue({ available: true });
+  it('should register manifests with availability check', async () => {
+    const { checkRequires } = await vi.importMock('../availability.js') as { checkRequires: any };
+    vi.mocked(checkRequires).mockReturnValue({ available: true });
 
     const manifests: CommandManifest[] = [{
       manifestVersion: '1.0',
@@ -47,14 +47,15 @@ describe('registerManifests', () => {
     const registered = registerManifests(discoveryResults, mockRegistry as any);
 
     expect(registered).toHaveLength(1);
-    expect(registered[0].available).toBe(true);
-    expect(registered[0].source).toBe('workspace');
+    expect(registered[0]).toBeDefined();
+    expect(registered[0]!.available).toBe(true);
+    expect(registered[0]!.source).toBe('workspace');
     expect(mockRegistry.registerManifest).toHaveBeenCalledWith(registered[0]);
   });
 
-  it('should handle unavailable commands with reason and hint', () => {
-    const { checkRequires } = require('../availability.js');
-    checkRequires.mockReturnValue({
+  it('should handle unavailable commands with reason and hint', async () => {
+    const { checkRequires } = await vi.importMock('../availability.js') as { checkRequires: any };
+    vi.mocked(checkRequires).mockReturnValue({
       available: false,
       reason: 'Missing dependency: @kb-labs/missing-package',
       hint: 'Run: kb devlink apply',
@@ -80,14 +81,15 @@ describe('registerManifests', () => {
     const registered = registerManifests(discoveryResults, mockRegistry as any);
 
     expect(registered).toHaveLength(1);
-    expect(registered[0].available).toBe(false);
-    expect(registered[0].unavailableReason).toBe('Missing dependency: @kb-labs/missing-package');
-    expect(registered[0].hint).toBe('Run: kb devlink apply');
+    expect(registered[0]).toBeDefined();
+    expect(registered[0]!.available).toBe(false);
+    expect(registered[0]!.unavailableReason).toBe('Missing dependency: @kb-labs/missing-package');
+    expect(registered[0]!.hint).toBe('Run: kb devlink apply');
   });
 
-  it('should handle shadowing: workspace shadows node_modules', () => {
-    const { checkRequires } = require('../availability.js');
-    checkRequires.mockReturnValue({ available: true });
+  it('should handle shadowing: workspace shadows node_modules', async () => {
+    const { checkRequires } = await vi.importMock('../availability.js') as { checkRequires: any };
+    vi.mocked(checkRequires).mockReturnValue({ available: true });
 
     const workspaceManifest: CommandManifest = {
       manifestVersion: '1.0',
@@ -136,9 +138,9 @@ describe('registerManifests', () => {
     expect(nodeCmd?.shadowed).toBe(true);
   });
 
-  it('should validate manifest schema', () => {
-    const { checkRequires } = require('../availability.js');
-    checkRequires.mockReturnValue({ available: true });
+  it('should validate manifest schema', async () => {
+    const { checkRequires } = await vi.importMock('../availability.js') as { checkRequires: any };
+    vi.mocked(checkRequires).mockReturnValue({ available: true });
 
     const invalidManifest: CommandManifest = {
       manifestVersion: '1.0',
@@ -161,9 +163,9 @@ describe('registerManifests', () => {
     }).toThrow();
   });
 
-  it('should validate flag definitions', () => {
-    const { checkRequires } = require('../availability.js');
-    checkRequires.mockReturnValue({ available: true });
+  it('should validate flag definitions', async () => {
+    const { checkRequires } = await vi.importMock('../availability.js') as { checkRequires: any };
+    vi.mocked(checkRequires).mockReturnValue({ available: true });
 
     const manifestWithInvalidFlag: CommandManifest = {
       manifestVersion: '1.0',

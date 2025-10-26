@@ -2,7 +2,7 @@
  * Integration tests for complete registry system
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { discoverManifests } from '../discover.js';
 import { registerManifests } from '../register.js';
 import { runCommand } from '../run.js';
@@ -51,7 +51,8 @@ describe('Registry Integration', () => {
     const { readFile } = await import('node:fs/promises');
     const { parse } = await import('yaml');
     const { glob } = await import('glob');
-    const { checkRequires } = require('../availability.js');
+    const { checkRequires } = await vi.importMock('../availability.js') as { checkRequires: any };
+    vi.mocked(checkRequires).mockReturnValue({ available: true });
 
     // Mock workspace discovery
     vi.mocked(readFile).mockResolvedValueOnce('packages:\n  - "packages/*"');
@@ -93,12 +94,14 @@ describe('Registry Integration', () => {
     // 1. Discover manifests
     const discoveryResults = await discoverManifests('/test/cwd', false);
     expect(discoveryResults).toHaveLength(1);
-    expect(discoveryResults[0].source).toBe('workspace');
+    expect(discoveryResults[0]).toBeDefined();
+    expect(discoveryResults[0]!.source).toBe('workspace');
 
     // 2. Register manifests
     const registered = registerManifests(discoveryResults, mockRegistry as any);
     expect(registered).toHaveLength(1);
-    expect(registered[0].available).toBe(true);
+    expect(registered[0]).toBeDefined();
+    expect(registered[0]!.available).toBe(true);
     expect(mockRegistry.registerManifest).toHaveBeenCalledWith(registered[0]);
 
     // 3. Run command
@@ -111,7 +114,7 @@ describe('Registry Integration', () => {
       },
     };
 
-    const result = await runCommand(registered[0], mockCtx, ['arg1'], { verbose: true });
+    const result = await runCommand(registered[0]!, mockCtx, ['arg1'], { verbose: true });
     expect(result).toBe(0);
     expect(mockCtx.presenter.info).toHaveBeenCalledWith('Verbose mode enabled');
 
@@ -129,7 +132,8 @@ describe('Registry Integration', () => {
     const { readFile } = await import('node:fs/promises');
     const { parse } = await import('yaml');
     const { glob } = await import('glob');
-    const { checkRequires } = require('../availability.js');
+    const { checkRequires } = await vi.importMock('../availability.js') as { checkRequires: any };
+    vi.mocked(checkRequires).mockReturnValue({ available: true });
 
     // Mock workspace discovery
     vi.mocked(readFile).mockResolvedValueOnce('packages:\n  - "packages/*"');
@@ -170,8 +174,9 @@ describe('Registry Integration', () => {
     // 2. Register manifests
     const registered = registerManifests(discoveryResults, mockRegistry as any);
     expect(registered).toHaveLength(1);
-    expect(registered[0].available).toBe(false);
-    expect(registered[0].unavailableReason).toBe('Missing dependency: @kb-labs/missing-package');
+    expect(registered[0]).toBeDefined();
+    expect(registered[0]!.available).toBe(false);
+    expect(registered[0]!.unavailableReason).toBe('Missing dependency: @kb-labs/missing-package');
 
     // 3. Run command - should return exit code 2
     const mockCtx = {
@@ -183,7 +188,7 @@ describe('Registry Integration', () => {
       },
     };
 
-    const result = await runCommand(registered[0], mockCtx, [], { json: true });
+    const result = await runCommand(registered[0]!, mockCtx, [], { json: true });
     expect(result).toBe(2);
     expect(mockCtx.presenter.json).toHaveBeenCalledWith({
       ok: false,
@@ -204,7 +209,8 @@ describe('Registry Integration', () => {
     const { readFile } = await import('node:fs/promises');
     const { parse } = await import('yaml');
     const { glob } = await import('glob');
-    const { checkRequires } = require('../availability.js');
+    const { checkRequires } = await vi.importMock('../availability.js') as { checkRequires: any };
+    vi.mocked(checkRequires).mockReturnValue({ available: true });
 
     // Mock workspace discovery
     vi.mocked(readFile).mockResolvedValueOnce('packages:\n  - "packages/*"');
@@ -237,7 +243,7 @@ describe('Registry Integration', () => {
     // Mock node_modules directory
     const { readdir } = await import('node:fs/promises');
     vi.mocked(readdir).mockResolvedValueOnce([
-      { name: 'node-package', isDirectory: () => true },
+      { name: 'node-package', isDirectory: () => true } as any,
     ]);
 
     // Mock node_modules package.json
