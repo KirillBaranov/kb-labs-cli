@@ -176,6 +176,216 @@ export function registerBuiltinCommands() {
 }
 ```
 
+## Command Output Standards
+
+All CLI commands should follow a consistent output pattern for better user experience and maintainability.
+
+### 1. Box Formatting Pattern
+
+Use the `box` utility from `@kb-labs/shared-cli-ui` for structured command output:
+
+```typescript
+import { box, keyValue, formatTiming, TimingTracker } from '@kb-labs/shared-cli-ui';
+
+export const run: CommandModule['run'] = async (ctx, argv, flags) => {
+  const tracker = new TimingTracker();
+  const jsonMode = !!flags.json;
+  
+  try {
+    // ... command logic ...
+    
+    const totalTime = tracker.total();
+    
+    if (jsonMode) {
+      ctx.presenter.json({ ok: true, ...result, timing: totalTime });
+    } else {
+      const summary = keyValue({
+        'Status': 'Success',
+        'Items Processed': result.count,
+        'Mode': flags.mode || 'default',
+      });
+      
+      const output = box('Command Title', [...summary, '', `Time: ${formatTiming(totalTime)}`]);
+      ctx.presenter.write(output);
+      
+      // Additional output (warnings, suggestions, etc.)
+      if (result.warnings?.length > 0) {
+        ctx.presenter.write('');
+        ctx.presenter.write('Warnings:');
+        result.warnings.forEach(warning => 
+          ctx.presenter.write(`  • ${warning}`)
+        );
+      }
+    }
+    
+    return 0;
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    if (jsonMode) {
+      ctx.presenter.json({ ok: false, error: errorMessage, timing: tracker.total() });
+    } else {
+      ctx.presenter.error(errorMessage);
+    }
+    return 1;
+  }
+};
+```
+
+### 2. Timing Tracking
+
+Use `TimingTracker` for commands that perform multiple operations:
+
+```typescript
+const tracker = new TimingTracker();
+
+// Mark checkpoints during execution
+tracker.checkpoint('scan');
+const scanResult = await scanWorkspace();
+
+tracker.checkpoint('process');
+const processResult = await processData(scanResult);
+
+tracker.checkpoint('save');
+await saveResults(processResult);
+
+// Display timing breakdown
+const timingInfo = [
+  `Scan: ${formatTiming(tracker.checkpointsOnly().scan)}`,
+  `Process: ${formatTiming(tracker.checkpointsOnly().process)}`,
+  `Save: ${formatTiming(tracker.checkpointsOnly().save)}`,
+  `Total: ${formatTiming(tracker.total())}`,
+];
+```
+
+### 3. When to Use Box Formatting
+
+**Use box formatting for:**
+- Commands that produce structured results (status, plan, apply, etc.)
+- Commands that show metrics or statistics
+- Commands that perform operations with clear outcomes
+- Commands that benefit from visual organization
+
+**Keep simple output for:**
+- Simple informational commands (hello, version)
+- Commands with very long detailed output (explain - but add summary box at end)
+- Commands that stream data or show real-time progress
+
+### 4. JSON Output Pattern
+
+Always include timing data in JSON output:
+
+```typescript
+if (jsonMode) {
+  ctx.presenter.json({
+    ok: true,
+    data: result,
+    timing: totalTime,
+    // Include timing breakdown for complex operations
+    timings: tracker.breakdown(),
+  });
+}
+```
+
+## Command Output Standards
+
+All CLI commands should follow the unified output pattern for consistent user experience.
+
+### Box Formatting Pattern
+
+Use `box()` formatting for commands that perform operations or show results:
+
+```typescript
+import { box, keyValue, formatTiming, TimingTracker } from '@kb-labs/shared-cli-ui';
+
+export const run: CommandModule['run'] = async (ctx, argv, flags) => {
+  const tracker = new TimingTracker();
+  const jsonMode = !!flags.json;
+  
+  try {
+    // ... command logic ...
+    
+    const totalTime = tracker.total();
+    
+    if (jsonMode) {
+      ctx.presenter.json({ ok: true, ...result, timing: totalTime });
+    } else {
+      const summary = keyValue({
+        'Status': 'Success',
+        'Items': result.count,
+        'Mode': flags.mode || 'default',
+      });
+      
+      const output = box('Command Title', [...summary, '', `Time: ${formatTiming(totalTime)}`]);
+      ctx.presenter.write(output);
+    }
+    
+    return 0;
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    if (jsonMode) {
+      ctx.presenter.json({ ok: false, error: errorMessage, timing: tracker.total() });
+    } else {
+      ctx.presenter.error(errorMessage);
+    }
+    return 1;
+  }
+};
+```
+
+### Timing Tracking
+
+Use `TimingTracker` for commands with multiple phases:
+
+```typescript
+const tracker = new TimingTracker();
+
+tracker.checkpoint('scan');
+const scanResult = await scanWorkspace();
+
+tracker.checkpoint('plan');
+const planResult = await buildPlan(scanResult);
+
+const totalTime = tracker.total();
+
+// Display timing breakdown
+const timingInfo = [
+  `Scan: ${formatTiming(tracker.checkpointsOnly().scan)}`,
+  `Plan: ${formatTiming(tracker.checkpointsOnly().plan)}`,
+  `Total: ${formatTiming(totalTime)}`,
+];
+```
+
+### When to Use Box Formatting
+
+**Use box formatting for:**
+- Commands that perform operations (apply, switch, freeze, etc.)
+- Commands that show status or results (status, plan, version)
+- Commands that process data (feed, pack, update)
+
+**Don't use box formatting for:**
+- Simple informational commands (hello)
+- Commands with very long detailed output (keep detailed output, add summary box at end)
+
+### JSON Output Support
+
+Always support `--json` flag with consistent structure:
+
+```typescript
+if (jsonMode) {
+  ctx.presenter.json({
+    ok: true,
+    data: { /* command-specific data */ },
+    timing: totalTime,
+    diagnostics: result.diagnostics || [],
+    warnings: result.warnings || [],
+  });
+}
+```
+
+For detailed examples and patterns, see [Command Output Guide](./guides/command-output.md).
+
+For general CLI design principles, see [CLI Style Guide](./guides/cli-style.md).
+
 ## Best Practices
 
 ### 1. Command Naming

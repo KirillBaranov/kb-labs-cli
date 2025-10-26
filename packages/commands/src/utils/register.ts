@@ -25,7 +25,7 @@ export async function registerBuiltinCommands() {
   // registry.registerGroup(initGroup);
   // registry.registerGroup(devlinkGroup); // Using plugin system instead
   // registry.registerGroup(profilesGroup);
-  // registry.registerGroup(bundleGroup);
+  registry.registerGroup(bundleGroup);
   // registry.registerGroup(mindGroup);
 
   // Standalone commands

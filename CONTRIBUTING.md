@@ -26,13 +26,52 @@ To add a new command to the CLI:
 1. **Create command file** in `packages/commands/src/commands/<command-name>/index.ts`:
    ```typescript
    import type { Command } from "../../types";
+   import { box, keyValue, formatTiming, TimingTracker } from '@kb-labs/shared-cli-ui';
 
    export const myCommand: Command = {
      name: "my-command",
      describe: "Description of what the command does",
      async run(ctx, args, flags) {
-       // Command implementation
-       ctx.presenter.write("Command output");
+       const tracker = new TimingTracker();
+       const jsonMode = !!flags.json;
+       
+       try {
+         // Command implementation
+         const result = await performOperation();
+         
+         const totalTime = tracker.total();
+         
+         if (jsonMode) {
+           ctx.presenter.json({ 
+             ok: true, 
+             result, 
+             timing: totalTime 
+           });
+         } else {
+           const summary = keyValue({
+             'Status': 'Success',
+             'Items': result.count,
+             'Mode': flags.mode || 'default',
+           });
+           
+           const output = box('Operation Complete', [...summary, '', `Time: ${formatTiming(totalTime)}`]);
+           ctx.presenter.write(output);
+         }
+         
+         return 0;
+       } catch (e: unknown) {
+         const errorMessage = e instanceof Error ? e.message : String(e);
+         if (jsonMode) {
+           ctx.presenter.json({ 
+             ok: false, 
+             error: errorMessage, 
+             timing: tracker.total() 
+           });
+         } else {
+           ctx.presenter.error(errorMessage);
+         }
+         return 1;
+       }
      },
    };
    ```
@@ -48,6 +87,21 @@ To add a new command to the CLI:
    
    // Add to registerBuiltinCommands function
    registerCommand(myCommand);
+   ```
+
+### Command Output Standards
+
+All commands should follow the unified output pattern for consistent user experience:
+
+- **Use box formatting** for operations and results
+- **Include timing information** for performance visibility  
+- **Support `--json` flag** for machine-readable output
+- **Handle errors gracefully** with proper exit codes
+
+For detailed examples and patterns, see:
+- [Command Output Guide](./docs/guides/command-output.md)
+- [CLI Style Guide](./docs/guides/cli-style.md)
+- [Command Registration Guide](./docs/COMMAND_REGISTRATION.md)
    ```
 
 4. **Add tests** in `packages/commands/src/commands/<command-name>/__tests__/`:

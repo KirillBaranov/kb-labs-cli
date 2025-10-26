@@ -11,6 +11,11 @@ export function createTextPresenter(isQuiet: boolean = false): Presenter {
         console.log(line);
       }
     },
+    info: (line) => {                               // NEW
+      if (!isQuiet) {
+        console.log(line);
+      }
+    },
     warn: (line) => {                               // NEW
       if (!isQuiet) {
         console.warn(line);

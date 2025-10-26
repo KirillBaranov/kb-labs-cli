@@ -59,9 +59,9 @@
     ]
   },
   "dependencies": {
-    "@kb-labs/devkit": "workspace:*",
-    "@kb-labs/devlink-core": "file:.yalc/@kb-labs/devlink-core",
-    "@kb-labs/mind-core": "file:.yalc/@kb-labs/mind-core",
+    "@kb-labs/devkit": "link:../kb-labs-devkit",
+    "@kb-labs/devlink-core": "workspace:*",
+    "@kb-labs/mind-core": "workspace:*",
     "zod": "^4.1.5"
   },
   "devDependencies": {

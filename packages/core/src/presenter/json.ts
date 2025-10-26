@@ -5,6 +5,7 @@ export function createJsonPresenter(): Presenter {
     isQuiet: false,
     isJSON: true,                                    // NEW
     write: (_line) => { },                           // no-op в JSON режиме
+    info: (_line) => { },                            // no-op (копится в ctx.diagnostics)
     warn: (_line) => { },                            // no-op (копится в ctx.diagnostics)
     error: (line) =>
       console.log(JSON.stringify({ ok: false, error: { message: line } })),

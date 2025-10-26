@@ -3,6 +3,7 @@ import type { RegisteredCommand } from "../registry/types.js";
 import type { ProductGroup } from "./registry.js";
 import { registry } from "./registry.js";
 import { colors } from "@kb-labs/cli-core";
+import { box, keyValue, formatTiming, TimingTracker } from "@kb-labs/shared-cli-ui";
 
 export function renderGroupHelp(group: CommandGroup): string {
   const lines: string[] = [];
@@ -78,7 +79,7 @@ export function renderGlobalHelp(groups: CommandGroup[], standalone: Command[]):
 }
 
 export function renderProductHelp(groupName: string, commands: RegisteredCommand[]): string {
-  const lines: string[] = [];
+  const tracker = new TimingTracker();
   
   // Decode emoji map for products (add more as needed)
   const emojiMap: Record<string, string> = {
@@ -91,10 +92,11 @@ export function renderProductHelp(groupName: string, commands: RegisteredCommand
   
   const emoji = emojiMap[groupName] || '📦';
   
-  lines.push(colors.cyan(colors.bold(`${emoji} ${groupName}`)) + " - Product Commands");
-  lines.push("");
-  lines.push(colors.bold("Available commands:"));
-  lines.push("");
+  // Build content for box
+  const content: string[] = [];
+  
+  content.push(colors.bold("Available commands:"));
+  content.push("");
   
   // Group by availability and deduplicate by ID
   const availableMap = new Map<string, RegisteredCommand>();
@@ -122,37 +124,37 @@ export function renderProductHelp(groupName: string, commands: RegisteredCommand
   for (const cmd of available) {
     const status = colors.green("✓");
     const paddedId = cmd.manifest.id.padEnd(maxLength);
-    lines.push(`  ${status} ${colors.cyan(paddedId)}  ${colors.dim(cmd.manifest.describe)}`);
+    content.push(`  ${status} ${colors.cyan(paddedId)}  ${colors.dim(cmd.manifest.describe)}`);
     
     // Show examples if available
     if (cmd.manifest.examples && cmd.manifest.examples.length > 0) {
       for (const example of cmd.manifest.examples.slice(0, 2) as string[]) {
-        lines.push(`     ${colors.dim(example)}`);
+        content.push(`     ${colors.dim(example)}`);
       }
     }
   }
   
   // Show unavailable commands
   if (unavailable.length > 0) {
-    lines.push("");
-    lines.push(colors.dim("Unavailable:"));
+    content.push("");
+    content.push(colors.dim("Unavailable:"));
     for (const cmd of unavailable) {
       const status = colors.red("✗");
       const paddedId = cmd.manifest.id.padEnd(maxLength);
-      lines.push(`  ${status} ${colors.dim(paddedId)}  ${colors.dim(cmd.manifest.describe)}`);
+      content.push(`  ${status} ${colors.dim(paddedId)}  ${colors.dim(cmd.manifest.describe)}`);
       
       if (cmd.unavailableReason) {
-        lines.push(`     ${colors.red(`Reason: ${cmd.unavailableReason}`)}`);
+        content.push(`     ${colors.red(`Reason: ${cmd.unavailableReason}`)}`);
       }
       if (cmd.hint) {
-        lines.push(`     ${colors.yellow(`Hint: ${cmd.hint}`)}`);
+        content.push(`     ${colors.yellow(`Hint: ${cmd.hint}`)}`);
       }
     }
   }
   
-  lines.push("");
-  lines.push(colors.bold("Next Steps:"));
-  lines.push("");
+  content.push("");
+  content.push(colors.bold("Next Steps:"));
+  content.push("");
   
   // Show next steps with actual commands from this group (deduplicate by ID)
   const uniqueCommands = new Map<string, RegisteredCommand>();
@@ -173,29 +175,33 @@ export function renderProductHelp(groupName: string, commands: RegisteredCommand
     nextSteps.push(`  ${colors.dim("Use 'kb ${groupName}:<command> --help' for detailed help")}`);
   }
   
-  lines.push(...nextSteps);
-  lines.push("");
-  lines.push(colors.dim(`Use 'kb --help' to see all products and system commands.`));
+  content.push(...nextSteps);
+  content.push("");
+  content.push(colors.dim(`Use 'kb --help' to see all products and system commands.`));
   
-  return lines.join("\n");
+  // Add timing
+  const totalTime = tracker.total();
+  content.push("");
+  content.push(`Time: ${formatTiming(totalTime)}`);
+  
+  // Return box-formatted help
+  return box(`${emoji} ${groupName}`, content);
 }
 
 export function renderGlobalHelpNew(registry: any): string {
-  const lines: string[] = [];
-  
-  lines.push(colors.cyan(colors.bold("🚀 KB Labs CLI")) + " - Project management and automation tool");
-  lines.push("");
-  lines.push(colors.bold("Usage:") + " kb [command] [options]");
-  lines.push("");
+  const tracker = new TimingTracker();
   
   // Get products from manifests
   const products = registry.listProductGroups();
   const standalone = registry.list().filter((cmd: Command) => !cmd.category || cmd.category === 'system');
   
-  // Show products
+  // Build content for box
+  const content: string[] = [];
+  
+  // Products section
   if (products.length > 0) {
-    lines.push(colors.bold("📦 Products:"));
-    lines.push("");
+    content.push("📦 Products:");
+    content.push("");
     
     // Emoji map for products
     const emojiMap: Record<string, string> = {
@@ -213,28 +219,28 @@ export function renderGlobalHelpNew(registry: any): string {
       const emoji = emojiMap[product.name] || '📦';
       const availableCount = product.commands.filter((c: RegisteredCommand) => c.available && !c.shadowed).length;
       const badge = availableCount > 0 ? colors.green(`✓ ${availableCount}`) : colors.dim("0");
-      lines.push(`  ${emoji} ${colors.cyan(product.name.padEnd(maxProductNameLength))}  ${colors.dim(product.describe || product.name)}  ${badge}`);
+      content.push(`  ${emoji} ${colors.cyan(product.name.padEnd(maxProductNameLength))}  ${colors.dim(product.describe || product.name)}  ${badge}`);
     }
-    lines.push("");
+    content.push("");
   }
   
-  // Show system commands
+  // System commands section
   if (standalone.length > 0) {
-    lines.push(colors.bold("⚙️  System Commands:"));
-    lines.push("");
+    content.push("⚙️  System Commands:");
+    content.push("");
     
     // Calculate max command name length for alignment
     const maxCommandNameLength = Math.max(...standalone.map((c: Command) => c.name.length), 12);
     
     for (const cmd of standalone.sort((a: Command, b: Command) => a.name.localeCompare(b.name))) {
-      lines.push(`  ${colors.cyan(cmd.name.padEnd(maxCommandNameLength))}  ${colors.dim(cmd.describe)}`);
+      content.push(`  ${colors.cyan(cmd.name.padEnd(maxCommandNameLength))}  ${colors.dim(cmd.describe)}`);
     }
-    lines.push("");
+    content.push("");
   }
   
-  // Show global options
-  lines.push(colors.bold("Global Options:"));
-  lines.push("");
+  // Global options section
+  content.push("Global Options:");
+  content.push("");
   
   const globalOptions = [
     { name: "--help", desc: "Show help information" },
@@ -247,85 +253,96 @@ export function renderGlobalHelpNew(registry: any): string {
   const maxOptionNameLength = Math.max(...globalOptions.map(o => o.name.length), 12);
   
   for (const option of globalOptions) {
-    lines.push(`  ${colors.cyan(option.name.padEnd(maxOptionNameLength))}  ${colors.dim(option.desc)}`);
+    content.push(`  ${colors.cyan(option.name.padEnd(maxOptionNameLength))}  ${colors.dim(option.desc)}`);
   }
-  lines.push("");
+  content.push("");
   
-  // Next Steps
-  lines.push(colors.bold("Next Steps:"));
-  lines.push("");
+  // Next Steps section
+  content.push("Next Steps:");
+  content.push("");
   
   // Dynamically generate next steps
   if (products.length > 0) {
     const firstProduct = products[0];
-    lines.push(`  ${colors.cyan(`kb ${firstProduct.name} --help`)}  ${colors.dim(`Explore ${firstProduct.name} commands`)}`);
+    content.push(`  ${colors.cyan(`kb ${firstProduct.name} --help`)}  ${colors.dim(`Explore ${firstProduct.name} commands`)}`);
   }
   
   // Check if version command exists
   const versionCmd = standalone.find((c: Command) => c.name === 'version');
   if (versionCmd) {
-    lines.push(`  ${colors.cyan("kb version")}  ${colors.dim("Check CLI version")}`);
+    content.push(`  ${colors.cyan("kb version")}  ${colors.dim("Check CLI version")}`);
   }
   
   // Check if diagnose command exists
   const diagnoseCmd = standalone.find((c: Command) => c.name === 'diagnose');
   if (diagnoseCmd) {
-    lines.push(`  ${colors.cyan("kb diagnose")}  ${colors.dim("Diagnose project health")}`);
+    content.push(`  ${colors.cyan("kb diagnose")}  ${colors.dim("Diagnose project health")}`);
   }
   
-  lines.push("");
-  lines.push(colors.dim("Use 'kb <product> --help' to see commands for a specific product."));
+  content.push("");
+  content.push(colors.dim("Use 'kb <product> --help' to see commands for a specific product."));
   
-  return lines.join("\n");
+  // Add timing
+  const totalTime = tracker.total();
+  content.push("");
+  content.push(`Time: ${formatTiming(totalTime)}`);
+  
+  // Return box-formatted help
+  return box("KB Labs CLI", content);
 }
 
 export function renderCommandHelp(command: Command, groupName?: string): string {
-  const lines: string[] = [];
+  const tracker = new TimingTracker();
   const fullName = groupName ? `${groupName} ${command.name}` : command.name;
 
-  lines.push(colors.cyan(colors.bold(`📋 ${fullName}`)));
-  lines.push("");
+  // Build content for box
+  const content: string[] = [];
 
   if (command.describe) {
-    lines.push(colors.bold("Description:"));
-    lines.push(`  ${command.describe}`);
-    lines.push("");
+    content.push(colors.bold("Description:"));
+    content.push(`  ${command.describe}`);
+    content.push("");
   }
 
   if (command.longDescription) {
-    lines.push(colors.bold("Details:"));
-    lines.push(`  ${command.longDescription}`);
-    lines.push("");
+    content.push(colors.bold("Details:"));
+    content.push(`  ${command.longDescription}`);
+    content.push("");
   }
 
   if (command.examples && command.examples.length > 0) {
-    lines.push(colors.bold("Examples:"));
+    content.push(colors.bold("Examples:"));
     for (const example of command.examples) {
-      lines.push(`  ${colors.dim(example)}`);
+      content.push(`  ${colors.dim(example)}`);
     }
-    lines.push("");
+    content.push("");
   }
 
   if (command.flags && command.flags.length > 0) {
-    lines.push(colors.bold("Options:"));
+    content.push(colors.bold("Options:"));
     for (const flag of command.flags) {
       const flagName = flag.alias ? `-${flag.alias}, --${flag.name}` : `--${flag.name}`;
       const typeInfo = flag.type !== "boolean" ? ` <${flag.type}>` : "";
       const required = flag.required ? colors.red(" (required)") : "";
       const defaultVal = flag.default !== undefined ? colors.dim(` (default: ${flag.default})`) : "";
 
-      lines.push(`  ${colors.cyan(flagName + typeInfo)}${required}${defaultVal}`);
+      content.push(`  ${colors.cyan(flagName + typeInfo)}${required}${defaultVal}`);
       if (flag.description) {
-        lines.push(`    ${colors.dim(flag.description)}`);
+        content.push(`    ${colors.dim(flag.description)}`);
       }
       if (flag.choices && flag.choices.length > 0) {
-        lines.push(`    ${colors.dim(`Choices: ${flag.choices.join(", ")}`)}`);
+        content.push(`    ${colors.dim(`Choices: ${flag.choices.join(", ")}`)}`);
       }
     }
-    lines.push("");
+    content.push("");
   }
 
-  return lines.join("\n");
+  // Add timing
+  const totalTime = tracker.total();
+  content.push(`Time: ${formatTiming(totalTime)}`);
+
+  // Return box-formatted help
+  return box(`📋 ${fullName}`, content);
 }
 
 export function renderHelp(

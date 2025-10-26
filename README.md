@@ -15,8 +15,28 @@ packages/
 ├── commands/                # Commands package (@kb-labs/cli-commands)
 ├── core/                    # Core package (@kb-labs/cli-core)
 docs/
-└── adr/                     # Architecture Decision Records (ADRs)
+├── guides/                  # Comprehensive guides
+│   ├── cli-style.md         # CLI design principles
+│   └── command-output.md    # Output formatting guide
+├── adr/                     # Architecture Decision Records
+└── README.md               # Documentation overview
 ```
+
+## 📚 Documentation
+
+**Quick Start:**
+- [Command Quick Reference](./docs/COMMAND_QUICK_REFERENCE.md) - Basic patterns
+- [Command Registration](./docs/COMMAND_REGISTRATION.md) - Implementation guide
+
+**Comprehensive Guides:**
+- [CLI Style Guide](./docs/guides/cli-style.md) - Design principles and conventions
+- [Command Output Guide](./docs/guides/command-output.md) - Detailed formatting patterns
+
+**Architecture:**
+- [ADR-0005: Unified CLI Output Formatting](./docs/adr/0005-unified-cli-output-formatting.md) - Output standards
+- [Architecture Overview](./docs/ARCHITECTURE.md) - System design
+
+**Need help finding something?** → [Documentation Overview](./docs/README.md)
 
 ## 🚀 Quick Start
 

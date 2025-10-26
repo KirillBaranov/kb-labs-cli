@@ -11,6 +11,18 @@ importers:
       '@kb-labs/devkit':
         specifier: link:../kb-labs-devkit
         version: link:../kb-labs-devkit
+      '@kb-labs/devlink-core':
+        specifier: file:.yalc/@kb-labs/devlink-core
+        version: file:.yalc/@kb-labs/devlink-core
+      '@kb-labs/mind-core':
+        specifier: workspace:*
+        version: link:../kb-labs-mind/packages/mind-core
+      chokidar:
+        specifier: ^4.0.3
+        version: 4.0.3
+      p-queue:
+        specifier: ^9.0.0
+        version: 9.0.0
       zod:
         specifier: ^4.1.5
         version: 4.1.12
@@ -54,6 +66,18 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)
+
+  ../kb-labs-devkit: {}
+
+  ../kb-labs-mind: {}
+
+  ../kb-labs-mind/packages/mind-adapters: {}
+
+  ../kb-labs-mind/packages/mind-core: {}
+
+  ../kb-labs-mind/packages/mind-indexer: {}
+
+  ../kb-labs-mind/packages/mind-pack: {}
 
   apps/demo:
     devDependencies:
@@ -130,6 +154,18 @@ importers:
       '@kb-labs/cli-core':
         specifier: link:../core
         version: link:../core
+      '@kb-labs/mind-adapters':
+        specifier: workspace:*
+        version: link:../../../kb-labs-mind/packages/mind-adapters
+      '@kb-labs/mind-core':
+        specifier: workspace:*
+        version: link:../../../kb-labs-mind/packages/mind-core
+      '@kb-labs/mind-indexer':
+        specifier: workspace:*
+        version: link:../../../kb-labs-mind/packages/mind-indexer
+      '@kb-labs/mind-pack':
+        specifier: workspace:*
+        version: link:../../../kb-labs-mind/packages/mind-pack
     devDependencies:
       rimraf:
         specifier: ^6.0.1
@@ -164,6 +200,15 @@ importers:
       '@kb-labs/devlink-core':
         specifier: link:../../../kb-labs-devlink/packages/core
         version: link:../../../kb-labs-devlink/packages/core
+      ajv:
+        specifier: ^8.17.1
+        version: 8.17.1
+      glob:
+        specifier: ^11.0.0
+        version: 11.0.3
+      yaml:
+        specifier: ^2.5.1
+        version: 2.8.1
     devDependencies:
       '@types/node':
         specifier: ^24.3.3
@@ -632,6 +677,9 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@kb-labs/devlink-core@file:.yalc/@kb-labs/devlink-core':
+    resolution: {directory: .yalc/@kb-labs/devlink-core, type: directory}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -1431,6 +1479,9 @@ packages:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
 
+  eventemitter3@5.0.1:
+    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
+
   expand-template@2.0.3:
     resolution: {integrity: sha512-XYfuKMvj4O35f/pOXLObndIRvyQ+/+6AhODh+OKWj9S9498pHHn/IMszH+gt0fBCRWMNfk1ZSp5x3AifmnI2vg==}
     engines: {node: '>=6'}
@@ -2034,9 +2085,25 @@ packages:
     resolution: {integrity: sha512-VFqfGDHlx87K66yZrNdI4YGtD70IRyd+zSvgks6mzHPRNkoKy+9EKP4SFC77/vTTQYmRmti7dvqC+m5jBrBAcg==}
     engines: {node: '>=12'}
 
+  p-queue@8.1.1:
+    resolution: {integrity: sha512-aNZ+VfjobsWryoiPnEApGGmf5WmNsCo9xu8dfaYamG5qaLP7ClhLN6NgsFe6SwJ2UbLEBK5dv9x8Mn5+RVhMWQ==}
+    engines: {node: '>=18'}
+
+  p-queue@9.0.0:
+    resolution: {integrity: sha512-KO1RyxstL9g1mK76530TExamZC/S2Glm080Nx8PE5sTd7nlduDQsAfEl4uXX+qZjLiwvDauvzXavufy3+rJ9zQ==}
+    engines: {node: '>=20'}
+
   p-timeout@3.2.0:
     resolution: {integrity: sha512-rhIwUycgwwKcP9yTOOFK/AKsAopjjCakVqLHePO3CC6Mir1Z99xT+R63jZxAT5lFZLa2inS5h+ZS2GvR99/FBg==}
     engines: {node: '>=8'}
+
+  p-timeout@6.1.4:
+    resolution: {integrity: sha512-MyIV3ZA/PmyBN/ud8vV9XzwTrNtR4jFrObymZYnZqMmW0zA8Z17vnT0rBgFE/TlohB+YCHqXMgZzb3Csp49vqg==}
+    engines: {node: '>=14.16'}
+
+  p-timeout@7.0.1:
+    resolution: {integrity: sha512-AxTM2wDGORHGEkPCt8yqxOTMgpfbEHqF51f/5fJCmwFC3C/zNcGT63SymH2ttOAaiIws2zVg4+izQCjrakcwHg==}
+    engines: {node: '>=20'}
 
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
@@ -3005,6 +3072,11 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@kb-labs/devlink-core@file:.yalc/@kb-labs/devlink-core':
+    dependencies:
+      chokidar: 4.0.3
+      p-queue: 8.1.1
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
@@ -3978,6 +4050,8 @@ snapshots:
 
   esutils@2.0.3: {}
 
+  eventemitter3@5.0.1: {}
+
   expand-template@2.0.3: {}
 
   expect-type@1.2.2: {}
@@ -4587,9 +4661,23 @@ snapshots:
     dependencies:
       aggregate-error: 4.0.1
 
+  p-queue@8.1.1:
+    dependencies:
+      eventemitter3: 5.0.1
+      p-timeout: 6.1.4
+
+  p-queue@9.0.0:
+    dependencies:
+      eventemitter3: 5.0.1
+      p-timeout: 7.0.1
+
   p-timeout@3.2.0:
     dependencies:
       p-finally: 1.0.0
+
+  p-timeout@6.1.4: {}
+
+  p-timeout@7.0.1: {}
 
   package-json-from-dist@1.0.1: {}
 

@@ -33,9 +33,9 @@
     "profiles:resolve:smoke": "tsx src/smoke/profiles-resolve.ts"
   },
   "dependencies": {
-    "@kb-labs/cli-adapters": "workspace:*",
-    "@kb-labs/cli-commands": "workspace:*",
-    "@kb-labs/cli-core": "workspace:*",
+    "@kb-labs/cli-adapters": "link:../adapters",
+    "@kb-labs/cli-commands": "link:../commands",
+    "@kb-labs/cli-core": "link:../core",
     "@kb-labs/mind-core": "workspace:*",
     "@kb-labs/mind-indexer": "workspace:*",
     "@kb-labs/mind-pack": "workspace:*",

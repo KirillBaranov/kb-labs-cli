@@ -1,5 +1,6 @@
 import type { Command } from "../../types";
 import { explainBundle, ProductId } from '@kb-labs/core-bundle';
+import { box, keyValue, formatTiming, TimingTracker } from '@kb-labs/shared-cli-ui';
 
 export const explain: Command = {
   name: "explain",
@@ -27,6 +28,9 @@ export const explain: Command = {
   ],
 
   async run(ctx, argv, flags) {
+    const tracker = new TimingTracker();
+    const jsonMode = !!flags.json;
+    
     const defaultFlags = {
       product: undefined as string | undefined,
       profile: "default",
@@ -51,6 +55,8 @@ export const explain: Command = {
     }
 
     try {
+      tracker.checkpoint('explain');
+      
       // Get configuration trace
       const trace = await explainBundle({
         cwd: process.cwd(),
@@ -58,11 +64,34 @@ export const explain: Command = {
         profileKey: profile as string
       });
 
+      const totalTime = tracker.total();
+
       // Display trace
       ctx.presenter.write("🔍 Configuration Resolution Trace\n\n");
       
       if (trace.length === 0) {
         ctx.presenter.write("No configuration layers found.\n");
+        
+        if (jsonMode) {
+          return { 
+            ok: true, 
+            product, 
+            profile, 
+            layers: 0, 
+            settings: 0,
+            timing: totalTime
+          };
+        } else {
+          const summary = keyValue({
+            'Product': product,
+            'Profile': profile,
+            'Layers': 0,
+            'Settings': 0,
+          });
+
+          const output = box('Bundle Explain', [...summary, '', `Time: ${formatTiming(totalTime)}`]);
+          ctx.presenter.write(output);
+        }
         return 0;
       }
 
@@ -103,6 +132,31 @@ export const explain: Command = {
         ctx.presenter.write("\n");
       }
 
+      // Add summary box at the end
+      const totalSettings = trace.length;
+      const totalLayers = Object.keys(layers).length;
+      
+      if (jsonMode) {
+        return { 
+          ok: true, 
+          product, 
+          profile, 
+          layers: totalLayers, 
+          settings: totalSettings,
+          timing: totalTime
+        };
+      } else {
+        const summary = keyValue({
+          'Product': product,
+          'Profile': profile,
+          'Layers': totalLayers,
+          'Settings': totalSettings,
+        });
+
+        const output = box('Bundle Explain', [...summary, '', `Time: ${formatTiming(totalTime)}`]);
+        ctx.presenter.write(output);
+      }
+
       return 0;
     } catch (error: any) {
       // Handle specific error codes
@@ -116,9 +170,20 @@ export const explain: Command = {
         exitCode = 1;
       }
 
-      ctx.presenter.error(`❌ ${error.message}\n`);
-      if (error.hint) {
-        ctx.presenter.error(`   Hint: ${error.hint}\n`);
+      const errorMessage = error.message || 'Unknown error';
+      
+      if (jsonMode) {
+        return { 
+          ok: false, 
+          error: errorMessage, 
+          hint: error.hint,
+          timing: tracker.total()
+        };
+      } else {
+        ctx.presenter.error(`❌ ${errorMessage}\n`);
+        if (error.hint) {
+          ctx.presenter.error(`   Hint: ${error.hint}\n`);
+        }
       }
 
       return exitCode;

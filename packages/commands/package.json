@@ -31,11 +31,17 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@kb-labs/cli-core": "workspace:*",
-    "@kb-labs/cli-adapters": "workspace:*",
+    "@kb-labs/cli-core": "link:../core",
+    "@kb-labs/cli-adapters": "link:../adapters",
     "ajv": "^8.17.1",
     "yaml": "^2.5.1",
-    "glob": "^11.0.0"
+    "glob": "^11.0.0",
+    "@kb-labs/core-bundle": "link:../../../kb-labs-core/packages/bundle",
+    "@kb-labs/core-config": "link:../../../kb-labs-core/packages/config",
+    "@kb-labs/core-policy": "link:../../../kb-labs-core/packages/policy",
+    "@kb-labs/core-profiles": "link:../../../kb-labs-core/packages/profiles",
+    "@kb-labs/devlink-core": "link:../../../kb-labs-devlink/packages/core",
+    "@kb-labs/shared-cli-ui": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.3.3",
