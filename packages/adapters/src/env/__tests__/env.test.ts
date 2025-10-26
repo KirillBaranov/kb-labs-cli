@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { envBool, envNumber, envString, readEnv } from "../env";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { envBool, envNumber, envString } from "../env";
 import { CliError, CLI_ERROR_CODES } from "@kb-labs/cli-core";
 
 describe("env helpers", () => {
