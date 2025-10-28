@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0",
+  "generator": "kb-labs-mind@0.1.0",
+  "project": "@kb-labs/cli",
+  "products": [
+    {
+      "id": "demo",
+      "name": "@product-name/demo",
+      "description": "",
+      "maintainers": [
+        "unknown"
+      ],
+      "tags": [],
+      "docs": [],
+      "dependencies": []
+    },
+    {
+      "id": "cli-adapters",
+      "name": "@kb-labs/cli-adapters",
+      "description": "Adapters for KB Labs CLI - file system, environment, and discovery utilities",
+      "maintainers": [
+        "unknown"
+      ],
+      "tags": [],
+      "docs": [],
+      "dependencies": [
+        "ajv",
+        "ajv-formats",
+        "picomatch",
+        "yaml",
+        "@kb-labs/cli-core"
+      ]
+    },
+    {
+      "id": "cli-bin",
+      "name": "@kb-labs/cli-bin",
+      "description": "KB Labs CLI tool for project management and automation",
+      "maintainers": [
+        "unknown"
+      ],
+      "tags": [],
+      "docs": [],
+      "dependencies": [
+        "@kb-labs/cli-adapters",
+        "@kb-labs/cli-commands",
+        "@kb-labs/cli-core",
+        "@kb-labs/mind-core",
+        "@kb-labs/mind-indexer",
+        "@kb-labs/mind-pack",
+        "@kb-labs/mind-adapters"
+      ]
+    },
+    {
+      "id": "cli-commands",
+      "name": "@kb-labs/cli-commands",
+      "description": "Command implementations for KB Labs CLI",
+      "maintainers": [
+        "unknown"
+      ],
+      "tags": [],
+      "docs": [
+        "docs/global-flags.md",
+        "docs/logging.md"
+      ],
+      "dependencies": [
+        "@kb-labs/cli-adapters",
+        "@kb-labs/cli-core",
+        "@kb-labs/core-bundle",
+        "@kb-labs/core-config",
+        "@kb-labs/core-policy",
+        "@kb-labs/devlink-core",
+        "@kb-labs/mind-types",
+        "@kb-labs/mind-core",
+        "@kb-labs/mind-indexer",
+        "@kb-labs/mind-pack",
+        "@kb-labs/shared-cli-ui",
+        "ajv",
+        "glob",
+        "yaml"
+      ]
+    },
+    {
+      "id": "cli-core",
+      "name": "@kb-labs/cli-core",
+      "description": "Core functionality for KB Labs CLI - command framework, context, and utilities",
+      "maintainers": [
+        "unknown"
+      ],
+      "tags": [],
+      "docs": [],
+      "dependencies": [
+        "colorette",
+        "zod",
+        "@kb-labs/shared-cli-ui"
+      ]
+    }
+  ],
+  "generatedAt": "2025-10-28T10:08:14.014Z"
+}

@@ -1,0 +1,1089 @@
+{
+  "files": {
+    "apps/demo/src/main.ts": {
+      "exports": [],
+      "sha256": "6af342c11339682cd8b4049bbf0a43fa908ef01b1537e092bdd110d8af8f64f3",
+      "size": 124
+    },
+    "apps/demo/vite.config.ts": {
+      "exports": [],
+      "sha256": "b1d809492b3d3905bb8ffc53c317e133445cbf5da41fc68d8ea7e13e3562a5a0",
+      "size": 98
+    },
+    "eslint.config.js": {
+      "exports": [],
+      "sha256": "ae94a4abf4188875bdd65c13760ccdbe7efb488b902dd858293352cbadca3c2f",
+      "size": 273
+    },
+    "packages/adapters/src/discovery/package-json.ts": {
+      "exports": [
+        {
+          "jsdoc": "Look up nearest package.json and read kbLabs.commands list.",
+          "kind": "function",
+          "name": "createPackageJsonDiscovery",
+          "signature": "export function createPackageJsonDiscovery("
+        }
+      ],
+      "sha256": "9b51fc859c5ad04319e4153f5725b029c0a927fac67ee2e1cf45db1814c295ee",
+      "size": 1704
+    },
+    "packages/adapters/src/discovery/static.ts": {
+      "exports": [
+        {
+          "jsdoc": "Use when you want to hardcode a plugin list in CLI.",
+          "kind": "function",
+          "name": "createStaticDiscovery",
+          "signature": "export function createStaticDiscovery("
+        }
+      ],
+      "sha256": "3910e0fdb8edefd0d8165d4a47416990842b067e04f347442f68dab2118d7c52",
+      "size": 956
+    },
+    "packages/adapters/src/discovery/types.ts": {
+      "exports": [],
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    "packages/adapters/src/env/env.ts": {
+      "exports": [
+        {
+          "jsdoc": "Thin helpers around process.env. Use core-config for real config shaping.",
+          "kind": "function",
+          "name": "envBool",
+          "signature": "export function envBool(name: string, def = false): boolean {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "envNumber",
+          "signature": "export function envNumber(name: string, def?: number): number | undefined {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "envString",
+          "signature": "export function envString(name: string, def?: string): string | undefined {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "readEnv",
+          "signature": "export function readEnv(prefix?: string): Record<string, string> {"
+        }
+      ],
+      "sha256": "cb456fc0cc98b967833e16e7de51ac04ab5a616a594e7354630b34f88df9ed03",
+      "size": 1573
+    },
+    "packages/adapters/src/env/repo.ts": {
+      "exports": [
+        {
+          "jsdoc": "Very small repo root detector: looks for .git upwards.",
+          "kind": "function",
+          "name": "detectRepoRoot",
+          "signature": "export function detectRepoRoot(start = process.cwd()): string {"
+        }
+      ],
+      "sha256": "f8b1a44b6aa706f9a0c6c2b9414d479dadf3247330e34967b549cddc9776133d",
+      "size": 441
+    },
+    "packages/adapters/src/index.test.ts": {
+      "exports": [],
+      "sha256": "51d470e06f5351da3092fe968d0ae516cf6ad9b3624e61b3e857ea0767bf6792",
+      "size": 175
+    },
+    "packages/adapters/src/index.ts": {
+      "exports": [],
+      "sha256": "5ccc0164662fccd61c0f71d09ae57016e6d9cafc437ac3b398c1fcb2b2a170c9",
+      "size": 289
+    },
+    "packages/adapters/src/io/file.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "fileSource",
+          "signature": "export function fileSource(path: string): InputSource {"
+        }
+      ],
+      "sha256": "ea99d486455277eb8352963a7bd8cfb2a618654f71f378d9c87aa9e2541a708e",
+      "size": 480
+    },
+    "packages/adapters/src/io/fs-artifacts.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "ensureDir",
+          "signature": "export async function ensureDir(dir: string): Promise<void> {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "writeText",
+          "signature": "export async function writeText(file: string, text: string): Promise<void> {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "writeJson",
+          "signature": "export async function writeJson(file: string, data: unknown): Promise<void> {"
+        }
+      ],
+      "sha256": "28d45f7206a8fe34f15d44b1fe5fae6519f28f4ea503863da399fcf3f9c6455e",
+      "size": 1032
+    },
+    "packages/adapters/src/io/stdin.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "stdinSource",
+          "signature": "export function stdinSource(): InputSource {"
+        }
+      ],
+      "sha256": "3d47468555eda8e95cc29bd440052c5b5389f3f988bf2771ae14233e1d114836",
+      "size": 596
+    },
+    "packages/adapters/src/telemetry/file-sink.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "createFileTelemetrySink",
+          "signature": "export function createFileTelemetrySink(fileOrDir: string): TelemetrySink {"
+        }
+      ],
+      "sha256": "c1c718d8dab91216098254ef17cdc4ba50911ff4d533e6c0ca7acdd7b04caf4e",
+      "size": 875
+    },
+    "packages/adapters/src/types/index.ts": {
+      "exports": [],
+      "sha256": "d51485b82b29d07016e9d3359f271622966aca8edfc59648a1d2369e6404123d",
+      "size": 25
+    },
+    "packages/adapters/src/types/types.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "HelloWorld",
+          "signature": "export interface HelloWorld {}"
+        }
+      ],
+      "sha256": "1ee4af355f1b9def3df86a3728605108709ed8e6e29fdc5fd2234f37d08045e3",
+      "size": 99
+    },
+    "packages/adapters/tsup.config.ts": {
+      "exports": [],
+      "sha256": "5189501766911e30e8e0443cdb49c2b64a34cdb382d4f37718dfa86c35de1da5",
+      "size": 201
+    },
+    "packages/adapters/vitest.config.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "config",
+          "signature": "export default config;"
+        }
+      ],
+      "sha256": "8c2419f8741e94c52a56051ddd6d4b093346ed10e1c5b8a01dcca110eeb0e47d",
+      "size": 77
+    },
+    "packages/cli/src/__smoke__/devlink.exit-codes.smoke.spec.ts": {
+      "exports": [],
+      "sha256": "4d7e850fe43c5f76f44e016dd27e8fe56c64e4db5267d991b1bf8e2eea663f82",
+      "size": 897
+    },
+    "packages/cli/src/__smoke__/exit-codes.smoke.spec.ts": {
+      "exports": [],
+      "sha256": "df33e5fca5eebd233e3b66883b34a9ffd9efe6fb201dd11f8cdb141810bd7f10",
+      "size": 828
+    },
+    "packages/cli/src/__smoke__/json-output.smoke.spec.ts": {
+      "exports": [],
+      "sha256": "8179d8e8e5640a32c9b09d99763eddf83c8f5377d6560b390733bc00f36b0f9a",
+      "size": 1516
+    },
+    "packages/cli/src/__smoke__/json-purity.smoke.spec.ts": {
+      "exports": [],
+      "sha256": "91dcc721b68dac49d0d9663a6d615c664ee1f07a87686846a769fd1dbdb146b4",
+      "size": 1270
+    },
+    "packages/cli/src/bin.ts": {
+      "exports": [],
+      "sha256": "6a82c3f2871da93761e87bbd68c29b3ef962e4acb0549655829fb79ed28ce353",
+      "size": 184
+    },
+    "packages/cli/src/index.test.ts": {
+      "exports": [],
+      "sha256": "4d6ab290b0c110b8db477f601003194482458984e0c4cf1d1f539e4bf4b6e761",
+      "size": 170
+    },
+    "packages/cli/src/index.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "run",
+          "signature": "export async function run(argv: string[]): Promise<number | void> {"
+        }
+      ],
+      "sha256": "3dedfb36f94c9773a7ffb63650a129ccabe1171a9a6013dbcccee3bdbc7f8801",
+      "size": 4800
+    },
+    "packages/cli/src/types/index.ts": {
+      "exports": [],
+      "sha256": "d51485b82b29d07016e9d3359f271622966aca8edfc59648a1d2369e6404123d",
+      "size": 25
+    },
+    "packages/cli/src/types/types.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "HelloWorld",
+          "signature": "export interface HelloWorld {}"
+        }
+      ],
+      "sha256": "1ee4af355f1b9def3df86a3728605108709ed8e6e29fdc5fd2234f37d08045e3",
+      "size": 99
+    },
+    "packages/cli/tests/smoke.spec.ts": {
+      "exports": [],
+      "sha256": "bd64f035a157b5fea994b71f02cfc4a087219c54bc4bad68262eda4d50bfff5a",
+      "size": 5659
+    },
+    "packages/cli/tsup.config.ts": {
+      "exports": [],
+      "sha256": "14dc1d68a917ea3bb09de27fa6a710583a3748e1e918c1495a59c99c272d4e37",
+      "size": 167
+    },
+    "packages/cli/vitest.config.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "config",
+          "signature": "export default config;"
+        }
+      ],
+      "sha256": "8c2419f8741e94c52a56051ddd6d4b093346ed10e1c5b8a01dcca110eeb0e47d",
+      "size": 77
+    },
+    "packages/commands/src/builtins/plugins-cache-clear.ts": {
+      "exports": [],
+      "sha256": "216e1b6f54c7f60b54d21bf29e98a57049f79afda0b22c93da06d2dfdb822cdd",
+      "size": 2230
+    },
+    "packages/commands/src/commands/system/diagnose.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "diagnose",
+          "signature": "diagnose: Command = {"
+        }
+      ],
+      "sha256": "dc3874dc77e607d6af3232917898a6714aeb76e475049467d6ceaffa150e0124",
+      "size": 1874
+    },
+    "packages/commands/src/commands/system/doctor.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "doctor",
+          "signature": "doctor: Command = {"
+        }
+      ],
+      "sha256": "565395f0f0f7a306c51bb35d0924ae7a434f9df7ae07631b0817beb1cec0fafd",
+      "size": 10863
+    },
+    "packages/commands/src/commands/system/hello.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "hello",
+          "signature": "hello: Command = {"
+        }
+      ],
+      "sha256": "eab8af5e41c1bbd011237a67d3a94c2cc6ed9992c882619099b0b166721369b9",
+      "size": 1444
+    },
+    "packages/commands/src/commands/system/plugins-list.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "pluginsList",
+          "signature": "pluginsList: Command = {"
+        }
+      ],
+      "sha256": "e1252daa8c169ddc5db019cdf4ff8037c3d3c38174bc62eaa4df42d2491b23a2",
+      "size": 6047
+    },
+    "packages/commands/src/commands/system/version.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "version",
+          "signature": "version: Command = {"
+        }
+      ],
+      "sha256": "a9091011f84002c86ba8ef1421eb21f0d7c4a5a3198b302fbc0e91221b30a3d8",
+      "size": 1123
+    },
+    "packages/commands/src/index.test.ts": {
+      "exports": [],
+      "sha256": "e230dd423d030124361b8ecbd16db5221cd9cfa345ca8769a06612fed6e294e1",
+      "size": 175
+    },
+    "packages/commands/src/index.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "registry",
+          "signature": "registry"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "findCommand",
+          "signature": "findCommand"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "ProductGroup",
+          "signature": "type ProductGroup"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "registerBuiltinCommands",
+          "signature": "registerBuiltinCommands"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "hello",
+          "signature": "hello"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "version",
+          "signature": "version"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "diagnose",
+          "signature": "diagnose"
+        }
+      ],
+      "sha256": "aeffb97a7aa4e493edd6a379d05f18b2d09d4704dd6516260dcf109e9c1ba392",
+      "size": 1081
+    },
+    "packages/commands/src/registry/availability.ts": {
+      "exports": [
+        {
+          "jsdoc": "Check if all required dependencies for a command are available",
+          "kind": "function",
+          "name": "checkRequires",
+          "signature": "export function checkRequires(manifest: CommandManifest, cwd = process.cwd()): AvailabilityCheck {"
+        }
+      ],
+      "sha256": "63eb59c8f81fe9e4252c1be15bdf69e993db6b7ecbf0de24fca535901a5148c2",
+      "size": 5381
+    },
+    "packages/commands/src/registry/discover.ts": {
+      "exports": [
+        {
+          "jsdoc": "Main discovery function",
+          "kind": "function",
+          "name": "discoverManifests",
+          "signature": "export async function discoverManifests(cwd: string, noCache = false): Promise<DiscoveryResult[]> {"
+        }
+      ],
+      "sha256": "1bd5fa39958dab81055bc6a61f4eed0a5ef9ec1a86c17439b772457c561dd9ed",
+      "size": 15213
+    },
+    "packages/commands/src/registry/index.ts": {
+      "exports": [],
+      "sha256": "85c490823f6978b91c4a50807e869a879b03292bffc21abe8da272a1bde8d024",
+      "size": 255
+    },
+    "packages/commands/src/registry/register.ts": {
+      "exports": [
+        {
+          "jsdoc": "Register manifests with shadowing and collision detection",
+          "kind": "function",
+          "name": "registerManifests",
+          "signature": "export function registerManifests("
+        }
+      ],
+      "sha256": "214d112ce1bbfe1ec4fe34cfd603d453b3834498502aa0c6ee5838caf5ac239d",
+      "size": 7446
+    },
+    "packages/commands/src/registry/run.ts": {
+      "exports": [
+        {
+          "jsdoc": "Execute a registered command with lazy loading",
+          "kind": "function",
+          "name": "runCommand",
+          "signature": "export async function runCommand("
+        }
+      ],
+      "sha256": "e568bc8b8bab7978ebdf95c2c528c25658e6d8654259b33ad4b8c0e889096c84",
+      "size": 2618
+    },
+    "packages/commands/src/registry/types.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "CommandManifest",
+          "signature": "export interface CommandManifest {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "FlagDefinition",
+          "signature": "export interface FlagDefinition {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "RegisteredCommand",
+          "signature": "export interface RegisteredCommand {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "CommandModule",
+          "signature": "export interface CommandModule {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "DiscoveryResult",
+          "signature": "export interface DiscoveryResult {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "GlobalFlags",
+          "signature": "export interface GlobalFlags {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "PackageCacheEntry",
+          "signature": "export interface PackageCacheEntry {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "CacheFile",
+          "signature": "export interface CacheFile {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "type",
+          "name": "AvailabilityCheck",
+          "signature": "export type AvailabilityCheck = "
+        }
+      ],
+      "sha256": "8b27e1c4ca6b091b37f8455f1a7e80904ead5ca109b84a99c7e442733b5dd081",
+      "size": 2242
+    },
+    "packages/commands/src/types/index.ts": {
+      "exports": [],
+      "sha256": "d51485b82b29d07016e9d3359f271622966aca8edfc59648a1d2369e6404123d",
+      "size": 25
+    },
+    "packages/commands/src/types/types.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "type",
+          "name": "CommandRun",
+          "signature": "export type CommandRun = ("
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "FlagDefinition",
+          "signature": "export interface FlagDefinition {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "Command",
+          "signature": "export interface Command {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "CommandGroup",
+          "signature": "export interface CommandGroup {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "CommandLookup",
+          "signature": "export interface CommandLookup {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "CommandRegistry",
+          "signature": "export interface CommandRegistry extends CommandLookup {"
+        }
+      ],
+      "sha256": "5fdbb06bceb5cb71db1907b4e9fb4abb3011511998eb047a96c377a250f24e20",
+      "size": 1720
+    },
+    "packages/commands/src/utils/help-generator.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "renderGroupHelp",
+          "signature": "export function renderGroupHelp(group: CommandGroup): string {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "renderGlobalHelp",
+          "signature": "export function renderGlobalHelp(groups: CommandGroup[], standalone: Command[]): string {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "renderProductHelp",
+          "signature": "export function renderProductHelp(groupName: string, commands: RegisteredCommand[]): string {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "renderGlobalHelpNew",
+          "signature": "export function renderGlobalHelpNew(registry: any): string {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "renderCommandHelp",
+          "signature": "export function renderCommandHelp(command: Command, groupName?: string): string {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "renderHelp",
+          "signature": "export function renderHelp("
+        }
+      ],
+      "sha256": "64ade3b0fca25356ed25d5bf66b92362586e8a03cd656882ba36bbffc38f6864",
+      "size": 15259
+    },
+    "packages/commands/src/utils/logger.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "type",
+          "name": "LogLevel",
+          "signature": "export type LogLevel = typeof LOG_LEVELS[number];"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "getLogLevel",
+          "signature": "export function getLogLevel(): LogLevel {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "log",
+          "signature": "export function log(level: LogLevel, message: string): void {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "resetLogLevel",
+          "signature": "export function resetLogLevel(): void {"
+        }
+      ],
+      "sha256": "f5fe482f2428283d5cf8d7749dc5bcdaeb7f0bc40516b24c276516c09316805e",
+      "size": 996
+    },
+    "packages/commands/src/utils/path.ts": {
+      "exports": [
+        {
+          "jsdoc": "Convert path to POSIX format (forward slashes)",
+          "kind": "function",
+          "name": "toPosixPath",
+          "signature": "export function toPosixPath(filePath: string): string {"
+        }
+      ],
+      "sha256": "a6baae5b90e1851b71f31cc127b3c3f51c95c04503299acfae695760ee72a736",
+      "size": 400
+    },
+    "packages/commands/src/utils/register.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "registerBuiltinCommands",
+          "signature": "export async function registerBuiltinCommands() {"
+        }
+      ],
+      "sha256": "923ad840c5bb3f85ab7c8f5faa48e136408e1c8d74854eaf1bbfc723c91a35ba",
+      "size": 2343
+    },
+    "packages/commands/src/utils/registry.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "ProductGroup",
+          "signature": "export interface ProductGroup {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "registry",
+          "signature": "registry = new InMemoryRegistry()"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "findCommand",
+          "signature": "export function findCommand(nameOrPath: string | string[]) {"
+        }
+      ],
+      "sha256": "f839a4d89e012401bdd66a2040b14d874f1c3b976efd746cb39d70142ca0a09b",
+      "size": 6470
+    },
+    "packages/commands/tsup.config.ts": {
+      "exports": [],
+      "sha256": "04be35c5c82f7248f8bda8d2447b505ece2b9f37dcdc75847dfa1dfb15df98ee",
+      "size": 168
+    },
+    "packages/commands/vitest.config.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "config",
+          "signature": "export default config;"
+        }
+      ],
+      "sha256": "8c2419f8741e94c52a56051ddd6d4b093346ed10e1c5b8a01dcca110eeb0e47d",
+      "size": 77
+    },
+    "packages/core/src/command.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "type",
+          "name": "FlagBuilder",
+          "signature": "export type FlagBuilder = (y: Record<string, unknown>) => void;"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "CliCommand",
+          "signature": "export interface CliCommand {"
+        }
+      ],
+      "sha256": "a859a11e38bf3d3112520da3e64a88812dff07484e7f229e9177e9ff73d8ae82",
+      "size": 430
+    },
+    "packages/core/src/context.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "Logger",
+          "signature": "export interface Logger {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "Profile",
+          "signature": "export interface Profile {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "CliContext",
+          "signature": "export interface CliContext {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "createContext",
+          "signature": "export async function createContext({"
+        }
+      ],
+      "sha256": "19997f0534d595998d2c91c918973441c19b620983aad3e40cb22d2373bf7183",
+      "size": 1610
+    },
+    "packages/core/src/errors.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "CLI_ERROR_CODES",
+          "signature": "CLI_ERROR_CODES = {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "type",
+          "name": "CliErrorCode",
+          "signature": "export type CliErrorCode ="
+        },
+        {
+          "jsdoc": "Standard CLI exit codes (unified across all commands)",
+          "kind": "const",
+          "name": "EXIT_CODES",
+          "signature": "EXIT_CODES = {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "mapCliErrorToExitCode",
+          "signature": "mapCliErrorToExitCode = (code: CliErrorCode): number => {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "class",
+          "name": "CliError",
+          "signature": "export class CliError extends Error {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "isCliError",
+          "signature": "export function isCliError(err: unknown): err is CliError {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "serializeCliError",
+          "signature": "export function serializeCliError("
+        }
+      ],
+      "sha256": "02dbef092d52854fff851da1ae5495019294a96f90c3f1e62862792df12a3c0c",
+      "size": 3404
+    },
+    "packages/core/src/flags.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "type",
+          "name": "GlobalFlags",
+          "signature": "export type GlobalFlags = {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "validateCommandFlags",
+          "signature": "export function validateCommandFlags("
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "parseArgs",
+          "signature": "export function parseArgs(argv: string[]): {"
+        }
+      ],
+      "sha256": "7819c41d237472753edba9449edb37a518d938d8810a2dd7c03d69e93a6d41df",
+      "size": 3597
+    },
+    "packages/core/src/index.test.ts": {
+      "exports": [],
+      "sha256": "21ec55d917ba822b315ce8494a37ca6bb9e56d32b92498407314010499117bf2",
+      "size": 171
+    },
+    "packages/core/src/index.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "EXIT_CODES",
+          "signature": "EXIT_CODES"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "CLI_ERROR_CODES",
+          "signature": "CLI_ERROR_CODES"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "CliError",
+          "signature": "CliError"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "mapCliErrorToExitCode",
+          "signature": "mapCliErrorToExitCode"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "createLoader",
+          "signature": "createLoader"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "createContext",
+          "signature": "createContext"
+        }
+      ],
+      "sha256": "c57a2afa1f1f8a4039ee683387659249efd4c24cb9bf472f20244a1786e5373c",
+      "size": 791
+    },
+    "packages/core/src/io/types.ts": {
+      "exports": [
+        {
+          "jsdoc": "Abstraction over input sources (stdin, file, http, etc.).",
+          "kind": "interface",
+          "name": "InputSource",
+          "signature": "export interface InputSource {"
+        }
+      ],
+      "sha256": "31294b1dea6c398fd26e31f3258eecf6a647d1a5dca5e83fdda219d4322598fc",
+      "size": 125
+    },
+    "packages/core/src/plugins/types.ts": {
+      "exports": [
+        {
+          "jsdoc": "How the CLI discovers/loads command plugins.",
+          "kind": "interface",
+          "name": "PluginDiscovery",
+          "signature": "export interface PluginDiscovery {"
+        }
+      ],
+      "sha256": "8e342a74f100647082e49da10915f879f59263f41cb0574ba11dfcaab5c7c677",
+      "size": 346
+    },
+    "packages/core/src/presenter/colors.ts": {
+      "exports": [
+        {
+          "jsdoc": "Color utilities for CLI output",
+          "kind": "const",
+          "name": "colors",
+          "signature": "colors = {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "bold",
+          "signature": "bold"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "dim",
+          "signature": "dim"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "gray",
+          "signature": "gray"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "green",
+          "signature": "green"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "red",
+          "signature": "red"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "yellow",
+          "signature": "yellow"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "cyan",
+          "signature": "cyan"
+        },
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "blue",
+          "signature": "blue"
+        }
+      ],
+      "sha256": "54bf8784c101652ebaf83c1610efc5e97d7969956286857f675df5db182b727b",
+      "size": 423
+    },
+    "packages/core/src/presenter/json.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "createJsonPresenter",
+          "signature": "export function createJsonPresenter(): Presenter & { setContext(context: CliContext): void } {"
+        }
+      ],
+      "sha256": "467babc334f7e886a5b4581fead94cd9ef71dcdec4743944d74493926265aca7",
+      "size": 677
+    },
+    "packages/core/src/presenter/loader.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "LoaderOptions",
+          "signature": "export interface LoaderOptions {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "LoaderTick",
+          "signature": "export interface LoaderTick {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "Loader",
+          "signature": "export interface Loader {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "createLoader",
+          "signature": "export function createLoader(options: LoaderOptions): Loader {"
+        }
+      ],
+      "sha256": "cb07fa06a4dd25eee5f6903a175c3c0619d9f95d9bcd743b308a7613dfc1c744",
+      "size": 2662
+    },
+    "packages/core/src/presenter/text.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "createTextPresenter",
+          "signature": "export function createTextPresenter(isQuiet: boolean = false): Presenter {"
+        }
+      ],
+      "sha256": "a26106cf779afa8fa3aeb85b7cb9ed3dccdb54642cb9e0c97d889644971f2736",
+      "size": 729
+    },
+    "packages/core/src/presenter/types.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "Presenter",
+          "signature": "export interface Presenter {"
+        }
+      ],
+      "sha256": "2cb601960f0306578be79426297700905e531308e6d7b6a20afef3e2bfa844a3",
+      "size": 234
+    },
+    "packages/core/src/registry.test.ts": {
+      "exports": [],
+      "sha256": "e08e73b49e10b43fe9cd3a42838934d8e8d85cb4f6860ff6db0bc9cebc6ce22f",
+      "size": 3332
+    },
+    "packages/core/src/registry.ts": {
+      "exports": [
+        {
+          "jsdoc": "Статический реестр. Позже можно добавить динамическое чтение из package.json",
+          "kind": "const",
+          "name": "registry",
+          "signature": "registry: CliCommand[] = []"
+        },
+        {
+          "jsdoc": "",
+          "kind": "function",
+          "name": "findCommand",
+          "signature": "export function findCommand(path: string[]): CliCommand | undefined {"
+        }
+      ],
+      "sha256": "a5c884fac0c931c96aca77820b50b624df470c73f5bfe13a6465b6abc89ab2e7",
+      "size": 391
+    },
+    "packages/core/src/telemetry/types.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "type",
+          "name": "TelemetryEvent",
+          "signature": "export type TelemetryEvent = {"
+        },
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "TelemetrySink",
+          "signature": "export interface TelemetrySink {"
+        }
+      ],
+      "sha256": "9eedf2ee12d100a6e06f3cdb3357567883f939b861f53f20cb19f5605c175408",
+      "size": 226
+    },
+    "packages/core/src/types/index.ts": {
+      "exports": [],
+      "sha256": "d51485b82b29d07016e9d3359f271622966aca8edfc59648a1d2369e6404123d",
+      "size": 25
+    },
+    "packages/core/src/types/types.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "interface",
+          "name": "HelloWorld",
+          "signature": "export interface HelloWorld {}"
+        }
+      ],
+      "sha256": "1ee4af355f1b9def3df86a3728605108709ed8e6e29fdc5fd2234f37d08045e3",
+      "size": 99
+    },
+    "packages/core/tsup.config.ts": {
+      "exports": [],
+      "sha256": "5189501766911e30e8e0443cdb49c2b64a34cdb382d4f37718dfa86c35de1da5",
+      "size": 201
+    },
+    "packages/core/vitest.config.ts": {
+      "exports": [
+        {
+          "jsdoc": "",
+          "kind": "const",
+          "name": "config",
+          "signature": "export default config;"
+        }
+      ],
+      "sha256": "8c2419f8741e94c52a56051ddd6d4b093346ed10e1c5b8a01dcca110eeb0e47d",
+      "size": 77
+    },
+    "vitest.config.ts": {
+      "exports": [],
+      "sha256": "03d4be5b177797d95d4e4120593fc1251c861042bf233c45bbb702efb18d5a44",
+      "size": 1309
+    }
+  },
+  "generator": "kb-labs-mind@0.1.0",
+  "schemaVersion": "1.0"
+}
