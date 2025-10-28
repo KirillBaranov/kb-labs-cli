@@ -104,6 +104,11 @@ export async function run(argv: string[]): Promise<number | void> {
   }
 
   const ctx = await createContext({ presenter });
+  
+  // Link context to JSON presenter for sentJSON flag
+  if (global.json && 'setContext' in presenter) {
+    (presenter as any).setContext(ctx);
+  }
 
   try {
     const result = await cmd.run(ctx, rest, { ...global, ...flagsObj });
