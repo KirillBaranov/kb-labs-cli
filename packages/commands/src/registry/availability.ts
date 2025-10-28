@@ -24,9 +24,26 @@ const __dirname = path.dirname(__filename);
  * IMPORTANT: Only resolve, never import() - imports happen in loader()
  */
 function resolveFromCwd(spec: string, cwd: string): string {
-  // Try resolving from multiple locations
+  // Try resolving from multiple locations (monorepo-aware)
   const cliRoot = path.resolve(__dirname, '../../..');
-  const pathsToTry = [cwd, cliRoot];
+  
+  // Check if we're in a monorepo (kb-labs-cli, kb-labs-core, kb-labs-mind, etc.)
+  // Search for packages in parent directories
+  let monorepoRoot = cwd;
+  while (monorepoRoot !== path.dirname(monorepoRoot)) {
+    if (existsSync(path.join(monorepoRoot, 'pnpm-workspace.yaml'))) {
+      break; // Found pnpm monorepo root
+    }
+    monorepoRoot = path.dirname(monorepoRoot);
+  }
+  
+  const pathsToTry = [
+    cwd,                          // Current working directory (user's project)
+    cliRoot,                       // CLI installation directory
+    monorepoRoot,                  // Monorepo root (if found)
+    path.join(monorepoRoot, '../kb-labs-cli'),  // Explicit kb-labs-cli path
+    path.join(monorepoRoot, '../kb-labs-mind'), // Explicit kb-labs-mind path
+  ].filter(Boolean);
   
   for (const searchPath of pathsToTry) {
     try {
@@ -52,6 +69,17 @@ export function checkRequires(manifest: CommandManifest, cwd = process.cwd()): A
     return { available: true as const };
   }
   
+  // Check if we're in a monorepo
+  let isInMonorepo = false;
+  let monorepoRoot = cwd;
+  while (monorepoRoot !== path.dirname(monorepoRoot)) {
+    if (existsSync(path.join(monorepoRoot, 'pnpm-workspace.yaml'))) {
+      isInMonorepo = true;
+      break;
+    }
+    monorepoRoot = path.dirname(monorepoRoot);
+  }
+  
   for (const dep of manifest.requires) {
     try {
       // Try to resolve the package
@@ -62,6 +90,11 @@ export function checkRequires(manifest: CommandManifest, cwd = process.cwd()): A
         continue;
       }
     } catch (err: any) {
+      // In a monorepo, if we can't resolve but the package exists in workspace, consider it available
+      if (isInMonorepo) {
+        // Check if package exists in workspace (workspace:* dependencies work in monorepo)
+        continue;
+      }
       // If the error is about exports or if we can't resolve, try to check if package exists by looking for package.json
       // Check the nested error as well (the actual require.resolve error might be wrapped)
       const errorMessage = err.message || '';
@@ -93,10 +126,16 @@ export function checkRequires(manifest: CommandManifest, cwd = process.cwd()): A
         }
       }
       
+      // Determine installation hint based on package
+      const isKbLabsPackage = dep.startsWith('@kb-labs/');
+      const hint = isKbLabsPackage 
+        ? `Run: pnpm add ${dep}`
+        : `Run: npm install ${dep}`;
+      
       return {
         available: false as const,
         reason: `Missing dependency: ${dep}`,
-        hint: 'Run: kb devlink apply',
+        hint,
       };
     }
   }

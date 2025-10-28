@@ -2,6 +2,7 @@ import { registry } from "./registry";
 import { hello } from "../commands/system/hello";
 import { version } from "../commands/system/version";
 import { diagnose } from "../commands/system/diagnose";
+import { doctor } from "../commands/system/doctor";
 import { pluginsList } from "../commands/system/plugins-list";
 import pluginsCacheClear from "../builtins/plugins-cache-clear";
 import { discoverManifests } from "../registry/discover";
@@ -32,6 +33,7 @@ export async function registerBuiltinCommands() {
   registry.register(hello);
   registry.register(version);
   registry.register(diagnose);
+  registry.register(doctor);
   registry.register(pluginsList);
   registry.register(pluginsCacheClear);
   
