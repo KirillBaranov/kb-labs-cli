@@ -81,6 +81,9 @@ importers:
       '@kb-labs/core-policy':
         specifier: link:../policy
         version: link:../policy
+      '@kb-labs/core-profiles':
+        specifier: link:../profiles
+        version: link:../profiles
     devDependencies:
       '@types/node':
         specifier: ^24.3.3
@@ -141,19 +144,19 @@ importers:
   ../kb-labs-core/packages/core:
     dependencies:
       '@kb-labs/core-bundle':
-        specifier: workspace:*
+        specifier: link:../bundle
         version: link:../bundle
       '@kb-labs/core-config':
-        specifier: workspace:*
+        specifier: link:../config
         version: link:../config
       '@kb-labs/core-policy':
-        specifier: workspace:*
+        specifier: link:../policy
         version: link:../policy
       '@kb-labs/core-profiles':
-        specifier: workspace:*
+        specifier: link:../profiles
         version: link:../profiles
       '@kb-labs/shared-cli-ui':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-shared/packages/cli-ui
         version: link:../../../kb-labs-shared/packages/cli-ui
     devDependencies:
       '@kb-labs/devkit':
@@ -174,6 +177,9 @@ importers:
 
   ../kb-labs-core/packages/policy:
     dependencies:
+      '@kb-labs/core-config':
+        specifier: link:../config
+        version: link:../config
       ajv:
         specifier: ^8.17.1
         version: 8.17.1
@@ -208,6 +214,9 @@ importers:
       '@kb-labs/core-sys':
         specifier: link:../sys
         version: link:../sys
+      '@kb-labs/profile-schemas':
+        specifier: link:../../../kb-labs-profile-schemas
+        version: link:../../../kb-labs-profile-schemas
       ajv:
         specifier: ^8.17.1
         version: 8.17.1
@@ -402,8 +411,8 @@ importers:
         specifier: link:../mind-types
         version: link:../mind-types
       '@kb-labs/shared-cli-ui':
-        specifier: link:../shared-cli-ui
-        version: link:../shared-cli-ui
+        specifier: link:../../../kb-labs-shared/packages/cli-ui
+        version: link:../../../kb-labs-shared/packages/cli-ui
     devDependencies:
       '@kb-labs/devkit':
         specifier: github:KirillBaranov/kb-labs-devkit#main
@@ -590,6 +599,9 @@ importers:
       '@kb-labs/mind-types':
         specifier: workspace:*
         version: link:../mind-types
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
     devDependencies:
       '@kb-labs/devkit':
         specifier: link:../../kb-labs-devkit
@@ -606,9 +618,6 @@ importers:
       typescript:
         specifier: ^5
         version: 5.9.3
-      vitest:
-        specifier: ^3.2.4
-        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
   ../kb-labs-mind/packages/mind-types:
     devDependencies:
@@ -854,6 +863,9 @@ importers:
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
@@ -885,6 +897,9 @@ importers:
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
       tsx:
         specifier: ^4.19.2
         version: 4.20.6
@@ -949,6 +964,9 @@ importers:
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
@@ -977,6 +995,9 @@ importers:
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
