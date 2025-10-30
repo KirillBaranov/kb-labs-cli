@@ -122,6 +122,29 @@ class InMemoryRegistry implements CommandRegistry {
   }
 
   get(nameOrPath: string | string[]): Command | CommandGroup | undefined {
+    // First try exact match if single string
+    if (typeof nameOrPath === 'string') {
+      if (this.byName.has(nameOrPath)) {
+        return this.byName.get(nameOrPath);
+      }
+      // Try as array for commands like "plugins:doctor"
+      if (nameOrPath.includes(":")) {
+        const parts = nameOrPath.split(":");
+        if (parts.length === 2) {
+          // Try exact match first, then split format
+          const exactMatch = this.byName.get(nameOrPath);
+          if (exactMatch) return exactMatch;
+          
+          // Try space-separated format
+          const spaceKey = parts.join(" ");
+          if (this.byName.has(spaceKey)) {
+            return this.byName.get(spaceKey);
+          }
+        }
+      }
+    }
+    
+    // Array format
     const key = Array.isArray(nameOrPath) ? nameOrPath.join(" ") : nameOrPath;
 
     // Прямой поиск по ключу (includes manifest-based commands)
@@ -196,6 +219,27 @@ class InMemoryRegistry implements CommandRegistry {
     return this.listManifests()
       .filter(cmd => cmd.manifest.group === group)
       .sort((a, b) => a.manifest.id.localeCompare(b.manifest.id));
+  }
+  
+  // New: Get manifest command by ID or alias
+  getManifestCommand(idOrAlias: string): RegisteredCommand | undefined {
+    // Try direct ID lookup
+    if (this.manifests.has(idOrAlias)) {
+      return this.manifests.get(idOrAlias);
+    }
+    
+    // Try alias lookup
+    for (const cmd of this.manifests.values()) {
+      if (cmd.manifest.aliases?.includes(idOrAlias)) {
+        return cmd;
+      }
+      // Also check whitespace alias
+      if (cmd.manifest.id.replace(':', ' ') === idOrAlias) {
+        return cmd;
+      }
+    }
+    
+    return undefined;
   }
 }
 

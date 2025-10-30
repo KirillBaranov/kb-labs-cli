@@ -5,13 +5,21 @@ import {
   createJsonPresenter,
   createContext,
 } from "@kb-labs/cli-core";
-import { findCommand, registerBuiltinCommands, renderGroupHelp, renderProductHelp, renderGlobalHelpNew, registry, type CommandGroup } from "@kb-labs/cli-commands";
+import { findCommand, registerBuiltinCommands, renderGroupHelp, renderProductHelp, renderGlobalHelpNew, renderManifestCommandHelp, registry, type CommandGroup } from "@kb-labs/cli-commands";
 
 function normalizeCmdPath(argvCmd: string[]): string[] {
+  // First try exact match (for commands like "plugins:doctor")
   if (argvCmd.length === 1 && argvCmd[0]?.includes(":")) {
-    const parts = argvCmd[0].split(":");
-    if (parts.length >= 2 && parts[0] && parts[1]) {
-      return [parts[0], parts[1]];
+    const cmdName = argvCmd[0];
+    // Check if it's a valid command ID format (namespace:command)
+    const parts = cmdName.split(":");
+    if (parts.length === 2 && parts[0] && parts[1]) {
+      // Try exact match first, then fallback to split format
+      return argvCmd; // Keep original for exact match
+    }
+    // For 3+ parts (namespace:group:command), split it
+    if (parts.length >= 3) {
+      return parts;
     }
   }
   return argvCmd;
@@ -108,6 +116,30 @@ export async function run(argv: string[]): Promise<number | void> {
   // Link context to JSON presenter for sentJSON flag
   if (global.json && 'setContext' in presenter) {
     (presenter as any).setContext(ctx);
+  }
+
+  // Handle --help flag for manifest-based commands
+  if (global.help && cmdPath.length > 0) {
+    // Check if this is a manifest-based command
+    const manifestCmd = registry.getManifestCommand(normalizedCmdPath.join(':'));
+    if (manifestCmd) {
+      if (global.json) {
+        presenter.json({
+          ok: true,
+          command: manifestCmd.manifest.id,
+          manifest: {
+            describe: manifestCmd.manifest.describe,
+            longDescription: manifestCmd.manifest.longDescription,
+            flags: manifestCmd.manifest.flags,
+            examples: manifestCmd.manifest.examples,
+            aliases: manifestCmd.manifest.aliases,
+          },
+        });
+      } else {
+        presenter.write(renderManifestCommandHelp(manifestCmd));
+      }
+      return 0;
+    }
   }
 
   try {
