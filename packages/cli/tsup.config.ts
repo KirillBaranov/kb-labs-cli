@@ -6,5 +6,9 @@ export default {
     index: "src/index.ts",
     bin: "src/bin.ts",
   },
+  dts: {
+    resolve: false,
+  },
+  skipNodeModulesBundle: true,
   clean: false,
 };
