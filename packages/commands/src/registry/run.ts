@@ -1,20 +1,52 @@
 /**
  * @kb-labs/cli-commands/registry
- * Command execution with lazy loading and global flags passthrough
+ * Command execution with lazy loading, timeouts, guards, and permissions
  */
 
 import type { RegisteredCommand } from './types.js';
+import { loadPluginsState } from './plugins-state.js';
+import { telemetry } from './telemetry.js';
 
 // Global flags that are always passed to commands
-const GLOBAL_FLAGS = ['json', 'onlyAvailable', 'noCache', 'verbose', 'quiet', 'help', 'version'];
+const GLOBAL_FLAGS = ['json', 'onlyAvailable', 'noCache', 'verbose', 'quiet', 'help', 'version', 'dryRun'];
+
+// Execution limits
+const COMMAND_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 /**
- * Execute a registered command with lazy loading
- * @param cmd Registered command
- * @param ctx CLI context
- * @param argv Command arguments
- * @param flags Parsed flags
- * @returns Exit code (0=success, 1=error, 2=unavailable)
+ * Check if plugin has required permissions
+ */
+async function checkPermissions(
+  cmd: RegisteredCommand,
+  cwd: string
+): Promise<{ allowed: boolean; reason?: string }> {
+  const requiredPermissions = cmd.manifest.permissions || [];
+  
+  if (requiredPermissions.length === 0) {
+    return { allowed: true };
+  }
+  
+  const state = await loadPluginsState(cwd);
+  const grantedPermissions = state.permissions[cmd.manifest.package || cmd.manifest.group] || [];
+  
+  // Default permissions for 3rd-party plugins
+  const defaultPermissions = ['fs.read'];
+  const allGranted = [...defaultPermissions, ...grantedPermissions];
+  
+  const missing = requiredPermissions.filter(p => !allGranted.includes(p));
+  
+  if (missing.length > 0) {
+    return {
+      allowed: false,
+      reason: `Missing permissions: ${missing.join(', ')}. Run: kb plugins enable ${cmd.manifest.package || cmd.manifest.group} --perm ${missing.join(' --perm ')}`,
+    };
+  }
+  
+  return { allowed: true };
+}
+
+/**
+ * Execute a registered command with lazy loading, timeouts, and guards
  */
 export async function runCommand(
   cmd: RegisteredCommand,
@@ -22,14 +54,8 @@ export async function runCommand(
   argv: string[],
   flags: Record<string, any>
 ): Promise<number> {
-  // LAZY EVALUATION PIPELINE:
-  // Stage 1: Check availability (resolve only, no imports)
-  // Stage 2: Load command module (actual import happens here)
-  // Stage 3: Execute command
-  
   // Check availability
   if (!cmd.available) {
-    // JSON mode: structured response with exact spec format
     if (flags.json) {
       ctx.presenter.json({
         ok: false,
@@ -41,7 +67,6 @@ export async function runCommand(
       return 2;
     }
     
-    // Text mode: formatted error
     const verbose = flags.verbose || false;
     if (verbose) {
       ctx.presenter.warn(`Command unavailable: ${cmd.manifest.id}`);
@@ -54,16 +79,37 @@ export async function runCommand(
     return 2;
   }
   
-  // Stage 2: Load command module (actual import happens here)
+  // Check permissions
+  const permissionsCheck = await checkPermissions(cmd, ctx.cwd || process.cwd());
+  if (!permissionsCheck.allowed) {
+    if (flags.json) {
+      ctx.presenter.json({
+        ok: false,
+        available: false,
+        command: cmd.manifest.id,
+        reason: permissionsCheck.reason,
+        hint: `Grant required permissions or enable plugin`,
+      });
+      return 2;
+    }
+    
+    ctx.presenter.error(`${cmd.manifest.id}: ${permissionsCheck.reason}`);
+    return 2;
+  }
+  
+  // Load command module
   let mod: any;
   try {
     mod = await cmd.manifest.loader();
   } catch (error: any) {
+    // Record crash for quarantine
+    const { recordCrash } = await import('./plugins-state.js');
+    await recordCrash(ctx.cwd || process.cwd(), cmd.manifest.package || cmd.manifest.group);
+    
     ctx.presenter.error(`Failed to load command ${cmd.manifest.id}: ${error.message}`);
     return 1;
   }
   
-  // Validate module has run function
   if (!mod?.run || typeof mod.run !== 'function') {
     ctx.presenter.error(`Invalid command module for ${cmd.manifest.id}: missing run function`);
     return 1;
@@ -77,12 +123,79 @@ export async function runCommand(
     }
   }
   
-  // Stage 3: Execute command
+  // Execute command with timeout
+  const execStart = Date.now();
   try {
-    const result = await mod.run(ctx, argv, allFlags);
+    const executionPromise = mod.run(ctx, argv, allFlags);
+    
+    const timeoutPromise = new Promise<number>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`Command execution timeout after ${COMMAND_TIMEOUT / 1000}s`));
+      }, COMMAND_TIMEOUT);
+    });
+    
+    const result = await Promise.race([executionPromise, timeoutPromise]);
+    const execDuration = Date.now() - execStart;
+    
+    // Record telemetry
+    telemetry.recordExecution({
+      commandId: cmd.manifest.id,
+      duration: execDuration,
+      success: true,
+    });
+    
     return typeof result === 'number' ? result : 0;
   } catch (error: any) {
+    const execDuration = Date.now() - execStart;
+    
+    // Enhanced crash report
+    const crashReport = {
+      commandId: cmd.manifest.id,
+      package: cmd.manifest.package || cmd.manifest.group,
+      version: process.env.CLI_VERSION || '0.1.0',
+      nodeVersion: process.version,
+      platform: process.platform,
+      error: {
+        code: error.code || 'UNKNOWN',
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 10).join('\n'), // First 10 lines of stack
+        hint: error.message.includes('timeout') 
+          ? 'Command exceeded timeout limit. Consider optimizing or using --no-timeout'
+          : error.message.includes('Cannot find module')
+          ? 'Missing dependency. Run: pnpm install'
+          : 'Check command implementation and dependencies',
+      },
+      timestamp: new Date().toISOString(),
+    };
+    
+    // Log crash report in verbose mode
+    if (ctx.logger?.level === 'debug' || ctx.logger?.level === 'verbose') {
+      ctx.logger.debug(`[crash-report] ${JSON.stringify(crashReport, null, 2)}`);
+    }
+    
+    // Record crash for quarantine
+    const { recordCrash } = await import('./plugins-state.js');
+    await recordCrash(ctx.cwd || process.cwd(), cmd.manifest.package || cmd.manifest.group);
+    
+    // Record telemetry
+    telemetry.recordExecution({
+      commandId: cmd.manifest.id,
+      duration: execDuration,
+      success: false,
+      errorCode: error.code || 'UNKNOWN',
+    });
+    
     ctx.presenter.error(`Command ${cmd.manifest.id} failed: ${error.message}`);
+    
+    if (error.message.includes('timeout')) {
+      ctx.presenter.warn(`Command exceeded timeout limit. Consider optimizing the command.`);
+    }
+    
+    // Show hint if available
+    if (crashReport.error.hint && crashReport.error.hint !== 'Check command implementation and dependencies') {
+      ctx.presenter.info(`Hint: ${crashReport.error.hint}`);
+    }
+    
     return 1;
   }
 }
