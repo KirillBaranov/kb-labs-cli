@@ -2,10 +2,13 @@
  * plugins:list command - List all discovered CLI plugins
  */
 
-import type { Command } from "../../types/types.js";
-import type { RegisteredCommand } from '../../registry/types.js';
-import { registry } from "../../utils/registry.js";
-import { box, keyValue, formatTiming, TimingTracker, safeSymbols, safeColors } from "@kb-labs/shared-cli-ui";
+import type { Command } from "../../types/types";
+import type { RegisteredCommand } from '../../registry/types';
+import { registry } from "../../utils/registry";
+import { box, keyValue, formatTiming, TimingTracker, safeSymbols, safeColors, formatTable, type TableColumn } from "@kb-labs/shared-cli-ui";
+import { loadPluginsState, isPluginEnabled } from '../../registry/plugins-state';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 
 export const pluginsList: Command = {
   name: "plugins",
@@ -34,114 +37,209 @@ export const pluginsList: Command = {
       
       const manifests = registry.listManifests();
       const productGroups = registry.listProductGroups();
+      const state = await loadPluginsState(process.cwd());
+      
+      // Group by package name
+      const packages = new Map<string, {
+        name: string;
+        namespace: string;
+        version: string;
+        source: string;
+        enabled: boolean;
+        commands: RegisteredCommand[];
+        state: 'enabled' | 'disabled' | 'error' | 'outdated' | 'linked';
+      }>();
+      
+      for (const cmd of manifests) {
+        const pkgName = cmd.manifest.package || cmd.manifest.group;
+        const namespace = cmd.manifest.namespace || cmd.manifest.group;
+        
+        if (!packages.has(pkgName)) {
+          // Try to get version from package.json
+          let version = 'unknown';
+          // First try from pkgRoot (workspace/linked plugins)
+          if (cmd.pkgRoot) {
+            try {
+              const pkgPath = path.join(cmd.pkgRoot, 'package.json');
+              const pkgJson = JSON.parse(await fs.readFile(pkgPath, 'utf8'));
+              version = pkgJson.version || 'unknown';
+            } catch {}
+          }
+          
+          // If not found, try node_modules
+          if (version === 'unknown') {
+            try {
+              const pkgPath = path.join(process.cwd(), 'node_modules', pkgName, 'package.json');
+              const pkgJson = JSON.parse(await fs.readFile(pkgPath, 'utf8'));
+              version = pkgJson.version || 'unknown';
+            } catch {
+              // Try workspace root/packages structure
+              try {
+                const pkgPath = path.join(process.cwd(), 'packages', namespace.replace('@kb-labs/', '').replace('-cli', ''), 'package.json');
+                const pkgJson = JSON.parse(await fs.readFile(pkgPath, 'utf8'));
+                version = pkgJson.version || 'unknown';
+              } catch {
+                // Try finding in parent workspace
+                try {
+                  const workspaceRoot = path.resolve(process.cwd(), '..');
+                  const pkgDirs = await fs.readdir(path.join(workspaceRoot, 'packages'), { withFileTypes: true });
+                  for (const dir of pkgDirs) {
+                    if (dir.isDirectory()) {
+                      try {
+                        const pkgPath = path.join(workspaceRoot, 'packages', dir.name, 'package.json');
+                        const pkgJson = JSON.parse(await fs.readFile(pkgPath, 'utf8'));
+                        if (pkgJson.name === pkgName) {
+                          version = pkgJson.version || 'unknown';
+                          break;
+                        }
+                      } catch {}
+                    }
+                  }
+                } catch {}
+              }
+            }
+          }
+          
+          const enabled = isPluginEnabled(state, pkgName, cmd.source === 'workspace' || cmd.source === 'linked');
+          let pluginState: 'enabled' | 'disabled' | 'error' | 'outdated' | 'linked' = enabled ? 'enabled' : 'disabled';
+          
+          if (cmd.source === 'linked') {
+            pluginState = 'linked';
+          } else if (!cmd.available) {
+            pluginState = 'error';
+          }
+          
+          packages.set(pkgName, {
+            name: pkgName,
+            namespace,
+            version,
+            source: cmd.source,
+            enabled,
+            commands: [],
+            state: pluginState,
+          });
+        }
+        
+        packages.get(pkgName)!.commands.push(cmd);
+      }
       
       const totalTime = tracker.total();
       
       if (jsonMode) {
-        // JSON output with all fields
-        const output = manifests.map(cmd => ({
-          id: cmd.manifest.id,
-          aliases: cmd.manifest.aliases || [],
-          group: cmd.manifest.group,
-          describe: cmd.manifest.describe,
-          source: cmd.source,
-          shadowed: cmd.shadowed,
-          available: cmd.available,
-          ...(cmd.unavailableReason && { reason: cmd.unavailableReason }),
-          ...(cmd.hint && { hint: cmd.hint }),
+        // JSON output with state
+        const output = Array.from(packages.values()).map(pkg => ({
+          name: pkg.name,
+          namespace: pkg.namespace,
+          version: pkg.version,
+          source: pkg.source,
+          enabled: pkg.enabled,
+          state: pkg.state,
+          commands: pkg.commands.map(cmd => ({
+            id: cmd.manifest.id,
+            aliases: cmd.manifest.aliases || [],
+            describe: cmd.manifest.describe,
+            available: cmd.available,
+            shadowed: cmd.shadowed,
+            ...(cmd.unavailableReason && { reason: cmd.unavailableReason }),
+          })),
         }));
         
         ctx.presenter.json({
           ok: true,
-          commands: output,
+          plugins: output,
           total: output.length,
-          available: output.filter(c => c.available).length,
-          unavailable: output.filter(c => !c.available).length,
-          shadowed: output.filter(c => c.shadowed).length,
+          enabled: output.filter(p => p.enabled).length,
+          disabled: output.filter(p => !p.enabled).length,
           products: productGroups.length,
           timing: totalTime,
         });
         return 0;
       }
       
-      // Text output - grouped by products
-      const available = manifests.filter(c => c.available && !c.shadowed).length;
-      const unavailable = manifests.filter(c => !c.available).length;
-      const shadowed = manifests.filter(c => c.shadowed).length;
-      const total = manifests.length;
+      // Text output - table format with state indicators
+      const packageList = Array.from(packages.values()).sort((a, b) => a.name.localeCompare(b.name));
       
-      // Summary section
-      const summary = keyValue({
-        'Total': `${total} commands in ${productGroups.length} products`,
-        'Available': `${available}`,
-        'Unavailable': unavailable > 0 ? `${unavailable}` : 'none',
-        'Shadowed': shadowed > 0 ? `${shadowed}` : 'none',
-      });
-      
-      // Products section
-      const productLines: string[] = [];
-      
-      // Emoji map for products
-      const emojiMap: Record<string, string> = {
-        'devlink': '🔗',
-        'profiles': '📋',
-        'mind': '🧠',
-        'bundle': '📦',
-        'init': '🚀',
-        'policy': '📜',
+      const stateIcons: Record<string, string> = {
+        enabled: '✅',
+        disabled: '⏸',
+        error: '❌',
+        outdated: '⚠',
+        linked: '🧩',
       };
       
-      for (const product of productGroups.sort((a, b) => a.name.localeCompare(b.name))) {
-        const emoji = emojiMap[product.name] || '📦';
-        const availableCount = product.commands.filter(c => c.available && !c.shadowed).length;
-        const unavailableCount = product.commands.filter(c => !c.available || c.shadowed).length;
+      const summary = keyValue({
+        'Total': `${packageList.length} plugins`,
+        'Enabled': `${packageList.filter(p => p.enabled).length}`,
+        'Disabled': `${packageList.filter(p => !p.enabled).length}`,
+        'Linked': `${packageList.filter(p => p.state === 'linked').length}`,
+        'Commands': `${manifests.length} total`,
+      });
+      
+      // Prepare table data
+      const columns: TableColumn[] = [
+        { header: 'Plugin', align: 'left' },
+        { header: 'NS', align: 'left' },
+        { header: 'Version', align: 'left' },
+        { header: 'Source', align: 'left' },
+        { header: 'State', align: 'left' },
+        { header: 'Cmds', align: 'right' },
+      ];
+      
+      const tableRows: string[][] = packageList.map(pkg => {
+        const stateIcon = stateIcons[pkg.state] || '❓';
+        const name = pkg.name.length > 26 ? pkg.name.substring(0, 23) + '...' : pkg.name;
+        // Don't use colors for source to avoid alignment issues
+        const sourceLabel = pkg.source === 'workspace' ? 'workspace' : 
+                           pkg.source === 'linked' ? 'linked' : 
+                           'node_modules';
+        const stateDisplay = `${stateIcon} ${pkg.state}`;
         
-        productLines.push(`${emoji} ${safeColors.info(safeColors.bold(product.name))}`);
-        productLines.push(`  ${availableCount > 0 ? safeSymbols.success : safeSymbols.error} ${availableCount} available${unavailableCount > 0 ? safeColors.dim(` | ${safeSymbols.error} ${unavailableCount} unavailable`) : ''}`);
-        
-        // Show commands for this product (deduplicate by ID)
-        const uniqueCommands = new Map<string, RegisteredCommand>();
-        for (const cmd of product.commands) {
-          if (!uniqueCommands.has(cmd.manifest.id)) {
-            uniqueCommands.set(cmd.manifest.id, cmd);
-          }
-        }
-        
-        const sortedCmds = Array.from(uniqueCommands.values()).sort((a, b) => a.manifest.id.localeCompare(b.manifest.id));
-        
-        for (const cmd of sortedCmds) {
-          const status = cmd.available && !cmd.shadowed ? safeSymbols.success : 
-                         cmd.shadowed ? safeSymbols.warning : 
-                         safeSymbols.error;
-          
-          const statusText = cmd.shadowed ? safeColors.dim(' (shadowed)') : '';
-          const sourceBadge = safeColors.dim(`[${cmd.source}]`);
-          
-          productLines.push(`    ${status} ${safeColors.info(cmd.manifest.id.padEnd(25))} ${sourceBadge}${statusText}`);
-          
-          // Show reason for unavailable/shadowed
-          if (!cmd.available && cmd.unavailableReason) {
-            productLines.push(`      ${safeColors.error(`Reason: ${cmd.unavailableReason}`)}`);
-            if (cmd.hint) {
-              productLines.push(`      ${safeColors.warning(`Hint: ${cmd.hint}`)}`);
+        return [
+          name,
+          pkg.namespace,
+          pkg.version,
+          sourceLabel,
+          stateDisplay,
+          String(pkg.commands.length),
+        ];
+      });
+      
+      const tableLines = formatTable(columns, tableRows, { separator: '─', padding: 2 });
+      
+      // Add error details below table
+      const errorLines: string[] = [];
+      for (const pkg of packageList) {
+        const hasErrors = pkg.commands.some(c => !c.available || c.shadowed);
+        if (hasErrors) {
+          for (const cmd of pkg.commands) {
+            if (!cmd.available) {
+              errorLines.push(`  ${safeColors.dim('  ❌')} ${cmd.manifest.id}: ${cmd.unavailableReason || 'unavailable'}`);
+              if (cmd.hint) {
+                errorLines.push(`     ${safeColors.warning(`Hint: ${cmd.hint}`)}`);
+              }
+            }
+            if (cmd.shadowed) {
+              errorLines.push(`  ${safeColors.dim('  ⚠')} ${cmd.manifest.id}: shadowed`);
             }
           }
-          if (cmd.shadowed && cmd.source === 'node_modules') {
-            productLines.push(`      ${safeColors.dim('Shadowed by workspace version')}`);
-          }
         }
-        
-        productLines.push('');
+      }
+      
+      if (errorLines.length > 0) {
+        tableLines.push('', ...errorLines);
       }
       
       const sections = [
         safeColors.bold('Summary:'),
         ...summary,
         '',
-        safeColors.bold('Products:'),
-        ...productLines,
+        safeColors.bold('Plugins:'),
+        ...tableLines,
+        '',
         safeColors.bold('Next Steps:'),
-        `  ${safeColors.info('kb <product> --help')}  ${safeColors.dim('Explore product commands')}`,
+        `  ${safeColors.info('kb plugins enable <name>')}  ${safeColors.dim('Enable a plugin')}`,
+        `  ${safeColors.info('kb plugins disable <name>')}  ${safeColors.dim('Disable a plugin')}`,
+        `  ${safeColors.info('kb plugins doctor')}  ${safeColors.dim('Diagnose plugin issues')}`,
         `  ${safeColors.info('kb plugins --json')}  ${safeColors.dim('Get machine-readable output')}`,
         '',
         safeColors.dim(`Discovery: ${formatTiming(totalTime)}`),
