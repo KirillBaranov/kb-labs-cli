@@ -170,11 +170,11 @@ export function normalizeManifest(manifest: CommandManifest, packageName: string
   const normalized = { ...manifest };
   
   // Ensure namespace/group consistency
-  if (!normalized.namespace && namespace) {
-    normalized.namespace = namespace;
-  }
+  // Priority: explicit namespace > group > package-derived namespace
   if (!normalized.namespace && normalized.group) {
     normalized.namespace = normalized.group;
+  } else if (!normalized.namespace && namespace) {
+    normalized.namespace = namespace;
   }
   if (!normalized.group && normalized.namespace) {
     normalized.group = normalized.namespace;

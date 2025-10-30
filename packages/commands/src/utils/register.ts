@@ -14,7 +14,7 @@ import { pluginsDoctor } from "../commands/system/plugins-doctor";
 import { pluginsWatch } from "../commands/system/plugins-watch";
 import { pluginsScaffold } from "../commands/system/plugins-scaffold";
 import { pluginsTelemetry } from "../commands/system/plugins-telemetry";
-import pluginsCacheClear from "../builtins/plugins-cache-clear";
+import { pluginsCacheClear } from "../builtins/plugins-cache-clear";
 import { discoverManifests } from "../registry/discover";
 import { registerManifests, disposeAllPlugins } from "../registry/register";
 import { log } from "./logger";

@@ -80,17 +80,6 @@ export function renderGlobalHelp(groups: CommandGroup[], standalone: Command[]):
 export function renderProductHelp(groupName: string, commands: RegisteredCommand[]): string {
   const tracker = new TimingTracker();
   
-  // Decode emoji map for products (add more as needed)
-  const emojiMap: Record<string, string> = {
-    'devlink': '🔗',
-    'profiles': '📋',
-    'mind': '🧠',
-    'bundle': '📦',
-    'init': '🚀',
-  };
-  
-  const emoji = emojiMap[groupName] || '📦';
-  
   // Build content for box
   const content: string[] = [];
   
@@ -184,7 +173,7 @@ export function renderProductHelp(groupName: string, commands: RegisteredCommand
   content.push(`Time: ${formatTiming(totalTime)}`);
   
   // Return box-formatted help
-  return box(`${emoji} ${groupName}`, content);
+  return box(groupName, content);
 }
 
 export function renderGlobalHelpNew(registry: any): string {
@@ -199,10 +188,10 @@ export function renderGlobalHelpNew(registry: any): string {
   
   // Products section
   if (products.length > 0) {
-    content.push("📦 Products:");
+    content.push("Products:");
     content.push("");
     
-    // Emoji map for products
+    // Emoji map for products (unused, kept for backward compatibility)
     const emojiMap: Record<string, string> = {
       'devlink': '🔗',
       'profiles': '📋',
@@ -215,17 +204,16 @@ export function renderGlobalHelpNew(registry: any): string {
     const maxProductNameLength = Math.max(...products.map((p: ProductGroup) => p.name.length), 12);
     
     for (const product of products.sort((a: ProductGroup, b: ProductGroup) => a.name.localeCompare(b.name))) {
-      const emoji = emojiMap[product.name] || '📦';
       const availableCount = product.commands.filter((c: RegisteredCommand) => c.available && !c.shadowed).length;
       const badge = availableCount > 0 ? colors.green(`✓ ${availableCount}`) : colors.dim("0");
-      content.push(`  ${emoji} ${colors.cyan(product.name.padEnd(maxProductNameLength))}  ${colors.dim(product.describe || product.name)}  ${badge}`);
+      content.push(`  ${colors.cyan(product.name.padEnd(maxProductNameLength))}  ${colors.dim(product.describe || product.name)}  ${badge}`);
     }
     content.push("");
   }
   
   // System commands section
   if (standalone.length > 0) {
-    content.push("⚙️  System Commands:");
+    content.push("System Commands:");
     content.push("");
     
     // Calculate max command name length for alignment
