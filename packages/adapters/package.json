@@ -28,11 +28,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@kb-labs/cli-core": "workspace:*",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "picomatch": "^4.0.2",
-    "yaml": "^2.5.1",
-    "@kb-labs/cli-core": "link:../core"
+    "yaml": "^2.5.1"
   },
   "devDependencies": {
     "@types/node": "^24.3.3",

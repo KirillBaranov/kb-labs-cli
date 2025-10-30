@@ -2,6 +2,7 @@ packages:
   - "apps/*"
   - "packages/*"
   - "../kb-labs-devkit"
+  - "../kb-labs-devlink/packages/*"
   - "../kb-labs-mind"
   - "../kb-labs-mind/packages/*"
   - "../kb-labs-shared/packages/*"
