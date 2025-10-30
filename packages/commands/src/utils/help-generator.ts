@@ -290,6 +290,148 @@ export function renderGlobalHelpNew(registry: any): string {
   return box("KB Labs CLI", content);
 }
 
+export function renderPluginsHelp(registry: any): string {
+  const tracker = new TimingTracker();
+  
+  const pluginCommands = registry.list().filter((cmd: Command) => 
+    cmd.name?.startsWith('plugins:') || cmd.category === 'system'
+  );
+  
+  const content: string[] = [];
+  
+  content.push(colors.bold("Plugin Management Commands:"));
+  content.push("");
+  
+  const commandMap: Record<string, string> = {
+    'plugins:ls': 'List all discovered plugins',
+    'plugins:enable': 'Enable a plugin',
+    'plugins:disable': 'Disable a plugin',
+    'plugins:link': 'Link a local plugin for development',
+    'plugins:unlink': 'Unlink a local plugin',
+    'plugins:doctor': 'Diagnose plugin issues',
+    'plugins:watch': 'Watch for manifest changes and hot-reload',
+    'plugins:scaffold': 'Generate a new plugin template',
+    'plugins:clear-cache': 'Clear plugin discovery cache',
+  };
+  
+  const maxLength = Math.max(...Object.keys(commandMap).map(c => c.length), 20);
+  
+  for (const [cmdName, desc] of Object.entries(commandMap)) {
+    content.push(`  ${colors.cyan(cmdName.padEnd(maxLength))}  ${colors.dim(desc)}`);
+  }
+  
+  content.push("");
+  content.push(colors.bold("Examples:"));
+  content.push("");
+  content.push(`  ${colors.dim('kb plugins ls')}                      ${colors.dim('List all plugins')}`);
+  content.push(`  ${colors.dim('kb plugins enable @kb-labs/devlink-cli')}  ${colors.dim('Enable a plugin')}`);
+  content.push(`  ${colors.dim('kb plugins doctor')}                 ${colors.dim('Diagnose plugin issues')}`);
+  content.push(`  ${colors.dim('kb plugins scaffold my-plugin')}      ${colors.dim('Generate plugin template')}`);
+  
+  content.push("");
+  content.push(colors.dim("Use 'kb plugins <command> --help' for detailed help"));
+  
+  const totalTime = tracker.total();
+  content.push("");
+  content.push(`Time: ${formatTiming(totalTime)}`);
+  
+  return box("🧩 Plugin Management", content);
+}
+
+/**
+ * Render help for manifest-based command
+ */
+export function renderManifestCommandHelp(registered: RegisteredCommand): string {
+  const tracker = new TimingTracker();
+  const manifest = registered.manifest;
+  const fullName = manifest.id;
+  
+  const content: string[] = [];
+  
+  if (manifest.describe) {
+    content.push(colors.bold("Description:"));
+    content.push(`  ${manifest.describe}`);
+    content.push("");
+  }
+  
+  if (manifest.longDescription) {
+    content.push(colors.bold("Details:"));
+    content.push(`  ${manifest.longDescription}`);
+    content.push("");
+  }
+  
+  if (manifest.aliases && manifest.aliases.length > 0) {
+    content.push(colors.bold("Aliases:"));
+    content.push(`  ${manifest.aliases.join(", ")}`);
+    content.push("");
+  }
+  
+  if (manifest.examples && manifest.examples.length > 0) {
+    content.push(colors.bold("Examples:"));
+    for (const example of manifest.examples) {
+      content.push(`  ${colors.dim(example)}`);
+    }
+    content.push("");
+  }
+  
+  if (manifest.flags && manifest.flags.length > 0) {
+    content.push(colors.bold("Options:"));
+    for (const flag of manifest.flags) {
+      const flagName = flag.alias ? `-${flag.alias}, --${flag.name}` : `--${flag.name}`;
+      const typeInfo = flag.type !== "boolean" ? ` <${flag.type}>` : "";
+      const required = flag.required ? colors.red(" (required)") : "";
+      const defaultVal = flag.default !== undefined ? colors.dim(` (default: ${flag.default})`) : "";
+      
+      content.push(`  ${colors.cyan(flagName + typeInfo)}${required}${defaultVal}`);
+      if (flag.description) {
+        content.push(`    ${colors.dim(flag.description)}`);
+      }
+      if (flag.choices && flag.choices.length > 0) {
+        content.push(`    ${colors.dim(`Choices: ${flag.choices.join(", ")}`)}`);
+      }
+    }
+    content.push("");
+  }
+  
+  if (manifest.package) {
+    content.push(colors.bold("Plugin:"));
+    content.push(`  ${manifest.package}`);
+    if (manifest.engine) {
+      const engineInfo: string[] = [];
+      if (manifest.engine.node) engineInfo.push(`Node ${manifest.engine.node}`);
+      if (manifest.engine.kbCli) engineInfo.push(`kb-cli ${manifest.engine.kbCli}`);
+      if (manifest.engine.module) engineInfo.push(manifest.engine.module.toUpperCase());
+      if (engineInfo.length > 0) {
+        content.push(`  ${colors.dim(`Requires: ${engineInfo.join(", ")}`)}`);
+      }
+    }
+    content.push("");
+  }
+  
+  if (manifest.permissions && manifest.permissions.length > 0) {
+    content.push(colors.bold("Permissions:"));
+    content.push(`  ${manifest.permissions.join(", ")}`);
+    content.push("");
+  }
+  
+  if (!registered.available) {
+    content.push(colors.bold("Status:"));
+    content.push(`  ${colors.red("Unavailable")}`);
+    if (registered.unavailableReason) {
+      content.push(`  ${colors.red(`Reason: ${registered.unavailableReason}`)}`);
+    }
+    if (registered.hint) {
+      content.push(`  ${colors.yellow(`Hint: ${registered.hint}`)}`);
+    }
+    content.push("");
+  }
+  
+  const totalTime = tracker.total();
+  content.push(`Time: ${formatTiming(totalTime)}`);
+  
+  return box(`📋 ${fullName}`, content);
+}
+
 export function renderCommandHelp(command: Command, groupName?: string): string {
   const tracker = new TimingTracker();
   const fullName = groupName ? `${groupName} ${command.name}` : command.name;
@@ -342,6 +484,61 @@ export function renderCommandHelp(command: Command, groupName?: string): string 
 
   // Return box-formatted help
   return box(`📋 ${fullName}`, content);
+}
+
+/**
+ * Generate man page content from manifest
+ */
+export function generateManPage(registered: RegisteredCommand): string {
+  const manifest = registered.manifest;
+  const lines: string[] = [];
+  
+  lines.push(`.TH ${manifest.id.toUpperCase().replace(':', ' ')} 1 "${new Date().toLocaleDateString('en-US')}" "KB Labs CLI"`);
+  lines.push(`.SH NAME`);
+  lines.push(`${manifest.id} \\- ${manifest.describe}`);
+  lines.push(`.SH SYNOPSIS`);
+  lines.push(`.B kb ${manifest.id}`);
+  if (manifest.flags && manifest.flags.length > 0) {
+    const flags = manifest.flags.map(f => `[\\fB--${f.name}\\fR]`).join(' ');
+    lines.push(`[ ${flags} ]`);
+  }
+  lines.push(`.SH DESCRIPTION`);
+  lines.push(manifest.longDescription || manifest.describe);
+  
+  if (manifest.flags && manifest.flags.length > 0) {
+    lines.push(`.SH OPTIONS`);
+    for (const flag of manifest.flags) {
+      lines.push(`.TP`);
+      lines.push(`\\fB--${flag.name}\\fR`);
+      if (flag.alias) {
+        lines.push(`\\fB-${flag.alias}\\fR`);
+      }
+      if (flag.description) {
+        lines.push(flag.description);
+      }
+      if (flag.default !== undefined) {
+        lines.push(`(default: ${flag.default})`);
+      }
+    }
+  }
+  
+  if (manifest.examples && manifest.examples.length > 0) {
+    lines.push(`.SH EXAMPLES`);
+    for (const example of manifest.examples) {
+      lines.push(`.PP`);
+      lines.push(`\\fB${example}\\fR`);
+    }
+  }
+  
+  if (manifest.package) {
+    lines.push(`.SH PLUGIN`);
+    lines.push(`Provided by ${manifest.package}`);
+  }
+  
+  lines.push(`.SH SEE ALSO`);
+  lines.push(`kb(1), kb plugins ls(1)`);
+  
+  return lines.join('\n');
 }
 
 export function renderHelp(
