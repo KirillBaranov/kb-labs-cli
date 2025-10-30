@@ -5,15 +5,26 @@
 
 export interface CommandManifest {
   manifestVersion: '1.0';    // Required for validation
-  id: string;                // "mind:pack"
+  id: string;                // "mind:pack" (must be namespace:command)
   aliases?: string[];        // ["mind-pack", "m:pack"]
-  group: string;             // "mind"
+  group: string;             // "mind" (namespace)
   describe: string;
   longDescription?: string;
-  requires?: string[];       // ["@kb-labs/mind-pack"]
+  requires?: string[];       // ["@kb-labs/mind-pack@^1.0.0"] (semver ranges)
   flags?: FlagDefinition[];
   examples?: string[];
   loader: () => Promise<CommandModule>;
+  
+  // New fields (optional for backward compatibility)
+  package?: string;          // Full package name (e.g., "@kb-labs/devlink-cli")
+  namespace?: string;        // Explicit namespace (derived from group/id if not provided)
+  engine?: {                // Engine requirements
+    node?: string;          // e.g., ">=18", "^18.0.0"
+    kbCli?: string;         // e.g., "^1.5.0"
+    module?: 'esm' | 'cjs'; // Module type
+  };
+  permissions?: string[];   // e.g., ["fs.read", "git.read", "net.fetch"]
+  telemetry?: 'opt-in' | 'off'; // Telemetry preference
 }
 
 export interface FlagDefinition {
@@ -31,8 +42,10 @@ export interface RegisteredCommand {
   available: boolean;
   unavailableReason?: string;
   hint?: string;
-  source: 'workspace' | 'node_modules' | 'builtin';
+  source: 'workspace' | 'node_modules' | 'linked' | 'builtin';
   shadowed: boolean;         // True if overridden by higher priority
+  pkgRoot?: string;          // Package root directory (for workspace/linked plugins)
+  packageName?: string;       // Full package name
 }
 
 export interface CommandModule {
@@ -40,7 +53,7 @@ export interface CommandModule {
 }
 
 export interface DiscoveryResult {
-  source: 'workspace' | 'node_modules' | 'builtin';
+  source: 'workspace' | 'node_modules' | 'linked' | 'builtin';
   packageName: string;
   manifestPath: string;      // Absolute JS path (POSIX)
   pkgRoot: string;           // Absolute package directory (POSIX)
@@ -55,6 +68,7 @@ export interface GlobalFlags {
   quiet?: boolean;
   help?: boolean;
   version?: boolean;
+  dryRun?: boolean;  // Global --dry-run flag for simulating commands
 }
 
 export interface PackageCacheEntry {
@@ -70,6 +84,9 @@ export interface CacheFile {
   version: string;           // Node version
   cliVersion: string;        // CLI version
   timestamp: number;
+  lockfileHash?: string;     // Hash of pnpm-lock.yaml
+  configHash?: string;       // Hash of kb-labs.config.json
+  pluginsStateHash?: string; // Hash of .kb/plugins.json
   packages: Record<string, PackageCacheEntry>;  // Changed from flat structure
 }
 
