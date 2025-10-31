@@ -79,6 +79,129 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
+  ../kb-labs-audit/packages/audit-checks:
+    dependencies:
+      '@kb-labs/audit-core':
+        specifier: link:../audit-core
+        version: link:../audit-core
+      execa:
+        specifier: ^8.0.0
+        version: 8.0.1
+      fs-extra:
+        specifier: ^11.0.0
+        version: 11.3.2
+    devDependencies:
+      '@kb-labs/devkit':
+        specifier: link:../../../kb-labs-devkit
+        version: link:../../../kb-labs-devkit
+      '@types/fs-extra':
+        specifier: ^11.0.0
+        version: 11.0.4
+      '@types/node':
+        specifier: ^24.7.0
+        version: 24.9.1
+      rimraf:
+        specifier: ^6
+        version: 6.0.1
+      tsup:
+        specifier: ^8
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      vitest:
+        specifier: ^3
+        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
+
+  ../kb-labs-audit/packages/audit-cli:
+    dependencies:
+      '@kb-labs/audit-checks':
+        specifier: link:../audit-checks
+        version: link:../audit-checks
+      '@kb-labs/audit-core':
+        specifier: link:../audit-core
+        version: link:../audit-core
+      '@kb-labs/cli-commands':
+        specifier: link:../../../kb-labs-cli/packages/commands
+        version: link:../../../kb-labs-cli/packages/commands
+      '@kb-labs/cli-core':
+        specifier: link:../../../kb-labs-cli/packages/core
+        version: link:../../../kb-labs-cli/packages/core
+      '@kb-labs/shared-cli-ui':
+        specifier: link:../../../kb-labs-shared/packages/cli-ui
+        version: link:../../../kb-labs-shared/packages/cli-ui
+      globby:
+        specifier: ^11.0.0
+        version: 11.1.0
+      yaml:
+        specifier: ^2.5.1
+        version: 2.8.1
+    devDependencies:
+      '@kb-labs/devkit':
+        specifier: link:../../../kb-labs-devkit
+        version: link:../../../kb-labs-devkit
+      '@types/node':
+        specifier: ^24.7.0
+        version: 24.9.1
+      rimraf:
+        specifier: ^6
+        version: 6.0.1
+      tsup:
+        specifier: ^8
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      vitest:
+        specifier: ^3
+        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
+
+  ../kb-labs-audit/packages/audit-core:
+    dependencies:
+      '@kb-labs/shared-profiles':
+        specifier: link:../../../kb-labs-shared/packages/profiles
+        version: link:../../../kb-labs-shared/packages/profiles
+      globby:
+        specifier: ^11.0.0
+        version: 11.1.0
+      yaml:
+        specifier: ^2.5.1
+        version: 2.8.1
+    devDependencies:
+      '@kb-labs/devkit':
+        specifier: link:../../../kb-labs-devkit
+        version: link:../../../kb-labs-devkit
+      '@types/node':
+        specifier: ^24.7.0
+        version: 24.9.1
+      rimraf:
+        specifier: ^6
+        version: 6.0.1
+      tsup:
+        specifier: ^8
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      vitest:
+        specifier: ^3
+        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
+
+  ../kb-labs-audit/packages/package-name:
+    devDependencies:
+      '@kb-labs/devkit':
+        specifier: github:KirillBaranov/kb-labs-devkit#main
+        version: https://codeload.github.com/KirillBaranov/kb-labs-devkit/tar.gz/5dd910147b8c09742ca13aeb2ea6aba5ffc5159b(eslint@9.38.0)(tsup@8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1))(typescript-eslint@8.46.2(eslint@9.38.0)(typescript@5.9.3))(typescript@5.9.3)(vitest@3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6)))
+      tsup:
+        specifier: ^8
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
+      tsx:
+        specifier: ^4.20.5
+        version: 4.20.6
+      vitest:
+        specifier: ^3
+        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
+
   ../kb-labs-core/packages/bundle:
     dependencies:
       '@kb-labs/core-config':
@@ -112,6 +235,9 @@ importers:
 
   ../kb-labs-core/packages/cli:
     dependencies:
+      '@kb-labs/cli-core':
+        specifier: link:../../../kb-labs-cli/packages/core
+        version: link:../../../kb-labs-cli/packages/core
       '@kb-labs/core-bundle':
         specifier: link:../bundle
         version: link:../bundle
@@ -124,6 +250,9 @@ importers:
       '@kb-labs/core-profiles':
         specifier: link:../profiles
         version: link:../profiles
+      '@kb-labs/profile-schemas':
+        specifier: link:../../../kb-labs-profile-schemas
+        version: link:../../../kb-labs-profile-schemas
       '@kb-labs/shared-cli-ui':
         specifier: link:../../../kb-labs-shared/packages/cli-ui
         version: link:../../../kb-labs-shared/packages/cli-ui
@@ -149,9 +278,6 @@ importers:
 
   ../kb-labs-core/packages/config:
     dependencies:
-      '@kb-labs/core-profiles':
-        specifier: link:../profiles
-        version: link:../profiles
       '@kb-labs/profile-schemas':
         specifier: link:../../../kb-labs-profile-schemas
         version: link:../../../kb-labs-profile-schemas
@@ -168,15 +294,27 @@ importers:
         specifier: ^2.5.1
         version: 2.8.1
     devDependencies:
+      '@kb-labs/devkit':
+        specifier: link:../../../kb-labs-devkit
+        version: link:../../../kb-labs-devkit
       '@types/node':
         specifier: ^24.3.3
         version: 24.9.1
       '@types/picomatch':
         specifier: ^4
         version: 4.0.2
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^8
+        version: 8.46.2(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint@9.38.0)(typescript@5.9.3)
+      '@typescript-eslint/parser':
+        specifier: ^8
+        version: 8.46.2(eslint@9.38.0)(typescript@5.9.3)
       cpy-cli:
         specifier: ^4.2.0
         version: 4.2.0
+      eslint:
+        specifier: ^9
+        version: 9.38.0
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1
@@ -188,40 +326,6 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.2.4
-        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
-
-  ../kb-labs-core/packages/core:
-    dependencies:
-      '@kb-labs/core-bundle':
-        specifier: link:../bundle
-        version: link:../bundle
-      '@kb-labs/core-config':
-        specifier: link:../config
-        version: link:../config
-      '@kb-labs/core-policy':
-        specifier: link:../policy
-        version: link:../policy
-      '@kb-labs/core-profiles':
-        specifier: link:../profiles
-        version: link:../profiles
-      '@kb-labs/shared-cli-ui':
-        specifier: link:../../../kb-labs-shared/packages/cli-ui
-        version: link:../../../kb-labs-shared/packages/cli-ui
-    devDependencies:
-      '@kb-labs/devkit':
-        specifier: link:../../../kb-labs-devkit
-        version: link:../../../kb-labs-devkit
-      '@types/node':
-        specifier: ^24.7.0
-        version: 24.9.1
-      tsup:
-        specifier: ^8
-        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
-      tsx:
-        specifier: ^4.20.5
-        version: 4.20.6
-      vitest:
-        specifier: ^3
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
   ../kb-labs-core/packages/policy:
@@ -409,7 +513,7 @@ importers:
   ../kb-labs-devlink/packages/core:
     dependencies:
       '@kb-labs/shared-cli-ui':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-shared/packages/cli-ui
         version: link:../../../kb-labs-shared/packages/cli-ui
       chokidar:
         specifier: ^4.0.0
@@ -476,11 +580,11 @@ importers:
   ../kb-labs-mind/packages/mind-adapters:
     dependencies:
       '@kb-labs/mind-core':
-        specifier: workspace:*
+        specifier: link:../mind-core
         version: link:../mind-core
     devDependencies:
       '@kb-labs/devkit':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-devkit
         version: link:../../../kb-labs-devkit
       '@types/node':
         specifier: ^24.7.0
@@ -504,26 +608,26 @@ importers:
         specifier: 0.4.0
         version: 0.4.0
       '@kb-labs/mind-core':
-        specifier: workspace:*
+        specifier: link:../mind-core
         version: link:../mind-core
       '@kb-labs/mind-indexer':
-        specifier: workspace:*
+        specifier: link:../mind-indexer
         version: link:../mind-indexer
       '@kb-labs/mind-pack':
-        specifier: workspace:*
+        specifier: link:../mind-pack
         version: link:../mind-pack
       '@kb-labs/mind-query':
-        specifier: workspace:*
+        specifier: link:../mind-query
         version: link:../mind-query
       '@kb-labs/mind-types':
-        specifier: workspace:*
+        specifier: link:../mind-types
         version: link:../mind-types
       '@kb-labs/shared-cli-ui':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-shared/packages/cli-ui
         version: link:../../../kb-labs-shared/packages/cli-ui
     devDependencies:
       '@kb-labs/devkit':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-devkit
         version: link:../../../kb-labs-devkit
       '@types/node':
         specifier: ^24.7.0
@@ -544,11 +648,11 @@ importers:
   ../kb-labs-mind/packages/mind-core:
     dependencies:
       '@kb-labs/mind-types':
-        specifier: workspace:*
+        specifier: link:../mind-types
         version: link:../mind-types
     devDependencies:
       '@kb-labs/devkit':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-devkit
         version: link:../../../kb-labs-devkit
       '@types/node':
         specifier: ^24.7.0
@@ -569,23 +673,23 @@ importers:
   ../kb-labs-mind/packages/mind-gateway:
     dependencies:
       '@kb-labs/mind-cli':
-        specifier: workspace:*
+        specifier: link:../mind-cli
         version: link:../mind-cli
       '@kb-labs/mind-core':
-        specifier: workspace:*
+        specifier: link:../mind-core
         version: link:../mind-core
       '@kb-labs/mind-indexer':
-        specifier: workspace:*
+        specifier: link:../mind-indexer
         version: link:../mind-indexer
       '@kb-labs/mind-query':
-        specifier: workspace:*
+        specifier: link:../mind-query
         version: link:../mind-query
       '@kb-labs/mind-types':
-        specifier: workspace:*
+        specifier: link:../mind-types
         version: link:../mind-types
     devDependencies:
       '@kb-labs/devkit':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-devkit
         version: link:../../../kb-labs-devkit
       '@types/node':
         specifier: ^20.0.0
@@ -603,20 +707,20 @@ importers:
   ../kb-labs-mind/packages/mind-indexer:
     dependencies:
       '@kb-labs/mind-adapters':
-        specifier: workspace:*
+        specifier: link:../mind-adapters
         version: link:../mind-adapters
       '@kb-labs/mind-core':
-        specifier: workspace:*
+        specifier: link:../mind-core
         version: link:../mind-core
       '@kb-labs/mind-types':
-        specifier: workspace:*
+        specifier: link:../mind-types
         version: link:../mind-types
       typescript:
         specifier: ^5.6.3
         version: 5.9.3
     devDependencies:
       '@kb-labs/devkit':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-devkit
         version: link:../../../kb-labs-devkit
       '@types/node':
         specifier: ^24.7.0
@@ -634,14 +738,14 @@ importers:
   ../kb-labs-mind/packages/mind-pack:
     dependencies:
       '@kb-labs/mind-core':
-        specifier: workspace:*
+        specifier: link:../mind-core
         version: link:../mind-core
       '@kb-labs/mind-types':
-        specifier: workspace:*
+        specifier: link:../mind-types
         version: link:../mind-types
     devDependencies:
       '@kb-labs/devkit':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-devkit
         version: link:../../../kb-labs-devkit
       '@types/node':
         specifier: ^24.7.0
@@ -662,13 +766,13 @@ importers:
   ../kb-labs-mind/packages/mind-query:
     dependencies:
       '@kb-labs/mind-core':
-        specifier: workspace:*
+        specifier: link:../mind-core
         version: link:../mind-core
       '@kb-labs/mind-indexer':
-        specifier: workspace:*
+        specifier: link:../mind-indexer
         version: link:../mind-indexer
       '@kb-labs/mind-types':
-        specifier: workspace:*
+        specifier: link:../mind-types
         version: link:../mind-types
     devDependencies:
       '@types/node':
@@ -687,32 +791,32 @@ importers:
   ../kb-labs-mind/packages/mind-tests:
     dependencies:
       '@kb-labs/mind-adapters':
-        specifier: workspace:*
+        specifier: link:../mind-adapters
         version: link:../mind-adapters
       '@kb-labs/mind-cli':
-        specifier: workspace:*
+        specifier: link:../mind-cli
         version: link:../mind-cli
       '@kb-labs/mind-core':
-        specifier: workspace:*
+        specifier: link:../mind-core
         version: link:../mind-core
       '@kb-labs/mind-indexer':
-        specifier: workspace:*
+        specifier: link:../mind-indexer
         version: link:../mind-indexer
       '@kb-labs/mind-pack':
-        specifier: workspace:*
+        specifier: link:../mind-pack
         version: link:../mind-pack
       '@kb-labs/mind-query':
-        specifier: workspace:*
+        specifier: link:../mind-query
         version: link:../mind-query
       '@kb-labs/mind-types':
-        specifier: workspace:*
+        specifier: link:../mind-types
         version: link:../mind-types
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
     devDependencies:
       '@kb-labs/devkit':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-devkit
         version: link:../../../kb-labs-devkit
       '@vitest/coverage-v8':
         specifier: ^3
@@ -730,7 +834,7 @@ importers:
   ../kb-labs-mind/packages/mind-types:
     devDependencies:
       '@kb-labs/devkit':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-devkit
         version: link:../../../kb-labs-devkit
       rimraf:
         specifier: ^6.0.1
@@ -783,9 +887,13 @@ importers:
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
   ../kb-labs-shared/packages/cli-ui:
+    dependencies:
+      glob:
+        specifier: ^11.0.0
+        version: 11.0.3
     devDependencies:
       '@kb-labs/devkit':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-devkit
         version: link:../../../kb-labs-devkit
       rimraf:
         specifier: ^6.0.1
@@ -944,7 +1052,7 @@ importers:
   packages/adapters:
     dependencies:
       '@kb-labs/cli-core':
-        specifier: workspace:*
+        specifier: link:../core
         version: link:../core
       ajv:
         specifier: ^8.17.1
@@ -980,26 +1088,32 @@ importers:
 
   packages/cli:
     dependencies:
+      '@kb-labs/audit-checks':
+        specifier: link:../../../kb-labs-audit/packages/audit-checks
+        version: link:../../../kb-labs-audit/packages/audit-checks
+      '@kb-labs/audit-core':
+        specifier: link:../../../kb-labs-audit/packages/audit-core
+        version: link:../../../kb-labs-audit/packages/audit-core
       '@kb-labs/cli-adapters':
-        specifier: workspace:*
+        specifier: link:../adapters
         version: link:../adapters
       '@kb-labs/cli-commands':
-        specifier: workspace:*
+        specifier: link:../commands
         version: link:../commands
       '@kb-labs/cli-core':
-        specifier: workspace:*
+        specifier: link:../core
         version: link:../core
       '@kb-labs/mind-adapters':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-mind/packages/mind-adapters
         version: link:../../../kb-labs-mind/packages/mind-adapters
       '@kb-labs/mind-core':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-mind/packages/mind-core
         version: link:../../../kb-labs-mind/packages/mind-core
       '@kb-labs/mind-indexer':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-mind/packages/mind-indexer
         version: link:../../../kb-labs-mind/packages/mind-indexer
       '@kb-labs/mind-pack':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-mind/packages/mind-pack
         version: link:../../../kb-labs-mind/packages/mind-pack
     devDependencies:
       rimraf:
@@ -1082,7 +1196,7 @@ importers:
   packages/core:
     dependencies:
       '@kb-labs/shared-cli-ui':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-shared/packages/cli-ui
         version: link:../../../kb-labs-shared/packages/cli-ui
       colorette:
         specifier: ^2.0.20
@@ -1592,6 +1706,18 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
+  '@kb-labs/devkit@https://codeload.github.com/KirillBaranov/kb-labs-devkit/tar.gz/5dd910147b8c09742ca13aeb2ea6aba5ffc5159b':
+    resolution: {tarball: https://codeload.github.com/KirillBaranov/kb-labs-devkit/tar.gz/5dd910147b8c09742ca13aeb2ea6aba5ffc5159b}
+    version: 0.1.0
+    engines: {node: '>=20.0.0', pnpm: '>=9.11.0'}
+    hasBin: true
+    peerDependencies:
+      eslint: ^9.35.0
+      tsup: ^8.5.0
+      typescript: ^5.9.2
+      typescript-eslint: ^8.44.0
+      vitest: ^3.2.4
+
   '@napi-rs/wasm-runtime@0.2.12':
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
 
@@ -1788,11 +1914,17 @@ packages:
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
+  '@types/fs-extra@11.0.4':
+    resolution: {integrity: sha512-yTbItCNreRooED33qjunPthRcSjERP1r4MqCZc7wv0u2sUkzTFp45tgUfS5+r7FrZPdmCCNflLhVSP/o+SemsQ==}
+
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
   '@types/json5@0.0.29':
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
+
+  '@types/jsonfile@6.1.4':
+    resolution: {integrity: sha512-D5qGUYwjvnNNextdU59/+fI+spnwtTFmyQP0h+PfIOSkNfpU6AOICUOkm4i0OnSk+NyjdPJrxCDro0sJsWlRpQ==}
 
   '@types/minimist@1.2.5':
     resolution: {integrity: sha512-hov8bUuiLiyFPGyFPE1lwWhmzYbirOXQNNo40+y3zow8aFVTeyn3VWL0VFFfdNddA8S4Vf0Tc062rzyNr7Paag==}
@@ -2102,6 +2234,10 @@ packages:
   array-includes@3.1.9:
     resolution: {integrity: sha512-FmeCCAenzH0KH381SPT5FZmiA/TmpndpcaShhfgEN9eCVjnFBqq3l1xrI42y8+PPLI6hypzou4GXw00WHmPBLQ==}
     engines: {node: '>= 0.4'}
+
+  array-union@2.1.0:
+    resolution: {integrity: sha512-HGyxoOTYUyCM6stUe6EJgnd4EoewAI7zMdfqO+kGjnlZmBDz/cR5pf8r/cR4Wq60sL/p0IkcjUEEPwS3GFrIyw==}
+    engines: {node: '>=8'}
 
   array.prototype.findlastindex@1.2.6:
     resolution: {integrity: sha512-F/TKATkzseUExPlfvmwQKGITM3DGTK+vkAsCZoDc5daVygbJBnjEUCbgkAvVFsgfXfX4YIqZ/27G3k3tdXrTxQ==}
@@ -2573,6 +2709,10 @@ packages:
   eventemitter3@5.0.1:
     resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
 
+  execa@8.0.1:
+    resolution: {integrity: sha512-VyhnebXciFV2DESc+p6B+y0LjSm0krU4OgJN44qFAhBY0TJ+1V61tYD2+wHusZ6F9n5K+vl8k0sTy7PEfV4qpg==}
+    engines: {node: '>=16.17'}
+
   expand-template@2.0.3:
     resolution: {integrity: sha512-XYfuKMvj4O35f/pOXLObndIRvyQ+/+6AhODh+OKWj9S9498pHHn/IMszH+gt0fBCRWMNfk1ZSp5x3AifmnI2vg==}
     engines: {node: '>=6'}
@@ -2645,6 +2785,10 @@ packages:
   fs-constants@1.0.0:
     resolution: {integrity: sha512-y6OAwoSIf7FyjMIv94u+b5rdheZEjzR63GTyZJm5qh4Bi+2YgwLCcI/fPFZkL5PSixOt6ZNKm+w+Hfp/Bciwow==}
 
+  fs-extra@11.3.2:
+    resolution: {integrity: sha512-Xr9F6z6up6Ws+NjzMCZc6WXg2YFRlrLP9NQDO3VQrWrfiojdhS56TzueT88ze0uBdCTwEIhQ3ptnmKeWGFAe0A==}
+    engines: {node: '>=14.14'}
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -2671,6 +2815,10 @@ packages:
   get-proto@1.0.1:
     resolution: {integrity: sha512-sTSfBjoXBp89JvIKIefqw7U2CCebsc74kiY6awiGogKtoSGbgjYE/G/+l9sF3MWFPNc9IcoOC4ODfKHfxFmp0g==}
     engines: {node: '>= 0.4'}
+
+  get-stream@8.0.1:
+    resolution: {integrity: sha512-VaUJspBffn/LMCJVoMvSAdmscJyS1auj5Zulnn5UoYcY531UWmdwhRWkcGKnGU93m5HSXP9LP2usOryrBtQowA==}
+    engines: {node: '>=16'}
 
   get-symbol-description@1.1.0:
     resolution: {integrity: sha512-w9UMqWwJxHNOvoNzSJ2oPF5wvYcvP7jUvYzhp67yEhTi17ZDBBC1z9pTdGuzjD+EFIqLSYRweZjqfiPzQ06Ebg==}
@@ -2706,6 +2854,10 @@ packages:
   globalthis@1.0.4:
     resolution: {integrity: sha512-DpLKbNU4WylpxJykQujfCcwYWiV/Jhm50Goo0wrVILAv5jOr9d+H+UR3PhSCD2rCCEIg0uc+G+muBTwD54JhDQ==}
     engines: {node: '>= 0.4'}
+
+  globby@11.1.0:
+    resolution: {integrity: sha512-jhIXaOzy1sb8IyocaruWSn1TjmnBVs8Ayhcy83rmxNJ8q2uWKCAj3CnJY+KpGSXCueAPc0i05kVvVKtP1t9S3g==}
+    engines: {node: '>=10'}
 
   globby@13.2.2:
     resolution: {integrity: sha512-Y1zNGV+pzQdh7H39l9zgB4PJqjRNqydvdYCDG4HFXM4XuvSaQQlEc91IU1yALL8gUTDomgBAfz3XJdmUS+oo0w==}
@@ -2770,6 +2922,10 @@ packages:
   https-proxy-agent@7.0.6:
     resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
     engines: {node: '>= 14'}
+
+  human-signals@5.0.0:
+    resolution: {integrity: sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==}
+    engines: {node: '>=16.17.0'}
 
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
@@ -2901,6 +3057,10 @@ packages:
     resolution: {integrity: sha512-ISWac8drv4ZGfwKl5slpHG9OwPNty4jOWPRIhBpxOoD+hqITiwuipOQ2bNthAzwA3B4fIjO4Nln74N0S9byq8A==}
     engines: {node: '>= 0.4'}
 
+  is-stream@3.0.0:
+    resolution: {integrity: sha512-LnQR4bZ9IADDRSkvpqMGvt/tEJWclzklNgSw48V5EAaAeDd6qGvN8ei6k5p0tvxSR171VmGyHuTiAOfxAbr8kA==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
   is-string@1.1.1:
     resolution: {integrity: sha512-BtEeSsoaQjlSPBemMQIrY1MY0uM6vnS1g5fmufYOtnxLGUZM2178PKbhsk7Ffv58IX+ZtcvoGwccYsh0PglkAA==}
     engines: {node: '>= 0.4'}
@@ -2996,6 +3156,9 @@ packages:
     resolution: {integrity: sha512-g1MWMLBiz8FKi1e4w0UyVL3w+iJceWAFBAaBnnGKOpNa5f8TLktkbre1+s6oICydWAm+HRUGTmI+//xv2hvXYA==}
     hasBin: true
 
+  jsonfile@6.2.0:
+    resolution: {integrity: sha512-FGuPw30AdOIUTRMC2OMRtQV+jkVj2cfPqSeWXv1NEAJ1qZ5zb1X6z1mFhbfOB/iy3ssJCD+3KuZ8r8C3uVFlAg==}
+
   junk@4.0.1:
     resolution: {integrity: sha512-Qush0uP+G8ZScpGMZvHUiRfI0YBWuB3gVBYlI0v0vvOJt5FLicco+IkP0a50LqTTQhmts/m6tP5SWE+USyIvcQ==}
     engines: {node: '>=12.20'}
@@ -3079,6 +3242,9 @@ packages:
     resolution: {integrity: sha512-/d+PQ4GKmGvM9Bee/DPa8z3mXs/pkvJE2KEThngVNOqtmljC6K7NMPxtc2JeZYTmpWb9k/TmxjeL18ez3h7vCw==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
+  merge-stream@2.0.0:
+    resolution: {integrity: sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==}
+
   merge2@1.4.1:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
     engines: {node: '>= 8'}
@@ -3086,6 +3252,10 @@ packages:
   micromatch@4.0.8:
     resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
     engines: {node: '>=8.6'}
+
+  mimic-fn@4.0.0:
+    resolution: {integrity: sha512-vqiC06CuhBTUdZH+RYl8sFrL096vA45Ok5ISO6sE/Mr1jRbGH4Csnhi8f3wKVl7x8mO4Au7Ir9D3Oyv1VYMFJw==}
+    engines: {node: '>=12'}
 
   mimic-response@3.1.0:
     resolution: {integrity: sha512-z0yWI+4FDrrweS8Zmt4Ej5HdJmky15+L2e6Wgn3+iK5fWzb6T3fhNFq2+MeTRb064c6Wr4N/wv0DzQTjNzHNGQ==}
@@ -3152,6 +3322,10 @@ packages:
     resolution: {integrity: sha512-p2W1sgqij3zMMyRC067Dg16bfzVH+w7hyegmpIvZ4JNjqtGOVAIvLmjBx3yP7YTe9vKJgkoNOPjwQGogDoMXFA==}
     engines: {node: '>=10'}
 
+  npm-run-path@5.3.0:
+    resolution: {integrity: sha512-ppwTtiJZq0O/ai0z7yfudtBpWIoxM8yE6nHi1X47eFR2EWORqfbu6CnPlNsjeN683eT0qG6H/Pyf9fCcvjnnnQ==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
 
@@ -3185,6 +3359,10 @@ packages:
 
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
+
+  onetime@6.0.0:
+    resolution: {integrity: sha512-1FlR+gjXK7X+AsAHso35MnyN5KqGwJRi/31ft6x0M194ht7S+rWAvd7PHss9xSKMzE0asv1pyIHaJYq+BbacAQ==}
+    engines: {node: '>=12'}
 
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
@@ -3251,6 +3429,10 @@ packages:
   path-key@3.1.1:
     resolution: {integrity: sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q==}
     engines: {node: '>=8'}
+
+  path-key@4.0.0:
+    resolution: {integrity: sha512-haREypq7xkM7ErfgIyA0z+Bj4AGKlMSdlQE2jvJo6huWD1EdkKYV+G/T4nq0YEF2vgTT8kqMFKo1uHn950r4SQ==}
+    engines: {node: '>=12'}
 
   path-parse@1.0.7:
     resolution: {integrity: sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==}
@@ -3505,6 +3687,10 @@ packages:
   simple-get@4.0.1:
     resolution: {integrity: sha512-brv7p5WgH0jmQJr1ZDDfKDOSeWWg+OVypG99A/5vYGPqJ6pxiaHLy8nxtFjBA7oMa01ebA9gfh1uMCFqOuXxvA==}
 
+  slash@3.0.0:
+    resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
+    engines: {node: '>=8'}
+
   slash@4.0.0:
     resolution: {integrity: sha512-3dOsAHXXUkQTpOYcoAxLIorMTp4gIQr5IW3iVb7A7lFIp0VHhnynm9izx6TssdrIcVIESAlVjtnO2K8bg+Coew==}
     engines: {node: '>=12'}
@@ -3577,6 +3763,10 @@ packages:
   strip-bom@3.0.0:
     resolution: {integrity: sha512-vavAMRXOgBVNF6nyEEmL3DBK19iRpDcoIwW+swQ+CbGiu7lju6t+JklA1MHweoWtadgt4ISVUsXLyDq34ddcwA==}
     engines: {node: '>=4'}
+
+  strip-final-newline@3.0.0:
+    resolution: {integrity: sha512-dOESqjYr96iWYylGObzd39EuNTa5VJxyvVAEm5Jnh7KGo75V43Hk1odPQkNDyXNmUR6k+gEiDVXnjB8HJ3crXw==}
+    engines: {node: '>=12'}
 
   strip-indent@4.1.1:
     resolution: {integrity: sha512-SlyRoSkdh1dYP0PzclLE7r0M9sgbFKKMFXpFRUMNuKhQSbC6VQIGzq3E0qsfvGJaUFJPGv6Ws1NZ/haTAjfbMA==}
@@ -3788,6 +3978,10 @@ packages:
 
   universal-user-agent@6.0.1:
     resolution: {integrity: sha512-yCzhz6FN2wU1NiiQRogkTQszlQSlpWaw8SvVegAc+bDxbzHgh1vX8uIe8OYyMH6DwH+sdTJsgMl36+mSMdRJIQ==}
+
+  universalify@2.0.1:
+    resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
+    engines: {node: '>= 10.0.0'}
 
   unrs-resolver@1.11.1:
     resolution: {integrity: sha512-bSjt9pjaEBnNiGgc9rUiHGKv5l4/TGzDmYw3RhnkJGtLhbnnA/5qJj7x3dNDCRx/PJxu774LlH8lCOlB4hEfKg==}
@@ -4361,6 +4555,21 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  '@kb-labs/devkit@https://codeload.github.com/KirillBaranov/kb-labs-devkit/tar.gz/5dd910147b8c09742ca13aeb2ea6aba5ffc5159b(eslint@9.38.0)(tsup@8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1))(typescript-eslint@8.46.2(eslint@9.38.0)(typescript@5.9.3))(typescript@5.9.3)(vitest@3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6)))':
+    dependencies:
+      eslint: 9.38.0
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.38.0)
+      eslint-plugin-import: 2.32.0(eslint-import-resolver-typescript@3.10.1)(eslint@9.38.0)
+      tsup: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
+      typescript: 5.9.3
+      typescript-eslint: 8.46.2(eslint@9.38.0)(typescript@5.9.3)
+      vitest: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
+    transitivePeerDependencies:
+      - '@typescript-eslint/parser'
+      - eslint-import-resolver-webpack
+      - eslint-plugin-import-x
+      - supports-color
+
   '@napi-rs/wasm-runtime@0.2.12':
     dependencies:
       '@emnapi/core': 1.6.0
@@ -4525,9 +4734,18 @@ snapshots:
 
   '@types/estree@1.0.8': {}
 
+  '@types/fs-extra@11.0.4':
+    dependencies:
+      '@types/jsonfile': 6.1.4
+      '@types/node': 24.9.1
+
   '@types/json-schema@7.0.15': {}
 
   '@types/json5@0.0.29': {}
+
+  '@types/jsonfile@6.1.4':
+    dependencies:
+      '@types/node': 24.9.1
 
   '@types/minimist@1.2.5': {}
 
@@ -4869,6 +5087,8 @@ snapshots:
       get-intrinsic: 1.3.0
       is-string: 1.1.1
       math-intrinsics: 1.1.0
+
+  array-union@2.1.0: {}
 
   array.prototype.findlastindex@1.2.6:
     dependencies:
@@ -5395,6 +5615,33 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
+  eslint-plugin-import@2.32.0(eslint-import-resolver-typescript@3.10.1)(eslint@9.38.0):
+    dependencies:
+      '@rtsao/scc': 1.1.0
+      array-includes: 3.1.9
+      array.prototype.findlastindex: 1.2.6
+      array.prototype.flat: 1.3.3
+      array.prototype.flatmap: 1.3.3
+      debug: 3.2.7
+      doctrine: 2.1.0
+      eslint: 9.38.0
+      eslint-import-resolver-node: 0.3.9
+      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@9.38.0))(eslint@9.38.0)
+      hasown: 2.0.2
+      is-core-module: 2.16.1
+      is-glob: 4.0.3
+      minimatch: 3.1.2
+      object.fromentries: 2.0.8
+      object.groupby: 1.0.3
+      object.values: 1.2.1
+      semver: 6.3.1
+      string.prototype.trimend: 1.0.9
+      tsconfig-paths: 3.15.0
+    transitivePeerDependencies:
+      - eslint-import-resolver-typescript
+      - eslint-import-resolver-webpack
+      - supports-color
+
   eslint-plugin-unused-imports@4.3.0(@typescript-eslint/eslint-plugin@8.46.2(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint@9.38.0)(typescript@5.9.3))(eslint@9.38.0):
     dependencies:
       eslint: 9.38.0
@@ -5486,6 +5733,18 @@ snapshots:
 
   eventemitter3@5.0.1: {}
 
+  execa@8.0.1:
+    dependencies:
+      cross-spawn: 7.0.6
+      get-stream: 8.0.1
+      human-signals: 5.0.0
+      is-stream: 3.0.0
+      merge-stream: 2.0.0
+      npm-run-path: 5.3.0
+      onetime: 6.0.0
+      signal-exit: 4.1.0
+      strip-final-newline: 3.0.0
+
   expand-template@2.0.3: {}
 
   expect-type@1.2.2: {}
@@ -5553,6 +5812,12 @@ snapshots:
 
   fs-constants@1.0.0: {}
 
+  fs-extra@11.3.2:
+    dependencies:
+      graceful-fs: 4.2.11
+      jsonfile: 6.2.0
+      universalify: 2.0.1
+
   fsevents@2.3.3:
     optional: true
 
@@ -5588,6 +5853,8 @@ snapshots:
     dependencies:
       dunder-proto: 1.0.1
       es-object-atoms: 1.1.1
+
+  get-stream@8.0.1: {}
 
   get-symbol-description@1.1.0:
     dependencies:
@@ -5633,6 +5900,15 @@ snapshots:
     dependencies:
       define-properties: 1.2.1
       gopd: 1.2.0
+
+  globby@11.1.0:
+    dependencies:
+      array-union: 2.1.0
+      dir-glob: 3.0.1
+      fast-glob: 3.3.3
+      ignore: 5.3.2
+      merge2: 1.4.1
+      slash: 3.0.0
 
   globby@13.2.2:
     dependencies:
@@ -5695,6 +5971,8 @@ snapshots:
       debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
+
+  human-signals@5.0.0: {}
 
   iconv-lite@0.6.3:
     dependencies:
@@ -5819,6 +6097,8 @@ snapshots:
     dependencies:
       call-bound: 1.0.4
 
+  is-stream@3.0.0: {}
+
   is-string@1.1.1:
     dependencies:
       call-bound: 1.0.4
@@ -5932,6 +6212,12 @@ snapshots:
     dependencies:
       minimist: 1.2.8
 
+  jsonfile@6.2.0:
+    dependencies:
+      universalify: 2.0.1
+    optionalDependencies:
+      graceful-fs: 4.2.11
+
   junk@4.0.1: {}
 
   keyv@4.5.4:
@@ -6010,12 +6296,16 @@ snapshots:
       type-fest: 1.4.0
       yargs-parser: 20.2.9
 
+  merge-stream@2.0.0: {}
+
   merge2@1.4.1: {}
 
   micromatch@4.0.8:
     dependencies:
       braces: 3.0.3
       picomatch: 2.3.1
+
+  mimic-fn@4.0.0: {}
 
   mimic-response@3.1.0: {}
 
@@ -6079,6 +6369,10 @@ snapshots:
       semver: 7.7.3
       validate-npm-package-license: 3.0.4
 
+  npm-run-path@5.3.0:
+    dependencies:
+      path-key: 4.0.0
+
   nth-check@2.1.1:
     dependencies:
       boolbase: 1.0.0
@@ -6121,6 +6415,10 @@ snapshots:
   once@1.4.0:
     dependencies:
       wrappy: 1.0.2
+
+  onetime@6.0.0:
+    dependencies:
+      mimic-fn: 4.0.0
 
   optionator@0.9.4:
     dependencies:
@@ -6190,6 +6488,8 @@ snapshots:
   path-exists@4.0.0: {}
 
   path-key@3.1.1: {}
+
+  path-key@4.0.0: {}
 
   path-parse@1.0.7: {}
 
@@ -6483,6 +6783,8 @@ snapshots:
       once: 1.4.0
       simple-concat: 1.0.1
 
+  slash@3.0.0: {}
+
   slash@4.0.0: {}
 
   source-map-js@1.2.1: {}
@@ -6564,6 +6866,8 @@ snapshots:
       ansi-regex: 6.2.2
 
   strip-bom@3.0.0: {}
+
+  strip-final-newline@3.0.0: {}
 
   strip-indent@4.1.1: {}
 
@@ -6794,6 +7098,8 @@ snapshots:
       '@fastify/busboy': 2.1.1
 
   universal-user-agent@6.0.1: {}
+
+  universalify@2.0.1: {}
 
   unrs-resolver@1.11.1:
     dependencies:
