@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "ts": "2025-10-31T11:08:24.974Z",
+  "context": {
+    "repo": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli",
+    "cwd": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli"
+  },
+  "checks": {
+    "build": {
+      "id": "build",
+      "ok": true,
+      "details": {
+        "exitCode": 0,
+        "artifacts": {
+          "count": 0,
+          "totalSizeBytes": 0,
+          "paths": []
+        },
+        "tool": "pnpm"
+      },
+      "timingMs": 4418
+    },
+    "devlink": {
+      "id": "devlink",
+      "ok": true,
+      "details": "skipped: kb CLI not installed"
+    },
+    "mind": {
+      "id": "mind",
+      "ok": true,
+      "details": "skipped: kb CLI not installed"
+    },
+    "style": {
+      "id": "style",
+      "ok": true,
+      "details": "skipped: eslint not installed"
+    },
+    "tests": {
+      "id": "tests",
+      "ok": true,
+      "details": "skipped: vitest not installed"
+    },
+    "types": {
+      "id": "types",
+      "ok": true,
+      "details": "skipped: tsc not installed"
+    }
+  },
+  "overall": {
+    "ok": true,
+    "failReasons": []
+  },
+  "meta": {
+    "node": "v20.19.4",
+    "timingMs": {
+      "total": 4439
+    }
+  }
+}

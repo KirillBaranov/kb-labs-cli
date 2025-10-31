@@ -70,6 +70,8 @@
     "@kb-labs/mind-query": "link:../kb-labs-mind/packages/mind-query",
     "@kb-labs/mind-types": "link:../kb-labs-mind/packages/mind-types",
     "@kb-labs/core-cli": "link:../kb-labs-core/packages/cli",
+    "@kb-labs/release-cli": "link:../kb-labs-release-manager/packages/release-cli",
+    "@kb-labs/release-core": "link:../kb-labs-release-manager/packages/release-core",
     "zod": "^4.1.5"
   },
   "devDependencies": {
