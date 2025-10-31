@@ -28,7 +28,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@kb-labs/shared-cli-ui": "workspace:*",
+    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui",
     "colorette": "^2.0.20",
     "zod": "^4.1.5"
   },

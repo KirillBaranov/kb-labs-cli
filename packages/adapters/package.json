@@ -28,7 +28,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@kb-labs/cli-core": "workspace:*",
+    "@kb-labs/cli-core": "link:../core",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "picomatch": "^4.0.2",
