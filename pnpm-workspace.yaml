@@ -8,3 +8,4 @@ packages:
   - "../kb-labs-audit/packages/*"
   - "../kb-labs-shared/packages/*"
   - "../kb-labs-core/packages/*"
+  - "../kb-labs-release-manager/packages/*"
