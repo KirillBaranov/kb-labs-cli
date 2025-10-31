@@ -72,4 +72,9 @@ DEVKIT_SYNC.json
 # ───────────────
 .kb/devlink
 .kb/cache/
+
+# ───────────────
+# DevKit provenance
+# ───────────────
+.kb/devkit/tmp/
 .yalc/
