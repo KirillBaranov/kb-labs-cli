@@ -1,8 +1,10 @@
 # ADR-0005: Unified CLI Output Formatting
 
-## Status
-
-**Accepted** - 2025-10-27
+**Date:** 2025-10-27
+**Status:** Accepted
+**Deciders:** KB Labs Team
+**Last Reviewed:** 2025-11-03
+**Tags:** [cli, ui/ux]
 
 ## Context
 
