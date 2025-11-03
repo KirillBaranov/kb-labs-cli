@@ -16,7 +16,7 @@ This directory contains comprehensive documentation for the KB Labs CLI project.
 
 ### 🏗️ Architecture Decisions
 
-- **[ADR 0001: Architecture and Repository Layout](./adr/0001-architecture-and-reposity-layout.md)** - Project structure
+- **[ADR 0001: Architecture and Repository Layout](./adr/0001-architecture-and-repository-layout.md)** - Project structure
 - **[ADR 0002: Plugins and Extensibility](./adr/0002-plugins-and-extensibility.md)** - Plugin system design
 - **[ADR 0003: Package and Module Boundaries](./adr/0003-package-and-module-boundaries.md)** - Package organization
 - **[ADR 0004: Versioning and Release Policy](./adr/0004-versioning-and-release-policy.md)** - Versioning strategy
