@@ -72,7 +72,7 @@ class TelemetryCollector {
    * Record discovery metrics
    */
   recordDiscovery(metrics: TelemetryMetrics['discovery']): void {
-    if (!this.enabled) return;
+    if (!this.enabled) {return;}
     
     this.events.push({
       type: 'discovery',
@@ -85,7 +85,7 @@ class TelemetryCollector {
    * Record registration metrics
    */
   recordRegistration(metrics: TelemetryMetrics['registration']): void {
-    if (!this.enabled) return;
+    if (!this.enabled) {return;}
     
     this.events.push({
       type: 'registration',
@@ -98,7 +98,7 @@ class TelemetryCollector {
    * Record execution metrics
    */
   recordExecution(metrics: TelemetryMetrics['execution']): void {
-    if (!this.enabled) return;
+    if (!this.enabled) {return;}
     
     this.events.push({
       type: 'execution',
@@ -111,7 +111,7 @@ class TelemetryCollector {
    * Record cache metrics
    */
   recordCache(metrics: TelemetryMetrics['cache']): void {
-    if (!this.enabled) return;
+    if (!this.enabled) {return;}
     
     this.events.push({
       type: 'cache',
@@ -124,7 +124,7 @@ class TelemetryCollector {
    * Record schema validation error
    */
   recordSchemaError(manifestId: string, error: string): void {
-    if (!this.enabled) return;
+    if (!this.enabled) {return;}
     
     this.events.push({
       type: 'schema_error',

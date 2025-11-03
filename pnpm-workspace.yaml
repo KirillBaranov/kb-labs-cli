@@ -6,6 +6,7 @@ packages:
   - "../kb-labs-mind"
   - "../kb-labs-mind/packages/*"
   - "../kb-labs-audit/packages/*"
+  - "../kb-labs-ai-review/packages/*"
   - "../kb-labs-shared/packages/*"
   - "../kb-labs-core/packages/*"
   - "../kb-labs-release-manager/packages/*"

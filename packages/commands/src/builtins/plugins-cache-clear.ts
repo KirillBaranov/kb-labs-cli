@@ -1,6 +1,6 @@
 import { box, keyValue, formatTiming, TimingTracker, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
 import { clearCache } from '../registry/plugins-state';
-import { Command } from '../types/types';
+import type { Command } from '../types/types';
 
 export const pluginsCacheClear: Command = {
   name: 'plugins:clear-cache',

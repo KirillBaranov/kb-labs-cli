@@ -133,7 +133,7 @@ class InMemoryRegistry implements CommandRegistry {
         if (parts.length === 2) {
           // Try exact match first, then split format
           const exactMatch = this.byName.get(nameOrPath);
-          if (exactMatch) return exactMatch;
+          if (exactMatch) {return exactMatch;}
           
           // Try space-separated format
           const spaceKey = parts.join(" ");

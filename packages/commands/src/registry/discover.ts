@@ -24,8 +24,8 @@ function createUnavailableManifest(pkgName: string, error: any): CommandManifest
   let missing: string | null = null;
   const m1 = rawMsg.match(/Cannot find (?:module|package) '([^']+)'/);
   const m2 = rawMsg.match(/from ['"]([^'"]+)['"]/);
-  if (m1 && m1[1]) missing = m1[1];
-  else if (m2 && m2[1] && m2[1].startsWith('@')) missing = m2[1];
+  if (m1 && m1[1]) {missing = m1[1];}
+  else if (m2 && m2[1] && m2[1].startsWith('@')) {missing = m2[1];}
 
   // Derive group from package name (e.g., @kb-labs/core-cli -> core)
   const seg = pkgName.includes('/') ? pkgName.split('/')[1] : pkgName;
@@ -261,10 +261,10 @@ async function findManifestPath(pkgRoot: string, pkg: any): Promise<{ path: stri
  * Check if package is a plugin by keywords or kb.plugin flag
  */
 function isPluginPackage(pkg: any): boolean {
-  if (!pkg) return false;
+  if (!pkg) {return false;}
   
   // Explicit flag
-  if (pkg.kb?.plugin === true) return true;
+  if (pkg.kb?.plugin === true) {return true;}
   
   // Keyword check
   const keywords = Array.isArray(pkg.keywords) ? pkg.keywords : [];
@@ -321,7 +321,7 @@ async function discoverWorkspace(cwd: string): Promise<DiscoveryResult[]> {
       const pkgRoot = path.join(cwd, dir);
       const pkg = await readPackageJson(path.join(pkgRoot, 'package.json'));
       
-      if (!pkg) continue;
+      if (!pkg) {continue;}
       
       // Check if package has manifest (explicit or conventional)
       const manifestInfo = await findManifestPath(pkgRoot, pkg);
@@ -401,7 +401,7 @@ async function discoverWorkspace(cwd: string): Promise<DiscoveryResult[]> {
 async function discoverCurrentPackage(cwd: string): Promise<DiscoveryResult | null> {
   try {
     const pkg = await readPackageJson(path.join(cwd, 'package.json'));
-    if (!pkg) return null;
+    if (!pkg) {return null;}
     
     const manifestInfo = await findManifestPath(cwd, pkg);
     if (manifestInfo.path) {
@@ -443,7 +443,7 @@ async function discoverNodeModules(cwd: string): Promise<DiscoveryResult[]> {
     const scanPromises: Promise<void>[] = [];
     
     for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
+      if (!entry.isDirectory()) {continue;}
       
       const scanEntry = async () => {
         let pkgRoot: string;
@@ -458,7 +458,7 @@ async function discoverNodeModules(cwd: string): Promise<DiscoveryResult[]> {
               pkgRoot = path.join(scopeDir, scopedEntry.name);
               pkg = await readPackageJson(path.join(pkgRoot, 'package.json'));
               
-              if (!pkg) continue;
+              if (!pkg) {continue;}
               
               // Check if it's a plugin
               const isPlugin = isPluginPackage(pkg);
@@ -503,7 +503,7 @@ async function discoverNodeModules(cwd: string): Promise<DiscoveryResult[]> {
           pkgRoot = path.join(nmDir, entry.name);
           pkg = await readPackageJson(path.join(pkgRoot, 'package.json'));
           
-          if (!pkg) return;
+          if (!pkg) {return;}
           
           const isPlugin = isPluginPackage(pkg);
           

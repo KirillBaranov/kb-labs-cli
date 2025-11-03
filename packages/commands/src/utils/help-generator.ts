@@ -386,9 +386,9 @@ export function renderManifestCommandHelp(registered: RegisteredCommand): string
     content.push(`  ${manifest.package}`);
     if (manifest.engine) {
       const engineInfo: string[] = [];
-      if (manifest.engine.node) engineInfo.push(`Node ${manifest.engine.node}`);
-      if (manifest.engine.kbCli) engineInfo.push(`kb-cli ${manifest.engine.kbCli}`);
-      if (manifest.engine.module) engineInfo.push(manifest.engine.module.toUpperCase());
+      if (manifest.engine.node) {engineInfo.push(`Node ${manifest.engine.node}`);}
+      if (manifest.engine.kbCli) {engineInfo.push(`kb-cli ${manifest.engine.kbCli}`);}
+      if (manifest.engine.module) {engineInfo.push(manifest.engine.module.toUpperCase());}
       if (engineInfo.length > 0) {
         content.push(`  ${colors.dim(`Requires: ${engineInfo.join(", ")}`)}`);
       }

@@ -85,7 +85,7 @@ function checkSelfUpdateNotices(registered: RegisteredCommand[]): void {
   
   for (const cmd of registered) {
     const required = cmd.manifest.engine?.kbCli;
-    if (!required || !currentCliVersion) continue;
+    if (!required || !currentCliVersion) {continue;}
     
     // Simple semver check
     if (required.startsWith('^')) {
