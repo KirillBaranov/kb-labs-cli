@@ -1,0 +1,41 @@
+{
+  "name": "@kb-labs/cli-api",
+  "version": "0.1.0",
+  "description": "Programmatic API for KB Labs CLI - stable interface for REST API, webhooks, and agents",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@kb-labs/cli-core": "link:../core",
+    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.3",
+    "tsup": "^8.5.0",
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  }
+}
+

@@ -1,0 +1,44 @@
+{
+  "name": "@kb-labs/cli-runtime",
+  "version": "0.1.0",
+  "description": "CLI runtime - command execution, middleware, formatters",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@kb-labs/cli-core": "link:../core",
+    "@kb-labs/sandbox": "link:../../../kb-labs-core/packages/sandbox",
+    "cli-table3": "^0.6.5",
+    "yaml": "^2.7.0",
+    "colorette": "^2.0.20"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.3",
+    "tsup": "^8.5.0",
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  }
+}
+
