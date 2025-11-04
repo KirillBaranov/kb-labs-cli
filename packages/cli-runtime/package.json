@@ -32,6 +32,7 @@
     "colorette": "^2.0.20"
   },
   "devDependencies": {
+    "@kb-labs/devkit": "link:../../../kb-labs-devkit",
     "@types/node": "^24.3.3",
     "tsup": "^8.5.0",
     "typescript": "^5.6.3",
