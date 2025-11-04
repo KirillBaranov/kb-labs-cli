@@ -14,3 +14,4 @@ export { telemetry } from "./registry/telemetry";
 export { hello } from "./commands/system/hello";
 export { version } from "./commands/system/version";
 export { diagnose } from "./commands/system/diagnose";
+export { createPluginsIntrospectCommand } from "./plugins-introspect.js";

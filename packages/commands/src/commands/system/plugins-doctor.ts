@@ -33,7 +33,7 @@ export const pluginsDoctor: Command = {
   async run(ctx, argv, flags) {
     const jsonMode = !!flags.json;
     const targetPlugin = argv[0];
-    
+
     try {
       const manifests = registry.listManifests();
       const issues: Array<{
@@ -43,15 +43,16 @@ export const pluginsDoctor: Command = {
         message: string;
         fix?: string;
       }> = [];
-      
+
       // Check each plugin
       for (const cmd of manifests) {
-        const pkgName = cmd.manifest.package || cmd.manifest.group;
-        
+        const pkgName = cmd.manifest.package || cmd.manifest.group || '';
+        if (!pkgName) { continue; }
+
         if (targetPlugin && !pkgName.includes(targetPlugin)) {
           continue;
         }
-        
+
         // Check Node version compatibility
         if (cmd.manifest.engine?.node) {
           const required = cmd.manifest.engine.node;
@@ -59,44 +60,54 @@ export const pluginsDoctor: Command = {
           // Simple check for >= requirements
           if (required.startsWith('>=')) {
             const requiredVersion = required.replace('>=', '').trim();
-            const currentMajor = parseInt(current.split('.')[0].replace('v', ''));
-            const requiredMajor = parseInt(requiredVersion.split('.')[0]);
-            if (currentMajor < requiredMajor) {
-              issues.push({
-                package: pkgName,
-                severity: 'error',
-                code: 'NODE_VERSION_MISMATCH',
-                message: `Requires Node ${required}, found ${current}`,
-                fix: `Upgrade Node to ${required} or higher`,
-              });
+            const currentVersionParts = current.split('.');
+            const requiredVersionParts = requiredVersion.split('.');
+            if (currentVersionParts[0] && requiredVersionParts[0]) {
+              const currentMajor = parseInt(currentVersionParts[0].replace('v', ''), 10);
+              const requiredMajor = parseInt(requiredVersionParts[0], 10);
+              if (!isNaN(currentMajor) && !isNaN(requiredMajor) && currentMajor < requiredMajor) {
+                issues.push({
+                  package: pkgName,
+                  severity: 'error',
+                  code: 'NODE_VERSION_MISMATCH',
+                  message: `Requires Node ${required}, found ${current}`,
+                  fix: `Upgrade Node to ${required} or higher`,
+                });
+              }
             }
           }
         }
-        
+
         // Check CLI version compatibility
         if (cmd.manifest.engine?.kbCli) {
           const required = cmd.manifest.engine.kbCli;
           const current = process.env.CLI_VERSION || '0.1.0';
           // Simple semver check
           if (required.startsWith('^') && current !== '0.1.0') {
-            const requiredMajor = parseInt(required.replace('^', '').split('.')[0]);
-            const currentMajor = parseInt(current.split('.')[0]);
-            if (currentMajor < requiredMajor) {
-              issues.push({
-                package: pkgName,
-                severity: 'error',
-                code: 'CLI_VERSION_MISMATCH',
-                message: `Requires kb-cli ${required}, found ${current}`,
-                fix: `Upgrade kb-cli: pnpm -w update @kb-labs/cli`,
-              });
+            const requiredParts = required.replace('^', '').split('.');
+            const currentParts = current.split('.');
+            if (requiredParts[0] && currentParts[0]) {
+              const requiredMajor = parseInt(requiredParts[0], 10);
+              const currentMajor = parseInt(currentParts[0], 10);
+              if (!isNaN(requiredMajor) && !isNaN(currentMajor) && currentMajor < requiredMajor) {
+                issues.push({
+                  package: pkgName,
+                  severity: 'error',
+                  code: 'CLI_VERSION_MISMATCH',
+                  message: `Requires kb-cli ${required}, found ${current}`,
+                  fix: `Upgrade kb-cli: pnpm -w update @kb-labs/cli`,
+                });
+              }
             }
           }
         }
-        
+
         // Check missing peer dependencies
         if (cmd.manifest.requires) {
           for (const req of cmd.manifest.requires) {
-            const [pkgNameReq, version] = req.split('@');
+            const parts = req.split('@');
+            const pkgNameReq = parts[0];
+            if (!pkgNameReq) { continue; }
             try {
               require.resolve(pkgNameReq);
             } catch {
@@ -110,15 +121,15 @@ export const pluginsDoctor: Command = {
             }
           }
         }
-        
+
         // Check ESM/CJS module type mismatch
         if (cmd.manifest.engine?.module) {
           const required = cmd.manifest.engine.module;
-          const pkgJsonPath = path.join(process.cwd(), 'node_modules', pkgName, 'package.json');
+          const pkgJsonPath = path.join(cmd.pkgRoot || process.cwd(), 'package.json');
           try {
             const pkgJson = JSON.parse(await fs.readFile(pkgJsonPath, 'utf8'));
-            const isESM = pkgJson.type === 'module' || cmd.manifestPath.endsWith('.mjs');
-            
+            const isESM = pkgJson.type === 'module';
+
             if (required === 'esm' && !isESM) {
               issues.push({
                 package: pkgName,
@@ -140,7 +151,7 @@ export const pluginsDoctor: Command = {
             // Can't check
           }
         }
-        
+
         // Check unavailable commands
         if (!cmd.available && cmd.unavailableReason) {
           issues.push({
@@ -151,20 +162,11 @@ export const pluginsDoctor: Command = {
             fix: cmd.hint || 'Check dependencies and manifest',
           });
         }
-        
-        // Check deprecated manifest paths
-        const manifestPath = cmd.manifestPath || '';
-        if (manifestPath.includes('kb/manifest') || manifestPath.includes('dist/kb/manifest')) {
-          issues.push({
-            package: pkgName,
-            severity: 'warning',
-            code: 'DEPRECATED_MANIFEST_PATH',
-            message: `Uses deprecated manifest path: ${manifestPath}`,
-            fix: `Migrate to exports["./kb/commands"] in package.json`,
-          });
-        }
+
+        // Check deprecated manifest paths - this check is skipped as manifestPath is not available in RegisteredCommand
+        // The path is only available in DiscoveryResult, so we can't check this during doctor
       }
-      
+
       if (jsonMode) {
         ctx.presenter.json({
           ok: issues.length === 0,
@@ -175,45 +177,45 @@ export const pluginsDoctor: Command = {
         });
         return issues.filter(i => i.severity === 'error').length > 0 ? 1 : 0;
       }
-      
+
       if (issues.length === 0) {
         ctx.presenter.info(`${safeSymbols.success} All plugins are healthy!`);
         return 0;
       }
-      
+
       const errorCount = issues.filter(i => i.severity === 'error').length;
       const warningCount = issues.filter(i => i.severity === 'warning').length;
-      
+
       const summary = keyValue({
         'Total Issues': `${issues.length}`,
         'Errors': errorCount > 0 ? `${safeColors.error(errorCount.toString())}` : 'none',
         'Warnings': warningCount > 0 ? `${safeColors.warning(warningCount.toString())}` : 'none',
       });
-      
+
       const issueLines: string[] = [];
       const byPackage = new Map<string, typeof issues>();
-      
+
       for (const issue of issues) {
         if (!byPackage.has(issue.package)) {
           byPackage.set(issue.package, []);
         }
         byPackage.get(issue.package)!.push(issue);
       }
-      
+
       for (const [pkg, pkgIssues] of Array.from(byPackage.entries()).sort()) {
         issueLines.push(safeColors.bold(`\n${pkg}:`));
-        
+
         for (const issue of pkgIssues) {
           const icon = issue.severity === 'error' ? safeSymbols.error : safeSymbols.warning;
           const color = issue.severity === 'error' ? safeColors.error : safeColors.warning;
-          
+
           issueLines.push(`  ${icon} ${color(issue.code)}: ${issue.message}`);
           if (issue.fix) {
             issueLines.push(`     ${safeColors.info(`Fix: ${issue.fix}`)}`);
           }
         }
       }
-      
+
       const sections = [
         safeColors.bold('Plugin Health Check:'),
         ...summary,
@@ -223,10 +225,10 @@ export const pluginsDoctor: Command = {
         `  ${safeColors.info('kb plugins enable <name>')}  ${safeColors.dim('Enable a disabled plugin')}`,
         `  ${safeColors.info('kb plugins clear-cache')}  ${safeColors.dim('Clear cache and rediscover')}`,
       ];
-      
+
       const output = box('Plugin Diagnostics', sections);
       ctx.presenter.write(output);
-      
+
       return errorCount > 0 ? 1 : 0;
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : String(e);

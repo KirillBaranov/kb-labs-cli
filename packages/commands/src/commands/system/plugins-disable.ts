@@ -20,6 +20,10 @@ export const pluginsDisable: Command = {
     }
 
     const packageName = argv[0];
+    if (!packageName) {
+      ctx.presenter.error("Please specify a plugin name to disable");
+      return 1;
+    }
 
     try {
       await disablePlugin(process.cwd(), packageName);

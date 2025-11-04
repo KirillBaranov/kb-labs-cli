@@ -29,6 +29,10 @@ export const pluginsEnable: Command = {
     }
 
     const packageName = argv[0];
+    if (!packageName) {
+      ctx.presenter.error("Please specify a plugin name to enable");
+      return 1;
+    }
     const permissions = flags.perm as string[] || [];
 
     try {

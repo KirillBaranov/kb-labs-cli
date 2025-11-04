@@ -98,7 +98,7 @@ describe('Registry Integration', () => {
     expect(discoveryResults[0]!.source).toBe('workspace');
 
     // 2. Register manifests
-    const registered = registerManifests(discoveryResults, mockRegistry as any);
+    const registered = await registerManifests(discoveryResults, mockRegistry as any);
     expect(registered).toHaveLength(1);
     expect(registered[0]).toBeDefined();
     expect(registered[0]!.available).toBe(true);
@@ -172,7 +172,7 @@ describe('Registry Integration', () => {
     expect(discoveryResults).toHaveLength(1);
 
     // 2. Register manifests
-    const registered = registerManifests(discoveryResults, mockRegistry as any);
+    const registered = await registerManifests(discoveryResults, mockRegistry as any);
     expect(registered).toHaveLength(1);
     expect(registered[0]).toBeDefined();
     expect(registered[0]!.available).toBe(false);
@@ -273,7 +273,7 @@ describe('Registry Integration', () => {
     expect(discoveryResults).toHaveLength(2);
 
     // 2. Register manifests
-    const registered = registerManifests(discoveryResults, mockRegistry as any);
+    const registered = await registerManifests(discoveryResults, mockRegistry as any);
     expect(registered).toHaveLength(2);
 
     // Workspace command should be active

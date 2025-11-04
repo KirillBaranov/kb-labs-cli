@@ -24,11 +24,15 @@ export const pluginsUnlink: Command = {
     }
 
     const identifier = argv[0];
+    if (!identifier) {
+      ctx.presenter.error("Please specify a plugin path or name to unlink");
+      return 1;
+    }
     const state = await loadPluginsState(process.cwd());
 
     try {
       // Try as path first
-      let absPath: string;
+      let absPath: string | undefined;
       try {
         absPath = path.resolve(process.cwd(), identifier);
         await fs.access(absPath);
@@ -42,6 +46,11 @@ export const pluginsUnlink: Command = {
           ctx.presenter.info(`Linked plugins: ${state.linked.length > 0 ? state.linked.join(', ') : 'none'}`);
           return 1;
         }
+      }
+
+      if (!absPath) {
+        ctx.presenter.error(`Plugin not found: ${identifier}`);
+        return 1;
       }
 
       await unlinkPlugin(process.cwd(), absPath);

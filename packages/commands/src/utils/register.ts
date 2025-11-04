@@ -1,5 +1,6 @@
 import { registry } from "./registry";
 import type { RegisteredCommand } from "../registry/types.js";
+import type { Command } from "../types/types.js";
 import { hello } from "../commands/system/hello";
 import { version } from "../commands/system/version";
 import { diagnose } from "../commands/system/diagnose";
@@ -14,9 +15,12 @@ import { pluginsDoctor } from "../commands/system/plugins-doctor";
 import { pluginsWatch } from "../commands/system/plugins-watch";
 import { pluginsScaffold } from "../commands/system/plugins-scaffold";
 import { pluginsTelemetry } from "../commands/system/plugins-telemetry";
+import { pluginsRegistry } from "../commands/system/plugins-registry";
 import { pluginsCacheClear } from "../builtins/plugins-cache-clear";
-import { discoverManifests } from "../registry/discover";
+import { createPluginsIntrospectCommand } from "../plugins-introspect.js";
 import { registerManifests, disposeAllPlugins } from "../registry/register";
+import { createCompatibilityDiscovery } from "@kb-labs/cli-adapters";
+import { PluginRegistry } from "@kb-labs/cli-core";
 import { log } from "./logger";
 
 let _registered = false;
@@ -43,22 +47,65 @@ export async function registerBuiltinCommands() {
   registry.register(pluginsWatch);
   registry.register(pluginsScaffold);
   registry.register(pluginsTelemetry);
+  registry.register(pluginsRegistry);
   registry.register(pluginsCacheClear);
   
-  // Discover and register manifest-based commands from workspace/node_modules
+  // Convert CliCommand to Command for introspect
+  const introspectCliCommand = createPluginsIntrospectCommand();
+  registry.register({
+    name: introspectCliCommand.name,
+    describe: introspectCliCommand.description,
+    category: 'system',
+    aliases: [],
+    async run(ctx, argv, flags) {
+      return introspectCliCommand.run(ctx, argv, flags);
+    },
+  });
+  
+  // Discover and register manifest-based commands (v1 and v2)
   try {
     const noCache = process.argv.includes('--no-cache');
-    const discovered = await discoverManifests(process.cwd(), noCache);
     
-    if (discovered.length > 0) {
-      log('info', `Discovered ${discovered.length} packages with CLI manifests`);
-      const registered = await registerManifests(discovered, registry);
-      registeredCommands.push(...registered);
+    // Try compatibility discovery first (v2 + v1 fallback)
+    const compatDiscovery = createCompatibilityDiscovery(process.cwd());
+    const pluginRefs = await compatDiscovery.find();
+    
+    if (pluginRefs.length > 0) {
+      log('info', `Discovered ${pluginRefs.length} plugins (v1/v2)`);
       
-      // Check for self-update notices (CLI version compatibility)
-      checkSelfUpdateNotices(registered);
-    } else {
-      log('debug', 'No external CLI manifests discovered');
+      for (const ref of pluginRefs) {
+        try {
+          const cliCommands = await compatDiscovery.load(ref);
+          for (const cliCmd of cliCommands) {
+            // Convert CliCommand to Command
+            const cmd: Command = {
+              name: cliCmd.name,
+              describe: cliCmd.description || '',
+              category: 'system',
+              aliases: [],
+              async run(ctx: any, argv: string[], flags: Record<string, unknown>) {
+                return cliCmd.run(ctx, argv, flags);
+              },
+            };
+            registry.register(cmd);
+            registeredCommands.push(cmd);
+          }
+        } catch (err: any) {
+          log('warn', `Failed to load plugin ${ref}: ${err.message}`);
+        }
+      }
+    }
+    
+    // Use new PluginRegistry from cli-core
+    const pluginRegistry = new PluginRegistry({
+      strategies: ['workspace', 'pkg', 'dir', 'file'],
+      preferV2: true,
+    });
+    await pluginRegistry.refresh();
+    const plugins = pluginRegistry.list();
+    
+    if (plugins.length > 0) {
+      log('info', `Discovered ${plugins.length} plugins via cli-core`);
     }
   } catch (err: any) {
     // Fail-open: if discovery fails, continue with built-in commands

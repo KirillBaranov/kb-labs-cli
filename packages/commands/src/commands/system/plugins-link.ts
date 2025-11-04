@@ -24,6 +24,10 @@ export const pluginsLink: Command = {
     }
 
     const pluginPath = argv[0];
+    if (!pluginPath) {
+      ctx.presenter.error("Please specify a plugin path to link");
+      return 1;
+    }
     const absPath = path.resolve(process.cwd(), pluginPath);
 
     try {

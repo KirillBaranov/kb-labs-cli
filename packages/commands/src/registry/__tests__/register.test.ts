@@ -44,7 +44,7 @@ describe('registerManifests', () => {
       manifests,
     }];
 
-    const registered = registerManifests(discoveryResults, mockRegistry as any);
+    const registered = await registerManifests(discoveryResults, mockRegistry as any);
 
     expect(registered).toHaveLength(1);
     expect(registered[0]).toBeDefined();
@@ -78,7 +78,7 @@ describe('registerManifests', () => {
       manifests,
     }];
 
-    const registered = registerManifests(discoveryResults, mockRegistry as any);
+    const registered = await registerManifests(discoveryResults, mockRegistry as any);
 
     expect(registered).toHaveLength(1);
     expect(registered[0]).toBeDefined();
@@ -124,7 +124,7 @@ describe('registerManifests', () => {
       },
     ];
 
-    const registered = registerManifests(discoveryResults, mockRegistry as any);
+    const registered = await registerManifests(discoveryResults, mockRegistry as any);
 
     expect(registered).toHaveLength(2);
     
@@ -158,9 +158,7 @@ describe('registerManifests', () => {
       manifests: [invalidManifest],
     }];
 
-    expect(() => {
-      registerManifests(discoveryResults, mockRegistry as any);
-    }).toThrow();
+    await expect(registerManifests(discoveryResults, mockRegistry as any)).rejects.toThrow();
   });
 
   it('should validate flag definitions', async () => {
@@ -188,8 +186,6 @@ describe('registerManifests', () => {
       manifests: [manifestWithInvalidFlag],
     }];
 
-    expect(() => {
-      registerManifests(discoveryResults, mockRegistry as any);
-    }).toThrow();
+    await expect(registerManifests(discoveryResults, mockRegistry as any)).rejects.toThrow();
   });
 });

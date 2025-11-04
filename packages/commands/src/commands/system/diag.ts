@@ -162,15 +162,19 @@ export const diag: Command = {
       for (const cmd of manifests) {
         const required = cmd.manifest.engine?.kbCli;
         if (required) {
-          const requiredMajor = parseInt(required.replace('^', '').split('.')[0]);
-          const currentMajor = parseInt(cliVersion.split('.')[0]);
+          const requiredParts = required.replace('^', '').split('.');
+          const currentParts = cliVersion.split('.');
+          if (requiredParts[0] && currentParts[0]) {
+            const requiredMajor = parseInt(requiredParts[0], 10);
+            const currentMajor = parseInt(currentParts[0], 10);
           
-          if (currentMajor < requiredMajor) {
-            versionIssues.push({
-              plugin: cmd.manifest.package || cmd.manifest.group,
-              required,
-              current: cliVersion,
-            });
+            if (!isNaN(requiredMajor) && !isNaN(currentMajor) && currentMajor < requiredMajor) {
+              versionIssues.push({
+                plugin: cmd.manifest.package || cmd.manifest.group,
+                required,
+                current: cliVersion,
+              });
+            }
           }
         }
       }

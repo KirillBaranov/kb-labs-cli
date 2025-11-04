@@ -97,7 +97,7 @@ export const pluginsWatch: Command = {
                 if (manifestPath && !watchedPaths.has(manifestPath)) {
                   watchedPaths.add(manifestPath);
                   
-                  const watcher = watch(manifestPath, async (eventType) => {
+                  const watcher = watch(manifestPath, async (eventType: string) => {
                     if (eventType === 'change') {
                       ctx.presenter.write(`${safeColors.dim(`[${new Date().toLocaleTimeString()}]`)} ${safeColors.info('Manifest changed:')} ${manifestPath}\n`);
                       await reloadManifests();
@@ -125,7 +125,7 @@ export const pluginsWatch: Command = {
       for (const configPath of configPaths) {
         try {
           await fs.access(configPath);
-          const watcher = watch(configPath, async (eventType) => {
+          const watcher = watch(configPath, async (eventType: string) => {
             if (eventType === 'change') {
               ctx.presenter.write(`${safeColors.dim(`[${new Date().toLocaleTimeString()}]`)} ${safeColors.info('Config changed:')} ${path.basename(configPath)}\n`);
               await reloadManifests();

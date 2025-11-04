@@ -33,6 +33,10 @@ export const pluginsScaffold: Command = {
     }
 
     const pluginName = argv[0];
+    if (!pluginName) {
+      ctx.presenter.error("Please specify a plugin name");
+      return 1;
+    }
     const format = (flags.format as string) || 'esm';
     const isESM = format === 'esm';
     const extension = isESM ? 'ts' : 'ts';
