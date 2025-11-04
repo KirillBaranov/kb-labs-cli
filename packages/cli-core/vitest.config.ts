@@ -1,14 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import config from "@kb-labs/devkit/vitest/node.js";
 
-export default defineConfig({
-  test: {
-    globals: true,
-    environment: 'node',
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: ['**/*.test.ts', '**/*.spec.ts', '**/dist/**', '**/node_modules/**'],
-    },
-  },
-});
+export default config;
 

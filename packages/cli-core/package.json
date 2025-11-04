@@ -34,6 +34,7 @@
     "yaml": "^2.7.0"
   },
   "devDependencies": {
+    "@kb-labs/devkit": "link:../../../kb-labs-devkit",
     "@types/node": "^24.3.3",
     "@types/semver": "^7.5.8",
     "tsup": "^8.5.0",
