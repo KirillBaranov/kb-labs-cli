@@ -25,7 +25,69 @@ export * from "./telemetry/types";
 
 // Registry
 export * from "./registry";
+export {
+  PluginRegistry,
+  type PluginBrief,
+  type RegistrySnapshot,
+  type RegistryDiff,
+  type ExplainResult,
+  type DiscoveryOptions,
+  type CacheOptions,
+  type RouteRef,
+  type HandlerRef,
+  type SourceKind,
+} from "./registry/plugin-registry";
+export { WatchManager } from "./registry/watch-manager";
 
 // Re-export specific functions that are imported by other packages
 export { createLoader } from "./presenter/loader";
 export { createContext } from "./context";
+
+// Cache
+export type { CacheAdapter } from "./cache/cache-adapter";
+export { InMemoryCacheAdapter } from "./cache/in-memory-adapter";
+export {
+  SchemaCache,
+  calculateManifestChecksum,
+  getSchemaCache,
+  resetSchemaCache,
+} from "./cache/schema-cache";
+
+// Compat
+export {
+  detectManifestVersion,
+  migrateV1ToV2,
+  getDeprecationWarning,
+} from "./compat/v1-to-v2";
+export {
+  isManifestVersionSupported,
+  checkDualManifest,
+} from "./compat/detection";
+
+// Generators
+export {
+  generateOpenAPISpec,
+  mergeOpenAPISpecs,
+  type OpenAPISpec,
+} from "./generators/openapi";
+export {
+  generateStudioRegistry,
+  type StudioRegistry,
+  type StudioRegistryEntry,
+} from "./generators/studio-registry";
+
+// Discovery
+export {
+  DependencyResolver,
+  type PluginDependency,
+  type ResolvedGraph,
+  type ValidationResult,
+} from "./discovery/dependency-resolver";
+export { PathValidator } from "./discovery/path-validator";
+
+// Lifecycle
+export {
+  LifecycleManager,
+  type PluginLifecycle,
+  type ExecutionLimits,
+} from "./lifecycle/lifecycle-manager";

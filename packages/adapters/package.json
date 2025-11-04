@@ -22,13 +22,15 @@
     "clean": "rimraf dist",
     "build": "tsup --config tsup.config.ts",
     "dev": "tsup --config tsup.config.ts --watch",
-    "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
-    "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "type-check": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
     "@kb-labs/cli-core": "link:../core",
+    "@kb-labs/plugin-manifest": "link:../../../kb-labs-core/packages/plugin-manifest",
+    "@kb-labs/plugin-adapter-cli": "link:../../../kb-labs-core/packages/plugin-adapter-cli",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "picomatch": "^4.0.2",

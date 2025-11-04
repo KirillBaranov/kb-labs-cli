@@ -9,3 +9,8 @@ export function findCommand(path: string[]): CliCommand | undefined {
     (c) => c.name === dotted || c.name.split(" ")[0] === path[0],
   );
 }
+
+// Add register method for compatibility
+(registry as any).register = function register(command: CliCommand): void {
+  registry.push(command);
+};

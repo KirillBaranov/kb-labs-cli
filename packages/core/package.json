@@ -22,19 +22,26 @@
     "clean": "rimraf dist",
     "build": "tsup --config tsup.config.ts",
     "dev": "tsup --config tsup.config.ts --watch",
-    "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
-    "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "type-check": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
     "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui",
+    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
+    "@kb-labs/plugin-adapter-rest": "link:../../../kb-labs-plugin/packages/adapters/rest",
     "colorette": "^2.0.20",
+    "semver": "^7.6.3",
+    "chokidar": "^4.0.3",
+    "glob": "^11.0.0",
+    "yaml": "^2.7.0",
     "zod": "^4.1.5"
   },
   "devDependencies": {
     "@types/node": "^24.3.3",
     "@types/picomatch": "^4",
+    "@types/semver": "^7.5.8",
     "cpy-cli": "^4.2.0",
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",
