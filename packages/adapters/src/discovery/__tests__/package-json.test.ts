@@ -20,7 +20,7 @@ describe("package-json discovery", () => {
     // Create package.json with commands
     const packageJson = {
       name: "test-package",
-      kbLabs: {
+      kb: {
         commands: ["@test/plugin1", "@test/plugin2"],
       },
     };

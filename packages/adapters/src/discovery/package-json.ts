@@ -4,7 +4,7 @@ import type { PluginDiscovery } from "@kb-labs/cli-core";
 import type { CliCommand } from "@kb-labs/cli-core";
 import { CliError, CLI_ERROR_CODES } from "@kb-labs/cli-core";
 
-/** Look up nearest package.json and read kbLabs.commands list. */
+/** Look up nearest package.json and read kb.commands list. */
 export function createPackageJsonDiscovery(
   startDir = process.cwd(),
 ): PluginDiscovery {
@@ -17,7 +17,7 @@ export function createPackageJsonDiscovery(
       try {
         const raw = await fsp.readFile(pkgPath, "utf8");
         const pkg = JSON.parse(raw) as any;
-        const list: string[] = pkg?.kbLabs?.commands ?? [];
+        const list: string[] = pkg?.kb?.commands ?? [];
         return Array.isArray(list) ? list : [];
       } catch (e) {
         throw new CliError(
