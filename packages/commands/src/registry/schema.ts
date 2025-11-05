@@ -64,6 +64,7 @@ export const CommandManifestSchema = z.object({
   engine: EngineSchema,
   permissions: z.array(z.string()).optional(), // e.g., ["fs.read", "git.read", "net.fetch"]
   telemetry: z.enum(['opt-in', 'off']).optional(),
+  manifestV2: z.any().optional(), // Full ManifestV2 for sandbox execution
 }).refine(
   (data) => {
     // If namespace is provided, it should match group or be derived from id
