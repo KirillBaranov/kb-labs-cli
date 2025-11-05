@@ -3,8 +3,9 @@ import { box, keyValue, formatTiming, TimingTracker, safeSymbols, safeColors } f
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { existsSync, statSync } from 'node:fs';
+import { runPreflightChecks } from '@kb-labs/sandbox';
 
-const ALL_SECTIONS = ['workspace', 'discovery', 'packages', 'cache', 'env', 'mind'] as const;
+const ALL_SECTIONS = ['workspace', 'discovery', 'packages', 'cache', 'env', 'mind', 'sandbox'] as const;
 type Section = typeof ALL_SECTIONS[number];
 type Status = 'ok' | 'warn' | 'fail';
 
@@ -188,6 +189,9 @@ async function runCheck(section: Section, cwd: string): Promise<CheckResult> {
       break;
     case 'mind':
       await checkMind(cwd, issues);
+      break;
+    case 'sandbox':
+      await checkSandbox(cwd, issues, flags.debug);
       break;
   }
   
@@ -375,4 +379,32 @@ async function applyFixes(
   }
   
   return result;
+}
+
+async function checkSandbox(cwd: string, issues: Issue[], debug: boolean = false): Promise<void> {
+  try {
+    const result = await runPreflightChecks(debug);
+    
+    for (const check of result.checks) {
+      if (!check.passed) {
+        issues.push({
+          code: `SANDBOX_${check.name.toUpperCase().replace(/\s+/g, '_')}`,
+          severity: 'fail',
+          section: 'sandbox',
+          message: check.error || check.name,
+          hint: check.suggestions && check.suggestions.length > 0 
+            ? check.suggestions.join('; ') 
+            : undefined,
+        });
+      }
+    }
+  } catch (error) {
+    issues.push({
+      code: 'SANDBOX_CHECK_ERROR',
+      severity: 'fail',
+      section: 'sandbox',
+      message: error instanceof Error ? error.message : 'Failed to run sandbox checks',
+      hint: 'Check that @kb-labs/sandbox is properly installed',
+    });
+  }
 } 

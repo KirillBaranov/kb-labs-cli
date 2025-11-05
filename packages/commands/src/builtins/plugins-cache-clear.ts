@@ -6,34 +6,46 @@ export const pluginsCacheClear: Command = {
   name: 'plugins:clear-cache',
   aliases: ['plugins cache clear'],
   describe: 'Clear CLI plugin discovery cache',
+  flags: [
+    {
+      name: 'deep',
+      type: 'boolean',
+      description: 'Also clear Node.js module cache',
+    },
+  ],
   async run(ctx: any, argv: string[], flags: Record<string, any>) {
     const tracker = new TimingTracker();
     const jsonMode = !!flags.json;
+    const deep = !!flags.deep;
     
     try {
       const cwd = process.cwd();
-      const cleared = await clearCache(cwd);
+      const result = await clearCache(cwd, { deep });
       const totalTime = tracker.total();
       
       if (jsonMode) {
         ctx.presenter.json({ 
           ok: true, 
           action: 'cache:clear',
-          cleared: cleared,
-          count: cleared.length,
+          files: result.files,
+          modules: result.modules,
+          count: result.files.length,
+          modulesCount: result.modules?.length || 0,
           timing: totalTime 
         });
       } else {
         const summary = keyValue({
           'Action': 'Cache Cleared',
-          'Files Removed': cleared.length > 0 ? cleared.join(', ') : 'none',
-          'Status': cleared.length > 0 ? safeSymbols.success + ' Success' : safeSymbols.info + ' No cache found',
+          'Files Removed': result.files.length > 0 ? result.files.join(', ') : 'none',
+          ...(deep && result.modules ? { 'Modules Cleared': result.modules.length.toString() } : {}),
+          'Status': result.files.length > 0 ? safeSymbols.success + ' Success' : safeSymbols.info + ' No cache found',
         });
         
         const output = box('Cache Management', [
           ...summary, 
           '',
-          cleared.length > 0 ? safeColors.dim(`Removed ${cleared.length} cache file(s)`) : safeColors.dim('No cache files to remove'),
+          result.files.length > 0 ? safeColors.dim(`Removed ${result.files.length} cache file(s)`) : safeColors.dim('No cache files to remove'),
+          ...(deep && result.modules && result.modules.length > 0 ? [safeColors.dim(`Cleared ${result.modules.length} module(s) from cache`)] : []),
           '',
           safeColors.dim(`Time: ${formatTiming(totalTime)}`)
         ]);
