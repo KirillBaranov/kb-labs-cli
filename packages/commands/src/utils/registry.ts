@@ -1,5 +1,7 @@
 import type { Command, CommandGroup, CommandRegistry } from "../types";
 import type { RegisteredCommand } from "../registry/types.js";
+import { executeCommand } from '@kb-labs/plugin-adapter-cli';
+import type { ManifestV2, CliCommandDecl } from '@kb-labs/plugin-manifest';
 
 /**
  * Convert RegisteredCommand to Command-like object for compatibility
@@ -20,7 +22,7 @@ function manifestToCommand(registered: RegisteredCommand): Command {
     flags: registered.manifest.flags,
     examples: registered.manifest.examples,
     async run(ctx, argv, flags) {
-      // Lazy load and execute
+      // Check availability
       if (!registered.available) {
         if (flags.json) {
           ctx.presenter.json({
@@ -33,18 +35,101 @@ function manifestToCommand(registered: RegisteredCommand): Command {
           return 2;
         }
         ctx.presenter.warn(`${registered.manifest.id} unavailable: ${registered.unavailableReason}`);
-        if (registered.hint) {ctx.presenter.info(registered.hint);}
+        if (registered.hint) { ctx.presenter.info(registered.hint); }
         return 2;
       }
       
-      const mod = await registered.manifest.loader();
-      if (!mod?.run) {
-        ctx.presenter.error(`Invalid command module for ${registered.manifest.id}`);
+      // STRICT MODE: Require ManifestV2 with permissions
+      const manifestV2 = registered.manifest.manifestV2;
+      if (!manifestV2) {
+        ctx.presenter.error(
+          `Command ${registered.manifest.id} must have ManifestV2 manifest. ` +
+          `This command cannot be executed without proper manifest declaration.`
+        );
         return 1;
       }
       
-      const result = await mod.run(ctx, argv, flags);
-      return typeof result === 'number' ? result : 0;
+      if (!manifestV2.permissions) {
+        ctx.presenter.error(
+          `Command ${registered.manifest.id} must declare permissions in manifest. ` +
+          `Add 'permissions: { fs: {...}, net: {...}, env: {...} }' to manifest.`
+        );
+        return 1;
+      }
+      
+      // Find CLI command declaration
+      const commandId = registered.manifest.id.split(':').pop() || registered.manifest.id;
+      const cliCommand = manifestV2.cli?.commands?.find((c: CliCommandDecl) => 
+        c.id === commandId || c.id === registered.manifest.id
+      );
+      
+      if (!cliCommand || !cliCommand.handler) {
+        ctx.presenter.error(
+          `Command ${registered.manifest.id} has no handler in manifest. ` +
+          `Add 'handler: "./cli/command#run"' to CLI command declaration.`
+        );
+        return 1;
+      }
+      
+      // Execute via plugin-adapter-cli (through sandbox)
+      try {
+        // Debug: log plugin root if debug flag is set
+            if (flags.debug) {
+              ctx.presenter.info(`[debug] Registered pkgRoot: ${registered.pkgRoot || 'undefined'}`);
+              ctx.presenter.info(`[debug] About to call executeCommand from plugin-adapter-cli`);
+              ctx.presenter.info(`[debug] Handler: ${cliCommand.handler}`);
+            }
+            
+            // Import executeCommand dynamically to avoid loading issues
+            const { executeCommand } = await import('@kb-labs/plugin-adapter-cli');
+            
+            if (flags.debug) {
+              ctx.presenter.info(`[debug] executeCommand imported successfully`);
+              ctx.presenter.info(`[debug] About to call executeCommand with pluginRoot: ${registered.pkgRoot || 'undefined'}`);
+            }
+            
+            // Call executeCommand with try-catch to catch any synchronous errors
+            let exitCode: number;
+            try {
+              if (flags.debug) {
+                ctx.presenter.info(`[debug] Calling executeCommand now...`);
+                console.log(`[DEBUG CLI] About to call executeCommand`);
+                console.log(`[DEBUG CLI] pluginRoot: ${registered.pkgRoot || 'undefined'}`);
+                console.log(`[DEBUG CLI] handler: ${cliCommand.handler}`);
+              }
+              
+              exitCode = await executeCommand(
+            cliCommand,
+            manifestV2,
+            ctx,
+            flags,
+            manifestV2.capabilities || [],  // granted capabilities
+            registered.pkgRoot,              // plugin root
+            process.cwd(),                   // workdir
+            undefined,                       // outdir (use default)
+            undefined                        // registry (no cross-plugin invocation)
+          );
+          
+              if (flags.debug) {
+                console.log(`[DEBUG CLI] executeCommand returned: ${exitCode}`);
+                ctx.presenter.info(`[debug] executeCommand returned: ${exitCode}`);
+              }
+        } catch (syncError: any) {
+          if (flags.debug) {
+            ctx.presenter.error(`[debug] Synchronous error in executeCommand: ${syncError.message}`);
+            ctx.presenter.error(`[debug] Stack: ${syncError.stack}`);
+          }
+          throw syncError;
+        }
+        return exitCode;
+      } catch (error: any) {
+        if (flags.debug) {
+          ctx.presenter.error(`[debug] Error in executeCommand: ${error.message}`);
+          ctx.presenter.error(`[debug] Stack: ${error.stack}`);
+        }
+        ctx.presenter.error(`Failed to execute ${registered.manifest.id}: ${error.message}`);
+        return 1;
+      }
     },
   };
 }

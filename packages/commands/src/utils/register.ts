@@ -17,6 +17,12 @@ import { pluginsScaffold } from "../commands/system/plugins-scaffold";
 import { pluginsTelemetry } from "../commands/system/plugins-telemetry";
 import { pluginsRegistry } from "../commands/system/plugins-registry";
 import { pluginsCacheClear } from "../builtins/plugins-cache-clear";
+import { replay } from "../commands/debug/replay";
+import { fix } from "../commands/debug/fix";
+import { repl } from "../commands/debug/repl";
+import { dev } from "../commands/debug/dev";
+import { trace } from "../commands/debug/trace";
+import { fixture } from "../commands/debug/fixture";
 import { createPluginsIntrospectCommand } from "../plugins-introspect.js";
 import { registerManifests, disposeAllPlugins } from "../registry/register";
 import { createCompatibilityDiscovery } from "@kb-labs/cli-adapters";
@@ -50,6 +56,14 @@ export async function registerBuiltinCommands() {
   registry.register(pluginsRegistry);
   registry.register(pluginsCacheClear);
   
+  // Debug commands
+  registry.register(replay);
+  registry.register(fix);
+  registry.register(repl);
+  registry.register(dev);
+  registry.register(trace);
+  registry.register(fixture);
+  
   // Convert CliCommand to Command for introspect
   const introspectCliCommand = createPluginsIntrospectCommand();
   registry.register({
@@ -62,16 +76,34 @@ export async function registerBuiltinCommands() {
     },
   });
   
-  // Discover and register manifest-based commands (v1 and v2)
-  try {
-    const noCache = process.argv.includes('--no-cache');
+    // Discover and register manifest-based commands (v1 and v2)
+    try {
+      // Support both --no-cache flag and KB_PLUGIN_NO_CACHE env var
+      const noCache = process.argv.includes('--no-cache') || process.env.KB_PLUGIN_NO_CACHE === '1';
+      
+      // Use discoverManifests from commands registry (supports both v1 and v2)
+      const { discoverManifests } = await import('../registry/discover.js');
+      const discovered = await discoverManifests(process.cwd(), noCache);
     
-    // Try compatibility discovery first (v2 + v1 fallback)
+    if (discovered.length > 0) {
+      log('info', `Discovered ${discovered.length} packages with CLI manifests`);
+      
+      // Register all discovered manifests
+      const { registerManifests } = await import('../registry/register.js');
+      const registered = await registerManifests(discovered, registry);
+      
+      if (registered.length > 0) {
+        log('info', `Registered ${registered.length} commands from manifests`);
+        registeredCommands.push(...registered);
+      }
+    }
+    
+    // Also try compatibility discovery for v2 plugins (fallback)
     const compatDiscovery = createCompatibilityDiscovery(process.cwd());
     const pluginRefs = await compatDiscovery.find();
     
     if (pluginRefs.length > 0) {
-      log('info', `Discovered ${pluginRefs.length} plugins (v1/v2)`);
+      log('info', `Discovered ${pluginRefs.length} plugins via compatibility discovery`);
       
       for (const ref of pluginRefs) {
         try {
@@ -96,7 +128,7 @@ export async function registerBuiltinCommands() {
       }
     }
     
-    // Use new PluginRegistry from cli-core
+    // Use new PluginRegistry from cli-core (for additional discovery)
     const pluginRegistry = new PluginRegistry({
       strategies: ['workspace', 'pkg', 'dir', 'file'],
       preferV2: true,
