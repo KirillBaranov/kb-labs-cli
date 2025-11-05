@@ -8,7 +8,7 @@ import { loadPluginsState } from './plugins-state.js';
 import { telemetry } from './telemetry.js';
 
 // Global flags that are always passed to commands
-const GLOBAL_FLAGS = ['json', 'onlyAvailable', 'noCache', 'verbose', 'quiet', 'help', 'version', 'dryRun'];
+const GLOBAL_FLAGS = ['json', 'onlyAvailable', 'noCache', 'verbose', 'debug', 'quiet', 'help', 'version', 'dryRun'];
 
 // Execution limits
 const COMMAND_TIMEOUT = 5 * 60 * 1000; // 5 minutes
@@ -97,22 +97,28 @@ export async function runCommand(
     return 2;
   }
   
-  // Load command module
-  let mod: any;
-  try {
-    mod = await cmd.manifest.loader();
-  } catch (error: any) {
-    // Record crash for quarantine
-    const { recordCrash } = await import('./plugins-state.js');
-    await recordCrash(ctx.cwd || process.cwd(), cmd.manifest.package || cmd.manifest.group);
-    
-    ctx.presenter.error(`Failed to load command ${cmd.manifest.id}: ${error.message}`);
-    return 1;
-  }
+  // For ManifestV2 commands, skip loader (handler is executed via plugin-adapter-cli)
+  // Check if this is a ManifestV2 command
+  const isManifestV2 = !!(cmd.manifest as any).manifestV2;
   
-  if (!mod?.run || typeof mod.run !== 'function') {
-    ctx.presenter.error(`Invalid command module for ${cmd.manifest.id}: missing run function`);
-    return 1;
+  // Load command module (skip for ManifestV2 - they use executeCommand directly)
+  let mod: any;
+  if (!isManifestV2) {
+    try {
+      mod = await cmd.manifest.loader();
+    } catch (error: any) {
+      // Record crash for quarantine
+      const { recordCrash } = await import('./plugins-state.js');
+      await recordCrash(ctx.cwd || process.cwd(), cmd.manifest.package || cmd.manifest.group);
+      
+      ctx.presenter.error(`Failed to load command ${cmd.manifest.id}: ${error.message}`);
+      return 1;
+    }
+    
+    if (!mod?.run || typeof mod.run !== 'function') {
+      ctx.presenter.error(`Invalid command module for ${cmd.manifest.id}: missing run function`);
+      return 1;
+    }
   }
   
   // Ensure global flags are always passed through
@@ -126,7 +132,33 @@ export async function runCommand(
   // Execute command with timeout
   const execStart = Date.now();
   try {
-    const executionPromise = mod.run(ctx, argv, allFlags);
+    // For ManifestV2 commands, use executeCommand directly (from utils/registry.ts)
+    // For legacy commands, use mod.run
+    const executionPromise = isManifestV2 
+      ? (async () => {
+          // Import executeCommand from utils/registry
+          const { executeCommand } = await import('../utils/registry.js');
+          const manifestV2 = (cmd.manifest as any).manifestV2;
+          const commandId = cmd.manifest.id.split(':').pop() || cmd.manifest.id;
+          const cliCommand = manifestV2.cli?.commands?.find((c: any) => 
+            c.id === commandId || c.id === cmd.manifest.id
+          );
+          if (!cliCommand) {
+            throw new Error(`Command ${cmd.manifest.id} not found in manifest`);
+          }
+          return await executeCommand(
+            cliCommand,
+            manifestV2,
+            ctx,
+            allFlags,
+            manifestV2.capabilities || [],
+            cmd.pkgRoot,
+            process.cwd(),
+            undefined,
+            undefined
+          );
+        })()
+      : mod.run(ctx, argv, allFlags);
     
     const timeoutPromise = new Promise<number>((_, reject) => {
       setTimeout(() => {

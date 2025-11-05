@@ -199,7 +199,7 @@ export async function computePackageIntegrity(pkgRoot: string): Promise<string> 
 /**
  * Clear plugin cache
  */
-export async function clearCache(cwd: string): Promise<string[]> {
+export async function clearCache(cwd: string, options?: { deep?: boolean }): Promise<{ files: string[]; modules?: string[] }> {
   const cleared: string[] = [];
   const cacheDir = path.join(cwd, '.kb', 'cache');
   
@@ -216,6 +216,26 @@ export async function clearCache(cwd: string): Promise<string[]> {
     // Cache dir doesn't exist
   }
   
-  return cleared;
+  // Deep clearing: clear Node.js module cache for dynamic imports
+  let modulesCleared: string[] = [];
+  if (options?.deep) {
+    try {
+      // Clear require cache for plugin-related modules
+      const cache = require.cache;
+      for (const key in cache) {
+        if (key.includes('plugin') || key.includes('manifest') || key.includes('@kb-labs')) {
+          delete cache[key];
+          modulesCleared.push(key);
+        }
+      }
+    } catch {
+      // Module cache clearing failed (ESM context)
+    }
+  }
+  
+  return {
+    files: cleared,
+    ...(options?.deep ? { modules: modulesCleared } : {}),
+  };
 }
 
