@@ -25,9 +25,9 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@kb-labs/plugin-manifest": "link:../../../kb-labs-core/packages/plugin-manifest",
-    "@kb-labs/plugin-devtools": "link:../../../kb-labs-core/packages/plugin-devtools",
-    "@kb-labs/plugin-adapter-studio": "link:../../../kb-labs-core/packages/plugin-adapter-studio",
+    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
+    "@kb-labs/plugin-devtools": "link:../../../kb-labs-plugin/packages/devtools",
+    "@kb-labs/plugin-adapter-studio": "link:../../../kb-labs-plugin/packages/adapters/studio",
     "semver": "^7.6.3",
     "chokidar": "^4.0.3",
     "glob": "^11.0.0",

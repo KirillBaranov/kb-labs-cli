@@ -31,6 +31,7 @@
     "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui",
     "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
     "@kb-labs/plugin-adapter-rest": "link:../../../kb-labs-plugin/packages/adapters/rest",
+    "@kb-labs/analytics-sdk-node": "link:../../../kb-labs-analytics/packages/analytics-sdk-node",
     "colorette": "^2.0.20",
     "semver": "^7.6.3",
     "chokidar": "^4.0.3",

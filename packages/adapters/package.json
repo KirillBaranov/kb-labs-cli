@@ -29,8 +29,8 @@
   },
   "dependencies": {
     "@kb-labs/cli-core": "link:../core",
-    "@kb-labs/plugin-manifest": "link:../../../kb-labs-core/packages/plugin-manifest",
-    "@kb-labs/plugin-adapter-cli": "link:../../../kb-labs-core/packages/plugin-adapter-cli",
+    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
+    "@kb-labs/plugin-adapter-cli": "link:../../../kb-labs-plugin/packages/adapters/cli",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "picomatch": "^4.0.2",

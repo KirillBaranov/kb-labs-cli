@@ -40,7 +40,8 @@
     "@kb-labs/mind-indexer": "link:../../../kb-labs-mind/packages/mind-indexer",
     "@kb-labs/mind-pack": "link:../../../kb-labs-mind/packages/mind-pack",
     "@kb-labs/audit-core": "link:../../../kb-labs-audit/packages/audit-core",
-    "@kb-labs/audit-checks": "link:../../../kb-labs-audit/packages/audit-checks"
+    "@kb-labs/audit-checks": "link:../../../kb-labs-audit/packages/audit-checks",
+    "zod": "^4.1.5"
   },
   "devDependencies": {
     "rimraf": "^6.0.1",

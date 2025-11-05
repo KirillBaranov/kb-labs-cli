@@ -6,11 +6,15 @@ export type GlobalFlags = {
   profile?: string;
   profilesDir?: string;
   noColor?: boolean;
-  verbose?: boolean;
-  debug?: boolean;
+  verbose?: boolean; // Deprecated: use --debug instead
+  debug?: boolean | 'verbose' | 'inspect' | 'profile';
   help?: boolean;
   version?: boolean;
   quiet?: boolean;
+  dryRun?: boolean; // New: dry-run mode
+  saveSnapshot?: boolean; // New: explicit snapshot save
+  mock?: boolean; // New: use mock fixtures
+  recordMocks?: boolean; // New: record operations to mocks
 };
 
 export function validateCommandFlags(
@@ -71,15 +75,37 @@ export function parseArgs(argv: string[]): {
         case "--no-color":
           global.noColor = true;
           break;
-        case "--quiet":
-          global.quiet = true;
-          break;
+            case "--quiet":
+              global.quiet = true;
+              break;
+            case "--dry-run":
+              global.dryRun = true;
+              break;
+            case "--save-snapshot":
+              global.saveSnapshot = true;
+              break;
+            case "--mock":
+              global.mock = true;
+              break;
+            case "--record-mocks":
+              global.recordMocks = true;
+              break;
         case "--debug":
-          global.debug = true;
-          global.logLevel = "debug";
+          // Support --debug or --debug=level
+          const nextArg = args[0];
+          if (nextArg && !nextArg.startsWith('-') && ['verbose', 'inspect', 'profile'].includes(nextArg)) {
+            global.debug = args.shift() as 'verbose' | 'inspect' | 'profile';
+            global.logLevel = "debug";
+          } else {
+            global.debug = true;
+            global.logLevel = "debug";
+          }
           break;
         case "--verbose":
-          global.verbose = true;
+          // Deprecated: show warning and map to --debug
+          console.warn('[DEPRECATED] --verbose is deprecated. Use --debug instead.');
+          global.debug = true;
+          global.verbose = true; // Keep for backward compatibility
           global.logLevel = "debug";
           break;
         case "--log-level":
@@ -105,7 +131,14 @@ export function parseArgs(argv: string[]): {
             const [key, ...valueParts] = stripped.split("=");
             if (key) {
               const value = valueParts.join("="); // rejoin in case value contains =
-              flagsObj[key] = value;
+              
+              // Special handling for --debug=level
+              if (key === 'debug' && ['verbose', 'inspect', 'profile'].includes(value)) {
+                global.debug = value as 'verbose' | 'inspect' | 'profile';
+                global.logLevel = "debug";
+              } else {
+                flagsObj[key] = value;
+              }
             }
           } else {
             // --flag value or --flag (boolean) syntax
