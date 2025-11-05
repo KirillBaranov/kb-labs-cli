@@ -6,7 +6,6 @@
 import type { CliCommand } from '@kb-labs/cli-core';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 import { generateOpenAPI } from '@kb-labs/plugin-adapter-rest';
-// @ts-ignore - plugin-adapter-studio may not have types
 import { toRegistry } from '@kb-labs/plugin-adapter-studio';
 import { discoverPlugins } from '@kb-labs/cli-adapters';
 import { CliError, CLI_ERROR_CODES } from '@kb-labs/cli-core';
