@@ -22,7 +22,6 @@ describe('CLI API Integration', () => {
       discovery: {
         strategies: ['workspace', 'pkg', 'dir', 'file'],
         roots: [testRoot],
-        preferV2: true,
       },
       cache: {
         inMemory: true,

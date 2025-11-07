@@ -13,7 +13,6 @@ describe('CliAPI', () => {
     api = await createCliAPI({
       discovery: {
         strategies: ['workspace', 'pkg', 'dir', 'file'],
-        preferV2: true,
       },
       cache: {
         inMemory: true,

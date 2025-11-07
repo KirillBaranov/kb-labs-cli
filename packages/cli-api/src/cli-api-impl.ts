@@ -31,7 +31,6 @@ export class CliAPIImpl implements CliAPI {
     const discoveryOpts = {
       strategies: opts?.discovery?.strategies || ['workspace', 'pkg', 'dir', 'file'],
       roots: opts?.discovery?.roots,
-      preferV2: opts?.discovery?.preferV2 !== false,
       allowDowngrade: opts?.discovery?.allowDowngrade || false,
       watch: opts?.discovery?.watch || false,
       debounceMs: opts?.discovery?.debounceMs,

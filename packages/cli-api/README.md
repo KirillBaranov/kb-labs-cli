@@ -27,7 +27,6 @@ import { createCliAPI } from '@kb-labs/cli-api';
 const cli = await createCliAPI({
   discovery: {
     strategies: ['workspace', 'pkg', 'dir', 'file'],
-    preferV2: true,
   },
   cache: {
     inMemory: true,
@@ -71,7 +70,6 @@ export const cli = await createCliAPI({
   discovery: {
     strategies: ['workspace', 'pkg', 'dir', 'file'],
     roots: [process.cwd()],
-    preferV2: true,
   },
   cache: {
     inMemory: true,
@@ -136,7 +134,6 @@ interface CliInitOptions {
   discovery?: {
     strategies?: ('workspace' | 'pkg' | 'dir' | 'file')[];
     roots?: string[];
-    preferV2?: boolean;
     allowDowngrade?: boolean;
     watch?: boolean;
     debounceMs?: number;

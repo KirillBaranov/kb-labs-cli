@@ -218,8 +218,6 @@ export async function bootstrap(cwd: string = process.cwd()): Promise<void> {
     discovery: {
       strategies: ['workspace', 'pkg', 'dir', 'file'],
       roots: [repoRoot],
-      preferV2: true,
-      allowDowngrade: false,
       watch: !process.env.REDIS_URL, // Only watch in single-instance
     },
     cache: {

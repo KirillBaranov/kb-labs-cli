@@ -91,7 +91,7 @@ We refactored KB Labs CLI into a layered architecture with clear boundaries:
 
 When multiple plugins with same ID found:
 
-1. Prefer V2 over V1 (if `preferV2` enabled)
+1. Manifest v2 is mandatory; legacy manifests are rejected.
 2. Higher semver version
 3. Source priority: `workspace > pkg > dir > file`
 4. Alphabetical path order
