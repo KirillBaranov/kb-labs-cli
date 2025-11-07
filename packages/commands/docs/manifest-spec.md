@@ -1,4 +1,7 @@
-# Plugin Manifest Specification
+# Command Manifest Specification (Legacy)
+
+> **Note**
+> Manifest V2 (`kb.plugin/2`) is now the required format for plugins. This document remains for historical reference because the registry still transforms ManifestV2 declarations into an internal command manifest structure. New plugins should author `src/kb/manifest.ts` files using ManifestV2 and let the CLI generate the internal representation automatically.
 
 ## Overview
 

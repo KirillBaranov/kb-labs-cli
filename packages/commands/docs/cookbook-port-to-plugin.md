@@ -1,4 +1,7 @@
-# Cookbook: Porting a Command to a Plugin
+# Cookbook: Port Legacy Commands to Plugins
+
+> **Note**
+> This cookbook focuses on legacy `CommandManifest` files. When creating new plugins use ManifestV2 (`kb.plugin/2`) and adapt the steps accordingly. The CLI registry automatically converts ManifestV2 CLI declarations into the internal format described below.
 
 This guide shows how to convert an existing CLI command into a KB CLI plugin in 5 simple steps.
 

@@ -21,45 +21,52 @@ kb-labs-cli/packages/commands/src/
 └── utils/             # Utilities (logger, path helpers)
 ```
 
-### Command Manifests
+### Plugin Manifest v2
 
-Commands are defined in `cli.manifest.ts` files within their packages:
+Commands ship as part of plugin manifests declared via ManifestV2:
 
 ```typescript
-// packages/my-package/src/cli.manifest.ts
-export const commands: CommandManifest[] = [
-  {
-    manifestVersion: '1.0',
-    id: 'my:command',
-    aliases: ['my-command'],
-    group: 'my',
-    describe: 'My command description',
-    requires: ['@kb-labs/some-dependency'],
-    flags: [
+// packages/my-plugin/src/kb/manifest.ts
+import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+
+export const manifest: ManifestV2 = {
+  schema: 'kb.plugin/2',
+  id: '@kb-labs/my-plugin',
+  version: '0.1.0',
+  display: {
+    name: 'My Plugin',
+    description: 'Example plugin command set',
+  },
+  permissions: {
+    fs: { mode: 'read', allow: ['.'] },
+  },
+  cli: {
+    commands: [
       {
-        name: 'verbose',
-        type: 'boolean',
-        alias: 'v',
-        description: 'Verbose output',
+        id: 'my:command',
+        group: 'my',
+        describe: 'My command description',
+        handler: './commands/command#run',
+        flags: [],
       },
     ],
-    examples: [
-      'kb my command --verbose',
-    ],
-    loader: async () => import('./cli/command.js'),
   },
-];
+};
 ```
+
+The CLI registry converts these declarations into internal command manifests during discovery.
 
 ### Package.json Configuration
 
-Add the manifest reference to your package.json:
-
 ```json
 {
-  "name": "@kb-labs/my-package",
+  "name": "@kb-labs/my-plugin",
+  "exports": {
+    "./kb/manifest": "./dist/kb/manifest.js"
+  },
   "kb": {
-    "commandsManifest": "./dist/cli.manifest.js"
+    "plugin": true,
+    "manifest": "./dist/kb/manifest.js"
   }
 }
 ```
@@ -109,20 +116,20 @@ All diagnostic output goes to `stderr`, leaving `stdout` free for command output
 
 ## Discovery Process
 
-1. **Workspace Discovery**: Scans `pnpm-workspace.yaml` for packages with `kb.commandsManifest`
-2. **Node Modules Discovery**: Scans `node_modules/@kb-labs/*` for installed packages
-3. **Current Package Fallback**: If no workspace file, checks current directory
-4. **Shadowing**: Workspace packages shadow node_modules packages
-5. **Caching**: Results are cached in `.kb/cache/cli-manifests.json`
+1. **Workspace Discovery**: Scans `pnpm-workspace.yaml` for packages exposing `./kb/manifest` via exports or `kb.manifest`.
+2. **Node Modules Discovery**: Looks through installed packages for ManifestV2 files.
+3. **Explicit Paths**: Follows linked directories and CLI-provided manifest paths.
+4. **Shadowing**: Workspace packages shadow node_modules packages.
+5. **Caching**: Results are cached in memory (and optional adapters) for fast startup.
 
 ## Command Execution
 
-Commands are lazy-loaded when executed:
+Commands execute inside the plugin sandbox:
 
-1. Check availability (dependencies)
-2. Load command module via `loader()`
-3. Execute with context, arguments, and flags
-4. Return exit code
+1. Validate ManifestV2 metadata and permissions.
+2. Check availability and granted permissions.
+3. Execute via `@kb-labs/plugin-adapter-cli` (sandbox runtime).
+4. Record telemetry and return the exit code.
 
 ## Diagnostics
 
@@ -149,10 +156,10 @@ pnpm build
 
 ### Adding New Commands
 
-1. Create `cli.manifest.ts` in your package
-2. Add `kb.commandsManifest` to package.json
-3. Build your package
-4. Test with `kb plugins list`
+1. Run `kb plugins scaffold my-plugin` to generate a manifest v2 skeleton.
+2. Implement your command handler in `src/commands/<name>.ts`.
+3. Update manifest permissions and metadata as needed.
+4. Build your package and test with `kb plugins list`.
 
 ## Migration from Legacy Commands
 

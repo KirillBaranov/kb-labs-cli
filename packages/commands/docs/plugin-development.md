@@ -1,4 +1,7 @@
-# KB Labs CLI Plugin Development Guide
+# Plugin Development Guide
+
+> **Note**
+> New plugins must declare commands via ManifestV2. Use `kb plugins scaffold` to generate a ready-to-build template with `src/kb/manifest.ts` and update the manifest metadata instead of authoring legacy `cli.manifest.ts` files.
 
 ## Quick Start
 

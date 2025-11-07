@@ -1,4 +1,7 @@
-# Versioning Guide: KB CLI Compatibility
+# Plugin Versioning Guide
+
+> **Note**
+> ManifestV2 is the authoritative schema for plugin metadata. Examples that reference `manifestVersion: '1.0'` describe the internal compatibility layer; new plugins should maintain their CLI declarations inside `src/kb/manifest.ts` and let the registry derive those fields automatically.
 
 This guide explains how to declare compatibility between your plugin and KB CLI versions.
 
