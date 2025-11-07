@@ -4,6 +4,23 @@ import type { ProductGroup } from "./registry.js";
 import { colors } from "@kb-labs/cli-core";
 import { box, formatTiming, TimingTracker } from "@kb-labs/shared-cli-ui";
 
+function collectManifestVersions(commands: RegisteredCommand[]): string[] {
+  const versions = new Set<string>();
+
+  for (const cmd of commands) {
+    const schema = cmd.manifest.manifestV2?.schema;
+    if (typeof schema === "string") {
+      const tail = schema.split("/").pop() ?? schema;
+      const match = tail.match(/\d+/);
+      versions.add(match ? `v${match[0]}` : tail);
+    } else {
+      versions.add("v2");
+    }
+  }
+
+  return Array.from(versions).sort();
+}
+
 export function renderGroupHelp(group: CommandGroup): string {
   const lines: string[] = [];
 
@@ -82,6 +99,13 @@ export function renderProductHelp(groupName: string, commands: RegisteredCommand
   
   // Build content for box
   const content: string[] = [];
+  
+  const manifestVersions = collectManifestVersions(commands);
+  if (manifestVersions.length > 0) {
+    content.push(colors.bold("Manifest:"));
+    content.push(`  ${colors.cyan(manifestVersions.join(" + "))}`);
+    content.push("");
+  }
   
   content.push(colors.bold("Available commands:"));
   content.push("");
@@ -206,7 +230,15 @@ export function renderGlobalHelpNew(registry: any): string {
     for (const product of products.sort((a: ProductGroup, b: ProductGroup) => a.name.localeCompare(b.name))) {
       const availableCount = product.commands.filter((c: RegisteredCommand) => c.available && !c.shadowed).length;
       const badge = availableCount > 0 ? colors.green(`✓ ${availableCount}`) : colors.dim("0");
-      content.push(`  ${colors.cyan(product.name.padEnd(maxProductNameLength))}  ${colors.dim(product.describe || product.name)}  ${badge}`);
+      const manifestVersions = collectManifestVersions(product.commands);
+      const manifestInfo = manifestVersions.length > 0
+        ? colors.yellow(`[manifest ${manifestVersions.join(" + ")}]`)
+        : "";
+      const describeInfo = product.describe && product.describe !== product.name
+        ? colors.dim(product.describe)
+        : "";
+      const detailParts = [describeInfo, manifestInfo, badge].filter(Boolean);
+      content.push(`  ${colors.cyan(product.name.padEnd(maxProductNameLength))}  ${detailParts.join("  ")}`);
     }
     content.push("");
   }

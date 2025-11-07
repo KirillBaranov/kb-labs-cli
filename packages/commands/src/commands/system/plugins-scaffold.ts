@@ -6,6 +6,7 @@ import type { Command } from "../../types/types.js";
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { box, safeColors, safeSymbols } from "@kb-labs/shared-cli-ui";
+import { getContextCwd } from "../../utils/context.js";
 
 export const pluginsScaffold: Command = {
   name: "plugins:scaffold",
@@ -41,8 +42,10 @@ export const pluginsScaffold: Command = {
     const isESM = format === 'esm';
     const extension = isESM ? 'ts' : 'ts';
     const moduleType = isESM ? 'module' : 'commonjs';
+    const tsupFormat = isESM ? 'esm' : 'cjs';
     
-    const dir = path.join(process.cwd(), pluginName);
+    const baseDir = getContextCwd(ctx as { cwd?: string });
+    const dir = path.join(baseDir, pluginName);
     
     try {
       // Check if directory exists
@@ -66,20 +69,23 @@ export const pluginsScaffold: Command = {
         type: moduleType,
         description: `KB Labs CLI plugin: ${pluginName}`,
         keywords: ["kb-cli-plugin"],
-        main: `./dist/index.js`,
+        main: `./dist/kb/manifest.js`,
         exports: {
-          "./kb/commands": "./dist/kb/commands.js"
+          "./kb/manifest": "./dist/kb/manifest.js"
         },
         files: ["dist"],
         scripts: {
-          build: "tsup src/kb/commands.ts --format esm --dts",
-          dev: "tsup src/kb/commands.ts --format esm --watch",
+          build: `tsup src/kb/manifest.ts src/commands/hello.ts --format ${tsupFormat} --dts`,
+          dev: `tsup src/kb/manifest.ts src/commands/hello.ts --format ${tsupFormat} --watch`,
         },
         kb: {
-          plugin: true
+          plugin: true,
+          manifest: "./dist/kb/manifest.js"
         },
         dependencies: {
-          "@kb-labs/cli-commands": "workspace:*"
+          "@kb-labs/plugin-manifest": "workspace:*",
+          "@kb-labs/shared-cli-ui": "workspace:*",
+          "@kb-labs/analytics-sdk-node": "workspace:*"
         },
         devDependencies: {
           "tsup": "^8.5.0",
@@ -110,36 +116,105 @@ export const pluginsScaffold: Command = {
       );
       
       // Manifest file
-      const manifestContent = `import type { CommandManifest } from '@kb-labs/cli-commands';
+      const manifestContent = `import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 
-export const commands: CommandManifest[] = [
-  {
-    manifestVersion: '1.0',
-    id: '${pluginName}:hello',
-    group: '${pluginName}',
-    namespace: '${pluginName}',
-    package: '@your-scope/${pluginName}-cli',
-    describe: 'Hello command from ${pluginName} plugin',
-    examples: [
-      'kb ${pluginName} hello',
-    ],
-    loader: async () => import('../commands/hello.js'),
+export const manifest: ManifestV2 = {
+  schema: 'kb.plugin/2',
+  id: '@your-scope/${pluginName}',
+  version: '0.1.0',
+  display: {
+    name: '${pluginName} Plugin',
+    description: 'Example KB Labs CLI plugin using manifest v2'
   },
-];
+  permissions: {
+    fs: {
+      mode: 'read',
+      allow: ['.']
+    },
+    env: {
+      allow: ['NODE_ENV']
+    }
+  },
+  cli: {
+    commands: [
+      {
+        id: 'hello',
+        group: '${pluginName}',
+        describe: 'Hello command from ${pluginName}',
+        flags: [],
+        handler: './commands/hello#run'
+      }
+    ]
+  }
+};
 `;
       
       await fs.writeFile(
-        path.join(dir, 'src', 'kb', `commands.${extension}`),
+        path.join(dir, 'src', 'kb', `manifest.${extension}`),
         manifestContent,
         'utf8'
       );
       
       // Command implementation
       const commandContent = `import type { CommandModule } from '@kb-labs/cli-commands';
+import { box, keyValue, formatTiming, TimingTracker, safeColors } from '@kb-labs/shared-cli-ui';
+import { runScope, type AnalyticsEventV1, type EmitResult } from '@kb-labs/analytics-sdk-node';
 
 export const run: CommandModule['run'] = async (ctx, argv, flags) => {
-  ctx.presenter.info('Hello from ${pluginName} plugin!');
-  return 0;
+  const tracker = new TimingTracker();
+  const jsonMode = !!flags.json;
+  const quiet = !!flags.quiet;
+  
+  return await runScope(
+    {
+      actor: '${pluginName}',
+      ctx: { workspace: ctx.cwd ?? process.cwd() },
+    },
+    async (emit) => {
+      try {
+        tracker.checkpoint('start');
+        await emit({ type: 'COMMAND_STARTED', payload: {} });
+        
+        // Your command logic here
+        // Example: const result = await doSomething();
+        const result = { count: 1, message: 'Hello from ${pluginName} plugin!' };
+        
+        tracker.checkpoint('complete');
+        const duration = tracker.total();
+        
+        if (jsonMode) {
+          ctx.presenter.json({ ok: true, ...result, timing: duration });
+        } else {
+          if (!quiet) {
+            const summary = keyValue({
+              'Status': safeColors.success('✓ Success'),
+              'Message': result.message,
+            });
+            summary.push('', \`Time: \${formatTiming(duration)}\`);
+            ctx.presenter.write(box('${pluginName} Command', summary));
+          }
+        }
+        
+        await emit({ 
+          type: 'COMMAND_FINISHED', 
+          payload: { durationMs: duration, result: 'success' } 
+        });
+        return 0;
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : String(e);
+        if (jsonMode) {
+          ctx.presenter.json({ ok: false, error: errorMessage, timing: tracker.total() });
+        } else {
+          ctx.presenter.error(errorMessage);
+        }
+        await emit({ 
+          type: 'COMMAND_FINISHED', 
+          payload: { durationMs: tracker.total(), result: 'error', error: errorMessage } 
+        });
+        return 1;
+      }
+    }
+  );
 };
 `;
       
@@ -154,8 +229,8 @@ export const run: CommandModule['run'] = async (ctx, argv, flags) => {
 
 export default {
   ...config,
-  entry: ['src/kb/commands.ts'],
-  format: ['esm'],
+  entry: ['src/kb/manifest.ts', 'src/commands/hello.ts'],
+  format: ['${tsupFormat}'],
   dts: true,
 };
 `;

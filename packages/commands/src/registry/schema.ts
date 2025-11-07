@@ -129,7 +129,6 @@ export function validateManifests(manifests: unknown[]): { success: true; data: 
     if (result.success) {
       validated.push(result.data);
     } else {
-      // Enhance error with index
       const errorWithIndex = new z.ZodError([
         ...result.error.issues.map(issue => ({
           ...issue,
@@ -145,23 +144,6 @@ export function validateManifests(manifests: unknown[]): { success: true; data: 
   }
   
   return { success: false, errors };
-}
-
-/**
- * Check if manifest version is supported
- */
-export function isManifestVersionSupported(version: string): boolean {
-  return version === '1.0';
-}
-
-/**
- * Get manifest version from manifest object
- */
-export function getManifestVersion(manifest: unknown): string | null {
-  if (typeof manifest === 'object' && manifest !== null && 'manifestVersion' in manifest) {
-    return String(manifest.manifestVersion);
-  }
-  return null;
 }
 
 /**

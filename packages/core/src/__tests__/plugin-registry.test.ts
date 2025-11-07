@@ -12,7 +12,6 @@ describe('PluginRegistry', () => {
   beforeEach(() => {
     registry = new PluginRegistry({
       strategies: ['workspace', 'pkg', 'dir', 'file'],
-      preferV2: true,
       allowDowngrade: false,
     });
   });

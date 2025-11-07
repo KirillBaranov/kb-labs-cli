@@ -7,8 +7,7 @@ import type { CliCommand } from '@kb-labs/cli-core';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 import { generateOpenAPI } from '@kb-labs/plugin-adapter-rest';
 import { toRegistry } from '@kb-labs/plugin-adapter-studio';
-import { discoverPlugins } from '@kb-labs/cli-adapters';
-import { CliError, CLI_ERROR_CODES } from '@kb-labs/cli-core';
+import { CliError, CLI_ERROR_CODES, PluginRegistry } from '@kb-labs/cli-core';
 
 /**
  * Create introspection command
@@ -45,57 +44,55 @@ export function createPluginsIntrospectCommand(): CliCommand {
       const output = flags.output as string | undefined;
 
       try {
-        // Discover plugins
-        const plugins = await discoverPlugins(ctx.repoRoot || process.cwd());
-        const plugin = plugins.find((p: any) => p.packageName === pluginId || (p.version === 'v2' && (p.manifest as ManifestV2).id === pluginId));
+        const registry = new PluginRegistry({
+          strategies: ['workspace', 'pkg', 'dir', 'file'],
+          roots: ctx.repoRoot ? [ctx.repoRoot] : undefined,
+        });
+        try {
+          await registry.refresh();
 
-        if (!plugin) {
-          throw new CliError(
-            CLI_ERROR_CODES.E_DISCOVERY_CONFIG,
-            `Plugin ${pluginId} not found`
-          );
-        }
-
-        if (plugin.version !== 'v2') {
-          throw new CliError(
-            CLI_ERROR_CODES.E_INVALID_FLAGS,
-            `Plugin ${pluginId} is v1, introspection only supports v2`
-          );
-        }
-
-        const manifest = plugin.manifest as ManifestV2;
-
-        // Generate artifacts based on format
-        if (format === 'manifest' || format === 'all') {
-          if (output && format === 'manifest') {
-            await ctx.presenter.write(JSON.stringify(manifest, null, 2));
-          } else {
-            ctx.presenter.info('=== Manifest v2 ===');
-            ctx.presenter.write(JSON.stringify(manifest, null, 2));
+          const manifest = registry.getManifestV2(pluginId);
+          if (!manifest) {
+            throw new CliError(
+              CLI_ERROR_CODES.E_DISCOVERY_CONFIG,
+              `Plugin ${pluginId} not found`
+            );
           }
-        }
 
-        if (format === 'openapi' || format === 'all') {
-          const openapi = generateOpenAPI(manifest);
-          if (output && format === 'openapi') {
-            await ctx.presenter.write(JSON.stringify(openapi, null, 2));
-          } else {
-            ctx.presenter.info('=== OpenAPI Spec ===');
-            ctx.presenter.write(JSON.stringify(openapi, null, 2));
+          // Generate artifacts based on format
+          if (format === 'manifest' || format === 'all') {
+            if (output && format === 'manifest') {
+              await ctx.presenter.write(JSON.stringify(manifest, null, 2));
+            } else {
+              ctx.presenter.info('=== Manifest v2 ===');
+              ctx.presenter.write(JSON.stringify(manifest, null, 2));
+            }
           }
-        }
 
-        if (format === 'registry' || format === 'all') {
-          const registry = toRegistry(manifest);
-          if (output && format === 'registry') {
-            await ctx.presenter.write(JSON.stringify(registry, null, 2));
-          } else {
-            ctx.presenter.info('=== Studio Registry ===');
-            ctx.presenter.write(JSON.stringify(registry, null, 2));
+          if (format === 'openapi' || format === 'all') {
+            const openapi = generateOpenAPI(manifest);
+            if (output && format === 'openapi') {
+              await ctx.presenter.write(JSON.stringify(openapi, null, 2));
+            } else {
+              ctx.presenter.info('=== OpenAPI Spec ===');
+              ctx.presenter.write(JSON.stringify(openapi, null, 2));
+            }
           }
-        }
 
-        return 0;
+          if (format === 'registry' || format === 'all') {
+            const registryArtifact = toRegistry(manifest);
+            if (output && format === 'registry') {
+              await ctx.presenter.write(JSON.stringify(registryArtifact, null, 2));
+            } else {
+              ctx.presenter.info('=== Studio Registry ===');
+              ctx.presenter.write(JSON.stringify(registryArtifact, null, 2));
+            }
+          }
+
+          return 0;
+        } finally {
+          await registry.dispose();
+        }
       } catch (e) {
         if (e instanceof CliError) {
           throw e;

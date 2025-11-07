@@ -25,7 +25,6 @@ import { trace } from "../commands/debug/trace";
 import { fixture } from "../commands/debug/fixture";
 import { createPluginsIntrospectCommand } from "../plugins-introspect.js";
 import { registerManifests, disposeAllPlugins } from "../registry/register";
-import { createCompatibilityDiscovery } from "@kb-labs/cli-adapters";
 import { PluginRegistry } from "@kb-labs/cli-core";
 import { log } from "./logger";
 
@@ -76,62 +75,22 @@ export async function registerBuiltinCommands() {
     },
   });
   
-    // Discover and register manifest-based commands (v1 and v2)
     try {
-      // Support both --no-cache flag and KB_PLUGIN_NO_CACHE env var
       const noCache = process.argv.includes('--no-cache') || process.env.KB_PLUGIN_NO_CACHE === '1';
-      
-      // Use discoverManifests from commands registry (supports both v1 and v2)
       const { discoverManifests } = await import('../registry/discover.js');
       const discovered = await discoverManifests(process.cwd(), noCache);
     
     if (discovered.length > 0) {
       log('info', `Discovered ${discovered.length} packages with CLI manifests`);
-      
-      // Register all discovered manifests
-      const { registerManifests } = await import('../registry/register.js');
       const registered = await registerManifests(discovered, registry);
-      
       if (registered.length > 0) {
         log('info', `Registered ${registered.length} commands from manifests`);
         registeredCommands.push(...registered);
       }
     }
     
-    // Also try compatibility discovery for v2 plugins (fallback)
-    const compatDiscovery = createCompatibilityDiscovery(process.cwd());
-    const pluginRefs = await compatDiscovery.find();
-    
-    if (pluginRefs.length > 0) {
-      log('info', `Discovered ${pluginRefs.length} plugins via compatibility discovery`);
-      
-      for (const ref of pluginRefs) {
-        try {
-          const cliCommands = await compatDiscovery.load(ref);
-          for (const cliCmd of cliCommands) {
-            // Convert CliCommand to Command
-            const cmd: Command = {
-              name: cliCmd.name,
-              describe: cliCmd.description || '',
-              category: 'system',
-              aliases: [],
-              async run(ctx: any, argv: string[], flags: Record<string, unknown>) {
-                return cliCmd.run(ctx, argv, flags);
-              },
-            };
-            registry.register(cmd);
-            registeredCommands.push(cmd);
-          }
-        } catch (err: any) {
-          log('warn', `Failed to load plugin ${ref}: ${err.message}`);
-        }
-      }
-    }
-    
-    // Use new PluginRegistry from cli-core (for additional discovery)
     const pluginRegistry = new PluginRegistry({
       strategies: ['workspace', 'pkg', 'dir', 'file'],
-      preferV2: true,
     });
     await pluginRegistry.refresh();
     const plugins = pluginRegistry.list();
@@ -140,11 +99,9 @@ export async function registerBuiltinCommands() {
       log('info', `Discovered ${plugins.length} plugins via cli-core`);
     }
   } catch (err: any) {
-    // Fail-open: if discovery fails, continue with built-in commands
     log('warn', `Discovery failed: ${err.message}`);
   }
   
-  // Register shutdown handler for dispose hooks
   process.on('SIGINT', async () => {
     await disposeAllPlugins(registry);
     process.exit(0);
@@ -156,17 +113,13 @@ export async function registerBuiltinCommands() {
   });
 }
 
-/**
- * Check for self-update notices (CLI version compatibility warnings)
- */
-function checkSelfUpdateNotices(registered: RegisteredCommand[]): void {
+export function checkSelfUpdateNotices(registered: RegisteredCommand[]): void {
   const currentCliVersion = process.env.CLI_VERSION || '0.1.0';
   
   for (const cmd of registered) {
     const required = cmd.manifest.engine?.kbCli;
     if (!required || !currentCliVersion) {continue;}
     
-    // Simple semver check
     if (required.startsWith('^')) {
       const requiredVersion = required.replace('^', '').trim();
       const requiredMajor = parseInt(requiredVersion.split('.')[0] || '0');

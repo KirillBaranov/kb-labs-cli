@@ -3,7 +3,6 @@
  * Command manifest discovery - workspace, node_modules, current package
  */
 
-import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { promises as fs } from 'node:fs';
 import { statSync } from 'node:fs';
@@ -15,7 +14,7 @@ import type { CommandManifest, DiscoveryResult, CacheFile, PackageCacheEntry } f
 import { log } from '../utils/logger';
 import { toPosixPath } from '../utils/path';
 import { telemetry } from './telemetry';
-import { validateManifests, normalizeManifest, getManifestVersion, isManifestVersionSupported } from './schema';
+import { validateManifests, normalizeManifest } from './schema';
 
 /** Create a synthetic manifest marking package as unavailable with actionable hint */
 function createUnavailableManifest(pkgName: string, error: any): CommandManifest {
@@ -137,106 +136,60 @@ function deriveNamespace(packageName: string): string {
 /**
  * Load manifest - tries ESM first, falls back to CJS
  * Validates and normalizes manifests according to schema
- * Supports both v1.0 (CommandManifest[]) and v2 (ManifestV2) formats
  */
 async function loadManifest(manifestPath: string, pkgName: string, pkgRoot?: string): Promise<CommandManifest[]> {
-  // Always prefer dynamic import for manifests (supports ESM)
   const fileUrl = pathToFileURL(manifestPath).href;
   const mod = await import(fileUrl);
   
-  // Check if this is a ManifestV2 (schema: 'kb.plugin/2')
   const manifestV2 = (mod as any).manifest || (mod as any).default;
-  if (manifestV2 && typeof manifestV2 === 'object' && manifestV2.schema === 'kb.plugin/2') {
-    // This is a ManifestV2 - extract CLI commands
-    if (!manifestV2.cli?.commands || !Array.isArray(manifestV2.cli.commands)) {
-      log('warn', `ManifestV2 ${manifestV2.id || pkgName} has no CLI commands`);
-      return [];
-    }
-    
-    // Convert ManifestV2 CLI commands to CommandManifest format
-    const namespace = deriveNamespace(pkgName);
-    const manifestDir = path.dirname(manifestPath);
-    const baseRoot = pkgRoot || manifestDir;
-    
-    const commandManifests: CommandManifest[] = manifestV2.cli.commands.map((cmd: any) => {
-      // Convert v2 command to v1.0 CommandManifest format
-      const commandId = cmd.id.includes(':') ? cmd.id : `${cmd.group || namespace}:${cmd.id}`;
-      
-      // For ManifestV2 commands, loader is not used - execution happens via plugin-adapter-cli
-      // Create a placeholder loader that won't be called (runCommand skips loader for ManifestV2)
-      const loader: () => Promise<{ run: any }> = async () => {
-        // This should never be called for ManifestV2 commands
-        // runCommand checks for manifestV2 and skips loader
-        throw new Error(`Loader should not be called for ManifestV2 command ${commandId}. Use plugin-adapter-cli executeCommand instead.`);
-      };
-      
-      // Ensure manifestV2 is preserved in the command manifest
-      const commandManifest: CommandManifest = {
-        manifestVersion: '1.0' as const,
-        id: commandId,
-        group: cmd.group || namespace,
-        describe: cmd.describe || '',
-        longDescription: cmd.longDescription,
-        aliases: cmd.aliases,
-        flags: cmd.flags,
-        examples: cmd.examples,
-        loader,
-        package: pkgName,
-        namespace: cmd.group || namespace,
-      };
-      
-      // Explicitly set manifestV2 after creation to ensure it's preserved
-      (commandManifest as any).manifestV2 = manifestV2;
-      
-      return commandManifest;
-    });
-    
-    // Validate converted manifests
-    const validation = validateManifests(commandManifests);
-    if (!validation.success) {
-      const errorMessages = validation.errors.map(err => 
-        err.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(', ')
-      ).join('; ');
-      log('warn', `ManifestV2 validation warnings for ${pkgName}: ${errorMessages}`);
-      // Continue anyway - some fields might be optional
-    }
-    
-    // Normalize manifests
-    const normalized = (validation.success ? validation.data : commandManifests).map(m => 
-      normalizeManifest(m, pkgName, namespace)
-    );
-    
-    return normalized;
+  if (!manifestV2 || typeof manifestV2 !== 'object' || manifestV2.schema !== 'kb.plugin/2') {
+    throw new Error(`Unsupported manifest format in ${pkgName}. Only ManifestV2 is supported.`);
   }
   
-  // Legacy v1.0 format - expect array of commands
-  const rawManifests = (mod as any).commands || (mod as any).default || [];
-  
-  if (!Array.isArray(rawManifests)) {
-    throw new Error(`Manifest must export an array of commands or ManifestV2 object, got ${typeof rawManifests}`);
+  if (!manifestV2.cli?.commands || !Array.isArray(manifestV2.cli.commands)) {
+    log('warn', `ManifestV2 ${manifestV2.id || pkgName} has no CLI commands`);
+    return [];
   }
   
-  // Check manifest version first
-  for (const manifest of rawManifests) {
-    const version = getManifestVersion(manifest);
-    if (version && !isManifestVersionSupported(version)) {
-      log('warn', `Manifest version ${version} is not supported. Expected 1.0`);
-      log('warn', `  → Plugin ${pkgName} may not work correctly. Check for updates.`);
-    }
-  }
+  const namespace = deriveNamespace(pkgName);
+  const manifestDir = path.dirname(manifestPath);
+  const baseRoot = pkgRoot || manifestDir;
   
-  // Validate all manifests
-  const validation = validateManifests(rawManifests);
+  const commandManifests: CommandManifest[] = manifestV2.cli.commands.map((cmd: any) => {
+    const commandId = cmd.id.includes(':') ? cmd.id : `${cmd.group || namespace}:${cmd.id}`;
+    const loader: () => Promise<{ run: any }> = async () => {
+      throw new Error(`Loader should not be called for ManifestV2 command ${commandId}. Use plugin-adapter-cli executeCommand instead.`);
+    };
+    
+    const commandManifest: CommandManifest = {
+      manifestVersion: '1.0' as const,
+      id: commandId,
+      group: cmd.group || namespace,
+      describe: cmd.describe || '',
+      longDescription: cmd.longDescription,
+      aliases: cmd.aliases,
+      flags: cmd.flags,
+      examples: cmd.examples,
+      loader,
+      package: pkgName,
+      namespace: cmd.group || namespace,
+    };
+    (commandManifest as any).manifestV2 = manifestV2;
+    (commandManifest as any).pkgRoot = baseRoot;
+    return commandManifest;
+  });
+  
+  const validation = validateManifests(commandManifests);
   if (!validation.success) {
     const errorMessages = validation.errors.map(err => 
       err.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(', ')
     ).join('; ');
-    throw new Error(`Manifest validation failed for ${pkgName}: ${errorMessages}`);
+    log('warn', `ManifestV2 validation warnings for ${pkgName}: ${errorMessages}`);
   }
   
-  // Normalize manifests
-  const namespace = deriveNamespace(pkgName);
-  const normalized = validation.data.map(m => normalizeManifest(m, pkgName, namespace));
+  const normalized = (validation.success ? validation.data : commandManifests).map(m => 
+    normalizeManifest(m, pkgName, namespace)
+  );
   
   return normalized;
 }
@@ -276,18 +229,6 @@ async function loadConfig(cwd: string): Promise<{ allow?: string[]; block?: stri
  * Returns path and whether it's deprecated
  */
 async function findManifestPath(pkgRoot: string, pkg: any): Promise<{ path: string | null; deprecated: boolean }> {
-  // Explicit path (preferred) - v1 manifest
-  if (pkg.kb?.commandsManifest) {
-    const manifestPath = path.join(pkgRoot, pkg.kb.commandsManifest);
-    try {
-      await fs.access(manifestPath);
-      return { path: manifestPath, deprecated: false };
-    } catch {
-      return { path: null, deprecated: false };
-    }
-  }
-
-  // Explicit path - v2 manifest
   if (pkg.kb?.manifest) {
     const manifestPath = path.join(pkgRoot, pkg.kb.manifest);
     try {
@@ -298,7 +239,6 @@ async function findManifestPath(pkgRoot: string, pkg: any): Promise<{ path: stri
     }
   }
 
-  // Check exports["./kb/commands"] (preferred convention)
   if (pkg.exports?.['./kb/commands']) {
     const exportPath = pkg.exports['./kb/commands'];
     const manifestPath = typeof exportPath === 'string' ? exportPath : exportPath.default || exportPath.import;
@@ -308,7 +248,6 @@ async function findManifestPath(pkgRoot: string, pkg: any): Promise<{ path: stri
         await fs.access(resolved);
         return { path: resolved, deprecated: false };
       } catch {
-        // Try with .js extension
         const withExt = resolved.endsWith('.js') ? resolved : `${resolved}.js`;
         try {
           await fs.access(withExt);
@@ -316,21 +255,6 @@ async function findManifestPath(pkgRoot: string, pkg: any): Promise<{ path: stri
         } catch {}
       }
     }
-  }
-
-  // Deprecated: kb/manifest.* or dist/kb/manifest.js
-  const deprecatedPaths = [
-    path.join(pkgRoot, 'kb', 'manifest.mjs'),
-    path.join(pkgRoot, 'kb', 'manifest.js'),
-    path.join(pkgRoot, 'kb', 'manifest.cjs'),
-    path.join(pkgRoot, 'dist', 'kb', 'manifest.js'),
-  ];
-
-  for (const depPath of deprecatedPaths) {
-    try {
-      await fs.access(depPath);
-      return { path: depPath, deprecated: true };
-    } catch {}
   }
 
   return { path: null, deprecated: false };

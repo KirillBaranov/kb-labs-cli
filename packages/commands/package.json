@@ -41,6 +41,7 @@
     "@kb-labs/core-bundle": "link:../../../kb-labs-core/packages/bundle",
     "@kb-labs/core-config": "link:../../../kb-labs-core/packages/config",
     "@kb-labs/core-policy": "link:../../../kb-labs-core/packages/policy",
+    "@kb-labs/sandbox": "link:../../../kb-labs-core/packages/sandbox",
     "@kb-labs/devlink-core": "link:../../../kb-labs-devlink/packages/core",
     "@kb-labs/mind-core": "link:../../../kb-labs-mind/packages/mind-core",
     "@kb-labs/mind-indexer": "link:../../../kb-labs-mind/packages/mind-indexer",

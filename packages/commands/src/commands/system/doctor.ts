@@ -4,6 +4,7 @@ import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { existsSync, statSync } from 'node:fs';
 import { runPreflightChecks } from '@kb-labs/sandbox';
+import { getContextCwd } from '../../utils/context.js';
 
 const ALL_SECTIONS = ['workspace', 'discovery', 'packages', 'cache', 'env', 'mind', 'sandbox'] as const;
 type Section = typeof ALL_SECTIONS[number];
@@ -65,7 +66,10 @@ export const doctor: Command = {
       : doFix ? ['cache'] : [];
     const autoYes = !!flags.yes;
     
-    const cwd = ctx?.repoRoot ?? process.cwd();
+    const debugMode = Boolean(flags.debug);
+    const cwd = typeof ctx?.repoRoot === 'string' && ctx.repoRoot.length > 0
+      ? ctx.repoRoot
+      : getContextCwd(ctx as { cwd?: string });
     
     try {
       const result: DoctorResult = {
@@ -84,7 +88,7 @@ export const doctor: Command = {
         }
         
         tracker.checkpoint(section);
-        const check = await runCheck(section, cwd);
+        const check = await runCheck(section, cwd, debugMode);
         result.checks[section] = check.status;
         result.issues.push(...check.issues);
         result.timingMs[section] = check.timingMs;
@@ -167,7 +171,7 @@ export const doctor: Command = {
   },
 };
 
-async function runCheck(section: Section, cwd: string): Promise<CheckResult> {
+async function runCheck(section: Section, cwd: string, debugMode: boolean): Promise<CheckResult> {
   const start = Date.now();
   const issues: Issue[] = [];
   
@@ -191,7 +195,7 @@ async function runCheck(section: Section, cwd: string): Promise<CheckResult> {
       await checkMind(cwd, issues);
       break;
     case 'sandbox':
-      await checkSandbox(cwd, issues, flags.debug);
+      await checkSandbox(cwd, issues, debugMode);
       break;
   }
   

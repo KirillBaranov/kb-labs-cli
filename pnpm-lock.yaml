@@ -85,6 +85,12 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
+  ../kb-labs-ai-review/packages/analytics: {}
+
+  ../kb-labs-ai-review/packages/cli: {}
+
+  ../kb-labs-ai-review/packages/core: {}
+
   ../kb-labs-audit/packages/audit-checks:
     dependencies:
       '@kb-labs/audit-core':
@@ -433,6 +439,8 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
+  ../kb-labs-core/packages/sandbox: {}
+
   ../kb-labs-core/packages/sys:
     dependencies:
       ajv:
@@ -469,6 +477,8 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
+
+  ../kb-labs-core/packages/types: {}
 
   ../kb-labs-devkit:
     dependencies:
@@ -846,6 +856,8 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
+  ../kb-labs-release-manager/packages/changelog: {}
+
   ../kb-labs-release-manager/packages/release-checks:
     dependencies:
       '@kb-labs/release-core':
@@ -1135,6 +1147,8 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
+  ../kb-labs-shared/packages/review-types: {}
+
   ../kb-labs-shared/packages/textops:
     dependencies:
       ajv:
@@ -1188,7 +1202,7 @@ importers:
         version: 9.1.2(eslint@9.38.0)
       eslint-plugin-import:
         specifier: ^2.29.1
-        version: 2.32.0(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.38.0)
+        version: 2.32.0(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint@9.38.0)
       eslint-plugin-unused-imports:
         specifier: ^4.0.0
         version: 4.3.0(@typescript-eslint/eslint-plugin@8.46.2(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint@9.38.0)(typescript@5.9.3))(eslint@9.38.0)
@@ -1207,6 +1221,12 @@ importers:
       '@kb-labs/cli-core':
         specifier: link:../core
         version: link:../core
+      '@kb-labs/plugin-adapter-cli':
+        specifier: link:../../../kb-labs-plugin/packages/adapters/cli
+        version: link:../../../kb-labs-plugin/packages/adapters/cli
+      '@kb-labs/plugin-manifest':
+        specifier: link:../../../kb-labs-plugin/packages/manifest
+        version: link:../../../kb-labs-plugin/packages/manifest
       ajv:
         specifier: ^8.17.1
         version: 8.17.1
@@ -1282,6 +1302,108 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
+  packages/cli-api:
+    dependencies:
+      '@kb-labs/cli-core':
+        specifier: link:../core
+        version: link:../core
+      '@kb-labs/plugin-manifest':
+        specifier: link:../../../kb-labs-plugin/packages/manifest
+        version: link:../../../kb-labs-plugin/packages/manifest
+    devDependencies:
+      '@kb-labs/devkit':
+        specifier: link:../../../kb-labs-devkit
+        version: link:../../../kb-labs-devkit
+      '@types/node':
+        specifier: ^24.3.3
+        version: 24.9.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
+
+  packages/cli-core:
+    dependencies:
+      '@kb-labs/plugin-adapter-studio':
+        specifier: link:../../../kb-labs-plugin/packages/adapters/studio
+        version: link:../../../kb-labs-plugin/packages/adapters/studio
+      '@kb-labs/plugin-devtools':
+        specifier: link:../../../kb-labs-plugin/packages/devtools
+        version: link:../../../kb-labs-plugin/packages/devtools
+      '@kb-labs/plugin-manifest':
+        specifier: link:../../../kb-labs-plugin/packages/manifest
+        version: link:../../../kb-labs-plugin/packages/manifest
+      chokidar:
+        specifier: ^4.0.3
+        version: 4.0.3
+      glob:
+        specifier: ^11.0.0
+        version: 11.0.3
+      semver:
+        specifier: ^7.6.3
+        version: 7.7.3
+      yaml:
+        specifier: ^2.7.0
+        version: 2.8.1
+    devDependencies:
+      '@kb-labs/devkit':
+        specifier: link:../../../kb-labs-devkit
+        version: link:../../../kb-labs-devkit
+      '@types/node':
+        specifier: ^24.3.3
+        version: 24.9.1
+      '@types/semver':
+        specifier: ^7.5.8
+        version: 7.7.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
+
+  packages/cli-runtime:
+    dependencies:
+      '@kb-labs/cli-core':
+        specifier: link:../core
+        version: link:../core
+      '@kb-labs/sandbox':
+        specifier: link:../../../kb-labs-core/packages/sandbox
+        version: link:../../../kb-labs-core/packages/sandbox
+      cli-table3:
+        specifier: ^0.6.5
+        version: 0.6.5
+      colorette:
+        specifier: ^2.0.20
+        version: 2.0.20
+      yaml:
+        specifier: ^2.7.0
+        version: 2.8.1
+    devDependencies:
+      '@kb-labs/devkit':
+        specifier: link:../../../kb-labs-devkit
+        version: link:../../../kb-labs-devkit
+      '@types/node':
+        specifier: ^24.3.3
+        version: 24.9.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
+
   packages/commands:
     dependencies:
       '@kb-labs/cli-adapters':
@@ -1314,6 +1436,18 @@ importers:
       '@kb-labs/mind-types':
         specifier: link:../../../kb-labs-mind/packages/mind-types
         version: link:../../../kb-labs-mind/packages/mind-types
+      '@kb-labs/plugin-adapter-cli':
+        specifier: link:../../../kb-labs-plugin/packages/adapters/cli
+        version: link:../../../kb-labs-plugin/packages/adapters/cli
+      '@kb-labs/plugin-adapter-rest':
+        specifier: link:../../../kb-labs-plugin/packages/adapters/rest
+        version: link:../../../kb-labs-plugin/packages/adapters/rest
+      '@kb-labs/plugin-adapter-studio':
+        specifier: link:../../../kb-labs-plugin/packages/adapters/studio
+        version: link:../../../kb-labs-plugin/packages/adapters/studio
+      '@kb-labs/plugin-manifest':
+        specifier: link:../../../kb-labs-plugin/packages/manifest
+        version: link:../../../kb-labs-plugin/packages/manifest
       '@kb-labs/shared-cli-ui':
         specifier: link:../../../kb-labs-shared/packages/cli-ui
         version: link:../../../kb-labs-shared/packages/cli-ui
@@ -1326,6 +1460,9 @@ importers:
       yaml:
         specifier: ^2.5.1
         version: 2.8.1
+      zod:
+        specifier: ^4.1.5
+        version: 4.1.12
     devDependencies:
       '@types/node':
         specifier: ^24.3.3
@@ -1348,12 +1485,30 @@ importers:
 
   packages/core:
     dependencies:
+      '@kb-labs/plugin-adapter-rest':
+        specifier: link:../../../kb-labs-plugin/packages/adapters/rest
+        version: link:../../../kb-labs-plugin/packages/adapters/rest
+      '@kb-labs/plugin-manifest':
+        specifier: link:../../../kb-labs-plugin/packages/manifest
+        version: link:../../../kb-labs-plugin/packages/manifest
       '@kb-labs/shared-cli-ui':
         specifier: link:../../../kb-labs-shared/packages/cli-ui
         version: link:../../../kb-labs-shared/packages/cli-ui
+      chokidar:
+        specifier: ^4.0.3
+        version: 4.0.3
       colorette:
         specifier: ^2.0.20
         version: 2.0.20
+      glob:
+        specifier: ^11.0.0
+        version: 11.0.3
+      semver:
+        specifier: ^7.6.3
+        version: 7.7.3
+      yaml:
+        specifier: ^2.7.0
+        version: 2.8.1
       zod:
         specifier: ^4.1.5
         version: 4.1.12
@@ -1364,6 +1519,9 @@ importers:
       '@types/picomatch':
         specifier: ^4
         version: 4.0.2
+      '@types/semver':
+        specifier: ^7.5.8
+        version: 7.7.1
       cpy-cli:
         specifier: ^4.2.0
         version: 4.2.0
@@ -1434,6 +1592,10 @@ packages:
 
   '@byjohann/toon@0.4.0':
     resolution: {integrity: sha512-3RcynuFRrGCINeKpDA3uGlKcwubSgKRmvRd4ZMgYLfnA/U/6nhf27wFqTBGGT4k6w4JVhyiGWY7iAlGl2lG6VQ==}
+
+  '@colors/colors@1.5.0':
+    resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
+    engines: {node: '>=0.1.90'}
 
   '@csstools/color-helpers@5.1.0':
     resolution: {integrity: sha512-S11EXWJyy0Mz5SYvRmY8nJYTFFd1LCNV+7cXyAgQtOOuzb4EsgfqDufL+9esx72/eLhsRdGZwaldu/h+E4t4BA==}
@@ -2522,6 +2684,10 @@ packages:
   clean-stack@4.2.0:
     resolution: {integrity: sha512-LYv6XPxoyODi36Dp976riBtSY27VmFo+MKqEU9QCCWyTrdEPDog+RWA7xQWHi6Vbp61j5c4cdzzX1NidnwtUWg==}
     engines: {node: '>=12'}
+
+  cli-table3@0.6.5:
+    resolution: {integrity: sha512-+W/5efTR7y5HRD7gACw9yQjqMVvEMLBHmboM/kPWam+H+Hmyrgjh6YncVKK122YZkXrLudzTuAukUw9FnMf7IQ==}
+    engines: {node: 10.* || >= 12.*}
 
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
@@ -4431,6 +4597,9 @@ snapshots:
 
   '@byjohann/toon@0.4.0': {}
 
+  '@colors/colors@1.5.0':
+    optional: true
+
   '@csstools/color-helpers@5.1.0': {}
 
   '@csstools/css-calc@2.1.4(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)':
@@ -5395,6 +5564,12 @@ snapshots:
     dependencies:
       escape-string-regexp: 5.0.0
 
+  cli-table3@0.6.5:
+    dependencies:
+      string-width: 4.2.3
+    optionalDependencies:
+      '@colors/colors': 1.5.0
+
   color-convert@2.0.1:
     dependencies:
       color-name: 1.1.4
@@ -5734,6 +5909,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@9.38.0):
+    dependencies:
+      debug: 3.2.7
+    optionalDependencies:
+      '@typescript-eslint/parser': 8.46.2(eslint@9.38.0)(typescript@5.9.3)
+      eslint: 9.38.0
+      eslint-import-resolver-node: 0.3.9
+    transitivePeerDependencies:
+      - supports-color
+
   eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.38.0):
     dependencies:
       '@rtsao/scc': 1.1.0
@@ -5746,6 +5931,35 @@ snapshots:
       eslint: 9.38.0
       eslint-import-resolver-node: 0.3.9
       eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@9.38.0))(eslint@9.38.0)
+      hasown: 2.0.2
+      is-core-module: 2.16.1
+      is-glob: 4.0.3
+      minimatch: 3.1.2
+      object.fromentries: 2.0.8
+      object.groupby: 1.0.3
+      object.values: 1.2.1
+      semver: 6.3.1
+      string.prototype.trimend: 1.0.9
+      tsconfig-paths: 3.15.0
+    optionalDependencies:
+      '@typescript-eslint/parser': 8.46.2(eslint@9.38.0)(typescript@5.9.3)
+    transitivePeerDependencies:
+      - eslint-import-resolver-typescript
+      - eslint-import-resolver-webpack
+      - supports-color
+
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint@9.38.0):
+    dependencies:
+      '@rtsao/scc': 1.1.0
+      array-includes: 3.1.9
+      array.prototype.findlastindex: 1.2.6
+      array.prototype.flat: 1.3.3
+      array.prototype.flatmap: 1.3.3
+      debug: 3.2.7
+      doctrine: 2.1.0
+      eslint: 9.38.0
+      eslint-import-resolver-node: 0.3.9
+      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@9.38.0)
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
