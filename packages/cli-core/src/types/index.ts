@@ -19,7 +19,7 @@ export interface PluginBrief {
   /** Plugin version */
   version: string;
   /** Manifest kind */
-  kind: 'v1' | 'v2';
+  kind: 'v2';
   /** Source information */
   source: {
     kind: SourceKind;
@@ -90,8 +90,6 @@ export interface DiscoveryOptions {
   strategies: Array<'workspace' | 'pkg' | 'dir' | 'file'>;
   /** Root directories to search */
   roots?: string[];
-  /** Prefer V2 manifests over V1 */
-  preferV2?: boolean;
   /** Allow downgrading to older versions */
   allowDowngrade?: boolean;
   /** Enable file watching */

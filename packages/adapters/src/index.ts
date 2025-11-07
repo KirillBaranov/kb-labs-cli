@@ -1,6 +1,5 @@
 export * from "./discovery/static.js";
 export * from "./discovery/package-json.js";
-export { createCompatibilityDiscovery, discoverPlugins } from "./discovery/compat.js";
 
 export * from "./io/stdin.js";
 export * from "./io/file.js";

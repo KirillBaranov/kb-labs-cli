@@ -6,6 +6,7 @@
 import type { CacheAdapter } from '../cache/cache-adapter.js';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 import { WatchManager } from './watch-manager.js';
+import semver from 'semver';
 
 /**
  * Source kind for discovered plugins
@@ -18,7 +19,7 @@ export type SourceKind = 'workspace' | 'pkg' | 'dir' | 'file';
 export interface PluginBrief {
   id: string;
   version: string;
-  kind: 'v1' | 'v2';
+  kind: 'v2';
   source: {
     kind: SourceKind;
     path: string;
@@ -75,7 +76,6 @@ export interface ExplainResult {
 export interface DiscoveryOptions {
   strategies: Array<'workspace' | 'pkg' | 'dir' | 'file'>;
   roots?: string[];
-  preferV2?: boolean;
   allowDowngrade?: boolean;
   watch?: boolean;
   debounceMs?: number;
@@ -169,6 +169,14 @@ export class PluginRegistry {
       
       for (const [id, manifest] of result.manifests) {
         this.manifests.set(id, manifest);
+        console.log(`[PluginRegistry] Stored manifest for ${id} (manifest.id=${manifest.id})`);
+      }
+      
+      // Log summary
+      console.log(`[PluginRegistry] Stored ${this.manifests.size} manifests for ${this.plugins.size} plugins`);
+      if (this.plugins.size > 0 && this.manifests.size === 0) {
+        console.warn(`[PluginRegistry] WARNING: Found ${this.plugins.size} plugins but 0 manifests!`);
+        console.warn(`[PluginRegistry] Plugin IDs: ${Array.from(this.plugins.keys()).join(', ')}`);
       }
       
       // Calculate diff

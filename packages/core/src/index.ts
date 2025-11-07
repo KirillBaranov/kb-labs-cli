@@ -53,17 +53,6 @@ export {
   resetSchemaCache,
 } from "./cache/schema-cache";
 
-// Compat
-export {
-  detectManifestVersion,
-  migrateV1ToV2,
-  getDeprecationWarning,
-} from "./compat/v1-to-v2";
-export {
-  isManifestVersionSupported,
-  checkDualManifest,
-} from "./compat/detection";
-
 // Generators
 export {
   generateOpenAPISpec,

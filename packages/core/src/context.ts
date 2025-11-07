@@ -31,6 +31,7 @@ export interface Profile {
 
 export interface CliContext {
   repoRoot?: string;
+  cwd: string;
   logger?: Logger;
   presenter: Presenter;
   env: NodeJS.ProcessEnv;
@@ -58,6 +59,7 @@ export async function createContext({
     logger,
     config,
     repoRoot,
+    cwd: process.cwd(),
     env: process.env,
     diagnostics: [],         // NEW
     sentJSON: false,        // NEW

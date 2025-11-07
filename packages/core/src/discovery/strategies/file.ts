@@ -5,6 +5,8 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import { detectManifestVersion } from '@kb-labs/plugin-manifest';
 import type { DiscoveryStrategy, DiscoveryResult } from '../types.js';
 import type { PluginBrief } from '../../registry/plugin-registry.js';
 
@@ -27,37 +29,47 @@ export class FileStrategy implements DiscoveryStrategy {
       }
 
       try {
-        // Extract plugin ID from filename or parent directory
-        const filename = path.basename(manifestPath, path.extname(manifestPath));
-        const pluginDir = path.dirname(manifestPath);
-        const pluginId = filename === 'manifest' || filename === 'index'
-          ? path.basename(pluginDir)
-          : filename;
+        // Load and parse manifest
+        const manifestModule = await import(manifestPath);
+        const manifestData: unknown = manifestModule.default || manifestModule.manifest || manifestModule;
+        const version = detectManifestVersion(manifestData);
+        
+        if (version === 'v2') {
+          const manifest = manifestData as ManifestV2;
+          const pluginId = manifest.id || path.basename(path.dirname(manifestPath));
+          
+          // Try to find package.json for additional info
+          const pluginDir = path.dirname(manifestPath);
+          const pkgPath = path.join(pluginDir, 'package.json');
+          let display: any = {};
 
-        // Try to find package.json for version info
-        const pkgPath = path.join(pluginDir, 'package.json');
-        let version = '0.0.0';
-        let display: any = {};
+          if (fs.existsSync(pkgPath)) {
+            const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+            display = {
+              name: manifest.display?.name || pkg.kbLabs?.name || pkg.name,
+              description: manifest.display?.description || pkg.kbLabs?.description || pkg.description,
+            };
+          } else {
+            display = {
+              name: manifest.display?.name,
+              description: manifest.display?.description,
+            };
+          }
 
-        if (fs.existsSync(pkgPath)) {
-          const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-          version = pkg.version || '0.0.0';
-          display = {
-            name: pkg.kbLabs?.name || pkg.name,
-            description: pkg.kbLabs?.description || pkg.description,
-          };
+          plugins.push({
+            id: pluginId,
+            version: manifest.version || '0.0.0',
+            kind: 'v2',
+            source: {
+              kind: 'file',
+              path: manifestPath,
+            },
+            display,
+          });
+          
+          // Store manifest
+          manifests.set(pluginId, manifest);
         }
-
-        plugins.push({
-          id: pluginId,
-          version,
-          kind: 'v2',
-          source: {
-            kind: 'file',
-            path: manifestPath,
-          },
-          display,
-        });
       } catch (error) {
         errors.push({
           path: manifestPath,
