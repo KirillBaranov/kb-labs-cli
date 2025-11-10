@@ -14,6 +14,32 @@ Quick reference for all DevLink commands with examples and common use cases.
 | `status` | Show current state | No |
 | `backups` | Manage backups | No |
 
+## plan - Analyze Workspace Links
+
+**Purpose:** Discover packages and plan how dependencies should be linked based on the selected mode.
+
+```bash
+# Basic plan (auto mode)
+kb devlink plan
+
+# Force local links
+kb devlink plan --mode=local
+
+# Treat current folder as a container and include child repositories
+kb devlink plan --mode=local --container
+
+# Explicit roots (comma-separated)
+kb devlink plan --roots=/work/repo-a,/work/repo-b
+
+# JSON output
+kb devlink plan --json
+```
+
+**Tips:**
+- Use `--container` when running from an umbrella directory that hosts multiple repos (e.g. `kb-labs/`).
+- Combine `--container` with `--mode=local` to ensure cross-repo links resolve to local paths instead of npm.
+- Without additional flags the command keeps legacy behaviour and only scans the current repository.
+
 ## freeze - Create Lock Snapshot
 
 **Purpose:** Capture current dependency state into lock file

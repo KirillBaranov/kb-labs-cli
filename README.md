@@ -62,12 +62,14 @@ kb --version
 
 # Run commands
 kb hello
+kb health
 kb version
 kb diagnose
 kb setup profile
 
 # JSON output
 kb hello --json
+kb health --json
 kb version --json
 ```
 
@@ -76,6 +78,7 @@ kb version --json
 | Command | Description | Exit Code |
 |---------|-------------|-----------|
 | `hello` | Print a friendly greeting | 0 |
+| `health` | Show system health snapshot (`kb.health/1`) | 0 |
 | `version` | Show CLI version | 0 |
 | `diagnose` | Diagnose project health and configuration | 0 |
 | `init` | Initialize complete KB Labs workspace | 0/1/2 |
@@ -182,7 +185,7 @@ workspace/
 - **Workspace Initialization**: One-command setup with `kb setup --yes`
 - **Profile Management**: Initialize, link, and manage profiles easily
 - **Configuration Inspection**: View and explain configuration resolution
-- **Diagnostics**: Health checks with actionable suggestions
+- **Diagnostics**: Shared `kb.health/1` snapshot via `kb health` and REST `/health`
 - **JSON Output**: Machine-readable output for automation and CI/CD
 - **Extensible Architecture**: Plugin system for adding custom commands
 - **Consistent UX**: Unified output formatting and error handling

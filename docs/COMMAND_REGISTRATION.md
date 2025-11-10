@@ -429,53 +429,56 @@ For general CLI design principles, see [CLI Style Guide](./guides/cli-style.md).
 
 ```typescript
 // packages/commands/src/commands/system/health.ts
-import type { Command } from "../../types";
+import { createCliAPI } from '@kb-labs/cli-api';
+import { box, keyValue, safeColors } from '@kb-labs/shared-cli-ui';
+import type { Command } from '../../types';
 
 export const health: Command = {
-  name: "health",
-  category: "system",
-  describe: "Check system health and dependencies",
-  longDescription: "Performs a comprehensive health check of the system, including dependency validation, configuration verification, and environment checks.",
-  flags: [
-    { name: "verbose", type: "boolean", description: "Show detailed health information" },
-    { name: "fix", type: "boolean", description: "Attempt to fix common issues automatically" },
-    { name: "json", type: "boolean", description: "Output results in JSON format" }
-  ],
-  examples: [
-    "kb health",
-    "kb health --verbose",
-    "kb health --fix",
-    "kb health --json"
-  ],
-  async run(ctx, argv, flags) {
-    const verbose = flags.verbose as boolean;
-    const fix = flags.fix as boolean;
-    const json = flags.json as boolean;
-    
-    // Health check implementation
-    const results = {
-      ok: true,
-      checks: [
-        { name: "dependencies", status: "ok" },
-        { name: "configuration", status: "ok" },
-        { name: "environment", status: "warning" }
-      ]
-    };
-    
-    if (json) {
-      ctx.presenter.json(results);
-    } else {
-      ctx.presenter.write("🏥 System Health Check\n");
-      ctx.presenter.write("=====================\n\n");
-      
-      for (const check of results.checks) {
-        const icon = check.status === "ok" ? "✅" : "⚠️";
-        ctx.presenter.write(`${icon} ${check.name}: ${check.status}\n`);
+  name: 'health',
+  category: 'system',
+  describe: 'Report kb.health/1 snapshot shared with REST and Studio',
+  longDescription: 'Emits the canonical kb.health/1 snapshot without triggering a new discovery pass.',
+  flags: [{ name: 'json', type: 'boolean', description: 'Print raw JSON snapshot' }],
+  examples: ['kb health', 'kb health --json'],
+  async run(ctx, _argv, flags) {
+    const jsonMode = Boolean(flags?.json);
+    const cliApi = await createCliAPI({
+      cache: { inMemory: true, ttlMs: 5000 },
+    });
+
+    try {
+      const snapshot = await cliApi.getSystemHealth({
+        uptimeSec: process.uptime(),
+        meta: { source: 'cli' },
+      });
+
+      if (jsonMode) {
+        ctx.presenter.json(snapshot);
+        return 0;
       }
+
+      const summary = keyValue({
+        Status: snapshot.status,
+        'KB Labs': snapshot.version.kbLabs,
+        CLI: snapshot.version.cli,
+        REST: snapshot.version.rest,
+        Plugins: `${snapshot.registry.total} total`,
+        Errors: String(snapshot.registry.errors),
+      });
+
+      ctx.presenter.write(
+        box('System Health', [
+          ...summary,
+          '',
+          safeColors.dim(`Generated at: ${snapshot.registry.generatedAt}`),
+        ])
+      );
+
+      return 0;
+    } finally {
+      await cliApi.dispose();
     }
-    
-    return results.ok ? 0 : 1;
-  }
+  },
 };
 ```
 

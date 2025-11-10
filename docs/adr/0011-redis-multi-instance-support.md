@@ -275,7 +275,7 @@ spec:
             port: 3000
         livenessProbe:
           httpGet:
-            path: /live
+            path: /health
             port: 3000
 
 ---
