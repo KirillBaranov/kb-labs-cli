@@ -12,6 +12,32 @@ import { detectManifestVersion } from '@kb-labs/plugin-manifest';
 import type { DiscoveryStrategy, DiscoveryResult } from '../types.js';
 import type { PluginBrief } from '../../registry/plugin-registry.js';
 
+const DISCOVERY_DEBUG =
+  process.env.KB_DISCOVERY_DEBUG === '1' || process.env.KB_LOG_LEVEL === 'debug';
+
+function trace(message: string): void {
+  if (DISCOVERY_DEBUG) {
+    console.log(`[WorkspaceStrategy] ${message}`);
+  }
+}
+
+function traceWarn(message: string): void {
+  if (DISCOVERY_DEBUG) {
+    console.warn(`[WorkspaceStrategy] ${message}`);
+  }
+}
+
+function traceError(message: string, error?: unknown): void {
+  if (!DISCOVERY_DEBUG) {
+    return;
+  }
+  if (error) {
+    console.error(`[WorkspaceStrategy] ${message}`, error);
+    return;
+  }
+  console.error(`[WorkspaceStrategy] ${message}`);
+}
+
 /**
  * Find workspace root by looking for pnpm-workspace.yaml or similar
  */
@@ -54,27 +80,27 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
   priority = 1;
 
   async discover(roots: string[]): Promise<DiscoveryResult> {
-    console.log(`[WorkspaceStrategy] Starting discovery with roots: ${roots.join(', ')}`);
+    trace(`Starting discovery with roots: ${roots.join(', ')}`);
     const plugins: PluginBrief[] = [];
     const manifests = new Map();
     const errors: Array<{ path: string; error: string }> = [];
 
     for (const root of roots) {
-      console.log(`[WorkspaceStrategy] Checking root: ${root}`);
+      trace(`Checking root: ${root}`);
       const workspaceRoot = findWorkspaceRoot(root);
       if (!workspaceRoot) {
-        console.log(`[WorkspaceStrategy] No workspace root found for ${root}`);
+        trace(`No workspace root found for ${root}`);
         continue;
       }
-      console.log(`[WorkspaceStrategy] Found workspace root: ${workspaceRoot}`);
+      trace(`Found workspace root: ${workspaceRoot}`);
 
       // Read workspace config
       const pnpmWorkspacePath = path.join(workspaceRoot, 'pnpm-workspace.yaml');
       if (!fs.existsSync(pnpmWorkspacePath)) {
-        console.log(`[WorkspaceStrategy] pnpm-workspace.yaml not found at ${pnpmWorkspacePath}`);
+        trace(`pnpm-workspace.yaml not found at ${pnpmWorkspacePath}`);
         continue;
       }
-      console.log(`[WorkspaceStrategy] Found pnpm-workspace.yaml at ${pnpmWorkspacePath}`);
+      trace(`Found pnpm-workspace.yaml at ${pnpmWorkspacePath}`);
 
       try {
         const content = fs.readFileSync(pnpmWorkspacePath, 'utf8');
@@ -85,20 +111,20 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
         for (const pattern of patterns) {
           const pkgPattern = path.join(workspaceRoot, pattern, 'package.json');
           const pkgFiles = await glob(pkgPattern, { absolute: true });
-          console.log(`[WorkspaceStrategy] Found ${pkgFiles.length} package.json files for pattern ${pattern}`);
+          trace(`Found ${pkgFiles.length} package.json files for pattern ${pattern}`);
 
           for (const pkgFile of pkgFiles) {
             try {
               const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf8'));
-              console.log(`[WorkspaceStrategy] Checking package ${pkg.name || path.basename(path.dirname(pkgFile))} at ${pkgFile}`);
+              trace(`Checking package ${pkg.name || path.basename(path.dirname(pkgFile))} at ${pkgFile}`);
               
               // Check for manifest in package.json (support both kb.manifest and kbLabs.manifest)
               const manifestPathRel = pkg.kbLabs?.manifest || pkg.kb?.manifest;
               if (manifestPathRel) {
                 const manifestPath = path.resolve(path.dirname(pkgFile), manifestPathRel);
-                console.log(`[WorkspaceStrategy] Found manifest path: ${manifestPathRel} -> ${manifestPath}`);
+                trace(`Found manifest path: ${manifestPathRel} -> ${manifestPath}`);
                 if (fs.existsSync(manifestPath)) {
-                  console.log(`[WorkspaceStrategy] Manifest file exists: ${manifestPath}`);
+                  trace(`Manifest file exists: ${manifestPath}`);
                   try {
                     // Load and parse manifest
                     const manifestModule = await import(manifestPath);
@@ -125,12 +151,12 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
                       
                       // Store manifest
                       manifests.set(pluginId, manifest);
-                      console.log(`[WorkspaceStrategy] Successfully loaded manifest for plugin ${pluginId}`);
+                      trace(`Successfully loaded manifest for plugin ${pluginId}`);
                     } else {
-                      console.log(`[WorkspaceStrategy] Manifest is not V2, skipping`);
+                      trace(`Manifest is not V2, skipping`);
                     }
                   } catch (error) {
-                    console.error(`[WorkspaceStrategy] Error loading manifest from ${manifestPath}:`, error);
+                    traceError(`Error loading manifest from ${manifestPath}:`, error);
                     errors.push({
                       path: manifestPath,
                       error: error instanceof Error ? error.message : String(error),
@@ -138,14 +164,14 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
                   }
                 } else {
                   // Manifest path specified but file doesn't exist
-                  console.warn(`[WorkspaceStrategy] Manifest file not found: ${manifestPath}`);
+                  traceWarn(`Manifest file not found: ${manifestPath}`);
                   errors.push({
                     path: manifestPath,
                     error: 'Manifest file not found',
                   });
                 }
               } else {
-                console.log(`[WorkspaceStrategy] No manifest path in package.json for ${pkg.name || path.basename(path.dirname(pkgFile))}`);
+                trace(`No manifest path in package.json for ${pkg.name || path.basename(path.dirname(pkgFile))}`);
               }
             } catch (error) {
               errors.push({
