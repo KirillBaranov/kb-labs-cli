@@ -26,7 +26,8 @@
   },
   "dependencies": {
     "@kb-labs/cli-core": "link:../core",
-    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest"
+    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
+    "redis": "^4.6.7"
   },
   "devDependencies": {
     "@kb-labs/devkit": "link:../../../kb-labs-devkit",

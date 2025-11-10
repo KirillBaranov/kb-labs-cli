@@ -10,6 +10,11 @@ export type {
   ErrorEnvelope,
   RunCommandParams,
   RunCommandResult,
+  SystemHealthSnapshot,
+  SystemHealthOptions,
+  RegistrySnapshot,
+  RegistrySnapshotManifestEntry,
+  RedisStatus,
 } from './types.js';
 
 // Factory

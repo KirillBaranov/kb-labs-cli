@@ -154,11 +154,11 @@ services:
 docker-compose up -d
 
 # Hit different instances
-curl http://localhost:3001/health/plugins  # Instance 1
-curl http://localhost:3002/health/plugins  # Instance 2
-curl http://localhost:3003/health/plugins  # Instance 3
+curl http://localhost:3001/health  # Instance 1
+curl http://localhost:3002/health  # Instance 2
+curl http://localhost:3003/health  # Instance 3
 
-# All should return same plugin count and registry version
+# All should return the same kb.health/1 snapshot (registry stats)
 ```
 
 ### Kubernetes (Production)
@@ -244,7 +244,7 @@ spec:
           periodSeconds: 5
         livenessProbe:
           httpGet:
-            path: /live
+            path: /health
             port: 3000
           initialDelaySeconds: 10
           periodSeconds: 10
@@ -278,9 +278,9 @@ kubectl apply -f rest-api-deployment.yaml
 # Check all pods are running
 kubectl get pods
 
-# Test load balancing
+# Test load balancing (snapshot should stay consistent)
 for i in {1..20}; do
-  curl -s http://<LOAD_BALANCER_IP>/health/plugins | jq '.pluginsCount'
+  curl -s http://<LOAD_BALANCER_IP>/health | jq '.registry.total'
 done
 ```
 
