@@ -9,6 +9,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { glob } from 'glob';
+import { getContextCwd } from "@kb-labs/shared-cli-ui";
 
 interface PluginManifestWithPath {
   manifest: ManifestV2;
@@ -249,7 +250,8 @@ export const pluginsRegistry: Command = {
     const jsonMode = !!flags.json;
     
     try {
-      const repoRoot = ctx.repoRoot || detectRepoRoot(process.cwd());
+      const cwd = getContextCwd(ctx);
+      const repoRoot = ctx.repoRoot || detectRepoRoot(cwd);
       
       // Discover REST API plugins from workspace
       const restApiPlugins = await discoverRestApiPlugins(repoRoot);

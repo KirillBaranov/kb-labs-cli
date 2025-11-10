@@ -4,6 +4,7 @@
 
 import type { Command } from "../../types/types.js";
 import { disablePlugin } from '../../registry/plugins-state.js';
+import { getContextCwd } from "@kb-labs/shared-cli-ui";
 
 export const pluginsDisable: Command = {
   name: "plugins:disable",
@@ -26,7 +27,8 @@ export const pluginsDisable: Command = {
     }
 
     try {
-      await disablePlugin(process.cwd(), packageName);
+      const cwd = getContextCwd(ctx);
+      await disablePlugin(cwd, packageName);
       ctx.presenter.info(`Disabled ${packageName}`);
       ctx.presenter.info(`Run 'kb plugins ls' to see updated status`);
       return 0;

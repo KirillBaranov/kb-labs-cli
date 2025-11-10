@@ -6,7 +6,7 @@ import type { Command } from '../../types/types';
 import { loadSnapshot, listSnapshots, diffSnapshots, searchSnapshots } from '@kb-labs/plugin-runtime';
 import { executeCommand } from '@kb-labs/plugin-adapter-cli';
 import type { CliContext } from '@kb-labs/cli-core';
-import { registry } from '../../utils/registry';
+import { registry } from '../../registry/service';
 import { box, keyValue, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
 import { getContextCwd } from '../../utils/context';
 import type { CliCommandDecl } from '@kb-labs/plugin-manifest';

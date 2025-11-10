@@ -1,60 +1,128 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { registerBuiltinCommands } from "../utils/register";
-import { registry } from "../utils/registry";
 
-// Mock the registry to avoid side effects
-vi.mock("../utils/registry", () => ({
+const mockRegister = vi.hoisted(() => vi.fn());
+const mockRegisterGroup = vi.hoisted(() => vi.fn());
+const mockMarkPartial = vi.hoisted(() => vi.fn());
+const mockRegisterManifests = vi.hoisted(() =>
+  vi.fn(async () => ({ registered: [], skipped: [], collisions: 0, errors: 0 })),
+);
+const mockPreflightManifests = vi.hoisted(() =>
+  vi.fn((discovered) => ({ valid: discovered, skipped: [] })),
+);
+const mockDiscoverManifests = vi.hoisted(() => vi.fn(async () => []));
+const mockDisposeAllPlugins = vi.hoisted(() => vi.fn());
+const mockPluginRegistry = vi.hoisted(() =>
+  vi.fn().mockImplementation(() => ({
+    refresh: vi.fn(),
+    list: vi.fn(() => []),
+  })),
+);
+
+vi.mock("../registry/service", () => ({
   registry: {
-    register: vi.fn(),
-    registerGroup: vi.fn(),
+    register: mockRegister,
+    registerGroup: mockRegisterGroup,
+    markPartial: mockMarkPartial,
+    listManifests: vi.fn(() => []),
+    listProductGroups: vi.fn(() => []),
   },
 }));
 
+vi.mock("../registry/register", () => ({
+  registerManifests: mockRegisterManifests,
+  disposeAllPlugins: mockDisposeAllPlugins,
+  preflightManifests: mockPreflightManifests,
+}));
+
+vi.mock("../registry/discover.js", () => ({
+  discoverManifests: mockDiscoverManifests,
+}));
+
+vi.mock("@kb-labs/cli-core", () => ({
+  PluginRegistry: mockPluginRegistry,
+}));
+
+async function loadModules() {
+  const { registerBuiltinCommands } = await import("../utils/register");
+  const { registry } = await import("../registry/service");
+  return { registerBuiltinCommands, registry };
+}
+
 describe("registerBuiltinCommands", () => {
-  const mockRegister = vi.mocked(registry.register);
-  const mockRegisterGroup = vi.mocked(registry.registerGroup);
-
   beforeEach(() => {
+    vi.resetModules();
     vi.clearAllMocks();
+    mockRegisterManifests.mockResolvedValue({
+      registered: [],
+      skipped: [],
+      collisions: 0,
+      errors: 0,
+    });
+    mockDiscoverManifests.mockResolvedValue([]);
   });
 
-  it("should register all builtin commands", () => {
-    registerBuiltinCommands();
+  it("registers core system commands", async () => {
+    const discoveryFixture = [
+      {
+        source: "workspace" as const,
+        packageName: "@kb-labs/test-package",
+        manifestPath: "/virtual/manifest.mjs",
+        pkgRoot: "/virtual/pkg",
+        manifests: [
+          {
+            manifestVersion: "1.0",
+            id: "test:command",
+            group: "test",
+            describe: "Test command",
+            loader: async () => ({ run: async () => 0 }),
+          },
+        ],
+      },
+    ];
 
-    // Should register 2 groups (devlink and profiles) + 3 standalone commands
-    expect(mockRegisterGroup).toHaveBeenCalledTimes(2);
-    expect(mockRegister).toHaveBeenCalledTimes(3);
+    mockDiscoverManifests.mockResolvedValueOnce(discoveryFixture);
+    mockRegisterManifests.mockResolvedValueOnce({
+      registered: [
+        {
+          manifest: discoveryFixture[0]!.manifests[0]!,
+          available: true,
+          source: "workspace",
+          shadowed: false,
+          pkgRoot: "/virtual/pkg",
+          packageName: "@kb-labs/test-package",
+        },
+      ],
+      skipped: [],
+      collisions: 0,
+      errors: 0,
+    });
 
-    // Check that groups are registered
-    const registeredGroups = mockRegisterGroup.mock.calls.map(call => call[0]);
-    const groupNames = registeredGroups.map(group => group.name);
-    expect(groupNames).toContain("devlink");
-    expect(groupNames).toContain("profiles");
+    const { registerBuiltinCommands } = await loadModules();
 
-    // Check that standalone commands are registered
-    const registeredCommands = mockRegister.mock.calls.map(call => call[0]);
-    const commandNames = registeredCommands.map(cmd => cmd.name);
-    expect(commandNames).toContain("hello");
-    expect(commandNames).toContain("version");
-    expect(commandNames).toContain("diagnose");
+    await registerBuiltinCommands();
+
+    expect(mockRegister).toHaveBeenCalled();
+    const registeredNames = mockRegister.mock.calls.map((call) => call[0]?.name);
+    expect(registeredNames).toEqual(
+      expect.arrayContaining(["hello", "version", "diagnose"]),
+    );
+    expect(mockMarkPartial).toHaveBeenCalledWith(true);
+    expect(mockMarkPartial).toHaveBeenLastCalledWith(false);
+    expect(mockRegisterManifests).toHaveBeenCalled();
   });
 
-  it("should not register commands multiple times", () => {
-    registerBuiltinCommands();
-    const firstRegisterCount = mockRegister.mock.calls.length;
-    const firstRegisterGroupCount = mockRegisterGroup.mock.calls.length;
+  it("is idempotent on subsequent calls", async () => {
+    const { registerBuiltinCommands } = await loadModules();
 
-    registerBuiltinCommands();
-    const secondRegisterCount = mockRegister.mock.calls.length;
-    const secondRegisterGroupCount = mockRegisterGroup.mock.calls.length;
+    await registerBuiltinCommands();
+    const firstCount = mockRegister.mock.calls.length;
 
-    // Should not register again due to _registered flag
-    expect(secondRegisterCount).toBe(firstRegisterCount);
-    expect(secondRegisterGroupCount).toBe(firstRegisterGroupCount);
+    await registerBuiltinCommands();
+    expect(mockRegister.mock.calls.length).toBe(firstCount);
   });
 
-  it("should register commands without errors", () => {
-    // Just test that the function runs without throwing
-    expect(() => registerBuiltinCommands()).not.toThrow();
+  it("does not throw during registration", async () => {
+    const { registerBuiltinCommands } = await loadModules();
+    await expect(registerBuiltinCommands()).resolves.not.toThrow();
   });
 });

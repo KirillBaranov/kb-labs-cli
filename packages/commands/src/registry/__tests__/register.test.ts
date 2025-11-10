@@ -44,21 +44,22 @@ describe('registerManifests', () => {
       manifests,
     }];
 
-    const registered = await registerManifests(discoveryResults, mockRegistry as any);
+    const result = await registerManifests(discoveryResults, mockRegistry as any);
 
-    expect(registered).toHaveLength(1);
-    expect(registered[0]).toBeDefined();
-    expect(registered[0]!.available).toBe(true);
-    expect(registered[0]!.source).toBe('workspace');
-    expect(mockRegistry.registerManifest).toHaveBeenCalledWith(registered[0]);
+    expect(result.registered).toHaveLength(1);
+    const registered = result.registered[0]!;
+    expect(registered.available).toBe(true);
+    expect(registered.source).toBe('workspace');
+    expect(result.skipped).toHaveLength(0);
+    expect(mockRegistry.registerManifest).toHaveBeenCalledWith(registered);
   });
 
   it('should handle unavailable commands with reason and hint', async () => {
     const { checkRequires } = await vi.importMock('../availability.js') as { checkRequires: any };
     vi.mocked(checkRequires).mockReturnValue({
       available: false,
-      reason: 'Missing dependency: @kb-labs/missing-package',
-      hint: 'Run: kb devlink apply',
+      reason: "Missing dependency: @kb-labs/missing-package",
+      hint: "Run: pnpm add @kb-labs/missing-package",
     });
 
     const manifests: CommandManifest[] = [{
@@ -78,13 +79,16 @@ describe('registerManifests', () => {
       manifests,
     }];
 
-    const registered = await registerManifests(discoveryResults, mockRegistry as any);
+    const result = await registerManifests(discoveryResults, mockRegistry as any);
 
-    expect(registered).toHaveLength(1);
-    expect(registered[0]).toBeDefined();
-    expect(registered[0]!.available).toBe(false);
-    expect(registered[0]!.unavailableReason).toBe('Missing dependency: @kb-labs/missing-package');
-    expect(registered[0]!.hint).toBe('Run: kb devlink apply');
+    expect(result.registered).toHaveLength(1);
+    const registered = result.registered[0]!;
+    expect(registered.available).toBe(false);
+    expect(registered.unavailableReason).toBe(
+      "Missing dependency: @kb-labs/missing-package",
+    );
+    expect(registered.hint).toBe("Run: pnpm add @kb-labs/missing-package");
+    expect(result.skipped).toHaveLength(0);
   });
 
   it('should handle shadowing: workspace shadows node_modules', async () => {
@@ -124,18 +128,13 @@ describe('registerManifests', () => {
       },
     ];
 
-    const registered = await registerManifests(discoveryResults, mockRegistry as any);
+    const result = await registerManifests(discoveryResults, mockRegistry as any);
 
-    expect(registered).toHaveLength(2);
-    
-    // Workspace command should be active
-    const workspaceCmd = registered.find(cmd => cmd.source === 'workspace');
-    expect(workspaceCmd?.shadowed).toBe(false);
+    expect(result.registered).toHaveLength(1);
+    const workspaceCmd = result.registered[0]!;
+    expect(workspaceCmd.source).toBe("workspace");
+    expect(workspaceCmd.shadowed).toBe(false);
     expect(mockRegistry.registerManifest).toHaveBeenCalledWith(workspaceCmd);
-
-    // Node modules command should be shadowed
-    const nodeCmd = registered.find(cmd => cmd.source === 'node_modules');
-    expect(nodeCmd?.shadowed).toBe(true);
   });
 
   it('should validate manifest schema', async () => {
@@ -158,7 +157,12 @@ describe('registerManifests', () => {
       manifests: [invalidManifest],
     }];
 
-    await expect(registerManifests(discoveryResults, mockRegistry as any)).rejects.toThrow();
+    const result = await registerManifests(discoveryResults, mockRegistry as any);
+
+    expect(result.registered).toHaveLength(0);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0]?.id).toBe('test:command');
+    expect(mockRegistry.registerManifest).not.toHaveBeenCalled();
   });
 
   it('should validate flag definitions', async () => {
@@ -186,6 +190,11 @@ describe('registerManifests', () => {
       manifests: [manifestWithInvalidFlag],
     }];
 
-    await expect(registerManifests(discoveryResults, mockRegistry as any)).rejects.toThrow();
+    const result = await registerManifests(discoveryResults, mockRegistry as any);
+
+    expect(result.registered).toHaveLength(0);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0]?.id).toBe('test:command');
+    expect(mockRegistry.registerManifest).not.toHaveBeenCalled();
   });
 });

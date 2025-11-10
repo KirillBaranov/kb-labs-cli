@@ -3,14 +3,14 @@
  */
 
 import type { Command } from "../../types/types.js";
-import { registry } from "../../utils/registry.js";
+import { registry } from "../../registry/service.js";
 import { discoverManifests } from '../../registry/discover.js';
 import { loadPluginsState } from '../../registry/plugins-state.js';
-import { box, keyValue, safeColors, safeSymbols, formatTiming } from "@kb-labs/shared-cli-ui";
-import { TimingTracker } from "../../utils/timing-tracker.js";
+import { box, keyValue, safeColors, safeSymbols, formatTiming, TimingTracker } from "@kb-labs/shared-cli-ui";
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { getContextCwd } from "@kb-labs/shared-cli-ui";
 
 const require = createRequire(import.meta.url);
 
@@ -33,7 +33,7 @@ export const diag: Command = {
   async run(ctx, argv, flags) {
     const jsonMode = !!flags.json;
     const tracker = new TimingTracker();
-    const cwd = process.cwd();
+    const cwd = getContextCwd(ctx);
     
     const diagnostics: Array<{
       category: string;
@@ -44,7 +44,7 @@ export const diag: Command = {
     
     // 1. Environment check
     const nodeVersion = process.version;
-    const cliVersion = process.env.CLI_VERSION || '0.1.0';
+    const cliVersion = ctx.env?.CLI_VERSION || process.env.CLI_VERSION || '0.1.0';
     const platform = process.platform;
     const arch = process.arch;
     

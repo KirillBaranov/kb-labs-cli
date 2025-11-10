@@ -31,7 +31,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@kb-labs/cli-api": "link:../cli-api",
     "@kb-labs/cli-adapters": "link:../adapters",
+    "@kb-labs/cli-bin": "link:../cli",
     "@kb-labs/cli-core": "link:../core",
     "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
     "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/runtime",

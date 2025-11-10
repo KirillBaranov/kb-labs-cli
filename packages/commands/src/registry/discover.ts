@@ -5,7 +5,6 @@
 
 import { pathToFileURL } from 'node:url';
 import { promises as fs } from 'node:fs';
-import { statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
@@ -50,6 +49,10 @@ function createUnavailableManifest(pkgName: string, error: any): CommandManifest
 
 // Constants
 const MANIFEST_LOAD_TIMEOUT = 1500; // 1.5 seconds
+const IN_PROC_CACHE_TTL_MS = 60_000;
+const DISK_CACHE_TTL_MS = 5 * 60_000;
+
+let inProcDiscoveryCache: { timestamp: number; results: DiscoveryResult[] } | null = null;
 
 /**
  * Compute SHA256 hash of manifest file content
@@ -685,37 +688,64 @@ async function loadCache(cwd: string): Promise<CacheFile | null> {
       return null;
     }
     
-    return cache as CacheFile;
+    const parsedCache = cache as CacheFile;
+    parsedCache.ttlMs = parsedCache.ttlMs ?? DISK_CACHE_TTL_MS;
+    for (const entry of Object.values(parsedCache.packages) as PackageCacheEntry[]) {
+      entry.cachedAt = entry.cachedAt ?? parsedCache.timestamp ?? Date.now();
+    }
+    
+    return parsedCache;
   } catch {
     return null; // Cache doesn't exist or is corrupt
   }
 }
 
 /**
- * Check if cache is stale for a specific package
+ * Check if cache is stale for a specific package (async to support hash validation)
  */
-function isPackageCacheStale(entry: PackageCacheEntry): boolean {
-  const now = Date.now();
-  
-  // TTL: 60 seconds (skip TTL check for builtin commands)
-  const cacheAge = entry.result.source === 'builtin' ? 0 : now - entry.pkgJsonMtime;
-  if (cacheAge > 60_000) {
-    log('debug', 'Package cache expired (TTL)');
-    return true;
-  }
-  
-  // Check manifest file mtime
+async function isPackageCacheStale(
+  entry: PackageCacheEntry,
+  options: { validateHash: boolean }
+): Promise<boolean> {
+  const manifestFsPath = entry.manifestPath.split('/').join(path.sep);
+  const pkgJsonPath = path.join(entry.result.pkgRoot.split('/').join(path.sep), 'package.json');
+
   try {
-    const stat = statSync(entry.manifestPath);
-    if (stat.mtimeMs > entry.manifestMtime) {
-      log('debug', `Package cache invalidated: ${entry.manifestPath} changed`);
+    const pkgStat = await fs.stat(pkgJsonPath);
+    if (pkgStat.mtimeMs !== entry.pkgJsonMtime) {
+      log('debug', `Package cache invalidated: package.json changed for ${entry.result.packageName}`);
       return true;
     }
-  } catch {
-    log('debug', `Package cache invalidated: ${entry.manifestPath} deleted`);
+  } catch (error: any) {
+    log('debug', `Package cache invalidated: missing package.json for ${entry.result.packageName} (${error?.message || 'unknown'})`);
     return true;
   }
-  
+
+  let manifestStat;
+  try {
+    manifestStat = await fs.stat(manifestFsPath);
+    if (manifestStat.mtimeMs !== entry.manifestMtime) {
+      log('debug', `Package cache invalidated: manifest mtime changed for ${entry.result.packageName}`);
+      return true;
+    }
+  } catch (error: any) {
+    log('debug', `Package cache invalidated: manifest deleted for ${entry.result.packageName} (${error?.message || 'unknown'})`);
+    return true;
+  }
+
+  if (options.validateHash) {
+    try {
+      const currentHash = await computeManifestHash(manifestFsPath);
+      if (currentHash !== entry.manifestHash) {
+        log('debug', `Package cache invalidated: manifest hash changed for ${entry.result.packageName}`);
+        return true;
+      }
+    } catch (error: any) {
+      log('debug', `Package cache hash validation failed for ${entry.result.packageName}: ${error?.message || 'unknown'}`);
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -727,6 +757,8 @@ async function saveCache(cwd: string, results: DiscoveryResult[]): Promise<void>
   await fs.mkdir(path.dirname(cachePath), { recursive: true });
   
   const packages: Record<string, PackageCacheEntry> = {};
+  const now = Date.now();
+  const stateHasher = createHash('sha256');
   
   // Process each result into package cache entries
   for (const result of results) {
@@ -746,8 +778,11 @@ async function saveCache(cwd: string, results: DiscoveryResult[]): Promise<void>
         manifestPath: result.manifestPath,
         pkgJsonMtime: pkgStat.mtimeMs,
         manifestMtime: manifestStat.mtimeMs,
+        cachedAt: now,
         result,
       };
+      stateHasher.update(result.packageName);
+      stateHasher.update(manifestHash);
     } catch (err: any) {
       log('debug', `Failed to cache package ${result.packageName}: ${err.message}`);
     }
@@ -757,11 +792,23 @@ async function saveCache(cwd: string, results: DiscoveryResult[]): Promise<void>
   const lockfileHash = await computeLockfileHash(cwd);
   const configHash = await computeConfigHash(cwd);
   const pluginsStateHash = await computePluginsStateHash(cwd);
+
+  if (lockfileHash) {
+    stateHasher.update(lockfileHash);
+  }
+  if (configHash) {
+    stateHasher.update(configHash);
+  }
+  if (pluginsStateHash) {
+    stateHasher.update(pluginsStateHash);
+  }
   
   const cache: CacheFile = {
     version: process.version,
     cliVersion: process.env.CLI_VERSION || '0.1.0',
-    timestamp: Date.now(),
+    timestamp: now,
+    ttlMs: DISK_CACHE_TTL_MS,
+    stateHash: stateHasher.digest('hex'),
     lockfileHash: lockfileHash || undefined,
     configHash: configHash || undefined,
     pluginsStateHash: pluginsStateHash || undefined,
@@ -782,6 +829,29 @@ async function saveCache(cwd: string, results: DiscoveryResult[]): Promise<void>
 export async function discoverManifests(cwd: string, noCache = false): Promise<DiscoveryResult[]> {
   const startTime = Date.now();
   const timings: Record<string, number> = {};
+
+  if (noCache) {
+    inProcDiscoveryCache = null;
+  } else if (inProcDiscoveryCache) {
+    const age = Date.now() - inProcDiscoveryCache.timestamp;
+    if (age < IN_PROC_CACHE_TTL_MS) {
+      const cachedResults = inProcDiscoveryCache.results;
+      const sourceCounts = cachedResults.reduce((acc, r) => {
+        acc[r.source] = (acc[r.source] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      telemetry.recordDiscovery({
+        duration: age,
+        packagesFound: cachedResults.length,
+        cacheHit: true,
+        sources: sourceCounts,
+      });
+
+      log('debug', `[plugins][discover] in-proc cache hit (${cachedResults.length} packages, age ${age}ms)`);
+      return cachedResults;
+    }
+  }
   
   // Check cache first
   if (!noCache) {
@@ -793,8 +863,15 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
       log('debug', 'Using cached manifests');
       // Filter out stale packages and return fresh ones
       const freshResults: DiscoveryResult[] = [];
-      for (const [_pkgName, entry] of Object.entries(cached.packages)) {
-        if (!isPackageCacheStale(entry)) {
+      const cacheAge = Date.now() - cached.timestamp;
+      const ttlMs = cached.ttlMs ?? DISK_CACHE_TTL_MS;
+      const enforceHashValidation = cacheAge >= ttlMs;
+
+      log('debug', `[plugins][cache] hit age=${cacheAge}ms ttl=${ttlMs}ms validateHash=${enforceHashValidation}`);
+
+      for (const entry of Object.values(cached.packages) as PackageCacheEntry[]) {
+        const stale = await isPackageCacheStale(entry, { validateHash: enforceHashValidation });
+        if (!stale) {
           freshResults.push(entry.result);
         }
       }
@@ -810,10 +887,12 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
           duration: totalTime,
           packagesFound: freshResults.length,
           cacheHit: true,
+          cacheValidated: enforceHashValidation,
           sources: sourceCounts,
         });
         
         log('info', `[plugins][discover] ${totalTime}ms (cached: ${Object.entries(sourceCounts).map(([s, c]) => `${s}:${c}`).join(', ')})`);
+        inProcDiscoveryCache = { timestamp: Date.now(), results: freshResults };
         return freshResults;
       }
     }
@@ -885,6 +964,7 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
     log('warn', `[plugins][perf] Discovery took ${totalTime}ms (budget: 150ms)`);
   }
   
+  inProcDiscoveryCache = { timestamp: Date.now(), results };
   return results;
 }
 

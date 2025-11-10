@@ -4,7 +4,7 @@
 
 import type { Command } from '../../types/types';
 import type { CliContext } from '@kb-labs/cli-core';
-import { registry } from '../../utils/registry';
+import { registry } from '../../registry/service';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import { getContextCwd } from '../../utils/context';

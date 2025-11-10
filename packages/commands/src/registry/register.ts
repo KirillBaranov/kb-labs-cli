@@ -6,6 +6,10 @@
 import Ajv from 'ajv';
 import type { CommandManifest, DiscoveryResult, RegisteredCommand } from './types';
 import { checkRequires } from './availability';
+
+export interface RegisterManifestsOptions {
+  cwd?: string;
+}
 import { log, getLogLevel } from '../utils/logger';
 import { telemetry } from './telemetry';
 
@@ -239,207 +243,251 @@ function checkCollision(
   return { shouldShadow: false };
 }
 
+export interface SkippedManifest {
+  id: string;
+  source: string;
+  reason: string;
+}
+
+export interface ManifestRegistrationResult {
+  registered: RegisteredCommand[];
+  skipped: SkippedManifest[];
+  collisions: number;
+  errors: number;
+}
+
+export function preflightManifests(
+  discoveryResults: DiscoveryResult[]
+): { valid: DiscoveryResult[]; skipped: SkippedManifest[] } {
+  const valid: DiscoveryResult[] = [];
+  const skipped: SkippedManifest[] = [];
+
+  for (const result of discoveryResults) {
+    const allowed: CommandManifest[] = [];
+
+    for (const manifest of result.manifests) {
+      try {
+        validateManifestStructure(manifest);
+        allowed.push(manifest);
+      } catch (error: any) {
+        const reason = error?.message ? String(error.message) : 'Validation failed';
+        skipped.push({
+          id: manifest?.id || manifest?.group || result.packageName || 'unknown',
+          source: result.source,
+          reason,
+        });
+        telemetry.recordSchemaError(manifest?.id || manifest?.group || result.packageName || 'unknown', reason);
+        log('warn', `Preflight skipped manifest ${manifest?.id || manifest?.group || result.packageName}: ${reason}`);
+      }
+    }
+
+    if (allowed.length > 0) {
+      valid.push({
+        ...result,
+        manifests: allowed,
+      });
+    }
+  }
+
+  return { valid, skipped };
+}
+
 /**
  * Register manifests with shadowing and collision detection
  */
 export async function registerManifests(
   discoveryResults: DiscoveryResult[],
-  registry: any // CommandRegistry interface
-): Promise<RegisteredCommand[]> {
+  registry: any, // CommandRegistry interface
+  options: RegisterManifestsOptions = {}
+): Promise<ManifestRegistrationResult> {
   const registered: RegisteredCommand[] = [];
+  const skipped: SkippedManifest[] = [];
   const globalIds = new Map<string, RegisteredCommand>();
   const globalAliases = new Map<string, RegisteredCommand>();
   const logLevel = getLogLevel();
-  
+
   let collisions = 0;
   let errors = 0;
-  
-  // Sort by priority: builtin > workspace > linked > node_modules
+
   const sorted = [...discoveryResults].sort((a, b) => {
     const priorityA = getSourcePriority(a.source);
     const priorityB = getSourcePriority(b.source);
-    return priorityB - priorityA; // Higher priority first
+    return priorityB - priorityA;
   });
-  
+
   for (const result of sorted) {
     for (const manifest of result.manifests) {
-      // Validate manifest structure
-      try {
-        validateManifestStructure(manifest);
-      } catch (err: any) {
-        errors++;
-        telemetry.recordSchemaError(manifest.id, err.message);
-        log('error', `Validation failed for ${manifest.id}: ${err.message}`);
-        throw err;
-      }
-      
-      // Ensure ID is normalized (should already be done by schema, but double-check)
+      const manifestId = manifest.id || manifest.group || 'unknown';
       const namespace = manifest.namespace || manifest.group;
-      const normalizedId = normalizeCommandId(manifest.id, namespace);
-      if (normalizedId !== manifest.id) {
-        log('warn', `Command ID "${manifest.id}" normalized to "${normalizedId}"`);
-        manifest.id = normalizedId;
-      }
-      
-      // Normalize aliases (add whitespace variants)
-      const normalizedAliases = normalizeAliases(manifest);
-      if (normalizedAliases.length > 0) {
-        manifest.aliases = normalizedAliases;
-      }
-      
-      // Check availability
-      const availability = checkRequires(manifest);
-      
-      const cmd: RegisteredCommand = {
-        manifest,
-        available: availability.available,
-        unavailableReason: availability.available ? undefined : availability.reason,
-        hint: availability.available ? undefined : availability.hint,
-        source: result.source,
-        shadowed: false,
-        pkgRoot: result.pkgRoot,
-        packageName: result.packageName,
-      };
-      
-      // Call lifecycle hooks if manifest module exports them
-      // Hooks are called in order: init -> register -> (dispose on shutdown)
+
       try {
-        // Load manifest module to check for lifecycle hooks
-        // Note: We don't execute loader here, just check the module structure
-        const manifestPath = result.manifestPath.replace(/\.(js|mjs)$/, '');
-        const manifestModule = await import(manifestPath);
-        
-        // Call init hook (before registration)
-        if (manifestModule.init && typeof manifestModule.init === 'function') {
-          await manifestModule.init({
-            cwd: result.pkgRoot,
-            package: result.packageName,
-            manifest: cmd.manifest,
-          });
-        }
-        
-        // Call register hook (during registration)
-        if (manifestModule.register && typeof manifestModule.register === 'function') {
-          await manifestModule.register({
-            registry,
-            command: cmd,
-            cwd: result.pkgRoot,
-            package: result.packageName,
-          });
-        }
-        
-        // Store dispose hook for later cleanup
-        if (manifestModule.dispose && typeof manifestModule.dispose === 'function') {
-          (cmd as any)._disposeHook = manifestModule.dispose;
-        }
-      } catch (err: any) {
-        // Lifecycle hooks not available or failed, continue
-        log('debug', `Lifecycle hooks not available for ${manifest.id}: ${err.message}`);
-      }
-      
-      // Check for ID collision
-      const existing = globalIds.get(manifest.id);
-      if (existing) {
         try {
+          validateManifestStructure(manifest);
+        } catch (err: any) {
+          telemetry.recordSchemaError(manifest.id, err.message);
+          throw new Error(`Validation failed: ${err.message}`);
+        }
+
+        const normalizedId = normalizeCommandId(manifest.id, namespace);
+        if (normalizedId !== manifest.id) {
+          log('warn', `Command ID "${manifest.id}" normalized to "${normalizedId}"`);
+          manifest.id = normalizedId;
+        }
+
+        const normalizedAliases = normalizeAliases(manifest);
+        if (normalizedAliases.length > 0) {
+          manifest.aliases = normalizedAliases;
+        }
+
+        const availability = checkRequires(manifest, {
+          cwd: options.cwd ?? result.pkgRoot,
+        });
+
+        const cmd: RegisteredCommand = {
+          manifest,
+          available: availability.available,
+          unavailableReason: availability.available ? undefined : availability.reason,
+          hint: availability.available ? undefined : availability.hint,
+          source: result.source,
+          shadowed: false,
+          pkgRoot: result.pkgRoot,
+          packageName: result.packageName,
+        };
+
+        try {
+          const manifestModule = await import(result.manifestPath);
+
+          if (manifestModule.init && typeof manifestModule.init === 'function') {
+            await manifestModule.init({
+              cwd: result.pkgRoot,
+              package: result.packageName,
+              manifest: cmd.manifest,
+            });
+          }
+
+          if (manifestModule.register && typeof manifestModule.register === 'function') {
+            await manifestModule.register({
+              registry,
+              command: cmd,
+              cwd: result.pkgRoot,
+              package: result.packageName,
+            });
+          }
+
+          if (manifestModule.dispose && typeof manifestModule.dispose === 'function') {
+            (cmd as any)._disposeHook = manifestModule.dispose;
+          }
+        } catch (hookError: any) {
+          log('debug', `Lifecycle hooks unavailable for ${manifest.id}: ${hookError.message}`);
+        }
+
+        const existing = globalIds.get(manifest.id);
+        if (existing) {
           const collision = checkCollision(manifest, existing, result.source, namespace);
           if (collision.shouldShadow) {
-            // Current command shadows existing
             existing.shadowed = true;
             globalIds.set(manifest.id, cmd);
             if (logLevel === 'info' || logLevel === 'debug') {
               log('info', `${manifest.id} from ${result.source} shadows ${existing.source} version`);
             }
           } else {
-            // Existing command shadows current
             cmd.shadowed = true;
             if (logLevel === 'info' || logLevel === 'debug') {
               log('info', `${manifest.id} from ${result.source} shadowed by ${existing.source} version`);
             }
           }
-        } catch (err: any) {
-          // Hard error from collision check
-          log('error', err.message);
-          throw err;
-        }
-      } else {
-        globalIds.set(manifest.id, cmd);
-      }
-      
-      // Check alias collisions (including whitespace aliases)
-      const aliasesToCheck = manifest.aliases || [];
-      for (const alias of aliasesToCheck) {
-        const existingAlias = globalAliases.get(alias);
-        if (existingAlias) {
-          // Skip if both commands are the same (duplicate registration)
-          if (existingAlias.manifest.id === manifest.id) {
-            continue;
-          }
-          
-          // Check if we can resolve by priority
-          const existingPriority = getSourcePriority(existingAlias.source);
-          const currentPriority = getSourcePriority(result.source);
-          
-          if (currentPriority > existingPriority) {
-            // Current wins, shadow existing
-            existingAlias.shadowed = true;
-            globalAliases.set(alias, cmd);
-            if (logLevel === 'info' || logLevel === 'debug') {
-              log('info', `Alias "${alias}" from ${result.source} shadows ${existingAlias.source} version`);
-            }
-          } else if (currentPriority < existingPriority) {
-            // Existing wins, skip current alias
-            if (logLevel === 'info' || logLevel === 'debug') {
-              log('info', `Alias "${alias}" from ${result.source} shadowed by ${existingAlias.source} version`);
-            }
-            continue;
-          } else {
-            // Same priority - collision error
-            collisions++;
-            throw new Error(
-              `Alias collision: "${alias}" used by both ${manifest.id} and ${existingAlias.manifest.id}. ` +
-              `Rename one alias or use a different namespace.`
-            );
-          }
-        }
-        
-        // Check if alias conflicts with command ID
-        if (globalIds.has(alias)) {
-          const conflictingCmd = globalIds.get(alias)!;
-          const existingPriority = getSourcePriority(conflictingCmd.source);
-          const currentPriority = getSourcePriority(result.source);
-          
-          if (currentPriority > existingPriority) {
-            // Current wins, but warn
-            log('warn', `Alias "${alias}" conflicts with command ID "${alias}". Alias will shadow command.`);
-            globalAliases.set(alias, cmd);
-          } else {
-            throw new Error(
-              `Alias "${alias}" conflicts with existing command ID "${alias}". ` +
-              `Rename the alias or use a different name.`
-            );
-          }
         } else {
-          globalAliases.set(alias, cmd);
+          globalIds.set(manifest.id, cmd);
         }
+
+        const aliasesToCheck = manifest.aliases || [];
+        for (const alias of aliasesToCheck) {
+          const existingAlias = globalAliases.get(alias);
+          if (existingAlias) {
+            if (existingAlias.manifest.id === manifest.id) {
+              continue;
+            }
+
+            const existingPriority = getSourcePriority(existingAlias.source);
+            const currentPriority = getSourcePriority(result.source);
+
+            if (currentPriority > existingPriority) {
+              existingAlias.shadowed = true;
+              globalAliases.set(alias, cmd);
+              if (logLevel === 'info' || logLevel === 'debug') {
+                log('info', `Alias "${alias}" from ${result.source} shadows ${existingAlias.source} version`);
+              }
+            } else if (currentPriority < existingPriority) {
+              if (logLevel === 'info' || logLevel === 'debug') {
+                log('info', `Alias "${alias}" from ${result.source} shadowed by ${existingAlias.source} version`);
+              }
+              continue;
+            } else {
+              collisions++;
+              throw new Error(
+                `Alias collision: "${alias}" used by both ${manifest.id} and ${existingAlias.manifest.id}. ` +
+                `Rename one alias or use a different namespace.`
+              );
+            }
+          }
+
+          if (globalIds.has(alias)) {
+            const conflictingCmd = globalIds.get(alias)!;
+            const existingPriority = getSourcePriority(conflictingCmd.source);
+            const currentPriority = getSourcePriority(result.source);
+
+            if (currentPriority > existingPriority) {
+              log('warn', `Alias "${alias}" conflicts with command ID "${alias}". Alias will shadow command.`);
+              globalAliases.set(alias, cmd);
+            } else {
+              throw new Error(
+                `Alias "${alias}" conflicts with existing command ID "${alias}". ` +
+                `Rename the alias or use a different name.`
+              );
+            }
+          } else {
+            globalAliases.set(alias, cmd);
+          }
+        }
+
+        if (!cmd.shadowed) {
+          registry.registerManifest(cmd);
+        }
+
+        registered.push(cmd);
+      } catch (error: any) {
+        errors++;
+        const reason = error?.message ? String(error.message) : String(error);
+        skipped.push({
+          id: manifestId,
+          source: result.source,
+          reason,
+        });
+        log('error', `Skipped manifest ${manifestId} (${result.source}): ${reason}`);
+        continue;
       }
-      
-      // Register if not shadowed
-      if (!cmd.shadowed) {
-        registry.registerManifest(cmd);
-      }
-      
-      registered.push(cmd);
     }
   }
-  
-  // Record telemetry
+
+  if (skipped.length > 0) {
+    log('warn', `Skipped ${skipped.length} manifest(s) during registration`);
+    for (const skip of skipped) {
+      log('warn', `  • ${skip.id} [${skip.source}] → ${skip.reason}`);
+    }
+  }
+
   telemetry.recordRegistration({
     commandsRegistered: registered.length,
     collisions,
     errors,
   });
-  
-  return registered;
+
+  return {
+    registered,
+    skipped,
+    collisions,
+    errors,
+  };
 }
 
 /**

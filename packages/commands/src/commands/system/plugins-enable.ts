@@ -3,8 +3,8 @@
  */
 
 import type { Command } from "../../types/types.js";
-import { enablePlugin, loadPluginsState } from '../../registry/plugins-state.js';
-import { safeColors } from "@kb-labs/shared-cli-ui";
+import { enablePlugin } from '../../registry/plugins-state.js';
+import { getContextCwd } from "@kb-labs/shared-cli-ui";
 
 export const pluginsEnable: Command = {
   name: "plugins:enable",
@@ -34,13 +34,14 @@ export const pluginsEnable: Command = {
       return 1;
     }
     const permissions = flags.perm as string[] || [];
+    const cwd = getContextCwd(ctx);
 
     try {
-      await enablePlugin(process.cwd(), packageName);
+      await enablePlugin(cwd, packageName);
       
       if (permissions.length > 0) {
         const { grantPermissions } = await import('../../registry/plugins-state.js');
-        await grantPermissions(process.cwd(), packageName, permissions);
+        await grantPermissions(cwd, packageName, permissions);
         ctx.presenter.info(`Enabled ${packageName} with permissions: ${permissions.join(', ')}`);
       } else {
         ctx.presenter.info(`Enabled ${packageName}`);

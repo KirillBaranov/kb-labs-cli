@@ -1,6 +1,7 @@
 import { box, keyValue, formatTiming, TimingTracker, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
 import { clearCache } from '../registry/plugins-state';
 import type { Command } from '../types/types';
+import { getContextCwd } from "@kb-labs/shared-cli-ui";
 
 export const pluginsCacheClear: Command = {
   name: 'plugins:clear-cache',
@@ -19,7 +20,7 @@ export const pluginsCacheClear: Command = {
     const deep = !!flags.deep;
     
     try {
-      const cwd = process.cwd();
+      const cwd = getContextCwd(ctx);
       const result = await clearCache(cwd, { deep });
       const totalTime = tracker.total();
       

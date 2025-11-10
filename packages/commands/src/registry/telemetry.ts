@@ -14,6 +14,7 @@ interface TelemetryMetrics {
     duration: number;
     packagesFound: number;
     cacheHit: boolean;
+    cacheValidated?: boolean;
     sources: Record<string, number>;
   };
   registration: {

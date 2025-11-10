@@ -8,8 +8,10 @@ import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { discoverManifests } from '../../registry/discover';
 import { registerManifests } from '../../registry/register';
-import { registry } from "../../utils/registry";
+import { registry } from "../../registry/service";
 import { box, safeColors, safeSymbols } from "@kb-labs/shared-cli-ui";
+import { registerShutdownHook } from '../../utils/shutdown';
+import { getContextCwd } from "@kb-labs/shared-cli-ui";
 
 export const pluginsWatch: Command = {
   name: "plugins:watch",
@@ -28,7 +30,7 @@ export const pluginsWatch: Command = {
 
   async run(ctx, argv, flags) {
     const jsonMode = !!flags.json;
-    const cwd = process.cwd();
+    const cwd = getContextCwd(ctx);
     
     if (jsonMode) {
       ctx.presenter.json({
@@ -55,9 +57,20 @@ export const pluginsWatch: Command = {
           // For now, just log
         }
         
-        registerManifests(discovered, registry);
-        
-        ctx.presenter.write(`\n${safeSymbols.success} ${safeColors.info('Reloaded manifests')} - ${discovered.length} packages\n`);
+        const result = await registerManifests(discovered, registry, { cwd });
+        const registeredCount = result.registered.length;
+        const skippedCount = result.skipped.length;
+        ctx.presenter.write(
+          `\n${safeSymbols.success} ${safeColors.info('Reloaded manifests')} - ` +
+          `${registeredCount} registered, ${skippedCount} skipped\n`
+        );
+        if (skippedCount > 0) {
+          for (const skip of result.skipped) {
+            ctx.presenter.write(
+              `${safeColors.warning('•')} ${skip.id} (${skip.source}): ${skip.reason}\n`
+            );
+          }
+        }
       } catch (err: any) {
         ctx.presenter.error(`Failed to reload: ${err.message}`);
       }
@@ -139,16 +152,18 @@ export const pluginsWatch: Command = {
       
       ctx.presenter.write(`${safeSymbols.success} Watching ${watchedPaths.size} manifest file(s) and ${watchers.size - watchedPaths.size} config file(s)\n`);
       
-      // Keep process alive
-      process.on('SIGINT', () => {
-        ctx.presenter.write(`\n${safeColors.dim('Stopping watch...')}\n`);
+      const stopWatching = () => {
         for (const watcher of watchers.values()) {
           watcher.close();
         }
-        process.exit(0);
+        watchers.clear();
+      };
+
+      registerShutdownHook(() => {
+        ctx.presenter.write(`\n${safeColors.dim('Stopping watch...')}\n`);
+        stopWatching();
       });
-      
-      // Keep alive
+
       await new Promise(() => {}); // Never resolves
       
     } catch (err: any) {

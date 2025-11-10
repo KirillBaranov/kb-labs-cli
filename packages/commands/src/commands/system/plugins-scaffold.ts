@@ -158,6 +158,7 @@ export const manifest: ManifestV2 = {
       // Command implementation
       const commandContent = `import type { CommandModule } from '@kb-labs/cli-commands';
 import { box, keyValue, formatTiming, TimingTracker, safeColors } from '@kb-labs/shared-cli-ui';
+import { getContextCwd } from "@kb-labs/shared-cli-ui";
 import { runScope, type AnalyticsEventV1, type EmitResult } from '@kb-labs/analytics-sdk-node';
 
 export const run: CommandModule['run'] = async (ctx, argv, flags) => {
@@ -168,7 +169,7 @@ export const run: CommandModule['run'] = async (ctx, argv, flags) => {
   return await runScope(
     {
       actor: '${pluginName}',
-      ctx: { workspace: ctx.cwd ?? process.cwd() },
+      ctx: { workspace: getContextCwd(ctx) },
     },
     async (emit) => {
       try {

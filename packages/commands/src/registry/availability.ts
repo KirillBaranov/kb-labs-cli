@@ -64,7 +64,15 @@ function resolveFromCwd(spec: string, cwd: string): string {
  * @param cwd Working directory to resolve from (defaults to process.cwd())
  * @returns Availability status with reason and hint if unavailable
  */
-export function checkRequires(manifest: CommandManifest, cwd = process.cwd()): AvailabilityCheck {
+export interface CheckRequiresOptions {
+  cwd?: string;
+}
+
+export function checkRequires(
+  manifest: CommandManifest,
+  options: CheckRequiresOptions = {},
+): AvailabilityCheck {
+  const cwd = options.cwd ?? process.cwd();
   if (!manifest.requires || manifest.requires.length === 0) {
     return { available: true as const };
   }

@@ -3,13 +3,13 @@
  */
 
 import type { Command } from "../../types/types.js";
-import { registry } from "../../utils/registry.js";
-import { loadPluginsState } from '../../registry/plugins-state.js';
+import { registry } from "../../registry/service.js";
 import { discoverManifests } from '../../registry/discover.js';
 import { box, keyValue, safeSymbols, safeColors } from "@kb-labs/shared-cli-ui";
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { getContextCwd } from "@kb-labs/shared-cli-ui";
 
 const require = createRequire(import.meta.url);
 
@@ -35,6 +35,7 @@ export const pluginsDoctor: Command = {
     const targetPlugin = argv[0];
 
     try {
+      const cwd = getContextCwd(ctx);
       const manifests = registry.listManifests();
       const issues: Array<{
         package: string;
@@ -81,7 +82,7 @@ export const pluginsDoctor: Command = {
         // Check CLI version compatibility
         if (cmd.manifest.engine?.kbCli) {
           const required = cmd.manifest.engine.kbCli;
-          const current = process.env.CLI_VERSION || '0.1.0';
+          const current = ctx.env?.CLI_VERSION || process.env.CLI_VERSION || '0.1.0';
           // Simple semver check
           if (required.startsWith('^') && current !== '0.1.0') {
             const requiredParts = required.replace('^', '').split('.');
@@ -125,7 +126,7 @@ export const pluginsDoctor: Command = {
         // Check ESM/CJS module type mismatch
         if (cmd.manifest.engine?.module) {
           const required = cmd.manifest.engine.module;
-          const pkgJsonPath = path.join(cmd.pkgRoot || process.cwd(), 'package.json');
+          const pkgJsonPath = path.join(cmd.pkgRoot || cwd, 'package.json');
           try {
             const pkgJson = JSON.parse(await fs.readFile(pkgJsonPath, 'utf8'));
             const isESM = pkgJson.type === 'module';

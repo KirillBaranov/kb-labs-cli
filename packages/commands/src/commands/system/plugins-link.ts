@@ -3,9 +3,10 @@
  */
 
 import type { Command } from "../../types/types.js";
-import { linkPlugin, loadPluginsState } from '../../registry/plugins-state.js';
+import { linkPlugin } from '../../registry/plugins-state.js';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { getContextCwd } from "@kb-labs/shared-cli-ui";
 
 export const pluginsLink: Command = {
   name: "plugins:link",
@@ -28,7 +29,8 @@ export const pluginsLink: Command = {
       ctx.presenter.error("Please specify a plugin path to link");
       return 1;
     }
-    const absPath = path.resolve(process.cwd(), pluginPath);
+    const cwd = getContextCwd(ctx);
+    const absPath = path.resolve(cwd, pluginPath);
 
     try {
       // Check if path exists and has package.json
@@ -44,14 +46,14 @@ export const pluginsLink: Command = {
         ctx.presenter.info('Add "kb.commandsManifest" or "exports[\\"./kb/commands\\"]" to package.json');
       }
       
-      await linkPlugin(process.cwd(), absPath);
+      await linkPlugin(cwd, absPath);
       
       ctx.presenter.info(`Linked ${pkgJson.name || pluginPath} from ${absPath}`);
       ctx.presenter.info(`The plugin will be discovered on next CLI run`);
       
       // Also update kb-labs.config.json if it exists
       try {
-        const configPath = path.join(process.cwd(), 'kb-labs.config.json');
+        const configPath = path.join(cwd, 'kb-labs.config.json');
         const config = JSON.parse(await fs.readFile(configPath, 'utf8'));
         
         if (!config.plugins) {

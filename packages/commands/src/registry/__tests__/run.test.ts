@@ -2,9 +2,56 @@
  * Tests for command execution with JSON mode and exit codes
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { runCommand } from '../run.js';
-import type { RegisteredCommand } from '../types.js';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { runCommand } from "../run.js";
+import type { RegisteredCommand } from "../types.js";
+import type { ManifestV2 } from "@kb-labs/plugin-manifest";
+
+const mockExecuteCommand = vi.hoisted(() =>
+  vi.fn(async () => {
+    return 0;
+  }),
+);
+
+vi.mock("@kb-labs/plugin-adapter-cli", () => ({
+  executeCommand: mockExecuteCommand,
+}));
+
+const baseManifestV2: ManifestV2 = {
+  schema: "kb.cli/2",
+  permissions: [],
+  cli: {
+    commands: [
+      {
+        id: "test:command",
+        handler: "./cli/command.js",
+      },
+    ],
+  },
+  capabilities: [],
+};
+
+function createRegisteredCommand(
+  overrides: Partial<RegisteredCommand["manifest"]> = {},
+  availability: Partial<RegisteredCommand> = {},
+): RegisteredCommand {
+  return {
+    manifest: {
+      manifestVersion: "1.0",
+      id: "test:command",
+      group: "test",
+      describe: "Test command",
+      manifestV2: structuredClone(baseManifestV2),
+      ...overrides,
+    },
+    available: true,
+    source: "workspace",
+    shadowed: false,
+    pkgRoot: "/tmp",
+    packageName: "@kb-labs/test",
+    ...availability,
+  } as RegisteredCommand;
+}
 
 describe('runCommand', () => {
   const mockCtx = {
@@ -14,6 +61,13 @@ describe('runCommand', () => {
       info: vi.fn(),
       error: vi.fn(),
     },
+    diagnostics: [],
+    logger: {
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    },
   };
 
   beforeEach(() => {
@@ -21,43 +75,24 @@ describe('runCommand', () => {
   });
 
   it('should execute available command successfully', async () => {
-    const mockCommand = {
-      run: vi.fn().mockResolvedValue(0),
-    };
+    const registeredCmd = createRegisteredCommand();
 
-    const registeredCmd: RegisteredCommand = {
-      manifest: {
-        manifestVersion: '1.0',
-        id: 'test:command',
-        group: 'test',
-        describe: 'Test command',
-        loader: async () => mockCommand,
-      },
-      available: true,
-      source: 'workspace',
-      shadowed: false,
-    };
+    mockExecuteCommand.mockResolvedValueOnce(0);
 
-    const result = await runCommand(registeredCmd, mockCtx, ['arg1'], { verbose: false });
+    const result = await runCommand(registeredCmd, mockCtx, ["arg1"], {
+      verbose: false,
+    });
 
     expect(result).toBe(0);
-    expect(mockCommand.run).toHaveBeenCalledWith(mockCtx, ['arg1'], { verbose: false });
+    expect(mockExecuteCommand).toHaveBeenCalled();
   });
 
   it('should return exit code 2 for unavailable command in JSON mode', async () => {
     const registeredCmd: RegisteredCommand = {
-      manifest: {
-        manifestVersion: '1.0',
-        id: 'test:command',
-        group: 'test',
-        describe: 'Test command',
-        loader: async () => ({ run: async () => 0 }),
-      },
+      ...createRegisteredCommand(),
       available: false,
-      source: 'workspace',
-      unavailableReason: 'Missing dependency: @kb-labs/missing-package',
-      hint: 'Run: kb devlink apply',
-      shadowed: false,
+      unavailableReason: "Missing dependency: @kb-labs/missing-package",
+      hint: "Run: pnpm add @kb-labs/missing-package",
     };
 
     const result = await runCommand(registeredCmd, mockCtx, [], { json: true });
@@ -68,95 +103,70 @@ describe('runCommand', () => {
       available: false,
       command: 'test:command',
       reason: 'Missing dependency: @kb-labs/missing-package',
-      hint: 'Run: kb devlink apply',
+      hint: "Run: pnpm add @kb-labs/missing-package",
     });
   });
 
   it('should return exit code 2 for unavailable command in text mode', async () => {
     const registeredCmd: RegisteredCommand = {
-      manifest: {
-        manifestVersion: '1.0',
-        id: 'test:command',
-        group: 'test',
-        describe: 'Test command',
-        loader: async () => ({ run: async () => 0 }),
-      },
+      ...createRegisteredCommand(),
       available: false,
-      source: 'workspace',
-      unavailableReason: 'Missing dependency: @kb-labs/missing-package',
-      hint: 'Run: kb devlink apply',
+      unavailableReason: "Missing dependency: @kb-labs/missing-package",
+      hint: "Run: pnpm add @kb-labs/missing-package",
       shadowed: false,
     };
 
     const result = await runCommand(registeredCmd, mockCtx, [], { verbose: false });
 
     expect(result).toBe(2);
-    expect(mockCtx.presenter.warn).toHaveBeenCalledWith('test:command unavailable: Missing dependency: @kb-labs/missing-package');
-    expect(mockCtx.presenter.info).toHaveBeenCalledWith('Run: kb devlink apply');
+    expect(mockCtx.presenter.warn).toHaveBeenCalledWith(
+      "test:command unavailable: Missing dependency: @kb-labs/missing-package",
+    );
+    expect(mockCtx.presenter.info).toHaveBeenCalledWith(
+      "Run: pnpm add @kb-labs/missing-package",
+    );
   });
 
   it('should show verbose output for unavailable command', async () => {
     const registeredCmd: RegisteredCommand = {
-      manifest: {
-        manifestVersion: '1.0',
-        id: 'test:command',
-        group: 'test',
-        describe: 'Test command',
-        loader: async () => ({ run: async () => 0 }),
-      },
+      ...createRegisteredCommand(),
       available: false,
-      source: 'workspace',
-      unavailableReason: 'Missing dependency: @kb-labs/missing-package',
-      hint: 'Run: kb devlink apply',
-      shadowed: false,
+      unavailableReason: "Missing dependency: @kb-labs/missing-package",
+      hint: "Run: pnpm add @kb-labs/missing-package",
     };
 
     const result = await runCommand(registeredCmd, mockCtx, [], { verbose: true });
 
     expect(result).toBe(2);
-    expect(mockCtx.presenter.warn).toHaveBeenCalledWith('Command unavailable: test:command');
-    expect(mockCtx.presenter.warn).toHaveBeenCalledWith('Reason: Missing dependency: @kb-labs/missing-package');
-    expect(mockCtx.presenter.info).toHaveBeenCalledWith('Hint: Run: kb devlink apply');
+    expect(mockCtx.presenter.warn).toHaveBeenCalledWith(
+      "Command unavailable: test:command",
+    );
+    expect(mockCtx.presenter.warn).toHaveBeenCalledWith(
+      "Reason: Missing dependency: @kb-labs/missing-package",
+    );
+    expect(mockCtx.presenter.info).toHaveBeenCalledWith(
+      "Hint: Run: pnpm add @kb-labs/missing-package",
+    );
   });
 
-  it('should return exit code 1 for invalid command module', async () => {
-    const registeredCmd: RegisteredCommand = {
-      manifest: {
-        manifestVersion: '1.0',
-        id: 'test:command',
-        group: 'test',
-        describe: 'Test command',
-        loader: async () => ({ run: async () => 0 }), // Valid module
+  it("should return exit code 1 when manifest lacks CLI declaration", async () => {
+    const incompleteManifest = createRegisteredCommand({
+      manifestV2: {
+        ...baseManifestV2,
+        cli: { commands: [] },
       },
-      available: true,
-      source: 'workspace',
-      shadowed: false,
-    };
+    });
 
-    const result = await runCommand(registeredCmd, mockCtx, [], {});
+    const result = await runCommand(incompleteManifest, mockCtx, [], {});
 
     expect(result).toBe(1);
-    expect(mockCtx.presenter.error).toHaveBeenCalledWith('Invalid command module for test:command');
+    expect(mockCtx.presenter.error).toHaveBeenCalledWith(
+      "Command test:command not declared in manifest",
+    );
   });
 
   it('should pass global flags to command', async () => {
-    const mockCommand = {
-      run: vi.fn().mockResolvedValue(0),
-    };
-
-    const registeredCmd: RegisteredCommand = {
-      manifest: {
-        manifestVersion: '1.0',
-        id: 'test:command',
-        group: 'test',
-        describe: 'Test command',
-        loader: async () => mockCommand,
-      },
-      available: true,
-      source: 'workspace',
-      shadowed: false,
-    };
-
+    const registeredCmd = createRegisteredCommand();
     const flags = {
       json: true,
       verbose: true,
@@ -167,51 +177,33 @@ describe('runCommand', () => {
       noCache: false,
     };
 
-    await runCommand(registeredCmd, mockCtx, ['arg1'], flags);
+    await runCommand(registeredCmd, mockCtx, ["arg1"], flags);
 
-    expect(mockCommand.run).toHaveBeenCalledWith(mockCtx, ['arg1'], flags);
+    expect(mockExecuteCommand).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "test:command" }),
+      expect.any(Object),
+      expect.any(Object),
+      expect.objectContaining(flags),
+      expect.any(Array),
+      registeredCmd.pkgRoot,
+      expect.any(String),
+      undefined,
+      undefined,
+    );
   });
 
-  it('should handle command returning number', async () => {
-    const mockCommand = {
-      run: vi.fn().mockResolvedValue(42),
-    };
-
-    const registeredCmd: RegisteredCommand = {
-      manifest: {
-        manifestVersion: '1.0',
-        id: 'test:command',
-        group: 'test',
-        describe: 'Test command',
-        loader: async () => mockCommand,
-      },
-      available: true,
-      source: 'workspace',
-      shadowed: false,
-    };
+  it("should handle command returning number", async () => {
+    const registeredCmd = createRegisteredCommand();
+    mockExecuteCommand.mockResolvedValueOnce(42);
 
     const result = await runCommand(registeredCmd, mockCtx, [], {});
 
     expect(result).toBe(42);
   });
 
-  it('should handle command returning void', async () => {
-    const mockCommand = {
-      run: vi.fn().mockResolvedValue(undefined),
-    };
-
-    const registeredCmd: RegisteredCommand = {
-      manifest: {
-        manifestVersion: '1.0',
-        id: 'test:command',
-        group: 'test',
-        describe: 'Test command',
-        loader: async () => mockCommand,
-      },
-      available: true,
-      source: 'workspace',
-      shadowed: false,
-    };
+  it("should handle command returning void", async () => {
+    const registeredCmd = createRegisteredCommand();
+    mockExecuteCommand.mockResolvedValueOnce(undefined);
 
     const result = await runCommand(registeredCmd, mockCtx, [], {});
 

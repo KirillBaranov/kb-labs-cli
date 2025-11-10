@@ -5,12 +5,13 @@
 import type { Command } from '../../types/types';
 import { executeCommand } from '@kb-labs/plugin-adapter-cli';
 import type { CliContext } from '@kb-labs/cli-core';
-import { registry } from '../../utils/registry';
+import { registry } from '../../registry/service';
 import type { ManifestV2, CliCommandDecl } from '@kb-labs/plugin-manifest';
 import * as readline from 'node:readline';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import { getContextCwd } from '../../utils/context';
+import { registerShutdownHook } from '../../utils/shutdown';
 
 interface ReplSession {
   id: string;
@@ -112,6 +113,7 @@ export const repl: Command = {
       pluginId: manifestV2.id,
       runs: [],
     };
+    let sessionSaved = false;
 
     ctx.presenter.info(`🔧 Interactive REPL for ${commandName}`);
     ctx.presenter.info(`Plugin: ${manifestV2.id}@${manifestV2.version || 'unknown'}`);
@@ -374,25 +376,26 @@ export const repl: Command = {
       rl.prompt();
     });
 
-    rl.on('close', async () => {
+    const handleShutdown = async () => {
+      if (sessionSaved) {
+        return;
+      }
       await saveSession();
-      process.exit(0);
+      sessionSaved = true;
+    };
+
+    rl.on('close', async () => {
+      await handleShutdown();
     });
 
-    // Handle Ctrl+C gracefully
-    process.on('SIGINT', async () => {
-      await saveSession();
+    registerShutdownHook(async () => {
+      await handleShutdown();
       ctx.presenter.info('\n👋 Goodbye!');
       rl.close();
-      process.exit(0);
     });
 
     rl.prompt();
-    
-    // Keep process alive
-    return new Promise(() => {
-      // Never resolves - keeps REPL running
-    });
+    return new Promise(() => {});
   },
 };
 

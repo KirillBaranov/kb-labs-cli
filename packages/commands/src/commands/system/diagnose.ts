@@ -1,5 +1,6 @@
 import type { Command } from "../../types";
 import { box, keyValue, formatTiming, TimingTracker, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
+import { getContextCwd } from "@kb-labs/shared-cli-ui";
 
 export const diagnose: Command = {
   name: "diagnose",
@@ -14,10 +15,10 @@ export const diagnose: Command = {
     const jsonMode = !!flags.json;
     
     try {
-      const repoRoot = ctx?.repoRoot ?? process.cwd();
+      const cwd = getContextCwd(ctx);
+      const repoRoot = ctx?.repoRoot ?? cwd;
       const nodeVersion = process.version;
       const platform = `${process.platform} ${process.arch}`;
-      const cwd = process.cwd();
       
       const totalTime = tracker.total();
 

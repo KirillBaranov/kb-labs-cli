@@ -5,12 +5,13 @@
 import type { Command } from '../../types/types';
 import { executeCommand } from '@kb-labs/plugin-adapter-cli';
 import type { CliContext } from '@kb-labs/cli-core';
-import { registry } from '../../utils/registry';
+import { registry } from '../../registry/service';
 import type { ManifestV2, CliCommandDecl } from '@kb-labs/plugin-manifest';
 import { watch, type FSWatcher } from 'node:fs';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import { getContextCwd } from '../../utils/context';
+import { registerShutdownHook } from '../../utils/shutdown';
 
 interface DevRun {
   id: string;
@@ -272,13 +273,10 @@ export const dev: Command = {
       });
 
       ctx.presenter.info('✓ Watch mode stopped');
-      process.exit(0);
     };
 
-    process.on('SIGINT', cleanup);
-    process.on('SIGTERM', cleanup);
+    registerShutdownHook(cleanup);
 
-    // Keep process alive
     return new Promise(() => {
       /* keep process running */
     });

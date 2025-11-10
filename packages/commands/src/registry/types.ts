@@ -36,8 +36,10 @@ export interface FlagDefinition {
   alias?: string;            // "p" - single letter
   default?: any;
   description?: string;
+  describe?: string;
   choices?: string[];        // ["dev", "prod"] - only for string type
   required?: boolean;
+  examples?: string[];
 }
 
 export interface RegisteredCommand {
@@ -80,6 +82,7 @@ export interface PackageCacheEntry {
   manifestPath: string;
   pkgJsonMtime: number;
   manifestMtime: number;
+  cachedAt: number;
   result: DiscoveryResult;
 }
 
@@ -87,6 +90,8 @@ export interface CacheFile {
   version: string;           // Node version
   cliVersion: string;        // CLI version
   timestamp: number;
+  ttlMs?: number;
+  stateHash?: string;
   lockfileHash?: string;     // Hash of pnpm-lock.yaml
   configHash?: string;       // Hash of kb-labs.config.json
   pluginsStateHash?: string; // Hash of .kb/plugins.json

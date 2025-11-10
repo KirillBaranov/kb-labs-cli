@@ -1,110 +1,90 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { registerManifests } from "../register.js";
+import { runCommand } from "../run.js";
+import { renderHelp } from "../../utils/help-generator.js";
+import type { CommandManifest } from "../types.js";
+
+const executeCommandMock = vi.hoisted(() =>
+  vi.fn(async (_manifest, implementation, ctx, flags) => {
+    if (typeof implementation.run === "function") {
+      return implementation.run(ctx, [], flags);
+    }
+    return 0;
+  }),
+);
+
+vi.mock("@kb-labs/plugin-adapter-cli", () => ({
+  executeCommand: executeCommandMock,
+  initCliLogging: vi.fn(),
+  createCliLogger: vi.fn(() => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  })),
+}));
+
+const baseManifestV2 = {
+  schema: "kb.cli/2",
+  permissions: [],
+  cli: {
+    commands: [
+      {
+        id: "test:command",
+        handler: "./cli/command.js",
+      },
+    ],
+  },
+  capabilities: [],
+};
+
 /**
- * Integration tests for complete registry system
+ * These tests exercise the registry pipeline using synthetic discovery results
+ * so we can verify behaviour without hitting the filesystem.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { discoverManifests } from '../discover.js';
-import { registerManifests } from '../register.js';
-import { runCommand } from '../run.js';
-import { renderHelp } from '../../utils/help-generator.js';
-import type { CommandManifest } from '../types.js';
-
-// Mock all dependencies
-vi.mock('node:fs/promises', () => ({
-  readFile: vi.fn(),
-  readdir: vi.fn(),
-  stat: vi.fn(),
-  mkdir: vi.fn(),
-  writeFile: vi.fn(),
-}));
-
-vi.mock('yaml', () => ({
-  parse: vi.fn(),
-}));
-
-vi.mock('glob', () => ({
-  glob: vi.fn(),
-}));
-
-vi.mock('../utils/logger.js', () => ({
-  log: vi.fn(),
-}));
-
-vi.mock('../utils/path.js', () => ({
-  toPosixPath: (p: string) => p.replace(/\\/g, '/'),
-}));
-
-vi.mock('../availability.js', () => ({
-  checkRequires: vi.fn(),
-}));
-
-describe('Registry Integration', () => {
+describe("Registry Integration", () => {
   const mockRegistry = {
     registerManifest: vi.fn(),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    executeCommandMock.mockClear();
   });
 
-  it('should handle complete workflow: discover -> register -> run', async () => {
-    const { readFile } = await import('node:fs/promises');
-    const { parse } = await import('yaml');
-    const { glob } = await import('glob');
-    const { checkRequires } = await vi.importMock('../availability.js') as { checkRequires: any };
-    vi.mocked(checkRequires).mockReturnValue({ available: true });
-
-    // Mock workspace discovery
-    vi.mocked(readFile).mockResolvedValueOnce('packages:\n  - "packages/*"');
-    vi.mocked(parse).mockReturnValue({ packages: ['packages/*'] });
-    vi.mocked(glob).mockResolvedValue(['packages/test-package']);
-
-    // Mock package.json
-    vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify({
-      name: '@kb-labs/test-package',
-      kb: { commandsManifest: './dist/cli.manifest.js' },
-    }));
-
-    // Mock manifest file
-    const mockManifest: CommandManifest = {
-      manifestVersion: '1.0',
-      id: 'test:command',
-      group: 'test',
-      describe: 'Test command',
-      flags: [
-        { name: 'verbose', type: 'boolean', alias: 'v' },
-      ],
+  it("registers a workspace manifest and executes successfully", async () => {
+    const manifest: CommandManifest = {
+      manifestVersion: "1.0",
+      id: "test:command",
+      group: "test",
+      describe: "Test command",
+      flags: [{ name: "verbose", type: "boolean", alias: "v" }],
+      manifestV2: baseManifestV2,
       loader: async () => ({
-        run: async (ctx: any, argv: string[], flags: any) => {
-          if (flags.verbose) {
-            ctx.presenter.info('Verbose mode enabled');
-          }
+        run: async (ctx: any, _argv: string[], flags: any) => {
+          ctx.presenter.info(flags.verbose ? "Verbose mode enabled" : "Run executed");
           return 0;
         },
       }),
     };
 
-    vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify({
-      commands: [mockManifest],
-    }));
+    const discoveryResults = [
+      {
+        source: "workspace" as const,
+        packageName: "@kb-labs/test-package",
+        manifestPath: "/virtual/manifest.mjs",
+        pkgRoot: "/virtual/pkg",
+        manifests: [manifest],
+      },
+    ];
 
-    // Mock availability check
-    checkRequires.mockReturnValue({ available: true });
-
-    // 1. Discover manifests
-    const discoveryResults = await discoverManifests('/test/cwd', false);
-    expect(discoveryResults).toHaveLength(1);
-    expect(discoveryResults[0]).toBeDefined();
-    expect(discoveryResults[0]!.source).toBe('workspace');
-
-    // 2. Register manifests
-    const registered = await registerManifests(discoveryResults, mockRegistry as any);
+    const { registered } = await registerManifests(discoveryResults, mockRegistry as any);
     expect(registered).toHaveLength(1);
-    expect(registered[0]).toBeDefined();
-    expect(registered[0]!.available).toBe(true);
-    expect(mockRegistry.registerManifest).toHaveBeenCalledWith(registered[0]);
+    const cmd = registered[0]!;
+    expect(cmd.available).toBe(true);
+    expect(mockRegistry.registerManifest).toHaveBeenCalledWith(cmd);
 
-    // 3. Run command
     const mockCtx = {
       presenter: {
         info: vi.fn(),
@@ -112,73 +92,57 @@ describe('Registry Integration', () => {
         error: vi.fn(),
         json: vi.fn(),
       },
+      diagnostics: [],
     };
 
-    const result = await runCommand(registered[0]!, mockCtx, ['arg1'], { verbose: true });
-    expect(result).toBe(0);
-    expect(mockCtx.presenter.info).toHaveBeenCalledWith('Verbose mode enabled');
+    const exitCode = await runCommand(cmd, mockCtx, ["arg1"], {
+      verbose: true,
+    });
 
-    // 4. Generate help
-    const helpText = renderHelp(registered, { json: false, onlyAvailable: false });
-    expect(helpText).toContain('test:command');
-    expect(helpText).toContain('Test command');
+    expect(exitCode).toBe(0);
+    expect(executeCommandMock).toHaveBeenCalled();
 
-    const helpJson = renderHelp(registered, { json: true, onlyAvailable: false });
-    expect(helpJson).toHaveProperty('groups');
-    expect((helpJson as any).groups[0].commands[0].id).toBe('test:command');
+    const helpText = renderHelp(registered, {
+      json: false,
+      onlyAvailable: false,
+    });
+    expect(helpText).toContain("test:command");
+    expect(helpText).toContain("Test command");
+
+    const helpJson = renderHelp(registered, {
+      json: true,
+      onlyAvailable: false,
+    });
+    expect(helpJson).toHaveProperty("groups");
+    expect((helpJson as any).groups[0].commands[0].id).toBe("test:command");
   });
 
-  it('should handle unavailable command with proper error handling', async () => {
-    const { readFile } = await import('node:fs/promises');
-    const { parse } = await import('yaml');
-    const { glob } = await import('glob');
-    const { checkRequires } = await vi.importMock('../availability.js') as { checkRequires: any };
-    vi.mocked(checkRequires).mockReturnValue({ available: true });
-
-    // Mock workspace discovery
-    vi.mocked(readFile).mockResolvedValueOnce('packages:\n  - "packages/*"');
-    vi.mocked(parse).mockReturnValue({ packages: ['packages/*'] });
-    vi.mocked(glob).mockResolvedValue(['packages/test-package']);
-
-    // Mock package.json
-    vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify({
-      name: '@kb-labs/test-package',
-      kb: { commandsManifest: './dist/cli.manifest.js' },
-    }));
-
-    // Mock manifest with missing dependency
-    const mockManifest: CommandManifest = {
-      manifestVersion: '1.0',
-      id: 'test:command',
-      group: 'test',
-      describe: 'Test command',
-      requires: ['@kb-labs/missing-package'],
+  it("propagates unavailable command metadata", async () => {
+    const manifest: CommandManifest = {
+      manifestVersion: "1.0",
+      id: "test:command",
+      group: "test",
+      describe: "Test command",
+      requires: ["@kb-labs/missing-package"],
+      manifestV2: baseManifestV2,
       loader: async () => ({ run: async () => 0 }),
     };
 
-    vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify({
-      commands: [mockManifest],
-    }));
+    const discoveryResults = [
+      {
+        source: "workspace" as const,
+        packageName: "@kb-labs/test-package",
+        manifestPath: "/virtual/manifest.mjs",
+        pkgRoot: "/virtual/pkg",
+        manifests: [manifest],
+      },
+    ];
 
-    // Mock availability check - missing dependency
-    checkRequires.mockReturnValue({
-      available: false,
-      reason: 'Missing dependency: @kb-labs/missing-package',
-      hint: 'Run: kb devlink apply',
-    });
-
-    // 1. Discover manifests
-    const discoveryResults = await discoverManifests('/test/cwd', false);
-    expect(discoveryResults).toHaveLength(1);
-
-    // 2. Register manifests
-    const registered = await registerManifests(discoveryResults, mockRegistry as any);
+    const { registered } = await registerManifests(discoveryResults, mockRegistry as any);
     expect(registered).toHaveLength(1);
-    expect(registered[0]).toBeDefined();
-    expect(registered[0]!.available).toBe(false);
-    expect(registered[0]!.unavailableReason).toBe('Missing dependency: @kb-labs/missing-package');
+    const unavailable = registered[0]!;
+    expect(unavailable.available).toBe(false);
 
-    // 3. Run command - should return exit code 2
     const mockCtx = {
       presenter: {
         info: vi.fn(),
@@ -186,114 +150,59 @@ describe('Registry Integration', () => {
         error: vi.fn(),
         json: vi.fn(),
       },
+      diagnostics: [],
     };
 
-    const result = await runCommand(registered[0]!, mockCtx, [], { json: true });
-    expect(result).toBe(2);
+    const exitCode = await runCommand(unavailable, mockCtx, [], { json: true });
+    expect(exitCode).toBe(2);
     expect(mockCtx.presenter.json).toHaveBeenCalledWith({
       ok: false,
       available: false,
-      command: 'test:command',
-      reason: 'Missing dependency: @kb-labs/missing-package',
-      hint: 'Run: kb devlink apply',
+      command: "test:command",
+      reason: "Missing dependency: @kb-labs/missing-package",
+      hint: "Run: pnpm add @kb-labs/missing-package",
     });
-
-    // 4. Generate help - should show unavailable command
-    const helpJson = renderHelp(registered, { json: true, onlyAvailable: false });
-    const command = (helpJson as any).groups[0].commands[0];
-    expect(command.available).toBe(false);
-    expect(command.reason).toBe('Missing dependency: @kb-labs/missing-package');
   });
 
-  it('should handle shadowing between workspace and node_modules', async () => {
-    const { readFile } = await import('node:fs/promises');
-    const { parse } = await import('yaml');
-    const { glob } = await import('glob');
-    const { checkRequires } = await vi.importMock('../availability.js') as { checkRequires: any };
-    vi.mocked(checkRequires).mockReturnValue({ available: true });
-
-    // Mock workspace discovery
-    vi.mocked(readFile).mockResolvedValueOnce('packages:\n  - "packages/*"');
-    vi.mocked(parse).mockReturnValue({ packages: ['packages/*'] });
-    vi.mocked(glob).mockResolvedValue(['packages/workspace-package']);
-
-    // Mock workspace package.json
-    vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify({
-      name: '@kb-labs/workspace-package',
-      kb: { commandsManifest: './dist/cli.manifest.js' },
-    }));
-
-    // Mock workspace manifest
-    const workspaceManifest: CommandManifest = {
-      manifestVersion: '1.0',
-      id: 'test:command',
-      group: 'test',
-      describe: 'Workspace command',
-      loader: async () => ({ run: async () => 0 }),
-    };
-
-    vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify({
-      commands: [workspaceManifest],
-    }));
-
-    // Mock node_modules discovery
-    vi.mocked(readFile).mockRejectedValueOnce(new Error('ENOENT')); // No current package
-    vi.mocked(readFile).mockRejectedValueOnce(new Error('ENOENT')); // No current package manifest
-
-    // Mock node_modules directory
-    const { readdir } = await import('node:fs/promises');
-    vi.mocked(readdir).mockResolvedValueOnce([
-      { name: 'node-package', isDirectory: () => true } as any,
-    ]);
-
-    // Mock node_modules package.json
-    vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify({
-      name: '@kb-labs/node-package',
-      kb: { commandsManifest: './dist/cli.manifest.js' },
-    }));
-
-    // Mock node_modules manifest
+  it("prefers workspace manifests over node_modules", async () => {
     const nodeManifest: CommandManifest = {
-      manifestVersion: '1.0',
-      id: 'test:command',
-      group: 'test',
-      describe: 'Node modules command',
+      manifestVersion: "1.0",
+      id: "test:command",
+      group: "test",
+      describe: "Node command",
+      manifestV2: baseManifestV2,
       loader: async () => ({ run: async () => 0 }),
     };
 
-    vi.mocked(readFile).mockResolvedValueOnce(JSON.stringify({
-      commands: [nodeManifest],
-    }));
+    const workspaceManifest: CommandManifest = {
+      manifestVersion: "1.0",
+      id: "test:command",
+      group: "test",
+      describe: "Workspace command",
+      manifestV2: baseManifestV2,
+      loader: async () => ({ run: async () => 0 }),
+    };
 
-    // Mock availability check
-    checkRequires.mockReturnValue({ available: true });
+    const discoveryResults = [
+      {
+        source: "node_modules" as const,
+        packageName: "@kb-labs/node-package",
+        manifestPath: "/virtual/node-manifest.mjs",
+        pkgRoot: "/virtual/node",
+        manifests: [nodeManifest],
+      },
+      {
+        source: "workspace" as const,
+        packageName: "@kb-labs/workspace-package",
+        manifestPath: "/virtual/workspace-manifest.mjs",
+        pkgRoot: "/virtual/workspace",
+        manifests: [workspaceManifest],
+      },
+    ];
 
-    // 1. Discover manifests
-    const discoveryResults = await discoverManifests('/test/cwd', false);
-    expect(discoveryResults).toHaveLength(2);
-
-    // 2. Register manifests
-    const registered = await registerManifests(discoveryResults, mockRegistry as any);
-    expect(registered).toHaveLength(2);
-
-    // Workspace command should be active
-    const workspaceCmd = registered.find(cmd => cmd.source === 'workspace');
-    expect(workspaceCmd?.shadowed).toBe(false);
-    expect(mockRegistry.registerManifest).toHaveBeenCalledWith(workspaceCmd);
-
-    // Node modules command should be shadowed
-    const nodeCmd = registered.find(cmd => cmd.source === 'node_modules');
-    expect(nodeCmd?.shadowed).toBe(true);
-
-    // 3. Generate help - should show shadowing info
-    const helpJson = renderHelp(registered, { json: true, onlyAvailable: false });
-    const commands = (helpJson as any).groups[0].commands;
-    expect(commands).toHaveLength(2);
-
-    const activeCmd = commands.find((c: any) => c.source === 'workspace');
-    expect(activeCmd.shadowed).toBe(false);
-
-    const shadowedCmd = commands.find((c: any) => c.source === 'node_modules');
-    expect(shadowedCmd.shadowed).toBe(true);
+    const { registered } = await registerManifests(discoveryResults, mockRegistry as any);
+    expect(registered).toHaveLength(1);
+    expect(registered[0]?.source).toBe("workspace");
+    expect(mockRegistry.registerManifest).toHaveBeenCalledWith(registered[0]);
   });
 });

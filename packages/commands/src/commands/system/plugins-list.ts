@@ -4,11 +4,12 @@
 
 import type { Command } from "../../types/types";
 import type { RegisteredCommand } from '../../registry/types';
-import { registry } from "../../utils/registry";
+import { registry } from "../../registry/service";
 import { box, keyValue, formatTiming, TimingTracker, safeSymbols, safeColors, formatTable, type TableColumn } from "@kb-labs/shared-cli-ui";
 import { loadPluginsState, isPluginEnabled } from '../../registry/plugins-state';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { getContextCwd } from "@kb-labs/shared-cli-ui";
 
 export const pluginsList: Command = {
   name: "plugins",
@@ -31,13 +32,14 @@ export const pluginsList: Command = {
   async run(ctx, argv, flags) {
     const tracker = new TimingTracker();
     const jsonMode = !!flags.json;
+    const cwd = getContextCwd(ctx);
     
     try {
       tracker.checkpoint('discover');
       
       const manifests = registry.listManifests();
       const productGroups = registry.listProductGroups();
-      const state = await loadPluginsState(process.cwd());
+      const state = await loadPluginsState(cwd);
       
       // Group by package name
       const packages = new Map<string, {
@@ -69,19 +71,19 @@ export const pluginsList: Command = {
           // If not found, try node_modules
           if (version === 'unknown') {
             try {
-              const pkgPath = path.join(process.cwd(), 'node_modules', pkgName, 'package.json');
+              const pkgPath = path.join(cwd, 'node_modules', pkgName, 'package.json');
               const pkgJson = JSON.parse(await fs.readFile(pkgPath, 'utf8'));
               version = pkgJson.version || 'unknown';
             } catch {
               // Try workspace root/packages structure
               try {
-                const pkgPath = path.join(process.cwd(), 'packages', namespace.replace('@kb-labs/', '').replace('-cli', ''), 'package.json');
+                const pkgPath = path.join(cwd, 'packages', namespace.replace('@kb-labs/', '').replace('-cli', ''), 'package.json');
                 const pkgJson = JSON.parse(await fs.readFile(pkgPath, 'utf8'));
                 version = pkgJson.version || 'unknown';
               } catch {
                 // Try finding in parent workspace
                 try {
-                  const workspaceRoot = path.resolve(process.cwd(), '..');
+                  const workspaceRoot = path.resolve(cwd, '..');
                   const pkgDirs = await fs.readdir(path.join(workspaceRoot, 'packages'), { withFileTypes: true });
                   for (const dir of pkgDirs) {
                     if (dir.isDirectory()) {

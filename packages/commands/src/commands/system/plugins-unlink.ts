@@ -6,6 +6,7 @@ import type { Command } from "../../types/types.js";
 import { unlinkPlugin, loadPluginsState } from '../../registry/plugins-state.js';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { getContextCwd } from "@kb-labs/shared-cli-ui";
 
 export const pluginsUnlink: Command = {
   name: "plugins:unlink",
@@ -28,13 +29,14 @@ export const pluginsUnlink: Command = {
       ctx.presenter.error("Please specify a plugin path or name to unlink");
       return 1;
     }
-    const state = await loadPluginsState(process.cwd());
+    const cwd = getContextCwd(ctx);
+    const state = await loadPluginsState(cwd);
 
     try {
       // Try as path first
       let absPath: string | undefined;
       try {
-        absPath = path.resolve(process.cwd(), identifier);
+        absPath = path.resolve(cwd, identifier);
         await fs.access(absPath);
       } catch {
         // Try to find by package name in linked list
@@ -53,7 +55,7 @@ export const pluginsUnlink: Command = {
         return 1;
       }
 
-      await unlinkPlugin(process.cwd(), absPath);
+      await unlinkPlugin(cwd, absPath);
       
       ctx.presenter.info(`Unlinked ${identifier}`);
       ctx.presenter.info(`Run 'kb plugins ls' to see updated status`);
