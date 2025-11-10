@@ -20,3 +20,11 @@ export { yamlFormatter } from './formatters/builtin/yaml.js';
 export { tableFormatter } from './formatters/builtin/table.js';
 export { markdownFormatter } from './formatters/builtin/markdown.js';
 
+// Runtime context helpers
+export { createRuntimeContext } from './context/runtime-context.js';
+export {
+  createCliRuntime,
+  type CliRuntime,
+  type RuntimeSetupOptions,
+} from "./runtime.js";
+

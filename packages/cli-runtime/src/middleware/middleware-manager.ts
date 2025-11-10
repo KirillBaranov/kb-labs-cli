@@ -3,12 +3,12 @@
  * Middleware chain management
  */
 
-import type { ExecutionLimits } from '@kb-labs/cli-core';
+import type { ExecutionLimits } from "@kb-labs/cli-core/public";
 
-export type CommandMiddleware = (
+export type CommandMiddleware<T = unknown> = (
   ctx: any,
-  next: () => Promise<void>
-) => Promise<void>;
+  next: () => Promise<T>,
+) => Promise<T>;
 
 export interface MiddlewareConfig {
   name: string;
@@ -27,27 +27,29 @@ export class MiddlewareManager {
     this.middlewares.sort((a, b) => a.priority - b.priority);
   }
 
-  buildChain(): CommandMiddleware[] {
-    return this.middlewares.map(m => m.middleware);
+  buildChain<T = unknown>(): CommandMiddleware<T>[] {
+    return this.middlewares.map(
+      (m) => m.middleware as CommandMiddleware<T>,
+    );
   }
 
-  async execute(ctx: any, handler: () => Promise<void>): Promise<void> {
-    const chain = this.buildChain();
-    let index = 0;
+  async execute<T>(ctx: any, handler: () => Promise<T>): Promise<T> {
+    const chain = this.buildChain<T>();
 
-    const next = async (): Promise<void> => {
+    const dispatch = async (index: number): Promise<T> => {
       if (index >= chain.length) {
-        await handler();
-        return;
+        return handler();
       }
 
-      const middleware = chain[index++];
-      if (!middleware) return;
+      const middleware = chain[index];
+      if (!middleware) {
+        return handler();
+      }
 
-      await middleware(ctx, next);
+      return middleware(ctx, () => dispatch(index + 1));
     };
 
-    await next();
+    return dispatch(0);
   }
 }
 
