@@ -8,10 +8,21 @@
     "paths": {
       "@kb-labs/cli-core": ["packages/core/dist"],
       "@kb-labs/cli-core/*": ["packages/core/dist/*"],
+      "@kb-labs/cli-core/public": ["packages/core/src/public/index.ts"],
+      "@kb-labs/cli-api": ["packages/cli-api/dist"],
+      "@kb-labs/cli-api/*": ["packages/cli-api/dist/*"],
       "@kb-labs/cli-adapters": ["packages/adapters/dist"],
       "@kb-labs/cli-adapters/*": ["packages/adapters/dist/*"],
       "@kb-labs/cli-commands": ["packages/commands/dist"],
-      "@kb-labs/cli-commands/*": ["packages/commands/dist/*"]
+      "@kb-labs/cli-commands/*": ["packages/commands/dist/*"],
+      "@kb-labs/cli-runtime": ["packages/cli-runtime/src"],
+      "@kb-labs/cli-runtime/*": ["packages/cli-runtime/src/*"],
+      "@kb-labs/plugin-adapter-cli": ["../kb-labs-plugin/packages/adapters/cli/src"],
+      "@kb-labs/plugin-adapter-cli/*": ["../kb-labs-plugin/packages/adapters/cli/src/*"],
+      "@kb-labs/core-sys": ["../kb-labs-core/packages/sys/src"],
+      "@kb-labs/core-sys/*": ["../kb-labs-core/packages/sys/src/*"],
+      "@kb-labs/shared-cli-ui": ["../kb-labs-shared/packages/cli-ui/src"],
+      "@kb-labs/shared-cli-ui/*": ["../kb-labs-shared/packages/cli-ui/src/*"],
     }
   }
 }
