@@ -80,3 +80,9 @@ export {
   type PluginLifecycle,
   type ExecutionLimits,
 } from "./lifecycle/lifecycle-manager";
+
+// Layered surface exports (structured access points)
+export * as framework from "./public/framework";
+export * as presenters from "./public/presenters";
+export * as errors from "./public/errors";
+export * as publicTypes from "./public/types";

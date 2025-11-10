@@ -2,8 +2,7 @@ import type { Presenter } from "./presenter/types";
 import path from "node:path";
 import { existsSync } from "node:fs";
 
-/** Very small repo root detector: looks for .git upwards. */
-function detectRepoRoot(start = process.cwd()): string {
+function detectRepoRoot(start: string): string {
   let cur = path.resolve(start);
   while (true) {
     if (existsSync(path.join(cur, ".git"))) {
@@ -12,7 +11,7 @@ function detectRepoRoot(start = process.cwd()): string {
     const parent = path.dirname(cur);
     if (parent === cur) {
       return start;
-    } // fallback
+    }
     cur = parent;
   }
 }
@@ -35,33 +34,41 @@ export interface CliContext {
   logger?: Logger;
   presenter: Presenter;
   env: NodeJS.ProcessEnv;
-  profile?: Profile; // команды могут просить профиль отдельно
-  config?: Record<string, any>; // конфигурация
-  diagnostics: string[];     // NEW: собираем WARN/INFO для JSON
-  sentJSON?: boolean;        // NEW: флаг что команда сама вывела JSON
+  profile?: Profile;
+  config?: Record<string, any>;
+  diagnostics: string[];
+  sentJSON?: boolean;
+}
+
+export interface CreateContextOptions {
+  presenter: Presenter;
+  logger?: Logger;
+  env?: NodeJS.ProcessEnv;
+  cwd?: string;
+  repoRoot?: string;
+  config?: Record<string, any>;
 }
 
 export async function createContext({
   presenter,
   logger,
-}: {
-  presenter: Presenter;
-  logger?: Logger;
-}): Promise<CliContext> {
-  // вычисли repoRoot
-  const repoRoot = detectRepoRoot();
-
-  // loadConfig - пока заглушка, так как функция не найдена в монорепе
-  const config = {}; // TODO: загрузить конфигурацию когда появится loadConfig
+  env,
+  cwd,
+  repoRoot,
+  config = {},
+}: CreateContextOptions): Promise<CliContext> {
+  const resolvedEnv = env ?? process.env;
+  const resolvedCwd = cwd ?? process.cwd();
+  const resolvedRepoRoot = repoRoot ?? detectRepoRoot(resolvedCwd);
 
   return {
     presenter,
     logger,
     config,
-    repoRoot,
-    cwd: process.cwd(),
-    env: process.env,
-    diagnostics: [],         // NEW
-    sentJSON: false,        // NEW
+    repoRoot: resolvedRepoRoot,
+    cwd: resolvedCwd,
+    env: resolvedEnv,
+    diagnostics: [],
+    sentJSON: false,
   };
 }

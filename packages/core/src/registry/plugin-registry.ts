@@ -4,9 +4,10 @@
  */
 
 import type { CacheAdapter } from '../cache/cache-adapter.js';
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import type { ManifestV2, RestRouteDecl } from '@kb-labs/plugin-manifest';
 import { WatchManager } from './watch-manager.js';
 import semver from 'semver';
+import * as path from 'node:path';
 
 /**
  * Source kind for discovered plugins
@@ -97,9 +98,59 @@ export type RouteRef = `${string}:${'GET'|'POST'|'PUT'|'PATCH'|'DELETE'} ${strin
 /**
  * Handler reference
  */
-export interface HandlerRef {
+export type HandlerRef = {
   file: string;
   export: string;
+};
+
+type ResolvedRoute = {
+  pluginId: string;
+  handler: HandlerRef;
+  manifest: ManifestV2;
+  route: RestRouteDecl;
+  pluginRoot: string;
+  workdir: string;
+  outdir?: string;
+};
+
+function parseHandlerRef(handler: string): HandlerRef {
+  const [file, exportName] = handler.split('#');
+  if (!file || !exportName) {
+    throw new Error(`Invalid handler reference: ${handler}`);
+  }
+  return { file, export: exportName };
+}
+
+function normalizeInvokePath(value: string): string {
+  if (!value) {
+    return '/';
+  }
+  const trimmed = value.trim();
+  if (trimmed === '') {
+    return '/';
+  }
+  const prefixed = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return prefixed.endsWith('/') && prefixed !== '/' ? prefixed.slice(0, -1) : prefixed;
+}
+
+function resolveRouteFullPath(route: RestRouteDecl, basePath: string, pluginId: string): string {
+  const normalizedBase = normalizeInvokePath(basePath || `/v1/plugins/${pluginId}`);
+  const rawPath = route.path || '/';
+
+  if (rawPath.startsWith('/v1/plugins/')) {
+    const basePrefix = normalizedBase.split('/v1')[0] || '';
+    return normalizeInvokePath(rawPath.replace(/^\/v1/, basePrefix + '/v1'));
+  }
+
+  if (rawPath.startsWith('/')) {
+    return normalizeInvokePath(`${normalizedBase}${rawPath}`);
+  }
+
+  return normalizeInvokePath(`${normalizedBase}/${rawPath}`);
+}
+
+function pathsEqual(a: string, b: string): boolean {
+  return normalizeInvokePath(a) === normalizeInvokePath(b);
 }
 
 /**
@@ -110,7 +161,9 @@ export class PluginRegistry {
   private manifests: Map<string, ManifestV2> = new Map();
   private listeners: Array<(diff: RegistryDiff) => void> = [];
   private snapshotVersion: string = '1';
-  private lastUpdate: number = Date.now();
+  private lastUpdate: number = 0;
+  private lastErrors: Array<{ path: string; error: string }> = [];
+  private initialized = false;
   private watchManager?: WatchManager;
 
   constructor(
@@ -185,6 +238,8 @@ export class PluginRegistry {
       // Update metadata
       this.lastUpdate = Date.now();
       this.snapshotVersion = String(Number(this.snapshotVersion) + 1);
+      this.lastErrors = result.errors;
+      this.initialized = true;
       
       const duration = Date.now() - start;
       console.log(
@@ -250,8 +305,49 @@ export class PluginRegistry {
   /**
    * Resolve route to handler
    */
-  resolveRoute(ref: RouteRef): HandlerRef | null {
-    // TODO: Implement route resolution
+  async resolveRoute(pluginId: string, method: string, rawPath: string): Promise<ResolvedRoute | null> {
+    const manifest = this.manifests.get(pluginId);
+    const plugin = this.plugins.get(pluginId);
+
+    if (!manifest || !plugin?.source?.path || !manifest.rest?.routes?.length) {
+      return null;
+    }
+
+    const targetMethod = method.toUpperCase();
+    const targetPath = normalizeInvokePath(rawPath);
+    const basePath = manifest.rest?.basePath || `/v1/plugins/${manifest.id}`;
+
+    for (const route of manifest.rest.routes) {
+      if (route.method.toUpperCase() !== targetMethod) {
+        continue;
+      }
+
+      const routeFullPath = resolveRouteFullPath(route, basePath, manifest.id);
+      if (!pathsEqual(routeFullPath, targetPath)) {
+        continue;
+      }
+
+      try {
+        const handlerRef = parseHandlerRef(route.handler);
+        return {
+          pluginId,
+          handler: handlerRef,
+          manifest,
+          route,
+          pluginRoot: plugin.source.path,
+          workdir: plugin.source.path,
+          outdir: path.join(plugin.source.path, 'out'),
+        } satisfies ResolvedRoute;
+      } catch (error) {
+        console.warn('[PluginRegistry] Failed to parse handler for route', {
+          pluginId,
+          handler: route.handler,
+          error,
+        });
+        return null;
+      }
+    }
+
     return null;
   }
 
@@ -264,6 +360,20 @@ export class PluginRegistry {
       plugins: this.list(),
       ts: this.lastUpdate,
     };
+  }
+
+  /**
+   * Get errors from last discovery
+   */
+  get errors(): Array<{ path: string; error: string }> {
+    return this.lastErrors;
+  }
+
+  /**
+   * Check if registry has completed at least one discovery
+   */
+  get isInitialized(): boolean {
+    return this.initialized;
   }
 
   /**

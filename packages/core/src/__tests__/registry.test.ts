@@ -10,7 +10,8 @@ describe("Registry", () => {
 
   describe("registry", () => {
     it("should be an empty array initially", () => {
-      expect(registry).toEqual([]);
+      expect(Array.from(registry)).toEqual([]);
+      expect(registry.length).toBe(0);
     });
 
     it("should allow adding commands", () => {

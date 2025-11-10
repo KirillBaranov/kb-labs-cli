@@ -37,5 +37,16 @@ describe("Context simple tests", () => {
       expect(context.repoRoot).toBeDefined();
       expect(typeof context.repoRoot).toBe("string");
     });
+
+    it("should honour provided env and cwd overrides", async () => {
+      const presenter = createTextPresenter();
+      const customEnv = { TEST_FLAG: "1" } as NodeJS.ProcessEnv;
+      const cwd = process.cwd();
+      const context = await createContext({ presenter, env: customEnv, cwd });
+
+      expect(context.env).toBe(customEnv);
+      expect(context.cwd).toBe(cwd);
+      expect(context.repoRoot).toBeDefined();
+    });
   });
 });
