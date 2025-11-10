@@ -3,14 +3,14 @@ import type { CliContext } from "../context";
 
 export function createJsonPresenter(): Presenter & { setContext(context: CliContext): void } {
   let context: CliContext | null = null;
-  
+
   return {
     isTTY: false,
     isQuiet: false,
     isJSON: true,
-    write: (_line) => { },
-    info: (_line) => { },
-    warn: (_line) => { },
+    write: (_line) => {},
+    info: (_line) => {},
+    warn: (_line) => {},
     error: (line) =>
       console.log(JSON.stringify({ ok: false, error: { message: line } })),
     json: (payload) => {
@@ -21,6 +21,8 @@ export function createJsonPresenter(): Presenter & { setContext(context: CliCont
     },
     setContext(ctx: CliContext) {
       context = ctx;
-    }
+    },
   };
 }
+
+export type JsonPresenter = ReturnType<typeof createJsonPresenter>;

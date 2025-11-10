@@ -5,18 +5,18 @@ export function createTextPresenter(isQuiet: boolean = false): Presenter {
   return {
     isTTY,
     isQuiet,
-    isJSON: false,                                   // NEW
+    isJSON: false,
     write: (line) => {
       if (!isQuiet) {
         console.log(line);
       }
     },
-    info: (line) => {                               // NEW
+    info: (line) => {
       if (!isQuiet) {
         console.log(line);
       }
     },
-    warn: (line) => {                               // NEW
+    warn: (line) => {
       if (!isQuiet) {
         console.warn(line);
       }
@@ -27,3 +27,5 @@ export function createTextPresenter(isQuiet: boolean = false): Presenter {
     },
   };
 }
+
+export type TextPresenter = ReturnType<typeof createTextPresenter>;
