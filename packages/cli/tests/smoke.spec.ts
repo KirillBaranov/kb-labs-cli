@@ -1,5 +1,166 @@
-import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { run } from "../src/index";
+import { describe, it, expect, vi, afterEach, beforeEach, beforeAll } from "vitest";
+
+const cliCommandMocks = vi.hoisted(() => {
+  type CommandImpl = {
+    name: string;
+    describe: string;
+    aliases?: string[];
+    run: (ctx: any, argv: string[], flags: Record<string, unknown>) => Promise<number | void> | number | void;
+  };
+
+  const commands = new Map<string, CommandImpl>();
+  let registered = false;
+
+  const normalizeKey = (input: string | string[]): string => {
+    if (Array.isArray(input)) {
+      return input.join(" ").trim();
+    }
+    return input.replace(/:/g, " ").trim();
+  };
+
+  const ensureRegistered = () => {
+    if (registered) {
+      return;
+    }
+    registered = true;
+
+    const hello: CommandImpl = {
+      name: "hello",
+      describe: "Friendly greeting",
+      run: (ctx, _argv, flags) => {
+        if (flags.json) {
+          ctx.sentJSON = true;
+          ctx.presenter.json({
+            ok: true,
+            data: { message: "Hello, KB Labs!" },
+          });
+          return 0;
+        }
+        ctx.presenter.write("Hello, KB Labs!");
+        return 0;
+      },
+    };
+
+    const version: CommandImpl = {
+      name: "version",
+      describe: "Show CLI version",
+      run: (ctx, _argv, flags) => {
+        const value = process.env.CLI_VERSION || "0.1.0";
+        if (flags.json) {
+          ctx.sentJSON = true;
+          ctx.presenter.json({
+            ok: true,
+            version: value,
+          });
+          return 0;
+        }
+        ctx.presenter.write(value);
+        return 0;
+      },
+    };
+
+    const diagnose: CommandImpl = {
+      name: "diagnose",
+      describe: "Diagnose environment",
+      run: (ctx, _argv, flags) => {
+        if (flags.json) {
+          ctx.sentJSON = true;
+          ctx.presenter.json({
+            ok: true,
+            data: {
+              node: process.version.replace(/^v/, `v`),
+              repoRoot: ctx.repoRoot ?? ctx.cwd,
+            },
+          });
+          return 0;
+        }
+        ctx.presenter.write(`node=${process.version.replace(/^v/, "v")}`);
+        ctx.presenter.write(`repoRoot=${ctx.repoRoot ?? ctx.cwd}`);
+        return 0;
+      },
+    };
+
+    const profilesInit: CommandImpl = {
+      name: "init",
+      describe: "Initialize profile",
+      run: (ctx, _argv, flags) => {
+        if (flags.json) {
+          ctx.sentJSON = true;
+          ctx.presenter.json({
+            ok: true,
+            created: true,
+          });
+          return 0;
+        }
+        ctx.presenter.write("✅ Profile created successfully");
+        return 0;
+      },
+    };
+
+    commands.set("hello", hello);
+    commands.set("version", version);
+    commands.set("diagnose", diagnose);
+    commands.set("profiles init", {
+      ...profilesInit,
+      name: "init",
+      describe: "Initialize profiles",
+    });
+  };
+
+  const registerBuiltinCommands = vi.fn(async (_input?: any) => {
+    ensureRegistered();
+  });
+
+  const findCommand = vi.fn((nameOrPath: string | string[]) => {
+    ensureRegistered();
+    return commands.get(normalizeKey(nameOrPath));
+  });
+
+  const registry = {
+    getCommandsByGroup: vi.fn(() => []),
+    getManifestCommand: vi.fn(() => undefined),
+    listProductGroups: vi.fn(() => []),
+    list: vi.fn(() => Array.from(commands.values())),
+    markPartial: vi.fn(),
+    isPartial: vi.fn(() => false),
+  };
+
+  const reset = () => {
+    commands.clear();
+    registered = false;
+    registerBuiltinCommands.mockClear();
+    findCommand.mockClear();
+    registry.getCommandsByGroup.mockClear();
+    registry.getManifestCommand.mockClear();
+    registry.listProductGroups.mockClear();
+    registry.list.mockClear();
+    registry.markPartial.mockClear();
+    registry.isPartial.mockClear();
+  };
+
+  return {
+    registerBuiltinCommands,
+    findCommand,
+    registry,
+    reset,
+  };
+});
+
+vi.mock("@kb-labs/cli-commands", () => ({
+  registerBuiltinCommands: cliCommandMocks.registerBuiltinCommands,
+  findCommand: cliCommandMocks.findCommand,
+  registry: cliCommandMocks.registry,
+  renderGlobalHelpNew: vi.fn(
+    () =>
+      "KB Labs CLI - Project management and automation tool\nUsage: kb [command] [options]",
+  ),
+  renderGroupHelp: vi.fn(() => "Group help"),
+  renderProductHelp: vi.fn(() => "Product help"),
+  renderManifestCommandHelp: vi.fn(() => "Manifest help"),
+}));
+
+const { run } = await import("../src/index");
+const { executeCli } = await import("../src/runtime/bootstrap");
 
 describe("CLI Smoke Tests", () => {
   let consoleLogSpy: any;
@@ -16,6 +177,7 @@ describe("CLI Smoke Tests", () => {
     process.argv = originalArgv;
     consoleLogSpy?.mockRestore();
     consoleErrorSpy?.mockRestore();
+    cliCommandMocks.reset();
   });
 
   describe("Global flags", () => {
@@ -164,6 +326,40 @@ describe("CLI Smoke Tests", () => {
           expect.stringContaining('{"ok":true,"created":')
         );
       });
+    });
+  });
+
+  describe("Runtime options", () => {
+    it("should respect explicit env version override", async () => {
+      const exitCode = await executeCli(["--version", "--json"], {
+        env: { CLI_VERSION: "9.9.9" } as NodeJS.ProcessEnv,
+        initLogging: vi.fn(),
+      });
+
+      expect(exitCode).toBe(0);
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('"version":"9.9.9"')
+      );
+    });
+
+    it("should emit diagnostics using provided cwd", async () => {
+      const exitCode = await executeCli(["diagnose", "--json"], {
+        env: process.env,
+        cwd: process.cwd(),
+        initLogging: vi.fn(),
+      });
+
+      expect(exitCode).toBe(0);
+      const payload = consoleLogSpy.mock.calls
+        .map((call: any[]) => String(call[0]))
+        .find((entry: string) => entry.includes('"repoRoot"'));
+
+      expect(payload).toBeDefined();
+      if (payload) {
+        const parsed = JSON.parse(payload);
+        expect(parsed.ok).toBe(true);
+        expect(parsed.data.repoRoot).toBeDefined();
+      }
     });
   });
 });

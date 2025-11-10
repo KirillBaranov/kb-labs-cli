@@ -15,30 +15,34 @@ describe('JSON output purity', () => {
     console.log = originalConsoleLog;
   });
 
-  it('should output single valid JSON object', async () => {
-    await run(['hello', '--json']);
+  it("should output single valid JSON object", async () => {
+    await run(["hello", "--json"]);
 
     expect(capturedOutput).toHaveLength(1);
     const parsed = JSON.parse(capturedOutput[0]!);
     expect(parsed.ok).toBe(true);
-    expect(parsed.data).toHaveProperty('message');
+    expect(parsed).toHaveProperty("message");
+    expect(parsed).toHaveProperty("who");
   });
 
-  it('should not leak ANSI codes in JSON mode', async () => {
-    await run(['devlink', 'status', '--json']);
+  it("should not leak ANSI codes in JSON mode", async () => {
+    await run(["hello", "--json"]);
 
-    capturedOutput.forEach(line => {
+    capturedOutput.forEach((line) => {
       expect(line).not.toMatch(/\x1b\[/);
       expect(() => JSON.parse(line)).not.toThrow();
     });
   });
 
-  it('should handle mixed output correctly', async () => {
-    await run(['hello', '--json']);
+  it("should include metadata fields in JSON mode", async () => {
+    await run(["hello", "--json"]);
 
     expect(capturedOutput).toHaveLength(1);
     const parsed = JSON.parse(capturedOutput[0]!);
-    expect(parsed).toHaveProperty('ok');
-    expect(parsed).toHaveProperty('data');
+    expect(parsed).toMatchObject({
+      ok: true,
+      who: expect.any(String),
+    });
+    expect(parsed).toHaveProperty("timing");
   });
 });

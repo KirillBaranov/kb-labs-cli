@@ -13,6 +13,10 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./shared": {
+      "import": "./dist/shared.js",
+      "types": "./dist/shared.d.ts"
     }
   },
   "files": [
@@ -35,12 +39,14 @@
     "@kb-labs/cli-adapters": "link:../adapters",
     "@kb-labs/cli-commands": "link:../commands",
     "@kb-labs/cli-core": "link:../core",
+    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui",
     "@kb-labs/mind-adapters": "link:../../../kb-labs-mind/packages/mind-adapters",
     "@kb-labs/mind-core": "link:../../../kb-labs-mind/packages/mind-core",
     "@kb-labs/mind-indexer": "link:../../../kb-labs-mind/packages/mind-indexer",
     "@kb-labs/mind-pack": "link:../../../kb-labs-mind/packages/mind-pack",
     "@kb-labs/audit-core": "link:../../../kb-labs-audit/packages/audit-core",
     "@kb-labs/audit-checks": "link:../../../kb-labs-audit/packages/audit-checks",
+    "@kb-labs/plugin-adapter-cli": "link:../../../kb-labs-plugin/packages/adapters/cli",
     "zod": "^4.1.5"
   },
   "devDependencies": {

@@ -2,7 +2,17 @@
   "extends": "@kb-labs/devkit/tsconfig/lib.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "baseUrl": ".",
+    "paths": {
+      "@kb-labs/cli-core/public": ["../../core/src/public/index.ts"],
+      "@kb-labs/cli-runtime": ["../../cli-runtime/src"],
+      "@kb-labs/cli-runtime/*": ["../../cli-runtime/src/*"],
+      "@kb-labs/plugin-adapter-cli": ["../../../kb-labs-plugin/packages/adapters/cli/src"],
+      "@kb-labs/plugin-adapter-rest": ["../../../kb-labs-plugin/packages/adapters/rest/src"],
+      "@kb-labs/shared-cli-ui": ["../../../kb-labs-shared/packages/cli-ui/src"],
+      "@kb-labs/shared-cli-ui/*": ["../../../kb-labs-shared/packages/cli-ui/src/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"]
