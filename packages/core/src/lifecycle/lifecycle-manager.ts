@@ -54,7 +54,9 @@ export class LifecycleManager {
    */
   async invokeLoad(pluginId: string): Promise<void> {
     const manifest = this.registry.getManifestV2(pluginId);
-    if (!manifest?.lifecycle?.onLoad) return;
+    if (!manifest?.lifecycle?.onLoad) {
+      return;
+    }
 
     try {
       const lifecycle = await this.loadLifecycle(pluginId, manifest.lifecycle.onLoad);
@@ -76,7 +78,9 @@ export class LifecycleManager {
    */
   async invokeUnload(pluginId: string): Promise<void> {
     const lifecycle = this.loadedHooks.get(pluginId);
-    if (!lifecycle?.onUnload) return;
+    if (!lifecycle?.onUnload) {
+      return;
+    }
 
     try {
       await this.withTimeout(
@@ -96,7 +100,9 @@ export class LifecycleManager {
    */
   async invokeEnable(pluginId: string): Promise<void> {
     const lifecycle = this.loadedHooks.get(pluginId);
-    if (!lifecycle?.onEnable) return;
+    if (!lifecycle?.onEnable) {
+      return;
+    }
 
     try {
       await this.withTimeout(
@@ -114,7 +120,9 @@ export class LifecycleManager {
    */
   async invokeDisable(pluginId: string): Promise<void> {
     const lifecycle = this.loadedHooks.get(pluginId);
-    if (!lifecycle?.onDisable) return;
+    if (!lifecycle?.onDisable) {
+      return;
+    }
 
     try {
       await this.withTimeout(

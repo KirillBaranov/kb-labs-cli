@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "description": "Adapters for KB Labs CLI - file system, environment, and discovery utilities",
+  "description": "Compatibility wrapper re-exporting @kb-labs/core-cli-adapters",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -13,35 +13,19 @@
     }
   },
   "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
+    "dist"
   ],
   "sideEffects": false,
   "scripts": {
     "clean": "rimraf dist",
     "build": "tsup --config tsup.config.ts",
-    "dev": "tsup --config tsup.config.ts --watch",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
-    "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "dev": "tsup --config tsup.config.ts --watch"
   },
   "dependencies": {
-    "@kb-labs/cli-core": "link:../core",
-    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
-    "@kb-labs/plugin-adapter-cli": "link:../../../kb-labs-plugin/packages/adapters/cli",
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
-    "picomatch": "^4.0.2",
-    "yaml": "^2.5.1"
+    "@kb-labs/core-cli-adapters": "link:../../../kb-labs-core/packages/cli-adapters"
   },
   "devDependencies": {
-    "@types/node": "^24.3.3",
-    "@types/picomatch": "^4",
-    "cpy-cli": "^4.2.0",
     "rimraf": "^6.0.1",
-    "tsup": "^8.5.0",
-    "vitest": "^3.2.4"
+    "tsup": "^8.5.0"
   }
 }

@@ -20,3 +20,12 @@ export { health } from "./commands/system/health";
 export { version } from "./commands/system/version";
 export { diagnose } from "./commands/system/diagnose";
 export { createPluginsIntrospectCommand } from "./plugins-introspect.js";
+export {
+  wfRun,
+  wfValidate,
+  wfRunsList,
+  wfRunsGet,
+  wfLogs,
+  wfCancel,
+  workflowCommandGroup,
+} from "./commands/workflows";

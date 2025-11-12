@@ -52,14 +52,15 @@ export class PkgStrategy implements DiscoveryStrategy {
               if (version === 'v2') {
                 const manifest = manifestData as ManifestV2;
                 const pluginId = manifest.id || pkg.name || path.basename(root);
-                
+                const pluginDir = path.dirname(manifestPath);
+
                 plugins.push({
                   id: pluginId,
                   version: manifest.version || pkg.version || '0.0.0',
                   kind: 'v2',
                   source: {
                     kind: 'pkg',
-                    path: manifestPath,
+                    path: pluginDir,
                   },
                   display: {
                     name: manifest.display?.name || pkg.kbLabs?.name || pkg.name,
@@ -113,14 +114,15 @@ export class PkgStrategy implements DiscoveryStrategy {
                       if (version === 'v2') {
                         const manifest = manifestData as ManifestV2;
                         const pluginId = manifest.id || pluginPkg.name || path.basename(resolvedPath);
-                        
+                        const pluginDir = path.dirname(pluginManifestPath);
+
                         plugins.push({
                           id: pluginId,
                           version: manifest.version || pluginPkg.version || '0.0.0',
                           kind: 'v2',
                           source: {
                             kind: 'pkg',
-                            path: pluginManifestPath,
+                            path: pluginDir,
                           },
                           display: {
                             name: manifest.display?.name || pluginPkg.kbLabs?.name || pluginPkg.name,

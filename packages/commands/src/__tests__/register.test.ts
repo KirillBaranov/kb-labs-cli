@@ -1,15 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { DiscoveryResult, RegisteredCommand, CommandManifest } from "../registry/types";
+import type { ManifestRegistrationResult } from "../registry/register";
 
 const mockRegister = vi.hoisted(() => vi.fn());
 const mockRegisterGroup = vi.hoisted(() => vi.fn());
 const mockMarkPartial = vi.hoisted(() => vi.fn());
 const mockRegisterManifests = vi.hoisted(() =>
-  vi.fn(async () => ({ registered: [], skipped: [], collisions: 0, errors: 0 })),
+  vi.fn(async (): Promise<ManifestRegistrationResult> => ({
+    registered: [],
+    skipped: [],
+    collisions: 0,
+    errors: 0,
+  })),
 );
 const mockPreflightManifests = vi.hoisted(() =>
-  vi.fn((discovered) => ({ valid: discovered, skipped: [] })),
+  vi.fn((discovered: DiscoveryResult[]) => ({ valid: discovered, skipped: [] })),
 );
-const mockDiscoverManifests = vi.hoisted(() => vi.fn(async () => []));
+const mockDiscoverManifests = vi.hoisted(() =>
+  vi.fn(async (): Promise<DiscoveryResult[]> => []),
+);
 const mockDisposeAllPlugins = vi.hoisted(() => vi.fn());
 const mockPluginRegistry = vi.hoisted(() =>
   vi.fn().mockImplementation(() => ({
@@ -17,6 +26,10 @@ const mockPluginRegistry = vi.hoisted(() =>
     list: vi.fn(() => []),
   })),
 );
+
+vi.mock("@kb-labs/cli-core", () => ({
+  PluginRegistry: mockPluginRegistry,
+}));
 
 vi.mock("../registry/service", () => ({
   registry: {
@@ -36,10 +49,6 @@ vi.mock("../registry/register", () => ({
 
 vi.mock("../registry/discover.js", () => ({
   discoverManifests: mockDiscoverManifests,
-}));
-
-vi.mock("@kb-labs/cli-core", () => ({
-  PluginRegistry: mockPluginRegistry,
 }));
 
 async function loadModules() {
@@ -62,36 +71,36 @@ describe("registerBuiltinCommands", () => {
   });
 
   it("registers core system commands", async () => {
-    const discoveryFixture = [
+    const discoveryFixture: DiscoveryResult[] = [
       {
-        source: "workspace" as const,
+        source: "workspace",
         packageName: "@kb-labs/test-package",
         manifestPath: "/virtual/manifest.mjs",
         pkgRoot: "/virtual/pkg",
         manifests: [
           {
-            manifestVersion: "1.0",
+            manifestVersion: "1.0" as const,
             id: "test:command",
             group: "test",
             describe: "Test command",
             loader: async () => ({ run: async () => 0 }),
-          },
+          } satisfies CommandManifest,
         ],
       },
     ];
 
     mockDiscoverManifests.mockResolvedValueOnce(discoveryFixture);
+    const registeredCommand: RegisteredCommand = {
+      manifest: discoveryFixture[0]!.manifests[0]!,
+      available: true,
+      source: "workspace",
+      shadowed: false,
+      pkgRoot: "/virtual/pkg",
+      packageName: "@kb-labs/test-package",
+    };
+
     mockRegisterManifests.mockResolvedValueOnce({
-      registered: [
-        {
-          manifest: discoveryFixture[0]!.manifests[0]!,
-          available: true,
-          source: "workspace",
-          shadowed: false,
-          pkgRoot: "/virtual/pkg",
-          packageName: "@kb-labs/test-package",
-        },
-      ],
+      registered: [registeredCommand],
       skipped: [],
       collisions: 0,
       errors: 0,

@@ -217,7 +217,7 @@ export async function clearCache(cwd: string, options?: { deep?: boolean }): Pro
   }
   
   // Deep clearing: clear Node.js module cache for dynamic imports
-  let modulesCleared: string[] = [];
+  const modulesCleared: string[] = [];
   if (options?.deep) {
     try {
       // Clear require cache for plugin-related modules

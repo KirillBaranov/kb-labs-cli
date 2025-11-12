@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { discoverManifests } from "../discover.js";
+import type { CommandManifest } from "../types.js";
 
 const fsPromisesMock = vi.hoisted(() => ({
   readFile: vi.fn(),
@@ -172,5 +173,23 @@ describe('discoverManifests', () => {
     const results = await discoverManifests("/test/cwd", false);
 
     expect(Array.isArray(results)).toBe(true);
+  });
+
+  it('should rehydrate loader stub for cached manifest entries', async () => {
+    const { __test } = await import('../discover.js') as any;
+
+    const manifest = {
+      manifestVersion: '1.0',
+      id: 'test:init',
+      group: 'test',
+      describe: 'Test init command',
+      flags: [],
+      examples: [],
+    } as unknown as CommandManifest;
+
+    expect(typeof manifest.loader).not.toBe('function');
+    __test.ensureManifestLoader(manifest);
+    expect(typeof manifest.loader).toBe('function');
+    await expect(manifest.loader()).rejects.toThrow(/ManifestV2 command/);
   });
 });

@@ -1,17 +1,3 @@
-import path from "node:path";
-import { existsSync } from "node:fs";
+// TODO: Remove after consumers migrate to @kb-labs/core-cli-adapters/env/repo
+export * from '@kb-labs/core-cli-adapters/env/repo';
 
-/** Very small repo root detector: looks for .git upwards. */
-export function detectRepoRoot(start = process.cwd()): string {
-  let cur = path.resolve(start);
-  while (true) {
-    if (existsSync(path.join(cur, ".git"))) {
-      return cur;
-    }
-    const parent = path.dirname(cur);
-    if (parent === cur) {
-      return start;
-    } // fallback
-    cur = parent;
-  }
-}

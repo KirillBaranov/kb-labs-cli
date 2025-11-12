@@ -23,3 +23,9 @@ vi.mock("@kb-labs/plugin-adapter-rest", () => ({
   resolveHeaderPolicy: vi.fn(() => ({})),
 }));
 
+vi.mock("@kb-labs/shared-cli-ui/debug", () => ({
+  formatDebugEntryAI: vi.fn((entry: unknown) => JSON.stringify(entry)),
+  formatDebugEntryHuman: vi.fn((entry: unknown) => JSON.stringify(entry)),
+  shouldUseAIFormat: vi.fn(() => false),
+}));
+

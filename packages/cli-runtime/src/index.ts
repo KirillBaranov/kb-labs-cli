@@ -28,3 +28,9 @@ export {
   type RuntimeSetupOptions,
 } from "./runtime.js";
 
+// Event bridge
+export {
+  StdoutEventBridge,
+  type StdoutEventBridgeOptions,
+} from './events/stdout-event-bridge.js';
+

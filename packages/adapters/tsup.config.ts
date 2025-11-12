@@ -5,6 +5,6 @@ export default {
   entry: {
     index: "src/index.ts",
   },
-  external: ["ajv", "ajv-formats", "yaml", "picomatch"],
-  clean: false,
+  external: ["@kb-labs/core-cli-adapters"],
+  clean: true,
 };

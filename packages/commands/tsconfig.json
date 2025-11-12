@@ -1,13 +1,7 @@
 {
-  "extends": "@kb-labs/devkit/tsconfig/lib.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
-    "baseUrl": "../../",
-    "paths": {
-      "@kb-labs/cli-api": ["packages/cli-api/dist"],
-      "@kb-labs/cli-api/*": ["packages/cli-api/dist/*"]
-    }
+    "outDir": "dist"
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules", "src/commands/debug"]

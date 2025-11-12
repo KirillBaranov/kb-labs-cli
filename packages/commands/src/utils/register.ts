@@ -1,6 +1,5 @@
 import { registry } from "../registry/service";
 import type { RegisteredCommand } from "../registry/types.js";
-import type { Command } from "../types/types.js";
 import { hello } from "../commands/system/hello";
 import { version } from "../commands/system/version";
 import { diagnose } from "../commands/system/diagnose";
@@ -27,6 +26,7 @@ import { trace } from "../commands/debug/trace";
 import { fixture } from "../commands/debug/fixture";
 import { createPluginsIntrospectCommand } from "../plugins-introspect.js";
 import { registerManifests, disposeAllPlugins, preflightManifests } from "../registry/register";
+import { workflowCommandGroup } from "../commands/workflows";
 import { PluginRegistry } from "@kb-labs/cli-core";
 import { log } from "./logger";
 import { registerShutdownHook } from "./shutdown";
@@ -69,6 +69,7 @@ export async function registerBuiltinCommands(
   registry.register(registryLint);
   registry.register(headersDebug);
   registry.register(pluginsCacheClear);
+  registry.registerGroup(workflowCommandGroup);
   
   // Debug commands
   registry.register(replay);

@@ -64,13 +64,15 @@ export class DirStrategy implements DiscoveryStrategy {
                 };
               }
 
+              const pluginDir = path.dirname(manifestPath)
+
               plugins.push({
                 id: pluginId,
                 version: manifest.version || '0.0.0',
                 kind: 'v2',
                 source: {
                   kind: 'dir',
-                  path: manifestPath,
+                  path: pluginDir,
                 },
                 display,
               });

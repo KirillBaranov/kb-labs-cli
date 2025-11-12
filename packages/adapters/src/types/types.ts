@@ -1,2 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface HelloWorld {}
+// TODO: Remove after consumers migrate to @kb-labs/core-cli-adapters/types/types
+export * from '@kb-labs/core-cli-adapters/types/types';
+

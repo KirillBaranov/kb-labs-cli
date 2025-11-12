@@ -3,7 +3,7 @@
  * CLI API implementation
  */
 
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import type { ManifestV2, CliCommandDecl } from '@kb-labs/plugin-manifest';
 import {
   PluginRegistry,
   InMemoryCacheAdapter,
@@ -15,6 +15,8 @@ import {
   type ExplainResult,
   type RegistrySnapshot as CoreRegistrySnapshot,
   type RegistryDiff,
+  createContext,
+  type CliContext,
 } from '@kb-labs/cli-core';
 import type {
   CliAPI,
@@ -26,7 +28,16 @@ import type {
   SystemHealthOptions,
   SystemHealthSnapshot,
   RedisStatus,
+  WorkflowRunParams,
+  WorkflowRunsListOptions,
+  WorkflowRunsListResult,
+  WorkflowLogStreamOptions,
+  WorkflowWorkerOptions,
+  WorkflowEventsListOptions,
+  WorkflowEventsListResult,
+  WorkflowEventStreamOptions,
 } from './types.js';
+import { WorkflowService } from './workflows.js';
 import type { RedisClientType, RedisClientOptions } from 'redis';
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
@@ -209,6 +220,7 @@ export class CliAPIImpl implements CliAPI {
   private readonly redisSnapshotKey: string | null;
   private readonly traceId: string;
   private readonly logger: StructuredLogger;
+  private readonly workflowService: WorkflowService;
 
   constructor(private opts?: CliInitOptions) {
     const discoveryOpts = {
@@ -226,6 +238,7 @@ export class CliAPIImpl implements CliAPI {
       component: 'cli-api',
       pid: process.pid,
     });
+    this.workflowService = new WorkflowService(this.logger);
 
     const cacheOpts = opts?.cache?.inMemory
       ? {
@@ -651,6 +664,42 @@ export class CliAPIImpl implements CliAPI {
     };
   }
 
+  async runWorkflow(input: WorkflowRunParams) {
+    return this.workflowService.runWorkflow(input);
+  }
+
+  async listWorkflowRuns(
+    options: WorkflowRunsListOptions = {},
+  ): Promise<WorkflowRunsListResult> {
+    return this.workflowService.listWorkflowRuns(options);
+  }
+
+  async getWorkflowRun(runId: string) {
+    return this.workflowService.getWorkflowRun(runId);
+  }
+
+  async cancelWorkflowRun(runId: string) {
+    return this.workflowService.cancelWorkflowRun(runId);
+  }
+
+  async streamWorkflowLogs(options: WorkflowLogStreamOptions) {
+    await this.workflowService.streamWorkflowLogs(options);
+  }
+
+  async listWorkflowEvents(
+    options: WorkflowEventsListOptions,
+  ): Promise<WorkflowEventsListResult> {
+    return this.workflowService.listWorkflowEvents(options);
+  }
+
+  async streamWorkflowEvents(options: WorkflowEventStreamOptions) {
+    await this.workflowService.streamWorkflowEvents(options);
+  }
+
+  async createWorkflowWorker(options: WorkflowWorkerOptions = {}) {
+    return this.workflowService.createWorker(options);
+  }
+
   private emitSnapshotChange(): void {
     if (this.changeListeners.length === 0) {
       return;
@@ -881,6 +930,7 @@ export class CliAPIImpl implements CliAPI {
     const base: SnapshotWithoutIntegrity = {
       schema: 'kb.registry/1',
       rev: 0,
+      version: '0',
       generatedAt,
       expiresAt,
       ttlMs: this.snapshotTtlMs,
@@ -893,6 +943,7 @@ export class CliAPIImpl implements CliAPI {
       corrupted,
       plugins: [],
       manifests: [],
+      ts: Date.parse(generatedAt),
     };
     return this.ensureSnapshotIntegrity(base, { previousChecksum: this.lastSnapshot?.checksum ?? null });
   }
@@ -936,6 +987,15 @@ export class CliAPIImpl implements CliAPI {
         }))
       : [];
 
+    const version =
+      typeof snapshot.version === 'string' && snapshot.version.trim().length > 0
+        ? snapshot.version
+        : String(rev);
+    const ts =
+      typeof snapshot.ts === 'number' && Number.isFinite(snapshot.ts)
+        ? snapshot.ts
+        : Date.parse(generatedAt);
+
     const baseCorrupted = overrides?.corrupted ?? (!schemaValid || snapshot.corrupted === true);
     const previousChecksum =
       overrides?.previousChecksum ?? (typeof snapshot.previousChecksum === 'string' ? snapshot.previousChecksum : null);
@@ -943,6 +1003,7 @@ export class CliAPIImpl implements CliAPI {
     const base: SnapshotWithoutIntegrity = {
       schema: 'kb.registry/1',
       rev,
+      version,
       generatedAt,
       expiresAt,
       ttlMs,
@@ -952,6 +1013,7 @@ export class CliAPIImpl implements CliAPI {
       corrupted: baseCorrupted,
       plugins: Array.isArray(snapshot.plugins) ? snapshot.plugins : [],
       manifests,
+      ts,
     };
 
     return this.ensureSnapshotIntegrity(
@@ -1002,6 +1064,7 @@ export class CliAPIImpl implements CliAPI {
     const base: SnapshotWithoutIntegrity = {
       schema: 'kb.registry/1',
       rev: safeParseInt(coreSnapshot.version),
+      version: coreSnapshot.version,
       generatedAt,
       expiresAt,
       ttlMs,
@@ -1014,6 +1077,7 @@ export class CliAPIImpl implements CliAPI {
       corrupted: false,
       plugins,
       manifests,
+      ts: coreSnapshot.ts,
     };
     return this.ensureSnapshotIntegrity(base, { previousChecksum: this.lastSnapshot?.checksum ?? null });
   }
@@ -1081,14 +1145,15 @@ export class CliAPIImpl implements CliAPI {
       return this.redisFactory;
     }
     try {
-      const redisModule = (await import('redis')) as { createClient?: RedisFactory };
-      if (typeof redisModule.createClient !== 'function') {
+      const redisModule = await import('redis');
+      const createClient = (redisModule as { createClient?: unknown }).createClient;
+      if (typeof createClient !== 'function') {
         this.logger.warn('Redis module missing createClient export', {
           traceId: this.traceId,
         });
         return null;
       }
-      this.redisFactory = redisModule.createClient;
+      this.redisFactory = createClient as unknown as RedisFactory;
       return this.redisFactory;
     } catch (error) {
       this.logger.warn('Failed to load redis module', {

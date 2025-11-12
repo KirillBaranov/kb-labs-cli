@@ -1,48 +1,36 @@
 {
   "name": "@kb-labs/cli-core",
   "version": "0.1.0",
-  "description": "Core domain logic for KB Labs CLI - registry, discovery, lifecycle, dependencies",
   "type": "module",
+  "private": true,
+  "description": "Compatibility wrapper re-exporting @kb-labs/core-cli",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./public": {
+      "import": "./dist/public.js",
+      "types": "./dist/public.d.ts"
     }
   },
   "files": [
-    "dist",
-    "README.md"
+    "dist"
   ],
+  "sideEffects": false,
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "type-check": "tsc --noEmit"
+    "clean": "rimraf dist",
+    "build": "tsup --config tsup.config.ts",
+    "dev": "tsup --config tsup.config.ts --watch"
   },
   "dependencies": {
-    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
-    "@kb-labs/plugin-devtools": "link:../../../kb-labs-plugin/packages/devtools",
-    "@kb-labs/plugin-adapter-studio": "link:../../../kb-labs-plugin/packages/adapters/studio",
-    "semver": "^7.6.3",
-    "chokidar": "^4.0.3",
-    "glob": "^11.0.0",
-    "yaml": "^2.7.0"
+    "@kb-labs/core-cli": "link:../../../kb-labs-core/packages/cli-core"
   },
   "devDependencies": {
-    "@kb-labs/devkit": "link:../../../kb-labs-devkit",
-    "@types/node": "^24.3.3",
-    "@types/semver": "^7.5.8",
-    "tsup": "^8.5.0",
-    "typescript": "^5.6.3",
-    "vitest": "^3.2.4"
-  },
-  "engines": {
-    "node": ">=18.18.0"
+    "rimraf": "^6.0.1",
+    "tsup": "^8.5.0"
   }
 }
 

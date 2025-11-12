@@ -62,7 +62,7 @@ export class FileStrategy implements DiscoveryStrategy {
             kind: 'v2',
             source: {
               kind: 'file',
-              path: manifestPath,
+              path: pluginDir,
             },
             display,
           });

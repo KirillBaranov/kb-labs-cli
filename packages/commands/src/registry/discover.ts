@@ -3,6 +3,8 @@
  * Command manifest discovery - workspace, node_modules, current package
  */
 
+import { PluginRegistry } from '@kb-labs/cli-core';
+import { detectRepoRoot } from '@kb-labs/core-cli-adapters';
 import { pathToFileURL } from 'node:url';
 import { promises as fs } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -14,6 +16,34 @@ import { log } from '../utils/logger';
 import { toPosixPath } from '../utils/path';
 import { telemetry } from './telemetry';
 import { validateManifests, normalizeManifest } from './schema';
+
+/**
+ * Create loader stub for ManifestV2 commands.
+ * Loader should never be executed directly – CLI adapters must handle execution.
+ */
+function createManifestV2Loader(commandId: string): () => Promise<{ run: any }> {
+  return async () => {
+    throw new Error(
+      `Loader should not be called for ManifestV2 command ${commandId}. Use plugin-adapter-cli executeCommand instead.`
+    );
+  };
+}
+
+/**
+ * Ensure manifest has loader function (rehydrate after JSON serialization).
+ */
+function ensureManifestLoader(manifest: CommandManifest): void {
+  if (typeof manifest.loader !== 'function') {
+    const commandId = manifest.id || manifest.group || 'unknown';
+    log('debug', `[plugins][cache] Rehydrated loader for ${commandId}`);
+    manifest.loader = createManifestV2Loader(commandId);
+  }
+}
+
+export const __test = {
+  ensureManifestLoader,
+  createManifestV2Loader,
+};
 
 /** Create a synthetic manifest marking package as unavailable with actionable hint */
 function createUnavailableManifest(pkgName: string, error: any): CommandManifest {
@@ -160,10 +190,6 @@ async function loadManifest(manifestPath: string, pkgName: string, pkgRoot?: str
   
   const commandManifests: CommandManifest[] = manifestV2.cli.commands.map((cmd: any) => {
     const commandId = cmd.id.includes(':') ? cmd.id : `${cmd.group || namespace}:${cmd.id}`;
-    const loader: () => Promise<{ run: any }> = async () => {
-      throw new Error(`Loader should not be called for ManifestV2 command ${commandId}. Use plugin-adapter-cli executeCommand instead.`);
-    };
-    
     const commandManifest: CommandManifest = {
       manifestVersion: '1.0' as const,
       id: commandId,
@@ -173,7 +199,7 @@ async function loadManifest(manifestPath: string, pkgName: string, pkgRoot?: str
       aliases: cmd.aliases,
       flags: cmd.flags,
       examples: cmd.examples,
-      loader,
+      loader: createManifestV2Loader(commandId),
       package: pkgName,
       namespace: cmd.group || namespace,
     };
@@ -691,6 +717,9 @@ async function loadCache(cwd: string): Promise<CacheFile | null> {
     const parsedCache = cache as CacheFile;
     parsedCache.ttlMs = parsedCache.ttlMs ?? DISK_CACHE_TTL_MS;
     for (const entry of Object.values(parsedCache.packages) as PackageCacheEntry[]) {
+      for (const manifest of entry.result.manifests) {
+        ensureManifestLoader(manifest);
+      }
       entry.cachedAt = entry.cachedAt ?? parsedCache.timestamp ?? Date.now();
     }
     
@@ -772,6 +801,17 @@ async function saveCache(cwd: string, results: DiscoveryResult[]): Promise<void>
       // Get manifest mtime
       const manifestStat = await fs.stat(result.manifestPath.split('/').join(path.sep));
       
+      const manifestsForCache = result.manifests.map(manifest => {
+        const manifestCopy = { ...manifest } as Record<string, unknown>;
+        delete manifestCopy.loader;
+        return manifestCopy;
+      });
+
+      const resultForCache = {
+        ...result,
+        manifests: manifestsForCache as unknown as CommandManifest[],
+      };
+
       packages[result.packageName] = {
         version: '0.1.0', // TODO: Extract from package.json
         manifestHash,
@@ -779,7 +819,7 @@ async function saveCache(cwd: string, results: DiscoveryResult[]): Promise<void>
         pkgJsonMtime: pkgStat.mtimeMs,
         manifestMtime: manifestStat.mtimeMs,
         cachedAt: now,
-        result,
+        result: resultForCache,
       };
       stateHasher.update(result.packageName);
       stateHasher.update(manifestHash);

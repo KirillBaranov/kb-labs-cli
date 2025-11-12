@@ -4,15 +4,26 @@
  */
 
 import type {
+  CliCommand,
+  CliContext,
+  RegistryDiff,
+  RegistrySnapshot as CoreRegistrySnapshot,
   PluginBrief,
-  SourceKind,
   OpenAPISpec,
   StudioRegistry,
+  StudioRegistryEntry,
   ExplainResult,
-  RegistrySnapshot as CoreRegistrySnapshot,
-  RegistryDiff,
+  SourceKind,
 } from '@kb-labs/cli-core';
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import type { CliCommandDecl, ManifestV2 } from '@kb-labs/plugin-manifest';
+import type {
+  WorkflowRun,
+  WorkflowSpec,
+} from '@kb-labs/workflow-contracts';
+import type {
+  CreateRedisClientOptions,
+  WorkflowWorker,
+} from '@kb-labs/workflow-engine';
 
 type ManifestHeadersConfig = ManifestV2 & { headers?: unknown } extends { headers?: infer H } ? H : unknown;
 
@@ -120,7 +131,7 @@ export interface RedisStatus {
 /**
  * Registry snapshot schema exposed by CLI API
  */
-export interface RegistrySnapshot {
+export interface RegistrySnapshot extends CoreRegistrySnapshot {
   schema: 'kb.registry/1';
   rev: number;
   generatedAt: string;
@@ -136,7 +147,6 @@ export interface RegistrySnapshot {
   checksum?: string;
   checksumAlgorithm?: 'sha256';
   previousChecksum?: string | null;
-  plugins: PluginBrief[];
   manifests: RegistrySnapshotManifestEntry[];
 }
 
@@ -220,6 +230,22 @@ export interface CliAPI {
   getSystemHealth(options?: SystemHealthOptions): Promise<SystemHealthSnapshot>;
   /** Get Redis connectivity status (if configured) */
   getRedisStatus?(): RedisStatus;
+  /** Run a workflow specification */
+  runWorkflow(input: WorkflowRunParams): Promise<WorkflowRun>;
+  /** List workflow runs */
+  listWorkflowRuns(options?: WorkflowRunsListOptions): Promise<WorkflowRunsListResult>;
+  /** Retrieve a workflow run */
+  getWorkflowRun(runId: string): Promise<WorkflowRun | null>;
+  /** Cancel a workflow run */
+  cancelWorkflowRun(runId: string): Promise<WorkflowRun | null>;
+  /** Stream workflow log events */
+  streamWorkflowLogs(options: WorkflowLogStreamOptions): Promise<void>;
+  /** List workflow presenter events */
+  listWorkflowEvents(options: WorkflowEventsListOptions): Promise<WorkflowEventsListResult>;
+  /** Stream workflow presenter events */
+  streamWorkflowEvents(options: WorkflowEventStreamOptions): Promise<void>;
+  /** Create a workflow worker (caller is responsible for start/stop lifecycle) */
+  createWorkflowWorker(options?: WorkflowWorkerOptions): Promise<WorkflowWorker>;
 }
 
 // Re-export selected types for convenience
@@ -227,4 +253,91 @@ export type { PluginBrief, ManifestV2, OpenAPISpec, StudioRegistry, ExplainResul
 export type { CoreRegistrySnapshot };
 export type { RegistrySnapshot as CliRegistrySnapshot };
 export type { SystemHealthSnapshot as CliSystemHealthSnapshot };
+
+/**
+ * Workflow API types
+ */
+export interface WorkflowRunParams {
+  spec: WorkflowSpec;
+  idempotencyKey?: string;
+  concurrencyGroup?: string;
+  metadata?: Record<string, unknown>;
+  trigger?: {
+    type: 'manual' | 'webhook' | 'push' | 'schedule';
+    actor?: string;
+    payload?: Record<string, unknown>;
+  };
+  source?: string;
+}
+
+export interface WorkflowRunsListOptions {
+  status?: string;
+  limit?: number;
+}
+
+export interface WorkflowRunsListResult {
+  runs: WorkflowRun[];
+  total: number;
+}
+
+export interface WorkflowLogEvent {
+  type: string;
+  runId: string;
+  jobId?: string;
+  stepId?: string;
+  payload?: Record<string, unknown>;
+  timestamp?: string;
+}
+
+export interface WorkflowLogStreamOptions {
+  runId: string;
+  follow?: boolean;
+  idleTimeoutMs?: number;
+  signal?: AbortSignal;
+  onEvent: (event: WorkflowLogEvent) => void;
+}
+
+export interface WorkflowEventEnvelope {
+  id: string;
+  type: string;
+  version: string;
+  timestamp: string;
+  payload?: unknown;
+  meta?: Record<string, unknown>;
+}
+
+export interface WorkflowEventsListOptions {
+  runId: string;
+  cursor?: string | null;
+  limit?: number;
+}
+
+export interface WorkflowEventsListResult {
+  events: WorkflowEventEnvelope[];
+  cursor: string | null;
+}
+
+export interface WorkflowEventStreamOptions {
+  runId: string;
+  cursor?: string | null;
+  follow?: boolean;
+  pollIntervalMs?: number;
+  signal?: AbortSignal;
+  onEvent: (event: WorkflowEventEnvelope) => void;
+}
+
+export interface WorkflowWorkerOptions {
+  pollIntervalMs?: number;
+  heartbeatIntervalMs?: number;
+  leaseTtlMs?: number;
+  maxConcurrentJobs?: number;
+  artifactsRoot?: string;
+  defaultWorkspace?: string;
+  redis?: CreateRedisClientOptions;
+  discovery?: {
+    strategies?: Array<'workspace' | 'pkg' | 'dir' | 'file'>;
+    roots?: string[];
+  };
+}
+
 

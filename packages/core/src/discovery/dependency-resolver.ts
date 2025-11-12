@@ -64,7 +64,9 @@ export class DependencyResolver {
   private buildGraph(): void {
     for (const plugin of this.plugins.values()) {
       const manifest = this.manifests.get(plugin.id);
-      if (!manifest?.dependencies) continue;
+      if (!manifest?.dependencies) {
+        continue;
+      }
 
       const deps = new Set<string>();
       for (const dep of manifest.dependencies) {
@@ -117,7 +119,9 @@ export class DependencyResolver {
     // Check missing dependencies
     for (const plugin of this.plugins.values()) {
       const manifest = this.manifests.get(plugin.id);
-      if (!manifest?.dependencies) continue;
+      if (!manifest?.dependencies) {
+        continue;
+      }
 
       for (const dep of manifest.dependencies) {
         const depPlugin = this.plugins.get(dep.id);

@@ -36,10 +36,14 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@kb-labs/cli-adapters": "link:../adapters",
     "@kb-labs/cli-commands": "link:../commands",
-    "@kb-labs/cli-core": "link:../core",
+    "@kb-labs/cli-core": "workspace:*",
+    "@kb-labs/cli-runtime": "link:../cli-runtime",
+    "@kb-labs/core-cli-adapters": "link:../../../kb-labs-core/packages/cli-adapters",
+    "glob": "^11.0.3",
     "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui",
+    "cli-table3": "^0.6.5",
+    "yaml": "^2.8.0",
     "@kb-labs/mind-adapters": "link:../../../kb-labs-mind/packages/mind-adapters",
     "@kb-labs/mind-core": "link:../../../kb-labs-mind/packages/mind-core",
     "@kb-labs/mind-indexer": "link:../../../kb-labs-mind/packages/mind-indexer",
@@ -47,6 +51,7 @@
     "@kb-labs/audit-core": "link:../../../kb-labs-audit/packages/audit-core",
     "@kb-labs/audit-checks": "link:../../../kb-labs-audit/packages/audit-checks",
     "@kb-labs/plugin-adapter-cli": "link:../../../kb-labs-plugin/packages/adapters/cli",
+    "@kb-labs/analytics-sdk-node": "link:../../../kb-labs-analytics/packages/analytics-sdk-node",
     "zod": "^4.1.5"
   },
   "devDependencies": {

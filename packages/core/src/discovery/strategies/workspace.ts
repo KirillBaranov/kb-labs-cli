@@ -135,13 +135,15 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
                       const manifest = manifestData as ManifestV2;
                       const pluginId = manifest.id || pkg.name || path.basename(path.dirname(pkgFile));
                       
+                      const pluginDir = path.dirname(manifestPath)
+
                       plugins.push({
                         id: pluginId,
                         version: manifest.version || pkg.version || '0.0.0',
                         kind: 'v2',
                         source: {
                           kind: 'workspace',
-                          path: manifestPath,
+                          path: pluginDir,
                         },
                         display: {
                           name: manifest.display?.name || pkg.kbLabs?.name || pkg.name,

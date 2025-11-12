@@ -11,6 +11,11 @@
       "default": "./dist/index.js"
     }
   },
+  "typesVersions": {
+    "*": {
+      "*": ["src/*"]
+    }
+  },
   "files": [
     "dist",
     "README.md"
@@ -25,8 +30,11 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@kb-labs/cli-core": "link:../core",
+    "@kb-labs/cli-core": "workspace:*",
     "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
+    "@kb-labs/workflow-engine": "link:../../../kb-labs-core/packages/workflow-engine",
+    "@kb-labs/workflow-contracts": "link:../../../kb-labs-core/packages/workflow-contracts",
+    "@kb-labs/workflow-constants": "link:../../../kb-labs-core/packages/workflow-constants",
     "redis": "^4.6.7"
   },
   "devDependencies": {

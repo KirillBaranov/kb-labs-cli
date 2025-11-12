@@ -138,8 +138,8 @@ export const repl: Command = {
 
     // History for commands (for custom history navigation)
     const history: string[] = [];
-    let historyIndex = -1;
-    let currentLine = '';
+    let _historyIndex = -1;
+    const _currentLine = '';
 
     // Setup history navigation (Ctrl+P/Ctrl+N or Up/Down arrows)
     // Note: readline already handles this, but we keep track for autocomplete
@@ -242,7 +242,7 @@ export const repl: Command = {
       // Track history
       if (line.trim()) {
         history.push(line);
-        historyIndex = history.length;
+         _historyIndex = history.length;
       }
 
       const { cmd, args } = parseCommand(line);

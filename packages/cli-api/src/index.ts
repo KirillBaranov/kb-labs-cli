@@ -15,16 +15,32 @@ export type {
   RegistrySnapshot,
   RegistrySnapshotManifestEntry,
   RedisStatus,
+  WorkflowRunParams,
+  WorkflowRunsListOptions,
+  WorkflowRunsListResult,
+  WorkflowLogEvent,
+  WorkflowLogStreamOptions,
+  WorkflowEventEnvelope,
+  WorkflowEventsListOptions,
+  WorkflowEventsListResult,
+  WorkflowEventStreamOptions,
+  WorkflowWorkerOptions,
 } from './types.js';
 
 // Factory
 export { createCliAPI } from './factory.js';
+export { WorkflowService } from './workflows.js';
 
-// Re-export useful types from cli-core
+// Re-export useful types from core CLI package
 export type {
   PluginBrief,
   OpenAPISpec,
   StudioRegistry,
   StudioRegistryEntry,
+  ExplainResult,
+  SourceKind,
+  RegistryDiff,
+  CliContext,
+  CliCommand,
 } from '@kb-labs/cli-core';
 

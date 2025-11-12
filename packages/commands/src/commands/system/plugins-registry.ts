@@ -4,7 +4,7 @@
 
 import type { Command } from "../../types/types";
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
-import { detectRepoRoot } from '@kb-labs/cli-adapters';
+import { detectRepoRoot } from '@kb-labs/core-cli-adapters';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { parse as parseYaml } from 'yaml';

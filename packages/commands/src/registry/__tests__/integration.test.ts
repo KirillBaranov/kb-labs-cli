@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { registerManifests } from "../register.js";
 import { runCommand } from "../run.js";
 import { renderHelp } from "../../utils/help-generator.js";
+import type { ManifestV2 } from "@kb-labs/plugin-manifest";
 import type { CommandManifest } from "../types.js";
 
 const executeCommandMock = vi.hoisted(() =>
@@ -24,18 +25,22 @@ vi.mock("@kb-labs/plugin-adapter-cli", () => ({
   })),
 }));
 
-const baseManifestV2 = {
-  schema: "kb.cli/2",
-  permissions: [],
+const baseManifestV2: ManifestV2 = {
+  schema: "kb.plugin/2",
+  id: "@kb-labs/test-plugin",
+  version: "0.0.1",
+  permissions: {},
+  capabilities: [],
   cli: {
     commands: [
       {
         id: "test:command",
+        describe: "Test command",
         handler: "./cli/command.js",
+        flags: [],
       },
     ],
   },
-  capabilities: [],
 };
 
 /**
@@ -60,7 +65,7 @@ describe("Registry Integration", () => {
       group: "test",
       describe: "Test command",
       flags: [{ name: "verbose", type: "boolean", alias: "v" }],
-      manifestV2: baseManifestV2,
+      manifestV2: structuredClone(baseManifestV2),
       loader: async () => ({
         run: async (ctx: any, _argv: string[], flags: any) => {
           ctx.presenter.info(flags.verbose ? "Verbose mode enabled" : "Run executed");
@@ -124,7 +129,7 @@ describe("Registry Integration", () => {
       group: "test",
       describe: "Test command",
       requires: ["@kb-labs/missing-package"],
-      manifestV2: baseManifestV2,
+      manifestV2: structuredClone(baseManifestV2),
       loader: async () => ({ run: async () => 0 }),
     };
 
@@ -170,7 +175,7 @@ describe("Registry Integration", () => {
       id: "test:command",
       group: "test",
       describe: "Node command",
-      manifestV2: baseManifestV2,
+      manifestV2: structuredClone(baseManifestV2),
       loader: async () => ({ run: async () => 0 }),
     };
 
@@ -179,7 +184,7 @@ describe("Registry Integration", () => {
       id: "test:command",
       group: "test",
       describe: "Workspace command",
-      manifestV2: baseManifestV2,
+      manifestV2: structuredClone(baseManifestV2),
       loader: async () => ({ run: async () => 0 }),
     };
 

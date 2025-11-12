@@ -5,7 +5,7 @@ export default {
   entry: {
     index: "src/index.ts",
   },
-  external: [/^@kb-labs\//, "cli-table3"],
+  external: [/^@kb-labs\//, "cli-table3", "@kb-labs/cli-core/public"],
   skipNodeModulesBundle: true,
 };
 

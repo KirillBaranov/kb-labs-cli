@@ -55,7 +55,7 @@ export const diag: Command = {
       details: { nodeVersion, cliVersion, platform, arch },
     });
     
-    tracker.mark('environment');
+    tracker.checkpoint('environment');
     
     // 2. Plugin discovery check
     try {
@@ -86,7 +86,7 @@ export const diag: Command = {
         details: { error: err.message },
       });
     }
-    tracker.mark('discovery');
+    tracker.checkpoint('discovery');
     
     // 3. Cache check
     try {
@@ -124,7 +124,7 @@ export const diag: Command = {
         details: { error: err.message },
       });
     }
-    tracker.mark('cache');
+    tracker.checkpoint('cache');
     
     // 4. Plugins state check
     try {
@@ -152,7 +152,7 @@ export const diag: Command = {
         details: { error: err.message },
       });
     }
-    tracker.mark('state');
+    tracker.checkpoint('state');
     
     // 5. Version compatibility check
     const versionIssues: Array<{ plugin: string; required: string; current: string }> = [];
@@ -202,7 +202,7 @@ export const diag: Command = {
         details: { error: err.message },
       });
     }
-    tracker.mark('versions');
+    tracker.checkpoint('versions');
     
     const totalTime = tracker.total();
     
@@ -218,7 +218,7 @@ export const diag: Command = {
         },
         timing: {
           total: totalTime,
-          breakdown: tracker.getBreakdown(),
+          breakdown: tracker.breakdown(),
         },
       });
       return diagnostics.filter(d => d.status === 'error').length > 0 ? 1 : 0;

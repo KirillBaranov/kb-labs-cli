@@ -18,13 +18,17 @@ vi.mock("@kb-labs/plugin-adapter-cli", () => ({
 }));
 
 const baseManifestV2: ManifestV2 = {
-  schema: "kb.cli/2",
-  permissions: [],
+  schema: "kb.plugin/2",
+  id: "-labs/test-plugin",
+  version: "0.0.1",
+  permissions: {},
   cli: {
     commands: [
       {
         id: "test:command",
+        describe: "Test command",
         handler: "./cli/command.js",
+        flags: [],
       },
     ],
   },
@@ -203,8 +207,6 @@ describe('runCommand', () => {
 
   it("should handle command returning void", async () => {
     const registeredCmd = createRegisteredCommand();
-    mockExecuteCommand.mockResolvedValueOnce(undefined);
-
     const result = await runCommand(registeredCmd, mockCtx, [], {});
 
     expect(result).toBe(0);

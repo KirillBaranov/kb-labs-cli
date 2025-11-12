@@ -25,10 +25,10 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@kb-labs/cli-core": "link:../core",
+    "@kb-labs/cli-core": "workspace:*",
     "@kb-labs/sandbox": "link:../../../kb-labs-core/packages/sandbox",
     "cli-table3": "^0.6.5",
-    "yaml": "^2.7.0",
+    "yaml": "^2.8.0",
     "colorette": "^2.0.20"
   },
   "devDependencies": {

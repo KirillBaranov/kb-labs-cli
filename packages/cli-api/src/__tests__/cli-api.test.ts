@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { createCliAPI, type CliAPI } from '../index.js';
+import { createCliAPI, type CliAPI, type StudioRegistryEntry } from '../index.js';
 
 describe('CliAPI', () => {
   let api: CliAPI;
@@ -108,7 +108,7 @@ describe('CliAPI', () => {
     it('should return plugins sorted by id', async () => {
       const registry = await api.getStudioRegistry();
       
-      const ids = registry.plugins.map(p => p.id);
+      const ids = registry.plugins.map((plugin: StudioRegistryEntry) => plugin.id);
       const sortedIds = [...ids].sort();
       
       expect(ids).toEqual(sortedIds);

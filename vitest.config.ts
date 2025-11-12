@@ -17,6 +17,14 @@ export default defineConfig({
       ),
       "@kb-labs/plugin-adapter-cli": resolve(__dirname, "../kb-labs-plugin/packages/adapters/cli/src"),
       "@kb-labs/plugin-adapter-rest": resolve(__dirname, "../kb-labs-plugin/packages/adapters/rest/src"),
+      "@kb-labs/core-cli": resolve(
+        __dirname,
+        "../kb-labs-core/packages/cli-core/src",
+      ),
+      "@kb-labs/core-cli-adapters": resolve(
+        __dirname,
+        "../kb-labs-core/packages/cli-adapters/src",
+      ),
     },
   },
   test: {

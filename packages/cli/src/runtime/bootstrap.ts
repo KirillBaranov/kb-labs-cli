@@ -310,6 +310,7 @@ function handleExecutionError(
 ): number {
   if (error instanceof CliError) {
     const exitCode = mapCliErrorToExitCode(error.code);
+    const diagnostics = ctx?.diagnostics ?? [];
 
     if (typeof presenter.json === "function") {
       presenter.json({
@@ -319,8 +320,8 @@ function handleExecutionError(
           message: error.message,
           ...(error.details != null && { details: error.details }),
         },
-        ...(ctx?.diagnostics?.length > 0 && {
-          warnings: ctx.diagnostics,
+        ...(diagnostics.length > 0 && {
+          warnings: diagnostics,
         }),
       });
     } else if (typeof presenter.error === "function") {
@@ -330,13 +331,14 @@ function handleExecutionError(
   }
 
   const message = String((error as any)?.message ?? error);
+  const diagnostics = ctx?.diagnostics ?? [];
 
   if (typeof presenter.json === "function") {
     presenter.json({
       ok: false,
       error: { message },
-      ...(ctx?.diagnostics?.length > 0 && {
-        warnings: ctx.diagnostics,
+      ...(diagnostics.length > 0 && {
+        warnings: diagnostics,
       }),
     });
   } else if (typeof presenter.error === "function") {
