@@ -8,6 +8,40 @@ function manifestToCommand(registered: RegisteredCommand): Command {
     ? registered.manifest.id.replace(":", " ")
     : registered.manifest.id;
 
+  async function executeLoaderCommand(
+    ctx: any,
+    argv: string[],
+    flags: Record<string, unknown>,
+  ): Promise<number> {
+    const loader = registered.manifest.loader;
+    if (typeof loader !== "function") {
+      ctx.presenter.error(
+        `Command ${registered.manifest.id} is missing runtime loader.`,
+      );
+      return 1;
+    }
+
+    let module: { run?: Command["run"] };
+    try {
+      module = await loader();
+    } catch (error: any) {
+      ctx.presenter.error(
+        `Failed to load ${registered.manifest.id}: ${error?.message || error}`,
+      );
+      return 1;
+    }
+
+    if (!module || typeof module.run !== "function") {
+      ctx.presenter.error(
+        `Command ${registered.manifest.id} loader did not return a runnable command.`,
+      );
+      return 1;
+    }
+
+    const result = await module.run(ctx, argv, flags);
+    return typeof result === "number" ? result : 0;
+  }
+
   return {
     name,
     category: registered.manifest.group,
@@ -17,6 +51,14 @@ function manifestToCommand(registered: RegisteredCommand): Command {
     flags: registered.manifest.flags,
     examples: registered.manifest.examples,
     async run(ctx, argv, flags) {
+      const isSetupCommand =
+        (registered.manifest as any).isSetup === true ||
+        (registered.manifest as any).isSetupRollback === true;
+
+      if (isSetupCommand) {
+        return executeLoaderCommand(ctx, argv, flags);
+      }
+
       if (!registered.available) {
         if (flags.json) {
           ctx.presenter.json({

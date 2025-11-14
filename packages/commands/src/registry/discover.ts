@@ -11,11 +11,35 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { glob } from 'glob';
-import type { CommandManifest, DiscoveryResult, CacheFile, PackageCacheEntry } from './types';
+import type { CommandManifest, DiscoveryResult, CacheFile, PackageCacheEntry, CommandModule } from './types';
+import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 import { log } from '../utils/logger';
 import { toPosixPath } from '../utils/path';
 import { telemetry } from './telemetry';
 import { validateManifests, normalizeManifest } from './schema';
+
+const SETUP_COMMAND_FLAGS = [
+  {
+    name: 'force',
+    type: 'boolean' as const,
+    description: 'Overwrite existing configuration and files.',
+  },
+  {
+    name: 'dry-run',
+    type: 'boolean' as const,
+    description: 'Preview setup changes without writing to disk.',
+  },
+  {
+    name: 'yes',
+    type: 'boolean' as const,
+    description: 'Auto-confirm modifications outside the .kb/ directory.',
+  },
+  {
+    name: 'kb-only',
+    type: 'boolean' as const,
+    description: 'Restrict setup to .kb/ paths and skip project files.',
+  },
+] satisfies Exclude<CommandManifest['flags'], undefined>;
 
 /**
  * Create loader stub for ManifestV2 commands.
@@ -29,12 +53,82 @@ function createManifestV2Loader(commandId: string): () => Promise<{ run: any }> 
   };
 }
 
+async function loadSetupCommandModule({
+  manifestV2,
+  namespace,
+  pkgName,
+  pkgRoot,
+}: SetupCommandFactoryInput): Promise<CommandModule> {
+  const module = await import('../commands/system/plugin-setup-command.js');
+  if (typeof module.createPluginSetupCommand !== 'function') {
+    throw new Error('Failed to load plugin setup command factory');
+  }
+  const command = module.createPluginSetupCommand({
+    manifest: manifestV2,
+    namespace,
+    packageName: pkgName,
+    pkgRoot,
+  });
+  return {
+    run: async (ctx, argv, flags) => {
+      const result = await command.run(ctx, argv, flags);
+      return typeof result === 'number' ? result : undefined;
+    },
+  };
+}
+
+async function loadSetupRollbackCommandModule({
+  manifestV2,
+  namespace,
+  pkgName,
+  pkgRoot,
+}: SetupCommandFactoryInput): Promise<CommandModule> {
+  const module = await import('../commands/system/plugin-setup-rollback.js');
+  if (typeof module.createPluginSetupRollbackCommand !== 'function') {
+    throw new Error('Failed to load plugin setup rollback command factory');
+  }
+  const command = module.createPluginSetupRollbackCommand({
+    manifest: manifestV2,
+    namespace,
+    packageName: pkgName,
+    pkgRoot,
+  });
+  return {
+    run: async (ctx, argv, flags) => {
+      const result = await command.run(ctx, argv, flags);
+      return typeof result === 'number' ? result : undefined;
+    },
+  };
+}
+
 /**
  * Ensure manifest has loader function (rehydrate after JSON serialization).
  */
 function ensureManifestLoader(manifest: CommandManifest): void {
   if (typeof manifest.loader !== 'function') {
     const commandId = manifest.id || manifest.group || 'unknown';
+    if ((manifest as any).isSetup) {
+      log('debug', `[plugins][cache] Rehydrated setup loader for ${commandId}`);
+      manifest.loader = () =>
+        loadSetupCommandModule({
+          manifestV2: (manifest as any).manifestV2,
+          namespace: manifest.namespace || manifest.group || deriveNamespace(manifest.package || commandId),
+          pkgName: manifest.package || commandId,
+          pkgRoot: (manifest as any).pkgRoot,
+        });
+      return;
+    }
+    if ((manifest as any).isSetupRollback) {
+      log('debug', `[plugins][cache] Rehydrated setup rollback loader for ${commandId}`);
+      manifest.loader = () =>
+        loadSetupRollbackCommandModule({
+          manifestV2: (manifest as any).manifestV2,
+          namespace: manifest.namespace || manifest.group || deriveNamespace(manifest.package || commandId),
+          pkgName: manifest.package || commandId,
+          pkgRoot: (manifest as any).pkgRoot,
+        });
+      return;
+    }
     log('debug', `[plugins][cache] Rehydrated loader for ${commandId}`);
     manifest.loader = createManifestV2Loader(commandId);
   }
@@ -166,6 +260,104 @@ function deriveNamespace(packageName: string): string {
   return lastPart.replace(/-cli$/, '').replace(/^kb-labs-/, '');
 }
 
+interface SetupCommandFactoryInput {
+  manifestV2: ManifestV2;
+  namespace: string;
+  pkgName: string;
+  pkgRoot: string;
+}
+
+function createSetupCommandManifest({
+  manifestV2,
+  namespace,
+  pkgName,
+  pkgRoot,
+}: SetupCommandFactoryInput): CommandManifest {
+  const setupId = `${namespace}:setup`;
+  const describe =
+    manifestV2.setup?.describe ||
+    `Initialize ${manifestV2.display?.name || manifestV2.id || namespace}`;
+
+  const setupManifest: CommandManifest = {
+    manifestVersion: '1.0',
+    id: setupId,
+    group: namespace,
+    describe,
+    flags: SETUP_COMMAND_FLAGS,
+    examples: [
+      `kb ${namespace} setup`,
+      `kb ${namespace} setup --dry-run`,
+    ],
+    loader: () =>
+      loadSetupCommandModule({
+        manifestV2,
+        namespace,
+        pkgName,
+        pkgRoot,
+      }),
+    package: pkgName,
+    namespace,
+  };
+
+  (setupManifest as any).manifestV2 = manifestV2;
+  (setupManifest as any).pkgRoot = pkgRoot;
+  (setupManifest as any).isSetup = true;
+  return setupManifest;
+}
+
+function createSetupRollbackCommandManifest({
+  manifestV2,
+  namespace,
+  pkgName,
+  pkgRoot,
+}: SetupCommandFactoryInput): CommandManifest {
+  const rollbackId = `${namespace}:setup:rollback`;
+  const describe = `Rollback setup changes for ${manifestV2.display?.name || manifestV2.id || namespace}`;
+
+  const rollbackManifest: CommandManifest = {
+    manifestVersion: '1.0',
+    id: rollbackId,
+    group: namespace,
+    describe,
+    flags: [
+      {
+        name: 'log',
+        type: 'string' as const,
+        description: 'Path to a setup change log JSON file.',
+      },
+      {
+        name: 'list',
+        type: 'boolean' as const,
+        description: 'List available setup change logs.',
+      },
+      {
+        name: 'yes',
+        type: 'boolean' as const,
+        alias: 'y',
+        description: 'Apply rollback without confirmation prompt.',
+      },
+    ],
+    examples: [
+      `kb ${namespace} setup:rollback --list`,
+      `kb ${namespace} setup:rollback --log .kb/logs/setup/${namespace}-<id>.json --yes`,
+    ],
+    loader: () =>
+      loadSetupRollbackCommandModule({
+        manifestV2,
+        namespace,
+        pkgName,
+        pkgRoot,
+      }),
+    package: pkgName,
+    namespace,
+  };
+
+  (rollbackManifest as any).manifestV2 = manifestV2;
+  (rollbackManifest as any).pkgRoot = pkgRoot;
+  (rollbackManifest as any).isSetupRollback = true;
+  return rollbackManifest;
+}
+
 /**
  * Load manifest - tries ESM first, falls back to CJS
  * Validates and normalizes manifests according to schema
@@ -179,16 +371,17 @@ async function loadManifest(manifestPath: string, pkgName: string, pkgRoot?: str
     throw new Error(`Unsupported manifest format in ${pkgName}. Only ManifestV2 is supported.`);
   }
   
-  if (!manifestV2.cli?.commands || !Array.isArray(manifestV2.cli.commands)) {
-    log('warn', `ManifestV2 ${manifestV2.id || pkgName} has no CLI commands`);
-    return [];
-  }
-  
   const namespace = deriveNamespace(pkgName);
   const manifestDir = path.dirname(manifestPath);
   const baseRoot = pkgRoot || manifestDir;
+  const cliCommands = Array.isArray(manifestV2.cli?.commands)
+    ? manifestV2.cli.commands
+    : [];
+  if (cliCommands.length === 0 && !manifestV2.setup) {
+    log('warn', `ManifestV2 ${manifestV2.id || pkgName} has no CLI commands or setup entry`);
+  }
   
-  const commandManifests: CommandManifest[] = manifestV2.cli.commands.map((cmd: any) => {
+  const commandManifests: CommandManifest[] = cliCommands.map((cmd: any) => {
     const commandId = cmd.id.includes(':') ? cmd.id : `${cmd.group || namespace}:${cmd.id}`;
     const commandManifest: CommandManifest = {
       manifestVersion: '1.0' as const,
@@ -207,6 +400,24 @@ async function loadManifest(manifestPath: string, pkgName: string, pkgRoot?: str
     (commandManifest as any).pkgRoot = baseRoot;
     return commandManifest;
   });
+
+  if (manifestV2.setup) {
+    const setupCommand = createSetupCommandManifest({
+      manifestV2,
+      namespace,
+      pkgName,
+      pkgRoot: baseRoot,
+    });
+    commandManifests.push(setupCommand);
+
+    const rollbackCommand = createSetupRollbackCommandManifest({
+      manifestV2,
+      namespace,
+      pkgName,
+      pkgRoot: baseRoot,
+    });
+    commandManifests.push(rollbackCommand);
+  }
   
   const validation = validateManifests(commandManifests);
   if (!validation.success) {
