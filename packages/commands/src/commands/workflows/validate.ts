@@ -1,5 +1,13 @@
 import type { Command } from '../../types'
 import { resolveWorkflowSpec } from './utils'
+import {
+  TimingTracker,
+  box,
+  keyValue,
+  safeColors,
+  safeSymbols,
+  formatTiming,
+} from '@kb-labs/shared-cli-ui'
 
 interface Flags {
   file?: string
@@ -49,28 +57,37 @@ export const wfValidate: Command = {
   async run(ctx, argv, rawFlags) {
     const flags = rawFlags as Flags
     const jsonMode = Boolean(flags.json)
+    const tracker = new TimingTracker()
 
     try {
+      tracker.checkpoint('start')
       const result = await resolveWorkflowSpec(ctx, flags, 'kb.workflow.yml')
+      tracker.checkpoint('validate')
 
       if (jsonMode) {
         ctx.presenter.json({
           ok: true,
           source: result.source,
           spec: result.spec,
+          timingMs: tracker.total(),
         })
         return 0
       }
 
-      if (typeof ctx.presenter.success === 'function') {
-        ctx.presenter.success('Workflow specification is valid')
-      } else {
-        ctx.presenter.info('Workflow specification is valid')
-      }
-      ctx.presenter.info(`Source: ${result.source}`)
-      ctx.presenter.info(`Name: ${result.spec.name}`)
-      ctx.presenter.info(`Version: ${result.spec.version}`)
+      const summaryLines: string[] = [
+        ...keyValue({
+          Source: result.source,
+          Name: result.spec.name,
+          Version: result.spec.version,
+        }),
+      ]
 
+      summaryLines.push('')
+      summaryLines.push(
+        `${safeSymbols.success} ${safeColors.success('Workflow specification is valid')} · ${safeColors.muted(formatTiming(tracker.total()))}`,
+      )
+
+      ctx.presenter.write('\n' + box('Workflow Validation', summaryLines))
       return 0
     } catch (error) {
       const message =
@@ -79,9 +96,15 @@ export const wfValidate: Command = {
         ctx.presenter.json({
           ok: false,
           error: message,
+          timingMs: tracker.total(),
         })
       } else {
-        ctx.presenter.error(`Validation failed: ${message}`)
+        const summaryLines: string[] = [
+          safeColors.error(message),
+          '',
+          `${safeSymbols.error} ${safeColors.error('Validation failed')} · ${safeColors.muted(formatTiming(tracker.total()))}`,
+        ]
+        ctx.presenter.write('\n' + box('Workflow Validation', summaryLines))
       }
       return 1
     }
