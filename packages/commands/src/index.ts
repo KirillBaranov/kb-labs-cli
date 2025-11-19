@@ -19,6 +19,8 @@ export { hello } from "./commands/system/hello";
 export { health } from "./commands/system/health";
 export { version } from "./commands/system/version";
 export { diagnose } from "./commands/system/diagnose";
+export { loggingCheck } from "./commands/system/logging-check";
+export { loggingInit } from "./commands/system/logging-init";
 export { createPluginsIntrospectCommand } from "./plugins-introspect.js";
 export {
   wfRun,

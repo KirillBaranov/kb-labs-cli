@@ -1,10 +1,10 @@
 import {
   colors,
-  collectManifestVersions,
   box,
   formatTiming,
   TimingTracker,
   type Command,
+  type CommandGroup,
   type ProductGroup,
 } from "./shared";
 
@@ -75,15 +75,38 @@ export function renderGlobalHelp(
 export function renderGlobalHelpNew(registry: {
   listProductGroups(): ProductGroup[];
   list(): Command[];
+  listGroups?(): CommandGroup[];
 }): string {
-  const tracker = new TimingTracker();
   const products = registry.listProductGroups();
+  const systemGroups = registry.listGroups?.() || [];
+  
+  // Get all command names and aliases from groups to exclude them from standalone
+  const commandsInGroups = new Set<string>();
+  for (const group of systemGroups) {
+    for (const cmd of group.commands) {
+      commandsInGroups.add(cmd.name);
+      // Also add all aliases
+      for (const alias of cmd.aliases || []) {
+        commandsInGroups.add(alias);
+      }
+    }
+  }
+  
+  // Filter standalone commands - exclude commands that are already in groups
   const standalone = registry
     .list()
-    .filter((cmd: Command) => !cmd.category || cmd.category === "system");
+    .filter((cmd: Command) => {
+      // Exclude commands that are in groups
+      if (commandsInGroups.has(cmd.name)) {
+        return false;
+      }
+      // Keep only system commands without category or with category === "system"
+      return (!cmd.category || cmd.category === "system");
+    });
 
   const content: string[] = [];
 
+  // Products section - simplified format: name (count)
   if (products.length > 0) {
     content.push("Products:");
     content.push("");
@@ -99,31 +122,41 @@ export function renderGlobalHelpNew(registry: {
       const availableCount = product.commands.filter(
         (c) => c.available && !c.shadowed,
       ).length;
-      const badge =
-        availableCount > 0
-          ? colors.green(`✓ ${availableCount}`)
-          : colors.dim("0");
-      const manifestVersions = collectManifestVersions(product.commands);
-      const manifestInfo =
-        manifestVersions.length > 0
-          ? colors.yellow(`[manifest ${manifestVersions.join(" + ")}]`)
-          : "";
-      const describeInfo =
-        product.describe && product.describe !== product.name
-          ? colors.dim(product.describe)
-          : "";
-      const detailParts = [describeInfo, manifestInfo, badge].filter(Boolean);
+      const badge = colors.green(`(${availableCount})`);
+      
       content.push(
         `  ${colors.cyan(
           product.name.padEnd(maxProductNameLength),
-        )}  ${detailParts.join("  ")}`,
+        )}  ${badge}`,
       );
     }
     content.push("");
   }
 
-  if (standalone.length > 0) {
+  // System Commands section - compact format: group name (count)
+  if (systemGroups.length > 0) {
     content.push("System Commands:");
+    content.push("");
+
+    const maxGroupNameLength = Math.max(
+      ...systemGroups.map((g) => g.name.length),
+      20,
+    );
+
+    for (const group of systemGroups.sort((a, b) => a.name.localeCompare(b.name))) {
+      const commandCount = group.commands.length;
+      const badge = colors.green(`(${commandCount})`);
+      
+      content.push(
+        `  ${colors.cyan(group.name.padEnd(maxGroupNameLength))}  ${badge}`,
+      );
+    }
+    content.push("");
+  }
+
+  // Other Commands section - only show if there are standalone commands
+  if (standalone.length > 0) {
+    content.push("Other Commands:");
     content.push("");
 
     const maxCommandNameLength = Math.max(
@@ -141,6 +174,7 @@ export function renderGlobalHelpNew(registry: {
     content.push("");
   }
 
+  // Global Options section
   content.push("Global Options:");
   content.push("");
 
@@ -165,15 +199,7 @@ export function renderGlobalHelpNew(registry: {
   }
   content.push("");
 
-  content.push("Plugin Diagnostics:");
-  content.push("");
-  content.push(
-    `  ${colors.cyan("--limit")}  ${colors.dim(
-      "Print sandbox limits for a product or command without executing it",
-    )}`,
-  );
-  content.push("");
-
+  // Next Steps section - simplified to 2-3 most important examples
   content.push("Next Steps:");
   content.push("");
 
@@ -182,39 +208,21 @@ export function renderGlobalHelpNew(registry: {
     content.push(
       `  ${colors.cyan(
         `kb ${firstProduct.name} --help`,
-      )}  ${colors.dim(`Explore ${firstProduct.name} commands`)}`,
+      )}  ${colors.dim("Explore product commands")}`,
     );
   }
 
-  const versionCmd = standalone.find((c) => c.name === "version");
-  if (versionCmd) {
+  const pluginsGroup = systemGroups.find((g: CommandGroup) => g.name === "system:plugins");
+  if (pluginsGroup) {
     content.push(
-      `  ${colors.cyan("kb version")}  ${colors.dim("Check CLI version")}`,
-    );
-  }
-
-  const healthCmd = standalone.find((c) => c.name === "health");
-  if (healthCmd) {
-    content.push(
-      `  ${colors.cyan("kb health")}  ${colors.dim("System health snapshot")}`,
-    );
-  }
-
-  const diagnoseCmd = standalone.find((c) => c.name === "diagnose");
-  if (diagnoseCmd) {
-    content.push(
-      `  ${colors.cyan("kb diagnose")}  ${colors.dim("Diagnose project health")}`,
+      `  ${colors.cyan("kb plugins")}  ${colors.dim("List and manage plugins")}`,
     );
   }
 
   content.push("");
   content.push(
-    colors.dim("Use 'kb <product> --help' to see commands for a specific product."),
+    colors.dim("Use 'kb <product> --help' or 'kb <group> --help' to see commands for a specific product or group."),
   );
-
-  const totalTime = tracker.total();
-  content.push("");
-  content.push(`Time: ${formatTiming(totalTime)}`);
 
   return box("KB Labs CLI", content);
 }

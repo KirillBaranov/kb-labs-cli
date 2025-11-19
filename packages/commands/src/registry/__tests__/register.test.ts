@@ -11,9 +11,7 @@ vi.mock('../availability.js', () => ({
   checkRequires: vi.fn(),
 }));
 
-vi.mock('../utils/logger.js', () => ({
-  log: vi.fn(),
-}));
+// Logger mock removed - using @kb-labs/core-sys/logging directly
 
 describe('registerManifests', () => {
   const mockRegistry = {
