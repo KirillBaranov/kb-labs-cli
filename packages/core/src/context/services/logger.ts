@@ -1,10 +1,14 @@
 /**
  * @module @kb-labs/cli-core/context/services/logger
  * Logging service with structured logging support
+ * 
+ * Wrapper around @kb-labs/core-sys/logging for CLI context
  */
 
+import { getLogger, type Logger as CoreLogger } from '@kb-labs/core-sys/logging';
+
 /**
- * Log level type
+ * Log level type (backward compatible)
  */
 export type LogLevel = 'silent' | 'error' | 'warn' | 'info' | 'debug';
 
@@ -23,59 +27,38 @@ export interface Logger {
 }
 
 /**
- * Console logger with structured logging support
+ * Adapter wrapper around core logger
  */
-export class ConsoleLogger implements Logger {
-  private readonly levelPriority: Record<LogLevel, number> = {
-    silent: 0,
-    error: 1,
-    warn: 2,
-    info: 3,
-    debug: 4,
-  };
+class CoreLoggerAdapter implements Logger {
+  private coreLogger: CoreLogger;
 
-  constructor(private level: LogLevel = 'info') {}
-
-  private shouldLog(level: LogLevel): boolean {
-    return this.levelPriority[level] <= this.levelPriority[this.level];
-  }
-
-  private formatMeta(meta?: Record<string, unknown>): string {
-    if (!meta || Object.keys(meta).length === 0) {
-      return '';
+  constructor(category: string = 'cli', level: LogLevel = 'info') {
+    this.coreLogger = getLogger(`cli:${category}`);
+    
+    // Map silent to error level (only errors)
+    if (level === 'silent') {
+      // Silent logger will be handled separately
     }
-    return ' ' + JSON.stringify(meta);
   }
 
   info(message: string, meta?: Record<string, unknown>): void {
-    if (this.shouldLog('info')) {
-      console.log(`[INFO] ${message}${this.formatMeta(meta)}`);
-    }
+    this.coreLogger.info(message, meta);
   }
 
   warn(message: string, meta?: Record<string, unknown>): void {
-    if (this.shouldLog('warn')) {
-      console.warn(`[WARN] ${message}${this.formatMeta(meta)}`);
-    }
+    this.coreLogger.warn(message, meta);
   }
 
   error(message: string, meta?: Record<string, unknown>): void {
-    if (this.shouldLog('error')) {
-      console.error(`[ERROR] ${message}${this.formatMeta(meta)}`);
-    }
+    this.coreLogger.error(message, meta);
   }
 
   debug(message: string, meta?: Record<string, unknown>): void {
-    if (this.shouldLog('debug')) {
-      console.debug(`[DEBUG] ${message}${this.formatMeta(meta)}`);
-    }
+    this.coreLogger.debug(message, meta);
   }
 
   metric(name: string, value: number, tags?: Record<string, string>): void {
-    if (this.shouldLog('debug')) {
-      const tagsStr = tags ? ` tags=${JSON.stringify(tags)}` : '';
-      console.debug(`[METRIC] ${name}=${value}${tagsStr}`);
-    }
+    this.coreLogger.debug(`[METRIC] ${name}=${value}`, { tags });
   }
 
   async span<T>(name: string, fn: () => Promise<T>): Promise<T> {
@@ -90,6 +73,16 @@ export class ConsoleLogger implements Logger {
       this.metric(`${name}.duration`, duration, { status: 'error' });
       throw error;
     }
+  }
+}
+
+/**
+ * Console logger with structured logging support (backward compatible)
+ * @deprecated Use createLogger() instead, which now uses the new logging system
+ */
+export class ConsoleLogger extends CoreLoggerAdapter {
+  constructor(level: LogLevel = 'info') {
+    super('console', level);
   }
 }
 
@@ -112,10 +105,10 @@ export class SilentLogger implements Logger {
  * @param level - Log level
  * @returns Logger instance
  */
-export function createLogger(level: LogLevel = 'info'): Logger {
+export function createLogger(level: LogLevel = 'info', category?: string): Logger {
   if (level === 'silent') {
     return new SilentLogger();
   }
-  return new ConsoleLogger(level);
+  return new CoreLoggerAdapter(category, level);
 }
 

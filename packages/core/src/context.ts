@@ -1,4 +1,6 @@
 import type { Presenter } from "./presenter/types";
+import type { Output } from "@kb-labs/core-sys/output";
+import type { Logger as CoreLogger } from "@kb-labs/core-sys/logging";
 import path from "node:path";
 import { existsSync } from "node:fs";
 
@@ -31,7 +33,12 @@ export interface Profile {
 export interface CliContext {
   repoRoot?: string;
   cwd: string;
-  logger?: Logger;
+  logger?: CoreLogger; // ✅ Unified Logger interface (for structured logging)
+  output?: Output; // ✅ Unified Output interface (for user-facing messages)
+  /** 
+   * @deprecated Use `output` API instead (e.g., `ctx.output.write()` instead of `ctx.presenter.write()`)
+   * This will be removed in a future version. Migrate to output API for better consistency.
+   */
   presenter: Presenter;
   env: NodeJS.ProcessEnv;
   profile?: Profile;
@@ -42,7 +49,8 @@ export interface CliContext {
 
 export interface CreateContextOptions {
   presenter: Presenter;
-  logger?: Logger;
+  logger?: CoreLogger;
+  output?: Output;
   env?: NodeJS.ProcessEnv;
   cwd?: string;
   repoRoot?: string;
@@ -52,6 +60,7 @@ export interface CreateContextOptions {
 export async function createContext({
   presenter,
   logger,
+  output,
   env,
   cwd,
   repoRoot,
@@ -64,6 +73,7 @@ export async function createContext({
   return {
     presenter,
     logger,
+    output,
     config,
     repoRoot: resolvedRepoRoot,
     cwd: resolvedCwd,

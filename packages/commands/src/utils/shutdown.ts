@@ -1,4 +1,6 @@
-import { log } from './logger';
+import { getLogger } from '@kb-labs/core-sys/logging';
+
+const log = getLogger('cli:shutdown');
 
 type ShutdownHook = () => void | Promise<void>;
 
@@ -21,7 +23,7 @@ function bindSignals(): void {
       try {
         await hook();
       } catch (error) {
-        log('warn', `Shutdown hook failed: ${error instanceof Error ? error.message : String(error)}`);
+        log.warn(`Shutdown hook failed: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
     const exitCode = signal === 'SIGINT' ? 0 : 0;

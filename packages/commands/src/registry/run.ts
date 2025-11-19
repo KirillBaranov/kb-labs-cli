@@ -58,8 +58,14 @@ export async function runCommand(
 ): Promise<number> {
   // Check availability
   if (!cmd.available) {
+    ctx.logger?.warn('Command unavailable', { 
+      command: cmd.manifest.id, 
+      reason: cmd.unavailableReason,
+      hint: cmd.hint,
+    });
+    
     if (flags.json) {
-      ctx.presenter.json({
+      ctx.output?.json({
         ok: false,
         available: false,
         command: cmd.manifest.id,
@@ -71,12 +77,12 @@ export async function runCommand(
     
     const verbose = flags.verbose || false;
     if (verbose) {
-      ctx.presenter.warn(`Command unavailable: ${cmd.manifest.id}`);
-      ctx.presenter.warn(`Reason: ${cmd.unavailableReason}`);
-      if (cmd.hint) {ctx.presenter.info(`Hint: ${cmd.hint}`);}
+      ctx.output?.warn(`Command unavailable: ${cmd.manifest.id}`);
+      ctx.output?.warn(`Reason: ${cmd.unavailableReason}`);
+      if (cmd.hint) {ctx.output?.info(`Hint: ${cmd.hint}`);}
     } else {
-      ctx.presenter.warn(`${cmd.manifest.id} unavailable: ${cmd.unavailableReason}`);
-      if (cmd.hint) {ctx.presenter.info(cmd.hint);}
+      ctx.output?.warn(`${cmd.manifest.id} unavailable: ${cmd.unavailableReason}`);
+      if (cmd.hint) {ctx.output?.info(cmd.hint);}
     }
     return 2;
   }
@@ -86,8 +92,13 @@ export async function runCommand(
 
   const permissionsCheck = await checkPermissions(cmd, currentCwd);
   if (!permissionsCheck.allowed) {
+    ctx.logger?.warn('Command permissions denied', {
+      command: cmd.manifest.id,
+      reason: permissionsCheck.reason,
+    });
+    
     if (flags.json) {
-      ctx.presenter.json({
+      ctx.output?.json({
         ok: false,
         available: false,
         command: cmd.manifest.id,
@@ -97,7 +108,7 @@ export async function runCommand(
       return 2;
     }
     
-    ctx.presenter.error(`${cmd.manifest.id}: ${permissionsCheck.reason}`);
+    ctx.output?.error(new Error(`${cmd.manifest.id}: ${permissionsCheck.reason}`));
     return 2;
   }
   
@@ -107,7 +118,8 @@ export async function runCommand(
   
   const manifestV2 = (cmd.manifest as any).manifestV2;
   if (!manifestV2) {
-    ctx.presenter.error(`Command ${cmd.manifest.id} must be defined via ManifestV2`);
+    ctx.logger?.error('Command must be defined via ManifestV2', { command: cmd.manifest.id });
+    ctx.output?.error(new Error(`Command ${cmd.manifest.id} must be defined via ManifestV2`));
     return 1;
   }
   
@@ -116,7 +128,8 @@ export async function runCommand(
     c.id === commandId || c.id === cmd.manifest.id
   );
   if (!cliCommand) {
-    ctx.presenter.error(`Command ${cmd.manifest.id} not declared in manifest`);
+    ctx.logger?.error('Command not declared in manifest', { command: cmd.manifest.id });
+    ctx.output?.error(new Error(`Command ${cmd.manifest.id} not declared in manifest`));
     return 1;
   }
   
@@ -183,10 +196,8 @@ export async function runCommand(
       timestamp: new Date().toISOString(),
     };
     
-    // Log crash report in verbose mode
-    if (ctx.logger?.level === 'debug' || ctx.logger?.level === 'verbose') {
-      ctx.logger.debug(`[crash-report] ${JSON.stringify(crashReport, null, 2)}`);
-    }
+    // Log crash report in debug mode
+    ctx.logger?.debug('Crash report', { crashReport });
     
     // Record crash for quarantine
     const { recordCrash } = await import('./plugins-state.js');
@@ -200,15 +211,21 @@ export async function runCommand(
       errorCode: error.code || 'UNKNOWN',
     });
     
-    ctx.presenter.error(`Command ${cmd.manifest.id} failed: ${error.message}`);
+    ctx.logger?.error('Command execution failed', {
+      command: cmd.manifest.id,
+      error: error.message,
+      code: error.code,
+    });
+    
+    ctx.output?.error(error instanceof Error ? error : new Error(error.message));
     
     if (error.message.includes('timeout')) {
-      ctx.presenter.warn(`Command exceeded timeout limit. Consider optimizing the command.`);
+      ctx.output?.warn(`Command exceeded timeout limit. Consider optimizing the command.`);
     }
     
     // Show hint if available
     if (crashReport.error.hint && crashReport.error.hint !== 'Check command implementation and dependencies') {
-      ctx.presenter.info(`Hint: ${crashReport.error.hint}`);
+      ctx.output?.info(`Hint: ${crashReport.error.hint}`);
     }
     
     return 1;

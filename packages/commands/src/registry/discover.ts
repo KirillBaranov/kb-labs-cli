@@ -13,10 +13,29 @@ import { parse as parseYaml } from 'yaml';
 import { glob } from 'glob';
 import type { CommandManifest, DiscoveryResult, CacheFile, PackageCacheEntry, CommandModule } from './types';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
-import { log } from '../utils/logger';
+import { getLogger } from '@kb-labs/core-sys/logging';
 import { toPosixPath } from '../utils/path';
 import { telemetry } from './telemetry';
 import { validateManifests, normalizeManifest } from './schema';
+
+// Helper function for logging (replaces deprecated log())
+const log = (level: 'debug' | 'info' | 'warn' | 'error', message: string, fields?: Record<string, unknown>): void => {
+  const logger = getLogger('commands:discover');
+  switch (level) {
+    case 'debug':
+      logger.debug(message, fields);
+      break;
+    case 'info':
+      logger.info(message, fields);
+      break;
+    case 'warn':
+      logger.warn(message, fields);
+      break;
+    case 'error':
+      logger.error(message, fields);
+      break;
+  }
+};
 
 const SETUP_COMMAND_FLAGS = [
   {

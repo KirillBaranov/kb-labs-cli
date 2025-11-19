@@ -1,27 +1,18 @@
 import { registry } from "../registry/service";
 import type { RegisteredCommand } from "../registry/types.js";
-import { hello } from "../commands/system/hello";
-import { version } from "../commands/system/version";
-import { diagnose } from "../commands/system/diagnose";
-import { health } from "../commands/system/health";
-import { diag } from "../commands/system/diag";
+import {
+  systemInfoGroup,
+  systemPluginsGroup,
+  systemLoggingGroup,
+  systemRegistryGroup,
+  systemDebugGroup,
+} from "../commands/system/groups";
 import { pluginsList } from "../commands/system/plugins-list";
-import { pluginsEnable } from "../commands/system/plugins-enable";
-import { pluginsDisable } from "../commands/system/plugins-disable";
-import { pluginsLink } from "../commands/system/plugins-link";
-import { pluginsUnlink } from "../commands/system/plugins-unlink";
 import { pluginsDoctor } from "../commands/system/plugins-doctor";
-import { pluginsWatch } from "../commands/system/plugins-watch";
 import { pluginsScaffold } from "../commands/system/plugins-scaffold";
-import { pluginsTelemetry } from "../commands/system/plugins-telemetry";
 import { pluginsRegistry } from "../commands/system/plugins-registry";
 import { registryLint } from "../commands/system/registry-lint";
 import { headersDebug } from "../commands/system/headers-debug";
-import { pluginsCacheClear } from "../builtins/plugins-cache-clear";
-import { pluginsDiscoveryTest } from "../commands/system/plugins-discovery-test";
-import { logTest } from "../commands/system/log-test";
-import { loggingCheck } from "../commands/system/logging-check";
-import { loggingInit } from "../commands/system/logging-init";
 import { replay } from "../commands/debug/replay";
 import { fix } from "../commands/debug/fix";
 import { repl } from "../commands/debug/repl";
@@ -32,9 +23,14 @@ import { createPluginsIntrospectCommand } from "../plugins-introspect.js";
 import { registerManifests, disposeAllPlugins, preflightManifests } from "../registry/register";
 import { workflowCommandGroup } from "../commands/workflows";
 import { PluginRegistry } from "@kb-labs/cli-core";
-import { log } from "./logger";
 import { registerShutdownHook } from "./shutdown";
 import { getContextCwd } from "@kb-labs/shared-cli-ui";
+
+// Simple logging helper
+function log(level: 'info' | 'warn' | 'error', message: string): void {
+  const prefix = level === 'error' ? '✗' : level === 'warn' ? '⚠' : 'ℹ';
+  console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](`${prefix} ${message}`);
+}
 
 let _registered = false;
 const registeredCommands: any[] = [];
@@ -54,38 +50,13 @@ export async function registerBuiltinCommands(
   registry.markPartial(true);
   registeredCommands.length = 0;
 
-  // Standalone commands
-  registry.register(hello);
-  registry.register(version);
-  registry.register(diagnose);
-  registry.register(health);
-  registry.register(diag);
-  registry.register(pluginsList);
-  registry.register(pluginsEnable);
-  registry.register(pluginsDisable);
-  registry.register(pluginsLink);
-  registry.register(pluginsUnlink);
-  registry.register(pluginsDoctor);
-  registry.register(pluginsWatch);
-  registry.register(pluginsScaffold);
-  registry.register(pluginsTelemetry);
-  registry.register(pluginsRegistry);
-  registry.register(registryLint);
-  registry.register(headersDebug);
-  registry.register(pluginsCacheClear);
-  registry.register(pluginsDiscoveryTest);
-  registry.register(logTest);
-  registry.register(loggingCheck);
-  registry.register(loggingInit);
+  // Register system command groups (migrated commands)
+  registry.registerGroup(systemInfoGroup);
+  registry.registerGroup(systemPluginsGroup);
+  registry.registerGroup(systemLoggingGroup);
+  registry.registerGroup(systemRegistryGroup);
+  registry.registerGroup(systemDebugGroup);
   registry.registerGroup(workflowCommandGroup);
-  
-  // Debug commands
-  registry.register(replay);
-  registry.register(fix);
-  registry.register(repl);
-  registry.register(dev);
-  registry.register(trace);
-  registry.register(fixture);
   
   // Convert CliCommand to Command for introspect
   const introspectCliCommand = createPluginsIntrospectCommand();

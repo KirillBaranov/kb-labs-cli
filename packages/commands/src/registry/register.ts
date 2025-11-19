@@ -10,8 +10,27 @@ import { checkRequires } from './availability';
 export interface RegisterManifestsOptions {
   cwd?: string;
 }
-import { log, getLogLevel } from '../utils/logger';
+import { getLogger, getLogLevel } from '@kb-labs/core-sys/logging';
 import { telemetry } from './telemetry';
+
+// Helper function for logging (replaces deprecated log())
+const log = (level: 'debug' | 'info' | 'warn' | 'error', message: string, fields?: Record<string, unknown>): void => {
+  const logger = getLogger('commands:registry');
+  switch (level) {
+    case 'debug':
+      logger.debug(message, fields);
+      break;
+    case 'info':
+      logger.info(message, fields);
+      break;
+    case 'warn':
+      logger.warn(message, fields);
+      break;
+    case 'error':
+      logger.error(message, fields);
+      break;
+  }
+};
 
 const ajv = new Ajv();
 
