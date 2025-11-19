@@ -2,83 +2,82 @@
  * plugins:watch command - Watch for manifest changes and hot-reload
  */
 
-import type { Command } from "../../types/types";
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
 import { watch } from 'node:fs';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { discoverManifests } from '../../registry/discover';
 import { registerManifests } from '../../registry/register';
-import { registry } from "../../registry/service";
-import { box, safeColors, safeSymbols } from "@kb-labs/shared-cli-ui";
+import { registry } from '../../registry/service';
 import { registerShutdownHook } from '../../utils/shutdown';
-import { getContextCwd } from "@kb-labs/shared-cli-ui";
+import { getContextCwd } from '@kb-labs/shared-cli-ui';
 
-export const pluginsWatch: Command = {
-  name: "plugins:watch",
-  category: "system",
-  describe: "Watch for plugin manifest changes and hot-reload",
-  flags: [
-    {
-      name: "json",
-      type: "boolean",
-      description: "Output in JSON format",
-    },
-  ],
-  examples: [
-    "kb plugins watch",
-  ],
+type PluginsWatchResult = CommandResult;
 
-  async run(ctx, argv, flags) {
-    const jsonMode = !!flags.json;
+type PluginsWatchFlags = {
+  json: { type: 'boolean'; description?: string };
+};
+
+export const pluginsWatch = defineSystemCommand<PluginsWatchFlags, PluginsWatchResult>({
+  name: 'plugins:watch',
+  description: 'Watch for plugin manifest changes and hot-reload',
+  category: 'system',
+  examples: ['kb plugins watch'],
+  flags: {
+    json: { type: 'boolean', description: 'Output in JSON format' },
+  },
+  analytics: {
+    command: 'plugins:watch',
+    startEvent: 'PLUGINS_WATCH_STARTED',
+    finishEvent: 'PLUGINS_WATCH_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
+    const jsonMode = flags.json; // Type-safe: boolean
     const cwd = getContextCwd(ctx);
-    
+
     if (jsonMode) {
-      ctx.presenter.json({
-        ok: false,
-        error: "Watch mode requires interactive terminal",
-      });
-      return 1;
+      throw new Error('Watch mode requires interactive terminal');
     }
-    
-    ctx.presenter.info(`${safeSymbols.info} Watching for plugin manifest changes...`);
-    ctx.presenter.info(`${safeColors.dim('Press Ctrl+C to stop')}\n`);
-    
+
+    if (!ctx.output) {
+      throw new Error('Output not available');
+    }
+
+    ctx.logger?.info('Starting plugin watch mode');
+    ctx.output.info(`${ctx.output.ui.symbols.info} Watching for plugin manifest changes...`);
+    ctx.output.info(`${ctx.output.ui.colors.muted('Press Ctrl+C to stop')}\n`);
+
     const watchedPaths = new Set<string>();
     const watchers = new Map<string, ReturnType<typeof watch>>();
-    
+
     async function reloadManifests() {
       try {
         const discovered = await discoverManifests(cwd, true); // Force no cache
-        const manifests = registry.listManifests();
-        
-        // Clear existing manifests
-        for (const manifest of manifests) {
-          // Note: Registry doesn't have clear, so we'll need to handle this differently
-          // For now, just log
-        }
-        
         const result = await registerManifests(discovered, registry, { cwd });
         const registeredCount = result.registered.length;
         const skippedCount = result.skipped.length;
-        ctx.presenter.write(
-          `\n${safeSymbols.success} ${safeColors.info('Reloaded manifests')} - ` +
-          `${registeredCount} registered, ${skippedCount} skipped\n`
+        ctx.logger?.info('Manifests reloaded', { registered: registeredCount, skipped: skippedCount });
+
+        if (!ctx.output) return;
+
+        ctx.output.write(
+          `\n${ctx.output.ui.symbols.success} ${ctx.output.ui.colors.info('Reloaded manifests')} - ` +
+            `${registeredCount} registered, ${skippedCount} skipped\n`,
         );
         if (skippedCount > 0) {
           for (const skip of result.skipped) {
-            ctx.presenter.write(
-              `${safeColors.warning('•')} ${skip.id} (${skip.source}): ${skip.reason}\n`
-            );
+            ctx.output.write(`${ctx.output.ui.colors.warn('•')} ${skip.id} (${skip.source}): ${skip.reason}\n`);
           }
         }
       } catch (err: any) {
-        ctx.presenter.error(`Failed to reload: ${err.message}`);
+        ctx.logger?.error('Failed to reload manifests', { error: err.message });
+        ctx.output?.error(err instanceof Error ? err : new Error(`Failed to reload: ${err.message}`));
       }
     }
-    
+
     // Initial discovery
     await reloadManifests();
-    
+
     // Watch for changes
     try {
       // Watch workspace packages
@@ -88,35 +87,40 @@ export const pluginsWatch: Command = {
         const { parse: parseYaml } = await import('yaml');
         const parsed = parseYaml(content) as { packages: string[] };
         const { glob } = await import('glob');
-        
+
         for (const pattern of parsed.packages || []) {
-          const pkgDirs = await glob(pattern, { 
-            cwd, 
+          const pkgDirs = await glob(pattern, {
+            cwd,
             absolute: false,
-            ignore: ['.kb/**', 'node_modules/**', '**/node_modules/**']
+            ignore: ['.kb/**', 'node_modules/**', '**/node_modules/**'],
           });
-          
+
           for (const dir of pkgDirs) {
             const pkgRoot = path.join(cwd, dir);
             const pkgJsonPath = path.join(pkgRoot, 'package.json');
-            
+
             try {
               const pkg = JSON.parse(await fs.readFile(pkgJsonPath, 'utf8'));
               if (pkg.kb?.commandsManifest || pkg.exports?.['./kb/commands']) {
-                const manifestPath = pkg.kb?.commandsManifest 
+                const manifestPath = pkg.kb?.commandsManifest
                   ? path.join(pkgRoot, pkg.kb.commandsManifest)
                   : pkg.exports?.['./kb/commands'];
-                
+
                 if (manifestPath && !watchedPaths.has(manifestPath)) {
                   watchedPaths.add(manifestPath);
-                  
+
                   const watcher = watch(manifestPath, async (eventType: string) => {
                     if (eventType === 'change') {
-                      ctx.presenter.write(`${safeColors.dim(`[${new Date().toLocaleTimeString()}]`)} ${safeColors.info('Manifest changed:')} ${manifestPath}\n`);
+                      ctx.logger?.debug('Manifest changed', { manifestPath });
+                      if (ctx.output) {
+                        ctx.output.write(
+                          `${ctx.output.ui.colors.muted(`[${new Date().toLocaleTimeString()}]`)} ${ctx.output.ui.colors.info('Manifest changed:')} ${manifestPath}\n`,
+                        );
+                      }
                       await reloadManifests();
                     }
                   });
-                  
+
                   watchers.set(manifestPath, watcher);
                 }
               }
@@ -128,19 +132,21 @@ export const pluginsWatch: Command = {
       } catch {
         // No workspace file
       }
-      
+
       // Watch config files
-      const configPaths = [
-        path.join(cwd, 'kb-labs.config.json'),
-        path.join(cwd, '.kb', 'plugins.json'),
-      ];
-      
+      const configPaths = [path.join(cwd, 'kb-labs.config.json'), path.join(cwd, '.kb', 'plugins.json')];
+
       for (const configPath of configPaths) {
         try {
           await fs.access(configPath);
           const watcher = watch(configPath, async (eventType: string) => {
             if (eventType === 'change') {
-              ctx.presenter.write(`${safeColors.dim(`[${new Date().toLocaleTimeString()}]`)} ${safeColors.info('Config changed:')} ${path.basename(configPath)}\n`);
+              ctx.logger?.debug('Config changed', { configPath });
+              if (ctx.output) {
+                ctx.output.write(
+                  `${ctx.output.ui.colors.muted(`[${new Date().toLocaleTimeString()}]`)} ${ctx.output.ui.colors.info('Config changed:')} ${path.basename(configPath)}\n`,
+                );
+              }
               await reloadManifests();
             }
           });
@@ -149,9 +155,17 @@ export const pluginsWatch: Command = {
           // File doesn't exist
         }
       }
-      
-      ctx.presenter.write(`${safeSymbols.success} Watching ${watchedPaths.size} manifest file(s) and ${watchers.size - watchedPaths.size} config file(s)\n`);
-      
+
+      if (ctx.output) {
+        ctx.output.write(
+          `${ctx.output.ui.symbols.success} Watching ${watchedPaths.size} manifest file(s) and ${watchers.size - watchedPaths.size} config file(s)\n`,
+        );
+      }
+      ctx.logger?.info('Watch mode active', {
+        manifests: watchedPaths.size,
+        configs: watchers.size - watchedPaths.size,
+      });
+
       const stopWatching = () => {
         for (const watcher of watchers.values()) {
           watcher.close();
@@ -160,16 +174,18 @@ export const pluginsWatch: Command = {
       };
 
       registerShutdownHook(() => {
-        ctx.presenter.write(`\n${safeColors.dim('Stopping watch...')}\n`);
+        if (ctx.output) {
+          ctx.output.write(`\n${ctx.output.ui.colors.muted('Stopping watch...')}\n`);
+        }
+        ctx.logger?.info('Stopping watch mode');
         stopWatching();
       });
 
       await new Promise(() => {}); // Never resolves
-      
     } catch (err: any) {
-      ctx.presenter.error(`Watch failed: ${err.message}`);
-      return 1;
+      ctx.logger?.error('Watch failed', { error: err.message });
+      throw err instanceof Error ? err : new Error(`Watch failed: ${err.message}`);
     }
   },
-};
+});
 

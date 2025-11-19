@@ -2,8 +2,10 @@
  * headers:debug command — inspect recent header policy decisions emitted by REST API
  */
 
-import { box, formatTable, formatRelativeTime, keyValue, safeColors, safeSymbols } from "@kb-labs/shared-cli-ui";
-import type { Command } from "../../types";
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+import { formatTable, formatRelativeTime, keyValue } from '@kb-labs/shared-cli-ui';
+import type { Output } from '@kb-labs/cli-core/public';
+import type { StringFlagSchema } from '@kb-labs/cli-command-kit/flags';
 
 interface HeaderDebugEntry {
   timestamp: number;
@@ -113,25 +115,28 @@ function filterEntries(
   });
 }
 
-function formatDecision(entry: HeaderDebugEntry): string {
+function formatDecision(entry: HeaderDebugEntry, output?: Output): string {
+  if (!output) return entry.allowed === true ? "allow" : entry.allowed === false ? "block" : entry.action ?? entry.reason ?? "unknown";
+  
   if (entry.allowed === true) {
-    return safeColors.success("allow");
+    return output.ui.colors.success("allow");
   }
   if (entry.allowed === false) {
-    const tag = safeColors.error("block");
-    return entry.dryRun ? `${tag} ${safeColors.warning("(dry-run)")}` : tag;
+    const tag = output.ui.colors.error("block");
+    return entry.dryRun ? `${tag} ${output.ui.colors.warn("(dry-run)")}` : tag;
   }
   if (entry.action) {
-    return safeColors.info(entry.action);
+    return output.ui.colors.info(entry.action);
   }
   return entry.reason ?? "unknown";
 }
 
-function formatWhen(entry: HeaderDebugEntry, nowMs: number): string {
+function formatWhen(entry: HeaderDebugEntry, nowMs: number, output?: Output): string {
   const timestamp = Number.isFinite(entry.timestamp) ? entry.timestamp : Date.now();
   const isoTime = new Date(timestamp).toISOString().slice(11, 19);
   const relative = formatRelativeTime(new Date(timestamp));
-  return `${isoTime} ${safeColors.dim(`(${relative})`)}`;
+  const dimColor = output?.ui?.colors?.muted || ((s: string) => s);
+  return `${isoTime} ${dimColor(`(${relative})`)}`;
 }
 
 function summarise(entries: HeaderDebugEntry[]) {
@@ -158,84 +163,71 @@ function summarise(entries: HeaderDebugEntry[]) {
   };
 }
 
-export const headersDebug: Command = {
-  name: "headers:debug",
-  category: "system",
-  describe: "Stream recent header policy decisions from the REST API debug buffer",
-  flags: [
-    {
-      name: "json",
-      type: "boolean",
-      description: "Output raw entries in JSON",
-    },
-    {
-      name: "limit",
-      type: "number",
-      description: "Number of recent decisions to fetch (1-200)",
-    },
-    {
-      name: "base-url",
-      type: "string",
-      description: "REST API base URL (defaults to KB_REST_BASE_URL or http://localhost:5050/api/v1)",
-    },
-    {
-      name: "plugin",
-      type: "string",
-      description: "Filter by plugin id",
-    },
-    {
-      name: "route",
-      type: "string",
-      description: "Filter by route id (e.g. GET /v1/foo)",
-    },
-    {
-      name: "direction",
-      type: "string",
-      description: "Filter by direction (inbound | outbound)",
-      choices: ["inbound", "outbound"],
-    },
-    {
-      name: "dry",
-      type: "boolean",
-      description: "Show only entries produced while KB_HEADERS_DEBUG=dry-run",
-    },
-    {
-      name: "blocked",
-      type: "boolean",
-      description: "Show only headers that were blocked by policy",
-    },
-  ],
-  examples: [
-    "kb headers:debug",
-    "kb headers:debug --plugin payments --blocked",
-    "kb headers:debug --dry --direction inbound --limit 20",
-  ],
+type HeadersDebugResult = CommandResult & {
+  entries?: HeaderDebugEntry[];
+  summary?: {
+    total: number;
+    allowed: number;
+    blocked: number;
+    dry: number;
+    topReasons: Array<{ reason: string; count: number }>;
+  };
+};
 
-  async run(ctx, _argv, flags) {
-    const jsonMode = Boolean(flags?.json);
+type HeadersDebugFlags = {
+  json: { type: 'boolean'; description?: string };
+  limit: { type: 'number'; description?: string };
+  'base-url': { type: 'string'; description?: string };
+  plugin: { type: 'string'; description?: string };
+  route: { type: 'string'; description?: string };
+  direction: { type: 'string'; description?: string; choices?: readonly string[] };
+  dry: { type: 'boolean'; description?: string };
+  blocked: { type: 'boolean'; description?: string };
+};
+
+export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugResult>({
+  name: 'headers:debug',
+  description: 'Stream recent header policy decisions from the REST API debug buffer',
+  category: 'system',
+  examples: [
+    'kb headers:debug',
+    'kb headers:debug --plugin payments --blocked',
+    'kb headers:debug --dry --direction inbound --limit 20',
+  ],
+  flags: {
+    json: { type: 'boolean', description: 'Output raw entries in JSON' },
+    limit: { type: 'number', description: 'Number of recent decisions to fetch (1-200)' },
+    'base-url': { type: 'string', description: 'REST API base URL (defaults to KB_REST_BASE_URL or http://localhost:5050/api/v1)' },
+    plugin: { type: 'string', description: 'Filter by plugin id' },
+    route: { type: 'string', description: 'Filter by route id (e.g. GET /v1/foo)' },
+    direction: { type: 'string', description: 'Filter by direction (inbound | outbound)', choices: ['inbound', 'outbound'] } as Omit<StringFlagSchema, 'name'>,
+    dry: { type: 'boolean', description: 'Show only entries produced while KB_HEADERS_DEBUG=dry-run' },
+    blocked: { type: 'boolean', description: 'Show only headers that were blocked by policy' },
+  },
+  analytics: {
+    command: 'headers:debug',
+    startEvent: 'HEADERS_DEBUG_STARTED',
+    finishEvent: 'HEADERS_DEBUG_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
+    ctx.logger?.info('Headers debug started');
+
     let baseUrl: string;
     try {
-      baseUrl = resolveBaseUrl(flags?.["base-url"]);
+      baseUrl = resolveBaseUrl(flags['base-url']); // Type-safe: string | undefined
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: message });
-      } else {
-        ctx.presenter.error(message);
-      }
-      return 1;
+      ctx.logger?.error('Failed to resolve base URL', { error: message });
+      throw new Error(`Failed to resolve base URL: ${message}`);
     }
 
-    const limit = clampLimit(flags?.limit);
+    const limit = clampLimit(flags.limit); // Type-safe: number | undefined
     const filters = {
-      plugin: typeof flags?.plugin === "string" && flags.plugin.trim().length > 0 ? flags.plugin.trim() : undefined,
-      route: typeof flags?.route === "string" && flags.route.trim().length > 0 ? flags.route.trim() : undefined,
-      direction:
-        typeof flags?.direction === "string" && (flags.direction === "inbound" || flags.direction === "outbound")
-          ? flags.direction
-          : undefined,
-      dryOnly: Boolean(flags?.dry),
-      blockedOnly: Boolean(flags?.blocked),
+      plugin: flags.plugin && flags.plugin.trim().length > 0 ? flags.plugin.trim() : undefined, // Type-safe: string | undefined
+      route: flags.route && flags.route.trim().length > 0 ? flags.route.trim() : undefined, // Type-safe: string | undefined
+      direction: flags.direction === 'inbound' || flags.direction === 'outbound' ? flags.direction : undefined, // Type-safe: 'inbound' | 'outbound' | undefined
+      dryOnly: Boolean(flags.dry), // Type-safe: boolean | undefined
+      blockedOnly: Boolean(flags.blocked), // Type-safe: boolean | undefined
     } as const;
 
     const fetchFn = ensureFetch();
@@ -244,41 +236,23 @@ export const headersDebug: Command = {
     let response: Awaited<ReturnType<FetchFn>>;
     try {
       response = await fetchFn(endpoint, {
-        headers: { accept: "application/json" },
+        headers: { accept: 'application/json' },
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      if (jsonMode) {
-        ctx.presenter.json({
-          ok: false,
-          error: message,
-          baseUrl,
-        });
-      } else {
-        ctx.presenter.error(`Request failed: ${message}`);
-        ctx.presenter.info(
-          `Ensure the REST API is running and KB_HEADERS_DEBUG is enabled (KB_HEADERS_DEBUG=1 or KB_HEADERS_DEBUG=dry-run).`
-        );
-      }
-      return 1;
+      ctx.logger?.error('Request failed', { error: message, baseUrl });
+      throw new Error(`Request failed: ${message}`);
     }
 
     if (!response.ok) {
-      const contentType = response.headers?.get("content-type") || "unknown";
-      const errorPayload = {
-        ok: false,
+      const contentType = response.headers?.get('content-type') || 'unknown';
+      ctx.logger?.error('REST API error response', {
         status: response.status,
         statusText: response.statusText,
         contentType,
-      };
-      if (jsonMode) {
-        ctx.presenter.json(errorPayload);
-      } else {
-        ctx.presenter.error(
-          `REST API responded with ${response.status} ${response.statusText} (content-type: ${contentType}).`
-        );
-      }
-      return 1;
+      });
+
+      throw new Error(`REST API responded with ${response.status} ${response.statusText} (content-type: ${contentType}).`);
     }
 
     const payload = (await response.json()) as HeaderDebugResponse;
@@ -286,103 +260,123 @@ export const headersDebug: Command = {
     const filtered = filterEntries(entries, filters);
     const summary = summarise(filtered);
 
-    if (jsonMode) {
-      ctx.presenter.json({
-        ok: true,
-        baseUrl,
-        limit,
-        fetched: entries.length,
-        filtered: filtered.length,
-        filters,
-        summary: {
-          allowed: summary.allowed,
-          blocked: summary.blocked,
-          dry: summary.dry,
-          reasons: summary.topReasons,
-        },
-        entries: filtered,
-      });
-      return 0;
+    ctx.logger?.info('Headers debug completed', {
+      entriesCount: entries.length,
+      filteredCount: filtered.length,
+      summary,
+    });
+
+    return {
+      ok: true,
+      baseUrl,
+      limit,
+      fetched: entries.length,
+      filtered: filtered.length,
+      filters,
+      summary: {
+        allowed: summary.allowed,
+        blocked: summary.blocked,
+        dry: summary.dry,
+        reasons: summary.topReasons,
+      },
+      entries: filtered,
+    };
+  },
+  formatter(result, ctx, flags) {
+    if (flags.json) { // Type-safe: boolean
+      ctx.output?.json(result);
+      return;
     }
 
+    if (!ctx.output) {
+      throw new Error('Output not available');
+    }
+
+    const entries = result.entries ?? [];
+    const summary = result.summary ?? {};
+    const filters = (result as any).filters ?? {};
+
     const lines: string[] = [];
-    lines.push(...keyValue({
-      "Base URL": baseUrl,
-      "Fetched": `${entries.length}`,
-      "After filters": `${filtered.length}`,
-      "Dry-run hits": `${summary.dry}`,
-      "Blocked": `${summary.blocked}`,
-      "Allowed": `${summary.allowed}`,
-    }));
+    lines.push(
+      ...keyValue({
+        'Base URL': (result as any).baseUrl ?? 'unknown',
+        Fetched: `${(result as any).fetched ?? 0}`,
+        'After filters': `${(result as any).filtered ?? 0}`,
+        'Dry-run hits': `${summary.dry ?? 0}`,
+        Blocked: `${summary.blocked ?? 0}`,
+        Allowed: `${summary.allowed ?? 0}`,
+      }),
+    );
 
     if (filters.plugin || filters.route || filters.direction || filters.dryOnly || filters.blockedOnly) {
       const filterParts = [
         filters.plugin ? `plugin=${filters.plugin}` : null,
         filters.route ? `route=${filters.route}` : null,
         filters.direction ? `direction=${filters.direction}` : null,
-        filters.dryOnly ? "dry-only" : null,
-        filters.blockedOnly ? "blocked-only" : null,
+        filters.dryOnly ? 'dry-only' : null,
+        filters.blockedOnly ? 'blocked-only' : null,
       ].filter(Boolean);
       if (filterParts.length > 0) {
-        lines.push("");
-        lines.push(`${safeSymbols.info} Filters: ${filterParts.join(", ")}`);
+        lines.push('');
+        lines.push(`${ctx.output.ui.symbols.info} Filters: ${filterParts.join(', ')}`);
       }
     }
 
-    if (summary.topReasons.length > 0) {
-      lines.push("");
-      lines.push(safeColors.bold("Top reasons:"));
+    if (summary.topReasons && summary.topReasons.length > 0) {
+      lines.push('');
+      lines.push(ctx.output.ui.colors.bold('Top reasons:'));
       for (const [reason, count] of summary.topReasons) {
-        lines.push(`  ${safeSymbols.bullet} ${reason} (${count})`);
+        lines.push(`  ${ctx.output.ui.symbols.bullet} ${reason} (${count})`);
       }
     }
 
     if (filtered.length === 0) {
-      lines.push("");
-      if (entries.length === 0) {
+      lines.push('');
+      if (resultData.fetched === 0) {
         lines.push(
-          `${safeSymbols.warning} No header decisions captured yet. Enable KB_HEADERS_DEBUG=1 (or KB_HEADERS_DEBUG=dry-run) on the REST API node and rerun this command.`
+          `${ctx.output.ui.symbols.warning} No header decisions captured yet. Enable KB_HEADERS_DEBUG=1 (or KB_HEADERS_DEBUG=dry-run) on the REST API node and rerun this command.`,
         );
       } else {
-        lines.push(`${safeSymbols.warning} No entries matched the current filters.`);
+        lines.push(`${ctx.output.ui.symbols.warning} No entries matched the current filters.`);
       }
-      const output = box("Header Policy Debug", lines);
-      ctx.presenter.write(output);
-      return 0;
+      const outputText = ctx.output.ui.box('Header Policy Debug', lines);
+      ctx.output.write(outputText);
+      return;
     }
 
     const now = Date.now();
     const columns = [
-      { header: "When" },
-      { header: "Plugin" },
-      { header: "Route" },
-      { header: "Dir" },
-      { header: "Header" },
-      { header: "Decision" },
-      { header: "Reason" },
+      { header: 'When' },
+      { header: 'Plugin' },
+      { header: 'Route' },
+      { header: 'Dir' },
+      { header: 'Header' },
+      { header: 'Decision' },
+      { header: 'Reason' },
     ] as const;
 
-    const rows = filtered.map((entry) => [
-      formatWhen(entry, now),
-      entry.pluginId ?? "—",
-      entry.routeId ?? "—",
+    const rows = filtered.map((entry: HeaderDebugEntry) => [
+      formatWhen(entry, now, ctx.output),
+      entry.pluginId ?? '—',
+      entry.routeId ?? '—',
       entry.direction,
       entry.header,
-      formatDecision(entry),
-      entry.reason ?? entry.action ?? "—",
+      formatDecision(entry, ctx.output),
+      entry.reason ?? entry.action ?? '—',
     ]);
 
-    lines.push("");
+    lines.push('');
     lines.push(...formatTable(columns as unknown as { header: string }[], rows));
-    lines.push("");
+    lines.push('');
     lines.push(
-      safeColors.dim("Tip: switch the REST API to shadow mode with KB_HEADERS_DEBUG=dry-run to observe would-be drops without mutating traffic.")
+      ctx.output.ui.colors.muted(
+        'Tip: switch the REST API to shadow mode with KB_HEADERS_DEBUG=dry-run to observe would-be drops without mutating traffic.',
+      ),
     );
 
-    const output = box("Header Policy Debug", lines);
-    ctx.presenter.write(output);
-    return 0;
+    const outputText = ctx.output.ui.box('Header Policy Debug', lines);
+    ctx.output.write(outputText);
   },
-};
+});
 
 

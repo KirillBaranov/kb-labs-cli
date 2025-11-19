@@ -2,10 +2,10 @@
  * registry:lint command — validate manifest header policies
  */
 
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
 import { createCliAPI } from '@kb-labs/cli-api';
 import { resolveHeaderPolicy } from '@kb-labs/plugin-adapter-rest';
 import type { ManifestV2, RestRouteDecl } from '@kb-labs/plugin-manifest';
-import type { Command } from '../../types';
 
 type LintLevel = 'error' | 'warn';
 
@@ -18,6 +18,17 @@ interface LintIssue {
   message: string;
   details?: Record<string, unknown>;
 }
+
+type RegistryLintResult = CommandResult & {
+  errors?: LintIssue[];
+  warnings?: LintIssue[];
+  issues?: LintIssue[];
+  summary?: {
+    manifests: number;
+    errors: number;
+    warnings: number;
+  };
+};
 
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
@@ -37,27 +48,22 @@ const WILDCARD_PATTERNS = [/^\*$/, /^\.\*$/, /^.*$/, /^\^?\.\*\$?$/];
 
 const MAX_RULES_THRESHOLD = 64;
 
-export const registryLint: Command = {
+export const registryLint = defineSystemCommand<RegistryLintFlags, RegistryLintResult>({
   name: 'registry:lint',
+  description: 'Validate header policies declared in REST plugin manifests',
   category: 'system',
-  describe: 'Validate header policies declared in REST plugin manifests',
-  flags: [
-    {
-      name: 'json',
-      type: 'boolean',
-      description: 'Output JSON report',
-    },
-    {
-      name: 'strict',
-      type: 'boolean',
-      description: 'Treat warnings as failures (exit 1 on warnings)',
-    },
-  ],
   examples: ['kb registry:lint', 'kb registry:lint --json', 'kb registry:lint --strict'],
-
-  async run(ctx, _argv, flags) {
-    const jsonMode = Boolean(flags?.json);
-    const strictMode = Boolean(flags?.strict);
+  flags: {
+    json: { type: 'boolean', description: 'Output JSON report' },
+    strict: { type: 'boolean', description: 'Treat warnings as failures (exit 1 on warnings)' },
+  },
+  analytics: {
+    command: 'registry:lint',
+    startEvent: 'REGISTRY_LINT_STARTED',
+    finishEvent: 'REGISTRY_LINT_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
+    const strictMode = flags.strict; // Type-safe: boolean
     const cliApi = await createCliAPI({
       cache: { inMemory: true, ttlMs: 10_000 },
     });
@@ -77,60 +83,67 @@ export const registryLint: Command = {
       const errors = issues.filter((issue) => issue.level === 'error');
       const warnings = issues.filter((issue) => issue.level === 'warn');
 
-      if (jsonMode) {
-        ctx.presenter.json({
-          ok: errors.length === 0 && (!strictMode || warnings.length === 0),
-          errors,
-          warnings,
-          summary: {
-            manifests: snapshot.manifests.length,
-            errors: errors.length,
-            warnings: warnings.length,
-          },
-        });
-      } else {
-        if (issues.length === 0) {
-          ctx.presenter.info('✅ Header policies look good (no issues found).');
-        } else {
-          const grouped = groupIssues(issues);
-          for (const [pluginId, pluginIssues] of grouped) {
-            ctx.presenter.info(`\n${pluginId}:`);
-            for (const issue of pluginIssues) {
-              const prefix = issue.level === 'error' ? '❌' : '⚠️';
-              const headerInfo = issue.header ? ` [${issue.header}]` : '';
-              ctx.presenter.info(
-                `  ${prefix} ${issue.code}${headerInfo} (${issue.routeId}) — ${issue.message}`
-              );
-              if (issue.details && Object.keys(issue.details).length > 0) {
-                ctx.presenter.info(
-                  `      details: ${JSON.stringify(issue.details)}`
-                );
-              }
-            }
-          }
-          ctx.presenter.info(
-            `\nSummary: ${errors.length} error(s), ${warnings.length} warning(s) across ${snapshot.manifests.length} plugin(s).`
-          );
-        }
-      }
+      ctx.logger?.info('Registry lint completed', {
+        manifests: snapshot.manifests.length,
+        errors: errors.length,
+        warnings: warnings.length,
+      });
 
-      if (errors.length > 0 || (strictMode && warnings.length > 0)) {
-        return 1;
-      }
-      return 0;
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: message });
-      } else {
-        ctx.presenter.error(message);
-      }
-      return 1;
+      return {
+        ok: errors.length === 0 && (!strictMode || warnings.length === 0),
+        errors,
+        warnings,
+        issues,
+        summary: {
+          manifests: snapshot.manifests.length,
+          errors: errors.length,
+          warnings: warnings.length,
+        },
+      };
     } finally {
       await cliApi.dispose();
     }
   },
-};
+  formatter(result, ctx, flags) {
+    if (flags.json) { // Type-safe: boolean
+      ctx.output?.json({
+        ok: result.ok,
+        errors: result.errors,
+        warnings: result.warnings,
+        summary: result.summary,
+      });
+      return;
+    }
+
+    if (!ctx.output) {
+      throw new Error('Output not available');
+    }
+
+    const issues = result.issues ?? [];
+    const errors = result.errors ?? [];
+    const warnings = result.warnings ?? [];
+
+    if (issues.length === 0) {
+      ctx.output.info('✅ Header policies look good (no issues found).');
+    } else {
+      const grouped = groupIssues(issues);
+      for (const [pluginId, pluginIssues] of grouped) {
+        ctx.output.info(`\n${pluginId}:`);
+        for (const issue of pluginIssues) {
+          const prefix = issue.level === 'error' ? '❌' : '⚠️';
+          const headerInfo = issue.header ? ` [${issue.header}]` : '';
+          ctx.output.info(`  ${prefix} ${issue.code}${headerInfo} (${issue.routeId}) — ${issue.message}`);
+          if (issue.details && Object.keys(issue.details).length > 0) {
+            ctx.output.info(`      details: ${JSON.stringify(issue.details)}`);
+          }
+        }
+      }
+      ctx.output.info(
+        `\nSummary: ${errors.length} error(s), ${warnings.length} warning(s) across ${result.summary?.manifests ?? 0} plugin(s).`,
+      );
+    }
+  },
+});
 
 function lintManifest(manifest: ManifestV2): LintIssue[] {
   const issues: LintIssue[] = [];

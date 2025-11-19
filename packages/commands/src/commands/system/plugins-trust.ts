@@ -1,0 +1,92 @@
+/**
+ * plugins:trust commands - Trust management for plugins (future feature)
+ * 
+ * These commands are stubs for future marketplace integration (~6 months)
+ */
+
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+
+type PluginsTrustResult = CommandResult & {
+  message?: string;
+};
+
+type PluginsTrustFlags = {
+  force: { type: 'boolean'; description?: string };
+};
+
+export const pluginsTrust = defineSystemCommand<PluginsTrustFlags, PluginsTrustResult>({
+  name: 'plugins:trust',
+  description: 'Promote plugin to locally trusted (no audit, at your own risk)',
+  category: 'system',
+  flags: {
+    force: { type: 'boolean', description: 'Skip confirmation prompt' },
+  },
+  examples: [
+    'kb plugins trust @author/my-plugin',
+    'kb plugins trust ./local-plugin --force',
+  ],
+  analytics: {
+    command: 'plugins:trust',
+    startEvent: 'PLUGINS_TRUST_STARTED',
+    finishEvent: 'PLUGINS_TRUST_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
+    // TODO: Implement when marketplace is ready (~6 months)
+    ctx.output?.warn('Trust management is not yet implemented');
+    ctx.output?.info('Coming soon: KB Labs Marketplace with automatic audit');
+    return { ok: false, message: 'Not implemented' };
+  },
+});
+
+type PluginsUntrustResult = CommandResult & {
+  message?: string;
+};
+
+type PluginsUntrustFlags = Record<string, never>;
+
+export const pluginsUntrust = defineSystemCommand<PluginsUntrustFlags, PluginsUntrustResult>({
+  name: 'plugins:untrust',
+  description: 'Demote plugin to untrusted (Docker isolation)',
+  category: 'system',
+  examples: ['kb plugins untrust @author/my-plugin'],
+  flags: {},
+  analytics: {
+    command: 'plugins:untrust',
+    startEvent: 'PLUGINS_UNTRUST_STARTED',
+    finishEvent: 'PLUGINS_UNTRUST_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
+    // TODO: Implement when marketplace is ready
+    ctx.output?.warn('Trust management is not yet implemented');
+    return { ok: false, message: 'Not implemented' };
+  },
+});
+
+type PluginsTrustStatusResult = CommandResult & {
+  message?: string;
+};
+
+type PluginsTrustStatusFlags = {
+  json: { type: 'boolean'; description?: string };
+};
+
+export const pluginsTrustStatus = defineSystemCommand<PluginsTrustStatusFlags, PluginsTrustStatusResult>({
+  name: 'plugins:trust-status',
+  description: 'Show plugin trust level and audit status',
+  category: 'system',
+  flags: {
+    json: { type: 'boolean', description: 'Output as JSON' },
+  },
+  examples: ['kb plugins trust-status @author/my-plugin'],
+  analytics: {
+    command: 'plugins:trust-status',
+    startEvent: 'PLUGINS_TRUST_STATUS_STARTED',
+    finishEvent: 'PLUGINS_TRUST_STATUS_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
+    // TODO: Implement when marketplace is ready
+    ctx.output?.warn('Trust management is not yet implemented');
+    return { ok: false, message: 'Not implemented' };
+  },
+});
+

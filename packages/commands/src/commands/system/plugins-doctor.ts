@@ -2,48 +2,56 @@
  * plugins:doctor command - Diagnose plugin issues
  */
 
-import type { Command } from "../../types/types.js";
-import { registry } from "../../registry/service.js";
-import { discoverManifests } from '../../registry/discover.js';
-import { box, keyValue, safeSymbols, safeColors } from "@kb-labs/shared-cli-ui";
+import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
+import { registry } from '../../registry/service.js';
+import { formatTiming } from '@kb-labs/shared-cli-ui';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
-import { getContextCwd } from "@kb-labs/shared-cli-ui";
+import { getContextCwd } from '@kb-labs/shared-cli-ui';
 
 const require = createRequire(import.meta.url);
 
-export const pluginsDoctor: Command = {
-  name: "plugins:doctor",
-  category: "system",
-  describe: "Diagnose plugin issues and suggest fixes",
-  flags: [
-    {
-      name: "json",
-      type: "boolean",
-      description: "Output in JSON format",
-    },
-  ],
-  examples: [
-    "kb plugins doctor",
-    "kb plugins doctor @kb-labs/devlink-cli",
-    "kb plugins doctor --json",
-  ],
+interface DoctorIssue {
+  package: string;
+  severity: 'error' | 'warning' | 'info';
+  code: string;
+  message: string;
+  fix?: string;
+}
 
-  async run(ctx, argv, flags) {
-    const jsonMode = !!flags.json;
+type DoctorResult = CommandResult & {
+  issues: DoctorIssue[];
+  summary: {
+    total: number;
+    errors: number;
+    warnings: number;
+    info: number;
+  };
+};
+
+type PluginsDoctorFlags = {
+  json: { type: 'boolean'; description?: string };
+};
+
+export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResult>({
+  name: 'plugins:doctor',
+  description: 'Diagnose plugin issues and suggest fixes',
+  category: 'system',
+  examples: ['kb plugins doctor', 'kb plugins doctor @kb-labs/devlink-cli', 'kb plugins doctor --json'],
+  flags: {
+    json: { type: 'boolean', description: 'Output in JSON format' },
+  },
+  analytics: {
+    command: 'plugins:doctor',
+    startEvent: 'PLUGINS_DOCTOR_STARTED',
+    finishEvent: 'PLUGINS_DOCTOR_FINISHED',
+  },
+  async handler(ctx, argv, flags): Promise<DoctorResult> {
     const targetPlugin = argv[0];
-
-    try {
-      const cwd = getContextCwd(ctx);
-      const manifests = registry.listManifests();
-      const issues: Array<{
-        package: string;
-        severity: 'error' | 'warning' | 'info';
-        code: string;
-        message: string;
-        fix?: string;
-      }> = [];
+    const cwd = getContextCwd(ctx);
+    const manifests = registry.listManifests();
+    const issues: DoctorIssue[] = [];
 
       // Check each plugin
       for (const cmd of manifests) {
@@ -168,78 +176,85 @@ export const pluginsDoctor: Command = {
         // The path is only available in DiscoveryResult, so we can't check this during doctor
       }
 
-      if (jsonMode) {
-        ctx.presenter.json({
-          ok: issues.length === 0,
-          issues,
-          total: issues.length,
-          errors: issues.filter(i => i.severity === 'error').length,
-          warnings: issues.filter(i => i.severity === 'warning').length,
-        });
-        return issues.filter(i => i.severity === 'error').length > 0 ? 1 : 0;
-      }
+    const summary = {
+      total: issues.length,
+      errors: issues.filter((i) => i.severity === 'error').length,
+      warnings: issues.filter((i) => i.severity === 'warning').length,
+      info: issues.filter((i) => i.severity === 'info').length,
+    };
 
-      if (issues.length === 0) {
-        ctx.presenter.info(`${safeSymbols.success} All plugins are healthy!`);
-        return 0;
-      }
+    ctx.logger?.info('Plugins doctor completed', summary);
 
-      const errorCount = issues.filter(i => i.severity === 'error').length;
-      const warningCount = issues.filter(i => i.severity === 'warning').length;
-
-      const summary = keyValue({
-        'Total Issues': `${issues.length}`,
-        'Errors': errorCount > 0 ? `${safeColors.error(errorCount.toString())}` : 'none',
-        'Warnings': warningCount > 0 ? `${safeColors.warning(warningCount.toString())}` : 'none',
-      });
-
-      const issueLines: string[] = [];
-      const byPackage = new Map<string, typeof issues>();
-
-      for (const issue of issues) {
-        if (!byPackage.has(issue.package)) {
-          byPackage.set(issue.package, []);
-        }
-        byPackage.get(issue.package)!.push(issue);
-      }
-
-      for (const [pkg, pkgIssues] of Array.from(byPackage.entries()).sort()) {
-        issueLines.push(safeColors.bold(`\n${pkg}:`));
-
-        for (const issue of pkgIssues) {
-          const icon = issue.severity === 'error' ? safeSymbols.error : safeSymbols.warning;
-          const color = issue.severity === 'error' ? safeColors.error : safeColors.warning;
-
-          issueLines.push(`  ${icon} ${color(issue.code)}: ${issue.message}`);
-          if (issue.fix) {
-            issueLines.push(`     ${safeColors.info(`Fix: ${issue.fix}`)}`);
-          }
-        }
-      }
-
-      const sections = [
-        safeColors.bold('Plugin Health Check:'),
-        ...summary,
-        ...issueLines,
-        '',
-        safeColors.bold('Next Steps:'),
-        `  ${safeColors.info('kb plugins enable <name>')}  ${safeColors.dim('Enable a disabled plugin')}`,
-        `  ${safeColors.info('kb plugins clear-cache')}  ${safeColors.dim('Clear cache and rediscover')}`,
-      ];
-
-      const output = box('Plugin Diagnostics', sections);
-      ctx.presenter.write(output);
-
-      return errorCount > 0 ? 1 : 0;
-    } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: errorMessage });
-      } else {
-        ctx.presenter.error(errorMessage);
-      }
-      return 1;
-    }
+    return {
+      ok: summary.errors === 0,
+      issues,
+      summary,
+    };
   },
-};
+  formatter(result, ctx, flags) {
+    const resultData = result as DoctorResult;
+
+    if (flags.json) {
+      ctx.output?.json(resultData);
+      return;
+    }
+
+    if (!ctx.output) {
+      throw new Error('Output not available');
+    }
+
+    const { issues, summary } = resultData;
+
+    if (issues.length === 0) {
+      ctx.output.info(`${ctx.output.ui.symbols.success} All plugins are healthy!`);
+      return;
+    }
+
+    const errorCount = summary.errors;
+    const warningCount = summary.warnings;
+
+    const summaryLines = ctx.output.ui.keyValue({
+      'Total Issues': `${issues.length}`,
+      Errors: errorCount > 0 ? `${ctx.output.ui.colors.error(errorCount.toString())}` : 'none',
+      Warnings: warningCount > 0 ? `${ctx.output.ui.colors.warn(warningCount.toString())}` : 'none',
+    });
+
+    const issueLines: string[] = [];
+    const byPackage = new Map<string, DoctorIssue[]>();
+
+    for (const issue of issues) {
+      if (!byPackage.has(issue.package)) {
+        byPackage.set(issue.package, []);
+      }
+      byPackage.get(issue.package)!.push(issue);
+    }
+
+    for (const [pkg, pkgIssues] of Array.from(byPackage.entries()).sort()) {
+      issueLines.push(ctx.output.ui.colors.bold(`\n${pkg}:`));
+
+      for (const issue of pkgIssues) {
+        const icon = issue.severity === 'error' ? ctx.output.ui.symbols.error : ctx.output.ui.symbols.warning;
+        const color = issue.severity === 'error' ? ctx.output.ui.colors.error : ctx.output.ui.colors.warn;
+
+        issueLines.push(`  ${icon} ${color(issue.code)}: ${issue.message}`);
+        if (issue.fix) {
+          issueLines.push(`     ${ctx.output.ui.colors.info(`Fix: ${issue.fix}`)}`);
+        }
+      }
+    }
+
+    const sections = [
+      ctx.output.ui.colors.bold('Plugin Health Check:'),
+      ...summaryLines,
+      ...issueLines,
+      '',
+      ctx.output.ui.colors.bold('Next Steps:'),
+      `  ${ctx.output.ui.colors.info('kb plugins enable <name>')}  ${ctx.output.ui.colors.muted('Enable a disabled plugin')}`,
+      `  ${ctx.output.ui.colors.info('kb plugins clear-cache')}  ${ctx.output.ui.colors.muted('Clear cache and rediscover')}`,
+    ];
+
+    const output = ctx.output.ui.box('Plugin Diagnostics', sections);
+    ctx.output.write(output);
+  },
+});
 

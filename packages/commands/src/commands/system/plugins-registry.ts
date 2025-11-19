@@ -2,20 +2,27 @@
  * plugins:registry command - List all REST API plugin manifests
  */
 
-import type { Command } from "../../types/types";
+import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 import { detectRepoRoot } from '@kb-labs/core-cli-adapters';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { glob } from 'glob';
-import { getContextCwd } from "@kb-labs/shared-cli-ui";
+import { getContextCwd } from '@kb-labs/shared-cli-ui';
 
 interface PluginManifestWithPath {
   manifest: ManifestV2;
   manifestPath: string;
   pluginRoot: string;
 }
+
+type PluginsRegistryResult = CommandResult & {
+  manifests?: ManifestV2[];
+  manifestsWithPaths?: PluginManifestWithPath[];
+  total?: number;
+  plugins?: PluginManifestWithPath[];
+};
 
 /**
  * Find REST API manifest path in a package
@@ -230,67 +237,69 @@ async function discoverRestApiPlugins(repoRoot: string): Promise<PluginManifestW
   return results;
 }
 
-export const pluginsRegistry: Command = {
-  name: "plugins:registry",
-  category: "system",
-  describe: "List all REST API plugin manifests for REST API server",
-  flags: [
-    {
-      name: "json",
-      type: "boolean",
-      description: "Output in JSON format",
-    },
-  ],
-  examples: [
-    "kb plugins:registry",
-    "kb plugins:registry --json",
-  ],
+type PluginsRegistryFlags = {
+  json: { type: 'boolean'; description?: string };
+};
 
-  async run(ctx, argv, flags) {
-    const jsonMode = !!flags.json;
-    
-    try {
-      const cwd = getContextCwd(ctx);
-      const repoRoot = ctx.repoRoot || detectRepoRoot(cwd);
-      
-      // Discover REST API plugins from workspace
-      const restApiPlugins = await discoverRestApiPlugins(repoRoot);
-      
-      const manifests = restApiPlugins;
-      const manifestsWithPaths = manifests.map(p => ({
-        manifest: p.manifest,
-        manifestPath: p.manifestPath,
-        pluginRoot: p.pluginRoot,
-      }));
+export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, PluginsRegistryResult>({
+  name: 'plugins:registry',
+  description: 'List all REST API plugin manifests for REST API server',
+  category: 'system',
+  examples: ['kb plugins:registry', 'kb plugins:registry --json'],
+  flags: {
+    json: { type: 'boolean', description: 'Output in JSON format' },
+  },
+  analytics: {
+    command: 'plugins:registry',
+    startEvent: 'PLUGINS_REGISTRY_STARTED',
+    finishEvent: 'PLUGINS_REGISTRY_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
+    const cwd = getContextCwd(ctx);
+    const repoRoot = ctx.repoRoot || detectRepoRoot(cwd);
 
-      if (jsonMode) {
-        ctx.presenter.json({
-          ok: true,
-          manifests: manifests.map(p => p.manifest),
-          manifestsWithPaths,
-          total: manifests.length,
-        });
-        return 0;
-      }
+    // Discover REST API plugins from workspace
+    const restApiPlugins = await discoverRestApiPlugins(repoRoot);
 
-      // Text output
-      ctx.presenter.info(`Found ${manifests.length} REST API plugin(s):`);
-      for (const plugin of manifests) {
-        const displayName = plugin.manifest.display?.name || plugin.manifest.id;
-        ctx.presenter.info(`  ${plugin.manifest.id}@${plugin.manifest.version} - ${displayName}`);
-        ctx.presenter.info(`    Path: ${plugin.manifestPath}`);
-        ctx.presenter.info(`    Routes: ${plugin.manifest.rest?.routes?.length || 0}`);
-      }
+    const manifests = restApiPlugins;
+    const manifestsWithPaths = manifests.map((p) => ({
+      manifest: p.manifest,
+      manifestPath: p.manifestPath,
+      pluginRoot: p.pluginRoot,
+    }));
 
-      return 0;
-    } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: errorMessage });
-      } else {
-        ctx.presenter.error(errorMessage);
-      }
-      return 1;
+    ctx.logger?.info('Plugins registry scan completed', { count: manifests.length });
+
+    return {
+      ok: true,
+      manifests: manifests.map((p) => p.manifest),
+      manifestsWithPaths,
+      total: manifests.length,
+      plugins: manifests,
+    };
+  },
+  formatter(result, ctx, flags) {
+    if (flags.json) { // Type-safe: boolean
+      ctx.output?.json({
+        ok: true,
+        manifests: result.manifests,
+        manifestsWithPaths: (result as any).manifestsWithPaths,
+        total: result.total,
+      });
+      return;
+    }
+
+    if (!ctx.output) {
+      throw new Error('Output not available');
+    }
+
+    const manifests = (result as any).plugins ?? [];
+    ctx.output.info(`Found ${manifests.length} REST API plugin(s):`);
+    for (const plugin of manifests) {
+      const displayName = plugin.manifest.display?.name || plugin.manifest.id;
+      ctx.output.info(`  ${plugin.manifest.id}@${plugin.manifest.version} - ${displayName}`);
+      ctx.output.info(`    Path: ${plugin.manifestPath}`);
+      ctx.output.info(`    Routes: ${plugin.manifest.rest?.routes?.length || 0}`);
     }
   },
-};
+});

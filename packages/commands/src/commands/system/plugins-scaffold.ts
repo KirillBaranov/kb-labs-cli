@@ -2,121 +2,124 @@
  * plugins:scaffold command - Generate plugin template
  */
 
-import type { Command } from "../../types/types.js";
+import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
+import type { StringFlagSchema } from '@kb-labs/cli-command-kit/flags';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { box, safeColors, safeSymbols } from "@kb-labs/shared-cli-ui";
-import { getContextCwd } from "../../utils/context.js";
+import { getContextCwd } from '@kb-labs/shared-cli-ui';
 
-export const pluginsScaffold: Command = {
-  name: "plugins:scaffold",
-  category: "system",
-  describe: "Generate a new KB CLI plugin template",
-  flags: [
-    {
-      name: "format",
-      type: "string",
-      description: "Module format: esm or cjs",
-      default: "esm",
-      choices: ["esm", "cjs"],
-    },
-  ],
-  examples: [
-    "kb plugins scaffold my-plugin",
-    "kb plugins scaffold my-plugin --format cjs",
-  ],
+type PluginsScaffoldResult = CommandResult & {
+  pluginName?: string;
+  dir?: string;
+  format?: string;
+};
 
-  async run(ctx, argv, flags) {
+type PluginsScaffoldFlags = {
+  format: { type: 'string'; description?: string; default?: string; choices?: readonly string[] };
+};
+
+export const pluginsScaffold = defineSystemCommand<PluginsScaffoldFlags, PluginsScaffoldResult>({
+  name: 'plugins:scaffold',
+  description: 'Generate a new KB CLI plugin template',
+  category: 'system',
+  examples: ['kb plugins scaffold my-plugin', 'kb plugins scaffold my-plugin --format cjs'],
+  flags: {
+    format: {
+      type: 'string',
+      description: 'Module format: esm or cjs',
+      default: 'esm',
+      choices: ['esm', 'cjs'],
+    } as Omit<StringFlagSchema, 'name'>,
+  },
+  analytics: {
+    command: 'plugins:scaffold',
+    startEvent: 'PLUGINS_SCAFFOLD_STARTED',
+    finishEvent: 'PLUGINS_SCAFFOLD_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
     if (argv.length === 0) {
-      ctx.presenter.error("Please specify a plugin name");
-      ctx.presenter.info("Usage: kb plugins scaffold <name>");
-      return 1;
+      throw new Error('Please specify a plugin name');
     }
 
     const pluginName = argv[0];
     if (!pluginName) {
-      ctx.presenter.error("Please specify a plugin name");
-      return 1;
+      throw new Error('Please specify a plugin name');
     }
-    const format = (flags.format as string) || 'esm';
+
+    ctx.logger?.info('Scaffolding plugin', { pluginName });
+    const format = String(flags.format ?? 'esm'); // Type-safe: string
     const isESM = format === 'esm';
     const extension = isESM ? 'ts' : 'ts';
     const moduleType = isESM ? 'module' : 'commonjs';
     const tsupFormat = isESM ? 'esm' : 'cjs';
-    
-    const baseDir = getContextCwd(ctx as { cwd?: string });
+
+    const baseDir = getContextCwd(ctx);
     const dir = path.join(baseDir, pluginName);
-    
+
+    // Check if directory exists
     try {
-      // Check if directory exists
-      try {
-        await fs.access(dir);
-        ctx.presenter.error(`Directory ${pluginName} already exists`);
-        return 1;
-      } catch {
-        // Good, doesn't exist
+      await fs.access(dir);
+      ctx.logger?.warn('Directory already exists', { dir });
+      throw new Error(`Directory ${pluginName} already exists`);
+    } catch (err: any) {
+      if (err.code !== 'ENOENT') {
+        throw err;
       }
-      
-      await fs.mkdir(dir, { recursive: true });
-      await fs.mkdir(path.join(dir, 'src'), { recursive: true });
-      await fs.mkdir(path.join(dir, 'src', 'kb'), { recursive: true });
-      await fs.mkdir(path.join(dir, 'src', 'commands'), { recursive: true });
-      
-      // package.json
-      const packageJson = {
-        name: `@your-scope/${pluginName}-cli`,
-        version: "1.0.0",
-        type: moduleType,
-        description: `KB Labs CLI plugin: ${pluginName}`,
-        keywords: ["kb-cli-plugin"],
-        main: `./dist/kb/manifest.js`,
-        exports: {
-          "./kb/manifest": "./dist/kb/manifest.js"
-        },
-        files: ["dist"],
-        scripts: {
-          build: `tsup src/kb/manifest.ts src/commands/hello.ts --format ${tsupFormat} --dts`,
-          dev: `tsup src/kb/manifest.ts src/commands/hello.ts --format ${tsupFormat} --watch`,
-        },
-        kb: {
-          plugin: true,
-          manifest: "./dist/kb/manifest.js"
-        },
-        dependencies: {
-          "@kb-labs/plugin-manifest": "workspace:*",
-          "@kb-labs/shared-cli-ui": "workspace:*",
-          "@kb-labs/core-types": "workspace:*"
-        },
-        devDependencies: {
-          "tsup": "^8.5.0",
-          "typescript": "^5.6.3"
-        }
-      };
-      
-      await fs.writeFile(
-        path.join(dir, 'package.json'),
-        JSON.stringify(packageJson, null, 2),
-        'utf8'
-      );
-      
-      // tsconfig.json
-      const tsconfig = {
-        extends: "@kb-labs/devkit/tsconfig/lib.json",
-        compilerOptions: {
-          outDir: "dist",
-          rootDir: "src"
-        },
-        include: ["src/**/*"]
-      };
-      
-      await fs.writeFile(
-        path.join(dir, 'tsconfig.json'),
-        JSON.stringify(tsconfig, null, 2),
-        'utf8'
-      );
-      
-      // Manifest file
-      const manifestContent = `import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+      // Good, doesn't exist
+    }
+
+    await fs.mkdir(dir, { recursive: true });
+    await fs.mkdir(path.join(dir, 'src'), { recursive: true });
+    await fs.mkdir(path.join(dir, 'src', 'kb'), { recursive: true });
+    await fs.mkdir(path.join(dir, 'src', 'commands'), { recursive: true });
+
+    // package.json
+    const packageJson = {
+      name: `@your-scope/${pluginName}-cli`,
+      version: '1.0.0',
+      type: moduleType,
+      description: `KB Labs CLI plugin: ${pluginName}`,
+      keywords: ['kb-cli-plugin'],
+      main: `./dist/kb/manifest.js`,
+      exports: {
+        './kb/manifest': './dist/kb/manifest.js',
+      },
+      files: ['dist'],
+      scripts: {
+        build: `tsup src/kb/manifest.ts src/commands/hello.ts --format ${tsupFormat} --dts`,
+        dev: `tsup src/kb/manifest.ts src/commands/hello.ts --format ${tsupFormat} --watch`,
+      },
+      kb: {
+        plugin: true,
+        manifest: './dist/kb/manifest.js',
+      },
+      dependencies: {
+        '@kb-labs/plugin-manifest': 'workspace:*',
+        '@kb-labs/shared-cli-ui': 'workspace:*',
+        '@kb-labs/core-types': 'workspace:*',
+      },
+      devDependencies: {
+        tsup: '^8.5.0',
+        typescript: '^5.6.3',
+      },
+    };
+
+    await fs.writeFile(path.join(dir, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf8');
+
+    // tsconfig.json
+    const tsconfig = {
+      extends: '@kb-labs/devkit/tsconfig/lib.json',
+      compilerOptions: {
+        outDir: 'dist',
+        rootDir: 'src',
+      },
+      include: ['src/**/*'],
+    };
+
+    await fs.writeFile(path.join(dir, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2), 'utf8');
+
+    // Manifest file
+    const manifestContent = `import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 
 export const manifest: ManifestV2 = {
   schema: 'kb.plugin/2',
@@ -148,104 +151,89 @@ export const manifest: ManifestV2 = {
   }
 };
 `;
-      
-      await fs.writeFile(
-        path.join(dir, 'src', 'kb', `manifest.${extension}`),
-        manifestContent,
-        'utf8'
-      );
-      
-      // Command implementation
-      const commandContent = `import type { CommandModule } from '@kb-labs/cli-commands';
-import { box, keyValue, formatTiming, TimingTracker, safeColors } from '@kb-labs/shared-cli-ui';
-import { getContextCwd } from "@kb-labs/shared-cli-ui";
-import type { TelemetryEvent, TelemetryEmitResult } from '@kb-labs/core-types';
 
-export const run: CommandModule['run'] = async (ctx, argv, flags) => {
-  const tracker = new TimingTracker();
-  const jsonMode = !!flags.json;
-  const quiet = !!flags.quiet;
-  
-  // Optional analytics - use dynamic import
-  let runScope: ((options: any, fn: (emit: (event: Partial<TelemetryEvent>) => Promise<TelemetryEmitResult>) => Promise<any>) => Promise<any>) | null = null;
-  try {
-    const analytics = await import('@kb-labs/analytics-sdk-node');
-    runScope = analytics.runScope as any;
-  } catch {
-    // analytics-sdk-node not available
-  }
-  
-  const executeWithAnalytics = async (emit: (event: Partial<TelemetryEvent>) => Promise<TelemetryEmitResult>) => {
-    try {
-      tracker.checkpoint('start');
-      await emit({ type: 'COMMAND_STARTED', payload: {} });
-      
-      // Your command logic here
-      // Example: const result = await doSomething();
-      const result = { count: 1, message: 'Hello from ${pluginName} plugin!' };
-      
-      tracker.checkpoint('complete');
-      const duration = tracker.total();
-      
-      if (jsonMode) {
-        ctx.presenter.json({ ok: true, ...result, timing: duration });
-      } else {
-        if (!quiet) {
-          const summary = keyValue({
-            'Status': safeColors.success('✓ Success'),
-            'Message': result.message,
-          });
-          summary.push('', \`Time: \${formatTiming(duration)}\`);
-          ctx.presenter.write(box('${pluginName} Command', summary));
-        }
-      }
-      
-      await emit({ 
-        type: 'COMMAND_FINISHED', 
-        payload: { durationMs: duration, result: 'success' } 
-      });
-      return 0;
-    } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: errorMessage, timing: tracker.total() });
-      } else {
-        ctx.presenter.error(errorMessage);
-      }
-      await emit({ 
-        type: 'COMMAND_FINISHED', 
-        payload: { durationMs: tracker.total(), result: 'error', error: errorMessage } 
-      });
-      return 1;
-    }
-  };
-  
-  if (runScope) {
-    return await runScope(
-      {
-        actor: { type: 'agent', id: '${pluginName}' },
-        ctx: { workspace: getContextCwd(ctx) },
-      },
-      executeWithAnalytics
-    ) as number;
-  } else {
-    // No analytics - create no-op emitter
-    const noOpEmit = async (_event: Partial<TelemetryEvent>): Promise<TelemetryEmitResult> => {
-      return { queued: false, reason: 'Analytics not available' };
-    };
-    return await executeWithAnalytics(noOpEmit);
-  }
+    await fs.writeFile(path.join(dir, 'src', 'kb', `manifest.${extension}`), manifestContent, 'utf8');
+
+    // Command implementation with full typing (Level 3 - Recommended)
+    const commandContent = `import { defineCommand, type CommandResult } from '@kb-labs/cli-command-kit';
+
+// Define flag types for type safety
+type ${pluginName.charAt(0).toUpperCase() + pluginName.slice(1)}HelloFlags = {
+  json: { type: 'boolean'; description?: string; default?: boolean };
+  quiet: { type: 'boolean'; description?: string; default?: boolean };
 };
+
+// Define result type for type safety
+type ${pluginName.charAt(0).toUpperCase() + pluginName.slice(1)}HelloResult = CommandResult & {
+  count?: number;
+  message?: string;
+  timing?: number;
+};
+
+export const run = defineCommand<${pluginName.charAt(0).toUpperCase() + pluginName.slice(1)}HelloFlags, ${pluginName.charAt(0).toUpperCase() + pluginName.slice(1)}HelloResult>({
+  name: '${pluginName}:hello',
+  flags: {
+    json: {
+      type: 'boolean',
+      description: 'Output as JSON',
+      default: false,
+    },
+    quiet: {
+      type: 'boolean',
+      description: 'Suppress non-error output',
+      default: false,
+    },
+  },
+  async handler(ctx, argv, flags) {
+    // Full type safety: flags.json and flags.quiet are properly typed!
+    ctx.logger?.info('${pluginName} hello started');
+
+    ctx.tracker.checkpoint('start');
+
+    // Your command logic here
+    const result = { 
+      count: 1, 
+      message: 'Hello from ${pluginName} plugin!' 
+    };
+
+    ctx.tracker.checkpoint('complete');
+    const duration = ctx.tracker.total();
+
+    ctx.logger?.info('${pluginName} hello completed', {
+      durationMs: duration,
+    });
+
+    if (flags.json) {
+      ctx.output?.json({ ok: true, ...result, timing: duration });
+    } else if (!flags.quiet) {
+      if (!ctx.output) {
+        throw new Error('Output not available');
+      }
+      const summary = [
+        ctx.output.ui.colors.success('✓ Success'),
+        \`Message: \${result.message}\`,
+        \`Time: \${ctx.output.ui.colors.muted(duration + 'ms')}\`,
+      ];
+      ctx.output.write(ctx.output.ui.box('${pluginName} Command', summary));
+    }
+
+    return { ok: true, ...result, timing: duration };
+  },
+});
+
+// Alternative: Level 2 - Partial typing (flags only)
+// Remove the result type parameter to use partial typing:
+// export const run = defineCommand<${pluginName.charAt(0).toUpperCase() + pluginName.slice(1)}HelloFlags>({ ... });
+
+// Alternative: Level 1 - No typing (minimal)
+// Remove both type parameters for quick prototyping:
+// export const run = defineCommand({ ... });
 `;
-      
-      await fs.writeFile(
-        path.join(dir, 'src', 'commands', `hello.${extension}`),
-        commandContent,
-        'utf8'
-      );
-      
-      // tsup.config.ts
-      const tsupConfig = `import config from "@kb-labs/devkit/tsup/node.js";
+
+    await fs.writeFile(path.join(dir, 'src', 'commands', `hello.${extension}`), commandContent, 'utf8');
+
+    // tsup.config.ts
+    const tsupConfig = `import config from "@kb-labs/devkit/tsup/node.js";
 
 export default {
   ...config,
@@ -254,15 +242,11 @@ export default {
   dts: true,
 };
 `;
-      
-      await fs.writeFile(
-        path.join(dir, 'tsup.config.ts'),
-        tsupConfig,
-        'utf8'
-      );
-      
-      // README.md
-      const readme = `# ${pluginName} CLI Plugin
+
+    await fs.writeFile(path.join(dir, 'tsup.config.ts'), tsupConfig, 'utf8');
+
+    // README.md
+    const readme = `# ${pluginName} CLI Plugin
 
 KB Labs CLI plugin for ${pluginName}.
 
@@ -291,49 +275,50 @@ pnpm dev
 kb plugins link ./${pluginName}
 \`\`\`
 `;
-      
-      await fs.writeFile(
-        path.join(dir, 'README.md'),
-        readme,
-        'utf8'
-      );
-      
-      // .gitignore
-      const gitignore = `node_modules
+
+    await fs.writeFile(path.join(dir, 'README.md'), readme, 'utf8');
+
+    // .gitignore
+    const gitignore = `node_modules
 dist
 *.log
 .DS_Store
 `;
-      
-      await fs.writeFile(
-        path.join(dir, '.gitignore'),
-        gitignore,
-        'utf8'
-      );
-      
-      const sections = [
-        safeColors.bold('Plugin Template Created:'),
-        `${safeSymbols.success} ${safeColors.info(dir)}`,
-        '',
-        safeColors.bold('Next Steps:'),
-        `  ${safeColors.info(`cd ${pluginName}`)}`,
-        `  ${safeColors.info('pnpm install')}`,
-        `  ${safeColors.info('pnpm build')}`,
-        `  ${safeColors.info(`kb plugins link ./${pluginName}`)}`,
-        `  ${safeColors.info(`kb ${pluginName} hello`)}`,
-        '',
-        safeColors.dim('See docs/plugin-development.md for more details'),
-      ];
-      
-      const output = box('Plugin Scaffold', sections);
-      ctx.presenter.write(output);
-      
-      return 0;
-    } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      ctx.presenter.error(`Failed to create scaffold: ${errorMessage}`);
-      return 1;
-    }
+
+    await fs.writeFile(path.join(dir, '.gitignore'), gitignore, 'utf8');
+
+    ctx.logger?.info('Plugin scaffold created', { pluginName, dir });
+
+    return {
+      ok: true,
+      pluginName,
+      dir,
+    };
   },
-};
+  formatter(result, ctx, flags) {
+    if (!ctx.output) {
+      throw new Error('Output not available');
+    }
+
+    const resultData = result as any;
+    const { pluginName, dir } = resultData;
+
+    const sections = [
+      ctx.output.ui.colors.bold('Plugin Template Created:'),
+      `${ctx.output.ui.symbols.success} ${ctx.output.ui.colors.info(dir)}`,
+      '',
+      ctx.output.ui.colors.bold('Next Steps:'),
+      `  ${ctx.output.ui.colors.info(`cd ${pluginName}`)}`,
+      `  ${ctx.output.ui.colors.info('pnpm install')}`,
+      `  ${ctx.output.ui.colors.info('pnpm build')}`,
+      `  ${ctx.output.ui.colors.info(`kb plugins link ./${pluginName}`)}`,
+      `  ${ctx.output.ui.colors.info(`kb ${pluginName} hello`)}`,
+      '',
+      ctx.output.ui.colors.muted('See docs/plugin-development.md for more details'),
+    ];
+
+    const output = ctx.output.ui.box('Plugin Scaffold', sections);
+    ctx.output.write(output);
+  },
+});
 
