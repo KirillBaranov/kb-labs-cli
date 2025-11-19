@@ -2,41 +2,52 @@
  * plugins:disable command - Disable a plugin
  */
 
-import type { Command } from "../../types/types.js";
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
 import { disablePlugin } from '../../registry/plugins-state.js';
-import { getContextCwd } from "@kb-labs/shared-cli-ui";
+import { getContextCwd } from '@kb-labs/shared-cli-ui';
 
-export const pluginsDisable: Command = {
-  name: "plugins:disable",
-  category: "system",
-  describe: "Disable a plugin",
-  examples: [
-    "kb plugins disable @kb-labs/devlink-cli",
-  ],
+type PluginsDisableResult = CommandResult & {
+  packageName?: string;
+  message?: string;
+};
 
-  async run(ctx, argv, flags) {
+type PluginsDisableFlags = Record<string, never>;
+
+export const pluginsDisable = defineSystemCommand<PluginsDisableFlags, PluginsDisableResult>({
+  name: 'plugins:disable',
+  description: 'Disable a plugin',
+  category: 'system',
+  examples: ['kb plugins disable @kb-labs/devlink-cli'],
+  flags: {},
+  analytics: {
+    command: 'plugins:disable',
+    startEvent: 'PLUGINS_DISABLE_STARTED',
+    finishEvent: 'PLUGINS_DISABLE_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
     if (argv.length === 0) {
-      ctx.presenter.error("Please specify a plugin name to disable");
-      return 1;
+      throw new Error('Please specify a plugin name to disable');
     }
 
     const packageName = argv[0];
     if (!packageName) {
-      ctx.presenter.error("Please specify a plugin name to disable");
-      return 1;
+      throw new Error('Please specify a plugin name to disable');
     }
 
-    try {
-      const cwd = getContextCwd(ctx);
-      await disablePlugin(cwd, packageName);
-      ctx.presenter.info(`Disabled ${packageName}`);
-      ctx.presenter.info(`Run 'kb plugins ls' to see updated status`);
-      return 0;
-    } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      ctx.presenter.error(`Failed to disable ${packageName}: ${errorMessage}`);
-      return 1;
-    }
+    const cwd = getContextCwd(ctx);
+    ctx.logger?.info('Disabling plugin', { packageName });
+    await disablePlugin(cwd, packageName);
+    ctx.logger?.info('Plugin disabled', { packageName });
+
+    return {
+      ok: true,
+      packageName,
+      message: `Disabled ${packageName}`,
+    };
   },
-};
+  formatter(result, ctx, flags) {
+    ctx.output?.info(result.message ?? 'Plugin disabled');
+    ctx.output?.info(`Run 'kb plugins ls' to see updated status`);
+  },
+});
 

@@ -2,60 +2,73 @@
  * diag command - Unified diagnostics command combining all system checks
  */
 
-import type { Command } from "../../types/types.js";
-import { registry } from "../../registry/service.js";
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+import { registry } from '../../registry/service.js';
 import { discoverManifests } from '../../registry/discover.js';
 import { loadPluginsState } from '../../registry/plugins-state.js';
-import { box, keyValue, safeColors, safeSymbols, formatTiming, TimingTracker } from "@kb-labs/shared-cli-ui";
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { createRequire } from 'node:module';
-import { getContextCwd } from "@kb-labs/shared-cli-ui";
+import { getContextCwd } from '@kb-labs/shared-cli-ui';
 
-const require = createRequire(import.meta.url);
+type DiagDetails = {
+  category: string;
+  status: 'ok' | 'warning' | 'error';
+  message: string;
+  details?: any;
+};
 
-export const diag: Command = {
-  name: "diag",
-  category: "system",
-  describe: "Comprehensive system diagnostics (plugins, cache, environment, versions)",
-  flags: [
-    {
-      name: "json",
-      type: "boolean",
-      description: "Output in JSON format",
-    },
-  ],
-  examples: [
-    "kb diag",
-    "kb diag --json",
-  ],
+type DiagSummary = {
+  total: number;
+  ok: number;
+  warnings: number;
+  errors: number;
+};
 
-  async run(ctx, argv, flags) {
-    const jsonMode = !!flags.json;
-    const tracker = new TimingTracker();
+type DiagResult = CommandResult & {
+  diagnostics?: DiagDetails[];
+  summary?: DiagSummary;
+};
+
+type DiagFlags = {
+  json: { type: 'boolean'; description?: string };
+};
+
+export const diag = defineSystemCommand<DiagFlags, DiagResult>({
+  name: 'diag',
+  description: 'Comprehensive system diagnostics (plugins, cache, environment, versions)',
+  category: 'system',
+  examples: ['kb diag', 'kb diag --json'],
+  flags: {
+    json: { type: 'boolean', description: 'Output in JSON format' },
+  },
+  analytics: {
+    command: 'diag',
+    startEvent: 'DIAG_STARTED',
+    finishEvent: 'DIAG_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
     const cwd = getContextCwd(ctx);
-    
     const diagnostics: Array<{
       category: string;
       status: 'ok' | 'warning' | 'error';
       message: string;
       details?: any;
     }> = [];
-    
+
     // 1. Environment check
     const nodeVersion = process.version;
     const cliVersion = ctx.env?.CLI_VERSION || process.env.CLI_VERSION || '0.1.0';
     const platform = process.platform;
     const arch = process.arch;
-    
+
     diagnostics.push({
       category: 'environment',
       status: 'ok',
       message: `Node ${nodeVersion}, CLI ${cliVersion}, ${platform}/${arch}`,
       details: { nodeVersion, cliVersion, platform, arch },
     });
-    
-    tracker.checkpoint('environment');
+
+    ctx.tracker.checkpoint('environment');
     
     // 2. Plugin discovery check
     try {
@@ -86,8 +99,8 @@ export const diag: Command = {
         details: { error: err.message },
       });
     }
-    tracker.checkpoint('discovery');
-    
+    ctx.tracker.checkpoint('discovery');
+
     // 3. Cache check
     try {
       const cachePath = path.join(cwd, '.kb', 'cache', 'cli-manifests.json');
@@ -124,8 +137,8 @@ export const diag: Command = {
         details: { error: err.message },
       });
     }
-    tracker.checkpoint('cache');
-    
+    ctx.tracker.checkpoint('cache');
+
     // 4. Plugins state check
     try {
       const state = await loadPluginsState(cwd);
@@ -152,8 +165,8 @@ export const diag: Command = {
         details: { error: err.message },
       });
     }
-    tracker.checkpoint('state');
-    
+    ctx.tracker.checkpoint('state');
+
     // 5. Version compatibility check
     const versionIssues: Array<{ plugin: string; required: string; current: string }> = [];
     
@@ -202,79 +215,99 @@ export const diag: Command = {
         details: { error: err.message },
       });
     }
-    tracker.checkpoint('versions');
-    
-    const totalTime = tracker.total();
-    
-    if (jsonMode) {
-      ctx.presenter.json({
-        ok: true,
-        diagnostics,
-        summary: {
-          total: diagnostics.length,
-          ok: diagnostics.filter(d => d.status === 'ok').length,
-          warnings: diagnostics.filter(d => d.status === 'warning').length,
-          errors: diagnostics.filter(d => d.status === 'error').length,
-        },
-        timing: {
-          total: totalTime,
-          breakdown: tracker.breakdown(),
-        },
-      });
-      return diagnostics.filter(d => d.status === 'error').length > 0 ? 1 : 0;
-    }
-    
-    // Text output
-    const summary = keyValue({
-      'Total Checks': `${diagnostics.length}`,
-      'OK': `${diagnostics.filter(d => d.status === 'ok').length}`,
-      'Warnings': `${diagnostics.filter(d => d.status === 'warning').length}`,
-      'Errors': `${diagnostics.filter(d => d.status === 'error').length}`,
-    });
-    
-    const sections: string[] = [
-      safeColors.bold('System Diagnostics:'),
-      ...summary,
-      '',
-      safeColors.bold('Details:'),
-      '',
-    ];
-    
-    for (const diag of diagnostics) {
-      const icon = diag.status === 'ok' ? safeSymbols.success : 
-                   diag.status === 'warning' ? safeSymbols.warning : 
-                   safeSymbols.error;
-      const color = diag.status === 'ok' ? safeColors.success : 
-                    diag.status === 'warning' ? safeColors.warning : 
-                    safeColors.error;
-      
-      sections.push(`${icon} ${color(safeColors.bold(diag.category))}: ${diag.message}`);
-      
-      if (diag.status === 'warning' && diag.details?.issues) {
-        for (const issue of diag.details.issues) {
-          sections.push(`   ${safeColors.warning(`→ ${issue.plugin}: requires ${issue.required}, found ${issue.current}`)}`);
-        }
-      }
-      sections.push('');
-    }
-    
-    sections.push(safeColors.bold('Next Steps:'));
-    sections.push('');
-    
-    if (diagnostics.filter(d => d.status === 'error').length > 0) {
-      sections.push(`  ${safeColors.info('kb plugins doctor')}  ${safeColors.dim('Diagnose plugin issues')}`);
-    }
-    if (diagnostics.filter(d => d.status === 'warning').length > 0) {
-      sections.push(`  ${safeColors.info('kb plugins ls')}  ${safeColors.dim('List all plugins')}`);
-    }
-    sections.push(`  ${safeColors.info('kb diagnose')}  ${safeColors.dim('Quick environment check')}`);
-    sections.push('');
-    sections.push(`${safeColors.dim(`Time: ${formatTiming(totalTime)}`)}`);
-    
-    const output = box('System Diagnostics', sections);
-    ctx.presenter.write(output);
-    
-    return diagnostics.filter(d => d.status === 'error').length > 0 ? 1 : 0;
+    ctx.tracker.checkpoint('versions');
+
+    const summary = {
+      total: diagnostics.length,
+      ok: diagnostics.filter((d) => d.status === 'ok').length,
+      warnings: diagnostics.filter((d) => d.status === 'warning').length,
+      errors: diagnostics.filter((d) => d.status === 'error').length,
+    };
+
+    ctx.logger?.info('Diag command completed', summary);
+
+    const hasErrors = summary.errors > 0;
+
+    return {
+      ok: !hasErrors,
+      diagnostics,
+      summary,
+    };
   },
-};
+  formatter(result, ctx, flags) {
+    if (flags.json) { // Type-safe: boolean
+      ctx.output?.json(result);
+    } else {
+      if (!ctx.output) {
+        throw new Error('Output not available');
+      }
+
+      if (!result.summary || !result.diagnostics) {
+        ctx.output?.error('Invalid diagnostic result');
+        return;
+      }
+
+      const summary = ctx.output.ui.keyValue({
+        'Total Checks': `${result.summary.total}`,
+        OK: `${result.summary.ok}`,
+        Warnings: `${result.summary.warnings}`,
+        Errors: `${result.summary.errors}`,
+      });
+
+      const sections: string[] = [
+        ctx.output.ui.colors.bold('System Diagnostics:'),
+        ...summary,
+        '',
+        ctx.output.ui.colors.bold('Details:'),
+        '',
+      ];
+
+      for (const diag of result.diagnostics) {
+        const icon =
+          diag.status === 'ok'
+            ? ctx.output.ui.symbols.success
+            : diag.status === 'warning'
+              ? ctx.output.ui.symbols.warning
+              : ctx.output.ui.symbols.error;
+        const color =
+          diag.status === 'ok'
+            ? ctx.output.ui.colors.success
+            : diag.status === 'warning'
+              ? ctx.output.ui.colors.warn
+              : ctx.output.ui.colors.error;
+
+        sections.push(`${icon} ${color(ctx.output.ui.colors.bold(diag.category))}: ${diag.message}`);
+
+        if (diag.status === 'warning' && diag.details?.issues) {
+          for (const issue of diag.details.issues) {
+            sections.push(
+              `   ${ctx.output.ui.colors.warn(`→ ${issue.plugin}: requires ${issue.required}, found ${issue.current}`)}`,
+            );
+          }
+        }
+        sections.push('');
+      }
+
+      sections.push(ctx.output.ui.colors.bold('Next Steps:'));
+      sections.push('');
+
+      if (result.summary.errors > 0) {
+        sections.push(
+          `  ${ctx.output.ui.colors.info('kb plugins doctor')}  ${ctx.output.ui.colors.muted('Diagnose plugin issues')}`,
+        );
+      }
+      if (result.summary.warnings > 0) {
+        sections.push(
+          `  ${ctx.output.ui.colors.info('kb plugins ls')}  ${ctx.output.ui.colors.muted('List all plugins')}`,
+        );
+      }
+      sections.push(
+        `  ${ctx.output.ui.colors.info('kb diagnose')}  ${ctx.output.ui.colors.muted('Quick environment check')}`,
+      );
+
+      const output = ctx.output.ui.box('System Diagnostics', sections);
+      ctx.output.write(output);
+    }
+  },
+});
 

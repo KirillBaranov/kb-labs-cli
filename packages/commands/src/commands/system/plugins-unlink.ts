@@ -2,70 +2,80 @@
  * plugins:unlink command - Unlink a local plugin
  */
 
-import type { Command } from "../../types/types.js";
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
 import { unlinkPlugin, loadPluginsState } from '../../registry/plugins-state.js';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { getContextCwd } from "@kb-labs/shared-cli-ui";
+import { getContextCwd } from '@kb-labs/shared-cli-ui';
 
-export const pluginsUnlink: Command = {
-  name: "plugins:unlink",
-  category: "system",
-  describe: "Unlink a local plugin",
-  examples: [
-    "kb plugins unlink ./packages/my-plugin",
-    "kb plugins unlink @kb-labs/devlink-cli",
-  ],
+type PluginsUnlinkResult = CommandResult & {
+  identifier?: string;
+  absPath?: string;
+  message?: string;
+};
 
-  async run(ctx, argv, flags) {
+type PluginsUnlinkFlags = Record<string, never>;
+
+export const pluginsUnlink = defineSystemCommand<PluginsUnlinkFlags, PluginsUnlinkResult>({
+  name: 'plugins:unlink',
+  description: 'Unlink a local plugin',
+  category: 'system',
+  examples: ['kb plugins unlink ./packages/my-plugin', 'kb plugins unlink @kb-labs/devlink-cli'],
+  flags: {},
+  analytics: {
+    command: 'plugins:unlink',
+    startEvent: 'PLUGINS_UNLINK_STARTED',
+    finishEvent: 'PLUGINS_UNLINK_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
     if (argv.length === 0) {
-      ctx.presenter.error("Please specify a plugin path or name to unlink");
-      ctx.presenter.info("Usage: kb plugins unlink <path|name>");
-      return 1;
+      throw new Error('Please specify a plugin path or name to unlink');
     }
 
     const identifier = argv[0];
     if (!identifier) {
-      ctx.presenter.error("Please specify a plugin path or name to unlink");
-      return 1;
+      throw new Error('Please specify a plugin path or name to unlink');
     }
     const cwd = getContextCwd(ctx);
     const state = await loadPluginsState(cwd);
 
+    ctx.logger?.info('Unlinking plugin', { identifier });
+
+    // Try as path first
+    let absPath: string | undefined;
     try {
-      // Try as path first
-      let absPath: string | undefined;
-      try {
-        absPath = path.resolve(cwd, identifier);
-        await fs.access(absPath);
-      } catch {
-        // Try to find by package name in linked list
-        const matched = state.linked.find(p => p.includes(identifier) || p.endsWith(identifier));
-        if (matched) {
-          absPath = matched;
-        } else {
-          ctx.presenter.error(`Plugin not found: ${identifier}`);
-          ctx.presenter.info(`Linked plugins: ${state.linked.length > 0 ? state.linked.join(', ') : 'none'}`);
-          return 1;
-        }
+      absPath = path.resolve(cwd, identifier);
+      await fs.access(absPath);
+    } catch {
+      // Try to find by package name in linked list
+      const matched = state.linked.find((p) => p.includes(identifier) || p.endsWith(identifier));
+      if (matched) {
+        absPath = matched;
+      } else {
+        ctx.logger?.warn('Plugin not found', { identifier, linkedPlugins: state.linked });
+        throw new Error(`Plugin not found: ${identifier}`);
       }
-
-      if (!absPath) {
-        ctx.presenter.error(`Plugin not found: ${identifier}`);
-        return 1;
-      }
-
-      await unlinkPlugin(cwd, absPath);
-      
-      ctx.presenter.info(`Unlinked ${identifier}`);
-      ctx.presenter.info(`Run 'kb plugins ls' to see updated status`);
-      
-      return 0;
-    } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      ctx.presenter.error(`Failed to unlink plugin: ${errorMessage}`);
-      return 1;
     }
+
+    if (!absPath) {
+      ctx.logger?.warn('Plugin not found', { identifier });
+      throw new Error(`Plugin not found: ${identifier}`);
+    }
+
+    await unlinkPlugin(cwd, absPath);
+
+    ctx.logger?.info('Plugin unlinked', { identifier, absPath });
+
+    return {
+      ok: true,
+      identifier,
+      absPath,
+      message: `Unlinked ${identifier}`,
+    };
   },
-};
+  formatter(result, ctx, flags) {
+    ctx.output?.info(result.message ?? 'Plugin unlinked');
+    ctx.output?.info(`Run 'kb plugins ls' to see updated status`);
+  },
+});
 

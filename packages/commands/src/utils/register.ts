@@ -20,6 +20,8 @@ import { headersDebug } from "../commands/system/headers-debug";
 import { pluginsCacheClear } from "../builtins/plugins-cache-clear";
 import { pluginsDiscoveryTest } from "../commands/system/plugins-discovery-test";
 import { logTest } from "../commands/system/log-test";
+import { loggingCheck } from "../commands/system/logging-check";
+import { loggingInit } from "../commands/system/logging-init";
 import { replay } from "../commands/debug/replay";
 import { fix } from "../commands/debug/fix";
 import { repl } from "../commands/debug/repl";
@@ -73,6 +75,8 @@ export async function registerBuiltinCommands(
   registry.register(pluginsCacheClear);
   registry.register(pluginsDiscoveryTest);
   registry.register(logTest);
+  registry.register(loggingCheck);
+  registry.register(loggingInit);
   registry.registerGroup(workflowCommandGroup);
   
   // Debug commands

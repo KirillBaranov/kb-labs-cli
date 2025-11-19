@@ -2,58 +2,76 @@
  * plugins:enable command - Enable a plugin
  */
 
-import type { Command } from "../../types/types.js";
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
 import { enablePlugin } from '../../registry/plugins-state.js';
-import { getContextCwd } from "@kb-labs/shared-cli-ui";
+import { getContextCwd } from '@kb-labs/shared-cli-ui';
 
-export const pluginsEnable: Command = {
-  name: "plugins:enable",
-  category: "system",
-  describe: "Enable a plugin",
-  flags: [
-    {
-      name: "perm",
-      type: "array",
-      description: "Grant specific permissions (e.g., --perm fs.write --perm net.fetch)",
-    },
-  ],
+type PluginsEnableResult = CommandResult & {
+  packageName?: string;
+  permissions?: string[];
+  message?: string;
+};
+
+type PluginsEnableFlags = {
+  perm: { type: 'array'; description?: string };
+};
+
+export const pluginsEnable = defineSystemCommand<PluginsEnableFlags, PluginsEnableResult>({
+  name: 'plugins:enable',
+  description: 'Enable a plugin',
+  category: 'system',
   examples: [
-    "kb plugins enable @kb-labs/devlink-cli",
-    "kb plugins enable @kb-labs/devlink-cli --perm fs.write",
+    'kb plugins enable @kb-labs/devlink-cli',
+    'kb plugins enable @kb-labs/devlink-cli --perm fs.write',
   ],
-
-  async run(ctx, argv, flags) {
+  flags: {
+    perm: {
+      type: 'array',
+      description: 'Grant specific permissions (e.g., --perm fs.write --perm net.fetch)',
+    },
+  },
+  analytics: {
+    command: 'plugins:enable',
+    startEvent: 'PLUGINS_ENABLE_STARTED',
+    finishEvent: 'PLUGINS_ENABLE_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
     if (argv.length === 0) {
-      ctx.presenter.error("Please specify a plugin name to enable");
-      return 1;
+      throw new Error('Please specify a plugin name to enable');
     }
 
     const packageName = argv[0];
     if (!packageName) {
-      ctx.presenter.error("Please specify a plugin name to enable");
-      return 1;
+      throw new Error('Please specify a plugin name to enable');
     }
-    const permissions = flags.perm as string[] || [];
+    const permissions = Array.isArray(flags.perm) ? flags.perm.map(String) : []; // Type-safe: string[]
     const cwd = getContextCwd(ctx);
 
-    try {
-      await enablePlugin(cwd, packageName);
-      
-      if (permissions.length > 0) {
-        const { grantPermissions } = await import('../../registry/plugins-state.js');
-        await grantPermissions(cwd, packageName, permissions);
-        ctx.presenter.info(`Enabled ${packageName} with permissions: ${permissions.join(', ')}`);
-      } else {
-        ctx.presenter.info(`Enabled ${packageName}`);
-      }
-      
-      ctx.presenter.info(`Run 'kb plugins ls' to see updated status`);
-      return 0;
-    } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      ctx.presenter.error(`Failed to enable ${packageName}: ${errorMessage}`);
-      return 1;
+    ctx.logger?.info('Enabling plugin', { packageName, permissions });
+    await enablePlugin(cwd, packageName);
+
+    if (permissions.length > 0) {
+      const { grantPermissions } = await import('../../registry/plugins-state.js');
+      await grantPermissions(cwd, packageName, permissions);
+      ctx.logger?.info('Plugin enabled with permissions', { packageName, permissions });
+      return {
+        ok: true,
+        packageName,
+        permissions,
+        message: `Enabled ${packageName} with permissions: ${permissions.join(', ')}`,
+      };
+    } else {
+      ctx.logger?.info('Plugin enabled', { packageName });
+      return {
+        ok: true,
+        packageName,
+        message: `Enabled ${packageName}`,
+      };
     }
   },
-};
+  formatter(result, ctx, flags) {
+    ctx.output?.info(result.message ?? 'Plugin enabled');
+    ctx.output?.info(`Run 'kb plugins ls' to see updated status`);
+  },
+});
 

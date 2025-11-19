@@ -1,42 +1,113 @@
 import { createCliAPI } from '@kb-labs/cli-api';
-import { box, keyValue, safeColors, safeSymbols } from '@kb-labs/shared-cli-ui';
-import type { Command } from "../../types";
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+import type { Output } from '@kb-labs/core-sys/output';
 
-function formatStatus(status: 'healthy' | 'degraded'): string {
-  const icon = status === 'healthy' ? safeSymbols.success : safeSymbols.warning;
-  const colorize = status === 'healthy' ? safeColors.success : safeColors.warning;
+function formatStatus(status: 'healthy' | 'degraded', output: Output): string {
+  const icon = status === 'healthy' ? output.ui.symbols.success : output.ui.symbols.warning;
+  const colorize = status === 'healthy' ? output.ui.colors.success : output.ui.colors.warning;
   return `${icon} ${colorize(status)}`;
 }
 
-export const health: Command = {
-  name: "health",
-  category: "system",
-  describe: "Report overall CLI health snapshot",
-  longDescription: "Shows the kb.health/1 snapshot shared with REST and Studio.",
-  examples: [
-    "kb health",
-    "kb health --json",
-  ],
-  async run(ctx, _argv, flags) {
-    const jsonMode = Boolean(flags?.json);
+type HealthResult = CommandResult & {
+  snapshot?: {
+    schema: string;
+    status: 'healthy' | 'degraded';
+    version: {
+      kbLabs: string;
+      cli: string;
+      rest: string;
+      git?: {
+        sha: string;
+        dirty: boolean;
+      };
+    };
+    registry: {
+      total: number;
+      withRest: number;
+      withStudio: number;
+      errors: number;
+      generatedAt: string;
+      expiresAt?: string;
+      partial: boolean;
+      stale: boolean;
+    };
+    uptimeSec: number;
+    components: Array<{
+      id: string;
+      lastError?: string;
+    }>;
+    error?: string;
+  };
+};
+
+type HealthFlags = {
+  json: { type: 'boolean'; description?: string };
+};
+
+export const health = defineSystemCommand<HealthFlags, HealthResult>({
+  name: 'health',
+  description: 'Report overall CLI health snapshot',
+  longDescription: 'Shows the kb.health/1 snapshot shared with REST and Studio.',
+  category: 'system',
+  examples: ['kb health', 'kb health --json'],
+  flags: {
+    json: { type: 'boolean', description: 'Output in JSON format' },
+  },
+  analytics: {
+    command: 'health',
+    startEvent: 'HEALTH_STARTED',
+    finishEvent: 'HEALTH_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
     const cliApi = await createCliAPI({
       cache: { inMemory: true, ttlMs: 5000 },
     });
 
     try {
+      ctx.logger?.info('Health check started');
+
       const snapshot = await cliApi.getSystemHealth({
         uptimeSec: process.uptime(),
         version: { rest: 'n/a' },
         meta: { source: 'cli' },
       });
 
-      if (jsonMode) {
-        ctx.presenter.json(snapshot);
-        return 0;
+      ctx.logger?.info('Health check completed', { status: snapshot.status });
+
+      return { ok: true, snapshot };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      ctx.logger?.error('Health check failed', { error: message });
+
+      return {
+        ok: false,
+        error: message,
+        snapshot: {
+          schema: 'kb.health/1',
+          status: 'degraded' as const,
+          error: message,
+        },
+      };
+    } finally {
+      await cliApi.dispose();
+    }
+  },
+  formatter(result, ctx, flags) {
+    if (flags.json) { // Type-safe: boolean
+      ctx.output?.json(result.snapshot || result);
+    } else {
+      if (!ctx.output) {
+        throw new Error('Output not available');
+      }
+
+      const snapshot = result.snapshot;
+      if (!snapshot) {
+        ctx.output?.error(new Error(result.error ?? 'Unknown error'));
+        return;
       }
 
       const summary: Record<string, string> = {
-        Status: formatStatus(snapshot.status),
+        Status: formatStatus(snapshot.status, ctx.output),
         'KB Labs': snapshot.version.kbLabs,
         CLI: snapshot.version.cli,
         REST: snapshot.version.rest,
@@ -53,37 +124,19 @@ export const health: Command = {
         summary.Git = `${snapshot.version.git.sha}${snapshot.version.git.dirty ? ' (dirty)' : ''}`;
       }
 
-      const lines = [
-        ...keyValue(summary),
-      ];
+      const lines = [...ctx.output.ui.keyValue(summary)];
 
-      const impacted = snapshot.components.filter(component => component.lastError);
+      const impacted = snapshot.components.filter((component: any) => component.lastError);
       if (impacted.length > 0) {
-        lines.push('', safeColors.dim('Components with issues:'));
+        lines.push('', ctx.output.ui.colors.muted('Components with issues:'));
         for (const component of impacted) {
-          lines.push(`  ${safeSymbols.warning} ${component.id} ${component.lastError}`);
+          lines.push(`  ${ctx.output.ui.symbols.warning} ${component.id} ${component.lastError}`);
         }
       }
 
-      const output = box('System Health', lines);
-      ctx.presenter.write(output);
-
-      return 0;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (jsonMode) {
-        ctx.presenter.json({
-          schema: 'kb.health/1',
-          status: 'degraded',
-          error: message,
-        });
-      } else {
-        ctx.presenter.error(message);
-      }
-      return 0;
-    } finally {
-      await cliApi.dispose();
+      const output = ctx.output.ui.box('System Health', lines);
+      ctx.output.write(output);
     }
   },
-};
+});
 
