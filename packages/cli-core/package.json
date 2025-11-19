@@ -29,6 +29,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@kb-labs/core-sys": "link:../../../kb-labs-core/packages/sys",
     "chokidar": "^4.0.3",
     "@kb-labs/core-cli": "link:../../../kb-labs-core/packages/cli-core"
   },

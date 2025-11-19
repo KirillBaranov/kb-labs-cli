@@ -47,7 +47,11 @@ export function createPluginSetupRollbackCommand(
     flags: ROLLBACK_COMMAND_FLAGS,
     async run(ctx, argv, rawFlags) {
       const presenter = ctx.presenter ?? {};
+      const output = ctx.output;
+      const logger = ctx.logger;
       const cwd = getContextCwd(ctx) ?? process.cwd();
+      
+      logger?.info('Plugin setup rollback started', { namespace });
       const logsDir = path.join(cwd, '.kb', 'logs', 'setup');
 
       const listOnly = rawFlags.list === true;
@@ -58,7 +62,7 @@ export function createPluginSetupRollbackCommand(
         await fs.mkdir(logsDir, { recursive: true });
 
         if (listOnly) {
-          await listLogs(logsDir, namespace, presenter);
+          await listLogs(logsDir, namespace, output || presenter, logger);
           return 0;
         }
 
@@ -68,30 +72,38 @@ export function createPluginSetupRollbackCommand(
             : await findLatestLog(logsDir, namespace);
 
         if (!resolvedLogPath) {
-          presenter.error?.(
+          logger?.warn('No setup log found', { namespace, logFlag });
+          (output || presenter)?.error?.(
             `Не найден ни один лог setup для ${namespace}. Используйте --log для указания файла.`,
           );
           return 1;
         }
 
-        presenter.info?.(`~ Используем лог: ${path.relative(cwd, resolvedLogPath)}`);
+        logger?.info('Using setup log', { logPath: resolvedLogPath });
+        (output || presenter)?.info?.(`~ Используем лог: ${path.relative(cwd, resolvedLogPath)}`);
 
         if (!autoConfirm) {
-          presenter.warn?.('Добавьте флаг --yes для подтверждения отката.');
+          (output || presenter)?.warn?.('Добавьте флаг --yes для подтверждения отката.');
           return 1;
         }
 
         const entries = await readJournalEntries(resolvedLogPath);
         if (entries.length === 0) {
-          presenter.warn?.('Лог пустой, откатывать нечего.');
+          logger?.warn('Setup log is empty', { logPath: resolvedLogPath });
+          (output || presenter)?.warn?.('Лог пустой, откатывать нечего.');
           return 0;
         }
 
-        await applyRollback(entries, cwd, presenter);
-        presenter.info?.('✓ Откат завершён.');
+        logger?.info('Applying rollback', { entriesCount: entries.length });
+        await applyRollback(entries, cwd, output || presenter, logger);
+        logger?.info('Rollback completed');
+        (output || presenter)?.info?.('✓ Откат завершён.');
         return 0;
       } catch (error) {
-        presenter.error?.(error);
+        logger?.error('Rollback failed', { 
+          error: error instanceof Error ? error.message : String(error),
+        });
+        (output || presenter)?.error?.(error);
         return 1;
       }
     },
@@ -108,21 +120,23 @@ function resolveLogPath(logsDir: string, inputPath: string, cwd: string): string
   return candidate;
 }
 
-async function listLogs(logsDir: string, namespace: string, presenter: any): Promise<void> {
+async function listLogs(logsDir: string, namespace: string, output: any, logger?: any): Promise<void> {
   const files = await safeReadDir(logsDir);
   const filtered = files
     .filter((file) => file.startsWith(namespace) && file.endsWith('.json'))
     .sort()
     .reverse();
 
+  logger?.info('Listing setup logs', { namespace, count: filtered.length });
+
   if (filtered.length === 0) {
-    presenter.info?.('Логи не найдены.');
+    output?.info?.('Логи не найдены.');
     return;
   }
 
-  presenter.info?.('Доступные логи setup:');
+  output?.info?.('Доступные логи setup:');
   for (const file of filtered) {
-    presenter.info?.(` • ${file}`);
+    output?.info?.(` • ${file}`);
   }
 }
 
@@ -166,7 +180,9 @@ async function readJournalEntries(logPath: string): Promise<JournalEntry[]> {
   return parsed as JournalEntry[];
 }
 
-async function applyRollback(entries: JournalEntry[], cwd: string, presenter: any): Promise<void> {
+async function applyRollback(entries: JournalEntry[], cwd: string, output: any, logger?: any): Promise<void> {
+  logger?.info('Applying rollback operations', { entriesCount: entries.length });
+  
   for (const entry of [...entries].reverse()) {
     const operation = entry.operation?.operation;
     if (!operation) continue;
@@ -175,17 +191,18 @@ async function applyRollback(entries: JournalEntry[], cwd: string, presenter: an
       case 'file':
       case 'config':
       case 'script':
-        await restoreFileLikeOperation(entry, cwd, presenter);
+        await restoreFileLikeOperation(entry, cwd, output, logger);
         break;
       default:
-        presenter.warn?.(
+        logger?.warn('Skipping operation (rollback not implemented)', { kind: operation.kind });
+        output?.warn?.(
           `Пропуск операции ${operation.kind} (откат не реализован).`,
         );
     }
   }
 }
 
-async function restoreFileLikeOperation(entry: JournalEntry, cwd: string, presenter: any): Promise<void> {
+async function restoreFileLikeOperation(entry: JournalEntry, cwd: string, output: any, logger?: any): Promise<void> {
   const operation = entry.operation.operation as
     | { kind: 'file'; path: string }
     | { kind: 'config'; path: string }
@@ -199,30 +216,34 @@ async function restoreFileLikeOperation(entry: JournalEntry, cwd: string, presen
   const targetPath = resolveWithinWorkspace(cwd, relativePath);
 
   if (entry.backupPath) {
-    await copyBackup(entry.backupPath, targetPath, presenter);
+    await copyBackup(entry.backupPath, targetPath, output, logger);
     return;
   }
 
   if (entry.before?.exists === false) {
     await fs.rm(targetPath, { force: true, recursive: false });
-    presenter.info?.(`− Удалён ${path.relative(cwd, targetPath)}`);
+    logger?.info('File removed during rollback', { path: targetPath });
+    output?.info?.(`− Удалён ${path.relative(cwd, targetPath)}`);
     return;
   }
 
   if (typeof entry.before?.content === 'string') {
     if (entry.before.content.startsWith('<truncated')) {
-      presenter.warn?.(
+      logger?.warn('Skipping truncated file', { path: targetPath });
+      output?.warn?.(
         `Пропуск ${path.relative(cwd, targetPath)} — содержимое лога усечено.`,
       );
       return;
     }
     await fs.mkdir(path.dirname(targetPath), { recursive: true });
     await fs.writeFile(targetPath, entry.before.content, 'utf8');
-    presenter.info?.(`↺ Восстановлен ${path.relative(cwd, targetPath)}`);
+    logger?.info('File restored from log', { path: targetPath });
+    output?.info?.(`↺ Восстановлен ${path.relative(cwd, targetPath)}`);
     return;
   }
 
-  presenter.warn?.(
+  logger?.warn('Skipping file (no restore data)', { path: targetPath });
+  output?.warn?.(
     `Пропуск ${path.relative(cwd, targetPath)} — отсутствуют данные для восстановления.`,
   );
 }
@@ -236,16 +257,18 @@ function resolveWithinWorkspace(workspace: string, target: string): string {
   return resolvedTarget;
 }
 
-async function copyBackup(backupPath: string, destination: string, presenter: any): Promise<void> {
+async function copyBackup(backupPath: string, destination: string, output: any, logger?: any): Promise<void> {
   try {
     await fs.access(backupPath);
   } catch {
-    presenter.warn?.(`Пропуск — backup ${backupPath} не найден.`);
+    logger?.warn('Backup not found', { backupPath });
+    output?.warn?.(`Пропуск — backup ${backupPath} не найден.`);
     return;
   }
 
   await fs.mkdir(path.dirname(destination), { recursive: true });
   await fs.copyFile(backupPath, destination);
-  presenter.info?.(`↺ Восстановлен из backup ${path.basename(destination)}`);
+  logger?.info('File restored from backup', { backupPath, destination });
+  output?.info?.(`↺ Восстановлен из backup ${path.basename(destination)}`);
 }
 

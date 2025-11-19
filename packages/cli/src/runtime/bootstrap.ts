@@ -1,6 +1,7 @@
 import {
   createJsonPresenter,
   createTextPresenter,
+  createContext,
   parseArgs,
   CliError,
   mapCliErrorToExitCode,
@@ -16,7 +17,8 @@ import {
   registry,
   type CommandGroup,
 } from "@kb-labs/cli-commands";
-import { initLogging } from "@kb-labs/core-sys/logging";
+import { initLogging, getLogger } from "@kb-labs/core-sys/logging";
+import { createOutput } from "@kb-labs/core-sys/output";
 import type { LogLevel } from "@kb-labs/core-sys";
 import {
   createCliRuntime,
@@ -138,12 +140,40 @@ export async function executeCli(
   const presenter = global.json
     ? jsonPresenterFactory()
     : textPresenterFactory(global.quiet);
+  
+  // Create unified output and logger
+  const output = createOutput({
+    verbosity: global.quiet ? 'quiet' : global.debug ? 'debug' : 'normal',
+    mode: global.json ? 'json' : 'auto',
+    json: global.json,
+    format: global.debug ? 'human' : 'human',
+    category: 'cli',
+  });
+  
+  const logger = getLogger('cli').child({
+    meta: {
+      cwd,
+      version,
+    },
+  });
+  
   const runtimeMiddlewares =
     options.runtimeMiddlewares ?? getDefaultMiddlewares();
+  
+  // Create context with output and logger
+  const cliContext = await createContext({
+    presenter,
+    logger,
+    output,
+    env,
+    cwd,
+  });
+  
   const runtimeInitOptions: RuntimeInitOptions = {
     presenter,
     env,
     cwd,
+    context: cliContext, // Pass context with output and logger
     executionLimits: options.runtimeExecutionLimits,
     middlewares: runtimeMiddlewares,
     formatters: options.runtimeFormatters,

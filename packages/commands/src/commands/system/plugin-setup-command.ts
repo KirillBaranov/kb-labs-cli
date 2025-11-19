@@ -137,29 +137,56 @@ function getFlagValue(
 }
 
 class SetupPresenterFacade implements PresenterFacade {
-  constructor(private readonly presenter: any) {}
+  constructor(
+    private readonly presenter: any,
+    private readonly output?: any,
+    private readonly logger?: any
+  ) {}
 
   message(text: string, options?: PresenterMessageOptions): void {
     const level = options?.level ?? 'info';
     const meta = options?.meta;
-    switch (level) {
-      case 'error':
-        this.presenter?.error?.(text) ?? this.presenter?.write?.(text);
-        break;
-      case 'warn':
-        this.presenter?.warn?.(text) ?? this.presenter?.write?.(text);
-        break;
-      case 'debug':
-        this.presenter?.write?.(text);
-        break;
-      default:
-        this.presenter?.info?.(text) ?? this.presenter?.write?.(text);
-        break;
+    
+    // Use output if available, fallback to presenter
+    if (this.output) {
+      switch (level) {
+        case 'error':
+          this.output.error?.(new Error(text));
+          break;
+        case 'warn':
+          this.output.warn?.(text);
+          break;
+        case 'debug':
+          this.output.debug?.(text, meta);
+          break;
+        default:
+          this.output.info?.(text, meta);
+          break;
+      }
+    } else {
+      // Fallback to presenter
+      switch (level) {
+        case 'error':
+          this.presenter?.error?.(text) ?? this.presenter?.write?.(text);
+          break;
+        case 'warn':
+          this.presenter?.warn?.(text) ?? this.presenter?.write?.(text);
+          break;
+        case 'debug':
+          this.presenter?.write?.(text);
+          break;
+        default:
+          this.presenter?.info?.(text) ?? this.presenter?.write?.(text);
+          break;
+      }
     }
 
     if (meta && Object.keys(meta).length > 0) {
+      this.logger?.debug('Setup message meta', meta);
       const serialized = safeSerialize(meta);
-      if (serialized) {
+      if (serialized && this.output) {
+        this.output.debug?.(serialized);
+      } else if (serialized) {
         this.presenter?.write?.(serialized);
       }
     }
@@ -175,21 +202,38 @@ class SetupPresenterFacade implements PresenterFacade {
         : '';
     const message = update.message ? ` - ${update.message}` : '';
     const line = `${update.stage}${status}${percent}${message}`;
-    this.presenter?.info?.(line) ?? this.presenter?.write?.(line);
+    
+    if (this.output) {
+      this.output.progress?.(update.stage, { message: update.message, current: update.percent });
+    } else {
+      this.presenter?.info?.(line) ?? this.presenter?.write?.(line);
+    }
   }
 
   json(data: unknown): void {
-    this.presenter?.json?.(data);
+    if (this.output) {
+      this.output.json?.(data);
+    } else {
+      this.presenter?.json?.(data);
+    }
   }
 
   error(error: unknown, meta?: Record<string, unknown>): void {
     const message =
       error instanceof Error ? error.stack ?? error.message : String(error);
-    this.presenter?.error?.(message) ?? this.presenter?.write?.(message);
-    if (meta && Object.keys(meta).length > 0) {
-      const serialized = safeSerialize(meta);
-      if (serialized) {
-        this.presenter?.error?.(serialized);
+    
+    if (this.output) {
+      this.output.error?.(error instanceof Error ? error : new Error(message));
+      if (meta && Object.keys(meta).length > 0) {
+        this.logger?.error('Setup error meta', meta);
+      }
+    } else {
+      this.presenter?.error?.(message) ?? this.presenter?.write?.(message);
+      if (meta && Object.keys(meta).length > 0) {
+        const serialized = safeSerialize(meta);
+        if (serialized) {
+          this.presenter?.error?.(serialized);
+        }
       }
     }
   }
@@ -332,12 +376,12 @@ async function writeSetupMarker(
   cwd: string,
   namespace: string,
   dryRun: boolean,
-  presenter: any,
+  output: any,
 ) {
   const markerDir = path.join(cwd, '.kb', namespace);
   const markerPath = path.join(markerDir, '.setup-complete');
   if (dryRun) {
-    presenter.info?.(
+    output?.info?.(
       `[dry-run] Would write setup marker: ${path.relative(cwd, markerPath)}`,
     );
     return;
@@ -345,7 +389,7 @@ async function writeSetupMarker(
 
   await fs.mkdir(markerDir, { recursive: true });
   await fs.writeFile(markerPath, new Date().toISOString(), 'utf8');
-  presenter.info?.(`✓ Setup marker written: ${path.relative(cwd, markerPath)}`);
+  output?.info?.(`✓ Setup marker written: ${path.relative(cwd, markerPath)}`);
 }
 
 async function updateConfigFile(options: {
@@ -356,8 +400,10 @@ async function updateConfigFile(options: {
   force: boolean;
   dryRun: boolean;
   presenter: any;
+  output?: any;
+  logger?: any;
 }): Promise<void> {
-  const { cwd, namespace, manifest, configDefaults, force, dryRun, presenter } =
+  const { cwd, namespace, manifest, configDefaults, force, dryRun, presenter, output, logger } =
     options;
   if (!configDefaults || Object.keys(configDefaults).length === 0) {
     return;
@@ -392,9 +438,10 @@ async function updateConfigFile(options: {
     : mergeDefaults(currentPluginConfig, configDefaults);
 
   if (currentPluginConfig && deepEqual(currentPluginConfig, nextPluginConfig)) {
-    presenter.info?.(
+    (output || presenter)?.info?.(
       `Config already up to date for plugins.${configKey}, nothing to change.`,
     );
+    logger?.debug('Config already up to date', { configKey });
     return;
   }
 
@@ -408,7 +455,7 @@ async function updateConfigFile(options: {
 
   const serialized = JSON.stringify(updatedConfig, null, 2) + '\n';
   if (dryRun) {
-    presenter.info?.(
+    (output || presenter)?.info?.(
       `[dry-run] Would update ${path.relative(cwd, configPath)} (plugins.${configKey})`,
     );
     return;
@@ -416,13 +463,14 @@ async function updateConfigFile(options: {
 
   await fs.mkdir(path.dirname(configPath), { recursive: true });
   await writeFileAtomic(configPath, serialized);
-  presenter.info?.(
+  (output || presenter)?.info?.(
     `✓ Updated config: ${path.relative(cwd, configPath)} (plugins.${configKey})`,
   );
+  logger?.info('Config updated', { configPath, configKey });
 }
 
 function printSuggestions(
-  presenter: any,
+  output: any,
   suggestions: SetupHandlerResult['suggestions'],
 ) {
   if (!suggestions) {
@@ -430,30 +478,30 @@ function printSuggestions(
   }
 
   if (suggestions.scripts && Object.keys(suggestions.scripts).length > 0) {
-    presenter.info?.('\n💡 Suggested package.json scripts:');
+    output?.info?.('\n💡 Suggested package.json scripts:');
     for (const [name, command] of Object.entries(suggestions.scripts)) {
-      presenter.info?.(`  "${name}": "${command}"`);
+      output?.info?.(`  "${name}": "${command}"`);
     }
   }
 
   if (suggestions.gitignore && suggestions.gitignore.length > 0) {
-    presenter.info?.('\n💡 Add to .gitignore:');
+    output?.info?.('\n💡 Add to .gitignore:');
     for (const pattern of suggestions.gitignore) {
-      presenter.info?.(`  ${pattern}`);
+      output?.info?.(`  ${pattern}`);
     }
   }
 
   if (suggestions.hooks && Object.keys(suggestions.hooks).length > 0) {
-    presenter.info?.('\n💡 Recommended git hooks:');
+    output?.info?.('\n💡 Recommended git hooks:');
     for (const [hook, command] of Object.entries(suggestions.hooks)) {
-      presenter.info?.(`  ${hook}: ${command}`);
+      output?.info?.(`  ${hook}: ${command}`);
     }
   }
 
   if (suggestions.notes && suggestions.notes.length > 0) {
-    presenter.info?.('\nℹ️  Additional notes:');
+    output?.info?.('\nℹ️  Additional notes:');
     for (const note of suggestions.notes) {
-      presenter.info?.(`  ${note}`);
+      output?.info?.(`  ${note}`);
     }
   }
 }
@@ -509,8 +557,16 @@ export function createPluginSetupCommand(
     flags: COMMAND_FLAGS,
     async run(ctx, argv, rawFlags): Promise<number> {
       const cliPresenter = ctx.presenter ?? {};
-      const setupPresenter = new SetupPresenterFacade(cliPresenter);
+      const setupPresenter = new SetupPresenterFacade(cliPresenter, ctx.output, ctx.logger);
       const cwd = getContextCwd(ctx) ?? process.cwd();
+      
+      ctx.logger?.info('Plugin setup started', { 
+        namespace, 
+        packageName, 
+        commandName,
+        dryRun: toBooleanFlag(getFlagValue(rawFlags, 'dry-run')),
+        force: toBooleanFlag(rawFlags.force),
+      });
 
       const applyDryRun = toBooleanFlag(getFlagValue(rawFlags, 'dry-run'));
       const force = toBooleanFlag(rawFlags.force);
@@ -528,12 +584,12 @@ export function createPluginSetupCommand(
 
         const dangerousPatterns = getDangerousPatterns(effectivePermissions.fs?.allow);
         if (!applyDryRun && dangerousPatterns.length > 0 && !autoConfirm) {
-          cliPresenter.warn?.(
-            `Setup will modify files outside .kb/: ${dangerousPatterns.join(', ')}`
-          );
+          ctx.output?.warn?.(`Setup will modify files outside .kb/: ${dangerousPatterns.join(', ')}`);
+          ctx.logger?.warn('Dangerous patterns detected', { patterns: dangerousPatterns });
           const confirmed = await confirmDangerousWrite(dangerousPatterns);
           if (!confirmed) {
-            cliPresenter.warn?.('Setup aborted by user.');
+            ctx.output?.warn?.('Setup aborted by user.');
+            ctx.logger?.info('Setup aborted by user');
             return 1;
           }
         }
@@ -611,7 +667,8 @@ export function createPluginSetupCommand(
         );
 
         if (!executeResult.ok) {
-          cliPresenter.error?.(executeResult.error);
+          ctx.logger?.error('Setup execution failed', { error: executeResult.error });
+          ctx.output?.error?.(executeResult.error instanceof Error ? executeResult.error : new Error(String(executeResult.error)));
           return 1;
         }
 
@@ -635,8 +692,9 @@ export function createPluginSetupCommand(
 
         const diffLines = renderSetupDiff(plan);
         for (const line of diffLines) {
-          cliPresenter.info?.(line);
+          ctx.output?.info?.(line);
         }
+        ctx.logger?.info('Setup plan generated', { operationsCount: plan.length });
 
         const executor = createSetupExecutor({
           workspaceRoot: cwd,
@@ -659,18 +717,29 @@ export function createPluginSetupCommand(
           backupDir: path.join(cwd, '.kb', 'logs', 'setup'),
           journal,
           onProgress: (event) => {
-            cliPresenter.info?.(
+            ctx.output?.info?.(
               `[${event.stageId}] ${event.status.toUpperCase()} ${event.operation.metadata.description}`
             );
+            ctx.logger?.debug('Setup progress', { 
+              stageId: event.stageId, 
+              status: event.status,
+              operation: event.operation.metadata.id,
+            });
           },
         });
 
         if (!executionResult.success) {
-          cliPresenter.error?.(
-            'Setup operations failed to apply. See logs for details.'
-          );
+          ctx.logger?.error('Setup operations failed', { 
+            journalPath: journal.getLogPath(),
+          });
+          ctx.output?.error?.(new Error('Setup operations failed to apply. See logs for details.'));
           return 1;
         }
+        
+        ctx.logger?.info('Setup operations completed successfully', {
+          operationsCount: plan.length,
+          journalPath: journal.getLogPath(),
+        });
 
         await updateConfigFile({
           cwd,
@@ -680,26 +749,35 @@ export function createPluginSetupCommand(
           force,
           dryRun: applyDryRun,
           presenter: cliPresenter,
+          output: ctx.output,
+          logger: ctx.logger,
         });
 
         if (!applyDryRun) {
-          await writeSetupMarker(cwd, namespace, applyDryRun, cliPresenter);
+          await writeSetupMarker(cwd, namespace, applyDryRun, ctx.output || cliPresenter);
         }
 
         if (payload.message) {
-          cliPresenter.info?.(payload.message);
+          ctx.output?.info?.(payload.message);
         }
 
-        printSuggestions(cliPresenter, payload.suggestions);
+        printSuggestions(ctx.output || cliPresenter, payload.suggestions);
 
-        cliPresenter.info?.('\nSetup completed successfully.');
+        ctx.output?.info?.('\nSetup completed successfully.');
         if (journal.getLogPath()) {
-          cliPresenter.info?.(`Change log: ${journal.getLogPath()}`);
+          ctx.output?.info?.(`Change log: ${journal.getLogPath()}`);
         }
+        
+        ctx.logger?.info('Plugin setup completed', { namespace, packageName });
 
         return 0;
       } catch (error) {
-        cliPresenter.error?.(error);
+        ctx.logger?.error('Plugin setup failed', { 
+          namespace, 
+          packageName, 
+          error: error instanceof Error ? error.message : String(error),
+        });
+        ctx.output?.error?.(error instanceof Error ? error : new Error(String(error)));
         return 1;
       }
     },
