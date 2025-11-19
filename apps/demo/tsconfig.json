@@ -1,7 +1,0 @@
-{
-  "extends": "@kb-labs/devkit/tsconfig/base.json",
-  "compilerOptions": {
-    "noEmit": true
-  },
-  "include": ["src", "vite.config.ts"]
-}
