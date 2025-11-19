@@ -271,13 +271,14 @@ export function preflightManifests(
         allowed.push(manifest);
       } catch (error: any) {
         const reason = error?.message ? String(error.message) : 'Validation failed';
+        const manifestId = manifest?.id || manifest?.group || result.packageName || 'unknown';
         skipped.push({
-          id: manifest?.id || manifest?.group || result.packageName || 'unknown',
+          id: manifestId,
           source: result.source,
           reason,
         });
-        telemetry.recordSchemaError(manifest?.id || manifest?.group || result.packageName || 'unknown', reason);
-        log('warn', `Preflight skipped manifest ${manifest?.id || manifest?.group || result.packageName}: ${reason}`);
+        telemetry.recordSchemaError(manifestId, reason);
+        log('warn', `Preflight skipped manifest ${manifestId}: ${reason}`);
       }
     }
 

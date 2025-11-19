@@ -9,6 +9,9 @@ import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 import { detectManifestVersion } from '@kb-labs/plugin-manifest';
 import type { DiscoveryStrategy, DiscoveryResult } from '../types.js';
 import type { PluginBrief } from '../../registry/plugin-registry.js';
+import { getLogger } from '@kb-labs/core-sys/logging';
+
+const logger = getLogger('PkgStrategy');
 
 /**
  * Package.json discovery strategy
@@ -18,31 +21,32 @@ export class PkgStrategy implements DiscoveryStrategy {
   priority = 2;
 
   async discover(roots: string[]): Promise<DiscoveryResult> {
-    console.log(`[PkgStrategy] Starting discovery with roots: ${roots.join(', ')}`);
+    logger.debug('Starting discovery', { roots });
     const plugins: PluginBrief[] = [];
     const manifests = new Map();
     const errors: Array<{ path: string; error: string }> = [];
 
     for (const root of roots) {
-      console.log(`[PkgStrategy] Checking root: ${root}`);
+      logger.debug('Checking root', { root });
       const pkgPath = path.join(root, 'package.json');
       if (!fs.existsSync(pkgPath)) {
-        console.log(`[PkgStrategy] package.json not found at ${pkgPath}`);
+        logger.debug('package.json not found', { pkgPath });
         continue;
       }
-      console.log(`[PkgStrategy] Found package.json at ${pkgPath}`);
+      logger.debug('Found package.json', { pkgPath });
 
       try {
         const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
         
         // Check for manifest path in kbLabs.manifest or kb.manifest
         const manifestPathRel = pkg.kbLabs?.manifest || pkg.kb?.manifest;
-        console.log(`[PkgStrategy] Checking package ${pkg.name || path.basename(root)} at ${root}`);
+        const pkgName = pkg.name || path.basename(root);
+        logger.debug('Checking package', { pkgName, root });
         if (manifestPathRel) {
           const manifestPath = path.resolve(root, manifestPathRel);
-          console.log(`[PkgStrategy] Found manifest path: ${manifestPathRel} -> ${manifestPath}`);
+          logger.debug('Found manifest path', { manifestPathRel, manifestPath });
           if (fs.existsSync(manifestPath)) {
-            console.log(`[PkgStrategy] Manifest file exists: ${manifestPath}`);
+            logger.debug('Manifest file exists', { manifestPath });
             try {
               // Load and parse manifest
               const manifestModule = await import(manifestPath);
@@ -70,26 +74,30 @@ export class PkgStrategy implements DiscoveryStrategy {
                 
                 // Store manifest
                 manifests.set(pluginId, manifest);
-                console.log(`[PkgStrategy] Successfully loaded manifest for plugin ${pluginId}`);
+                logger.debug('Successfully loaded manifest for plugin', { pluginId });
               } else {
-                console.log(`[PkgStrategy] Manifest is not V2, skipping`);
+                logger.debug('Manifest is not V2, skipping', { manifestPath });
               }
             } catch (error) {
-              console.error(`[PkgStrategy] Error loading manifest from ${manifestPath}:`, error);
+              logger.error('Error loading manifest', { 
+                manifestPath,
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined
+              });
               errors.push({
                 path: manifestPath,
                 error: error instanceof Error ? error.message : String(error),
               });
             }
           } else {
-            console.warn(`[PkgStrategy] Manifest file not found: ${manifestPath}`);
+            logger.warn('Manifest file not found', { manifestPath });
             errors.push({
               path: manifestPath,
               error: 'Manifest file not found',
             });
           }
         } else {
-          console.log(`[PkgStrategy] No manifest path in package.json for ${pkg.name || path.basename(root)}`);
+          logger.debug('No manifest path in package.json', { pkgName });
         }
         
         // Check for inline plugins list

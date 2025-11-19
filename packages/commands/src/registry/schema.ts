@@ -48,7 +48,7 @@ export const CommandManifestSchema = z.object({
   manifestVersion: z.literal('1.0'),
   
   // Legacy fields (still supported)
-  id: z.string().min(1).regex(/^[a-z0-9-]+:[a-z0-9-]+$/, 'Command ID must be in format "namespace:command"'),
+  id: z.string().min(1).regex(/^[a-z0-9-]+:[a-z0-9-]+(?:[:a-z0-9-]+)*$/, 'Command ID must be in format "namespace:command"'),
   aliases: z.array(z.string()).optional(),
   group: z.string().min(1),
   describe: z.string().min(1),

@@ -9,34 +9,11 @@ import { parse as parseYaml } from 'yaml';
 import { glob } from 'glob';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 import { detectManifestVersion } from '@kb-labs/plugin-manifest';
+import { getLogger } from '@kb-labs/core-sys/logging';
 import type { DiscoveryStrategy, DiscoveryResult } from '../types.js';
 import type { PluginBrief } from '../../registry/plugin-registry.js';
 
-const DISCOVERY_DEBUG =
-  process.env.KB_DISCOVERY_DEBUG === '1' || process.env.KB_LOG_LEVEL === 'debug';
-
-function trace(message: string): void {
-  if (DISCOVERY_DEBUG) {
-    console.log(`[WorkspaceStrategy] ${message}`);
-  }
-}
-
-function traceWarn(message: string): void {
-  if (DISCOVERY_DEBUG) {
-    console.warn(`[WorkspaceStrategy] ${message}`);
-  }
-}
-
-function traceError(message: string, error?: unknown): void {
-  if (!DISCOVERY_DEBUG) {
-    return;
-  }
-  if (error) {
-    console.error(`[WorkspaceStrategy] ${message}`, error);
-    return;
-  }
-  console.error(`[WorkspaceStrategy] ${message}`);
-}
+const logger = getLogger('WorkspaceStrategy');
 
 /**
  * Find workspace root by looking for pnpm-workspace.yaml or similar
@@ -80,27 +57,27 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
   priority = 1;
 
   async discover(roots: string[]): Promise<DiscoveryResult> {
-    trace(`Starting discovery with roots: ${roots.join(', ')}`);
+    logger.debug('Starting discovery', { roots });
     const plugins: PluginBrief[] = [];
     const manifests = new Map();
     const errors: Array<{ path: string; error: string }> = [];
 
     for (const root of roots) {
-      trace(`Checking root: ${root}`);
+      logger.debug('Checking root', { root });
       const workspaceRoot = findWorkspaceRoot(root);
       if (!workspaceRoot) {
-        trace(`No workspace root found for ${root}`);
+        logger.debug('No workspace root found', { root });
         continue;
       }
-      trace(`Found workspace root: ${workspaceRoot}`);
+      logger.debug('Found workspace root', { workspaceRoot });
 
       // Read workspace config
       const pnpmWorkspacePath = path.join(workspaceRoot, 'pnpm-workspace.yaml');
       if (!fs.existsSync(pnpmWorkspacePath)) {
-        trace(`pnpm-workspace.yaml not found at ${pnpmWorkspacePath}`);
+        logger.debug('pnpm-workspace.yaml not found', { pnpmWorkspacePath });
         continue;
       }
-      trace(`Found pnpm-workspace.yaml at ${pnpmWorkspacePath}`);
+      logger.debug('Found pnpm-workspace.yaml', { pnpmWorkspacePath });
 
       try {
         const content = fs.readFileSync(pnpmWorkspacePath, 'utf8');
@@ -111,20 +88,21 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
         for (const pattern of patterns) {
           const pkgPattern = path.join(workspaceRoot, pattern, 'package.json');
           const pkgFiles = await glob(pkgPattern, { absolute: true });
-          trace(`Found ${pkgFiles.length} package.json files for pattern ${pattern}`);
+          logger.debug('Found package.json files for pattern', { count: pkgFiles.length, pattern });
 
           for (const pkgFile of pkgFiles) {
             try {
               const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf8'));
-              trace(`Checking package ${pkg.name || path.basename(path.dirname(pkgFile))} at ${pkgFile}`);
+              const pkgName = pkg.name || path.basename(path.dirname(pkgFile));
+              logger.debug('Checking package', { pkgName, pkgFile });
               
               // Check for manifest in package.json (support both kb.manifest and kbLabs.manifest)
               const manifestPathRel = pkg.kbLabs?.manifest || pkg.kb?.manifest;
               if (manifestPathRel) {
                 const manifestPath = path.resolve(path.dirname(pkgFile), manifestPathRel);
-                trace(`Found manifest path: ${manifestPathRel} -> ${manifestPath}`);
+                logger.debug('Found manifest path', { manifestPathRel, manifestPath });
                 if (fs.existsSync(manifestPath)) {
-                  trace(`Manifest file exists: ${manifestPath}`);
+                  logger.debug('Manifest file exists', { manifestPath });
                   try {
                     // Load and parse manifest
                     const manifestModule = await import(manifestPath);
@@ -153,12 +131,16 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
                       
                       // Store manifest
                       manifests.set(pluginId, manifest);
-                      trace(`Successfully loaded manifest for plugin ${pluginId}`);
+                      logger.debug('Successfully loaded manifest for plugin', { pluginId });
                     } else {
-                      trace(`Manifest is not V2, skipping`);
+                      logger.debug('Manifest is not V2, skipping', { manifestPath });
                     }
                   } catch (error) {
-                    traceError(`Error loading manifest from ${manifestPath}:`, error);
+                    logger.error('Error loading manifest', { 
+                      manifestPath,
+                      error: error instanceof Error ? error.message : String(error),
+                      stack: error instanceof Error ? error.stack : undefined
+                    });
                     errors.push({
                       path: manifestPath,
                       error: error instanceof Error ? error.message : String(error),
@@ -166,14 +148,14 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
                   }
                 } else {
                   // Manifest path specified but file doesn't exist
-                  traceWarn(`Manifest file not found: ${manifestPath}`);
+                  logger.warn('Manifest file not found', { manifestPath });
                   errors.push({
                     path: manifestPath,
                     error: 'Manifest file not found',
                   });
                 }
               } else {
-                trace(`No manifest path in package.json for ${pkg.name || path.basename(path.dirname(pkgFile))}`);
+                logger.debug('No manifest path in package.json', { pkgName });
               }
             } catch (error) {
               errors.push({

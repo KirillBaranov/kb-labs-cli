@@ -35,7 +35,7 @@ export class FileKeyValueStore implements KeyValueStore {
         return fs.readFileSync(filePath, 'utf8');
       }
       return null;
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }
@@ -51,7 +51,7 @@ export class FileKeyValueStore implements KeyValueStore {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
-    } catch (error) {
+    } catch (_error) {
       // Ignore errors
     }
   }

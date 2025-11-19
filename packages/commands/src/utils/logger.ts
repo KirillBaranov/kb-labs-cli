@@ -1,110 +1,85 @@
 /**
  * @kb-labs/cli-commands/utils
- * Logging utility with KB_LOG_LEVEL support
+ * Logging utility - re-exports from unified logging system
+ * 
+ * @deprecated Use getLogger() from @kb-labs/core-sys/logging directly
+ * This file is kept for backward compatibility
  */
 
+import { getLogger as getCoreLogger, getLogLevel as getCoreLogLevel, type LogLevel as CoreLogLevel } from '@kb-labs/core-sys/logging';
+
+// Re-export for backward compatibility
+export { getLogger, getLogLevel } from '@kb-labs/core-sys/logging';
+export type { LogLevel } from '@kb-labs/core-sys/logging';
+
+// Map old LogLevel type to new one (for compatibility)
 const LOG_LEVELS = ['silent', 'error', 'warn', 'info', 'debug'] as const;
-export type LogLevel = (typeof LOG_LEVELS)[number];
+type OldLogLevel = (typeof LOG_LEVELS)[number];
 
-type Fields = Record<string, unknown>;
-
-type CliLogger = {
-  debug(message: string, fields?: Fields): void;
-  info(message: string, fields?: Fields): void;
-  warn(message: string, fields?: Fields): void;
-  error(message: string, fields?: Fields): void;
+const LEVEL_MAP: Record<OldLogLevel, CoreLogLevel> = {
+  silent: 'error', // silent = only error
+  error: 'error',
+  warn: 'warn',
+  info: 'info',
+  debug: 'debug',
 };
 
-let cachedLogLevel: LogLevel | null = null;
-let sharedLogger: CliLogger | null = null;
-
-const STATIC_TRACE_ID =
-  process.env.KB_TRACE_ID ||
-  `cli-shared-${process.pid}-${Math.random().toString(36).slice(2)}`;
-const STATIC_REQ_ID = `cli-shared-${process.pid}`;
-
-if (!process.env.KB_TRACE_ID) {
-  process.env.KB_TRACE_ID = STATIC_TRACE_ID;
-}
-
-export function initCliLogging(level: LogLevel = 'info'): void {
-  cachedLogLevel = level;
-}
-
-export function createCliLogger(_scope: string, _context: Fields): CliLogger {
-  const formatFields = (fields?: Fields): string => {
-    if (!fields || Object.keys(fields).length === 0) {
-      return '';
-    }
-    try {
-      return ` ${JSON.stringify(fields)}`;
-    } catch {
-      return '';
-    }
-  };
-
-  return {
-    debug(message, fields) {
-      console.debug(message + formatFields(fields));
-    },
-    info(message, fields) {
-      console.log(message + formatFields(fields));
-    },
-    warn(message, fields) {
-      console.warn(message + formatFields(fields));
-    },
-    error(message, fields) {
-      console.error(message + formatFields(fields));
-    },
-  };
-}
-
-export function getLogLevel(): LogLevel {
-  if (cachedLogLevel) {
-    return cachedLogLevel;
-  }
-  const level = (process.env.KB_LOG_LEVEL || 'warn').toLowerCase();
-  cachedLogLevel = LOG_LEVELS.includes(level as LogLevel) ? (level as LogLevel) : 'warn';
-  return cachedLogLevel;
-}
-
-function getLogger(): CliLogger {
-  if (!sharedLogger) {
-    initCliLogging(getLogLevel());
-    sharedLogger = createCliLogger('commands', {
-      traceId: STATIC_TRACE_ID,
-      reqId: STATIC_REQ_ID,
-    });
-  }
-  return sharedLogger;
-}
-
-export function log(level: LogLevel, message: string, fields?: Record<string, unknown>): void {
-  const currentLevel = getLogLevel();
-  const currentIndex = LOG_LEVELS.indexOf(currentLevel);
-  const messageIndex = LOG_LEVELS.indexOf(level);
-
-  if (messageIndex > currentIndex || currentLevel === 'silent') {
+/**
+ * @deprecated Use getLogger() from @kb-labs/core-sys/logging directly
+ */
+export function log(level: OldLogLevel, message: string, fields?: Record<string, unknown>): void {
+  const currentLevel = getCoreLogLevel();
+  const currentIndex = LOG_LEVELS.indexOf(level);
+  const coreLevel = LEVEL_MAP[level];
+  
+  // Map current level to old levels for comparison
+  const currentCoreIndex = LOG_LEVELS.indexOf(
+    currentLevel === 'debug' || currentLevel === 'trace' ? 'debug' :
+    currentLevel === 'info' ? 'info' :
+    currentLevel === 'warn' ? 'warn' :
+    'error'
+  );
+  
+  // Skip if level is too low or silent
+  if (currentIndex > currentCoreIndex || level === 'silent') {
     return;
   }
 
-  const logger = getLogger();
-  if (level === 'error') {
+  const logger = getCoreLogger('commands');
+  
+  if (coreLevel === 'error') {
     logger.error(message, fields);
-    return;
-  }
-  if (level === 'warn') {
+  } else if (coreLevel === 'warn') {
     logger.warn(message, fields);
-    return;
-  }
-  if (level === 'info') {
+  } else if (coreLevel === 'info') {
     logger.info(message, fields);
-    return;
+  } else {
+    logger.debug(message, fields);
   }
-  logger.debug(message, fields);
 }
 
+/**
+ * @deprecated No longer needed - logging is initialized globally
+ */
+export function initCliLogging(_level: OldLogLevel = 'info'): void {
+  // No-op - logging is initialized globally via initLogging()
+}
+
+/**
+ * @deprecated Use getLogger() from @kb-labs/core-sys/logging directly
+ */
+export function createCliLogger(scope: string, context: Record<string, unknown>): ReturnType<typeof getCoreLogger> {
+  return getCoreLogger(`cli:${scope}`).child({
+    meta: {
+      layer: 'cli',
+      ...context,
+    },
+  });
+}
+
+/**
+ * @deprecated No longer needed
+ */
 export function resetLogLevel(): void {
-  cachedLogLevel = null;
-  sharedLogger = null;
+  // No-op - use setLogLevel() from @kb-labs/core-sys/logging if needed
 }

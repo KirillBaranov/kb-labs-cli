@@ -1,7 +1,6 @@
 import type { Command } from '../../types'
-import { writeFile, mkdir } from 'node:fs/promises'
+import { writeFile, mkdir, readFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
-import { readFile } from 'node:fs/promises'
 import { minimatch } from 'minimatch'
 import {
   TimingTracker,
@@ -11,7 +10,6 @@ import {
   safeSymbols,
   formatTiming,
 } from '@kb-labs/shared-cli-ui'
-import { readFile } from 'node:fs/promises'
 
 const TEMPLATES = {
   'ai-ci-standard': `name: ai-ci-standard

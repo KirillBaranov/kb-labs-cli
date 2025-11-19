@@ -15,6 +15,7 @@ export type {
   RegistrySnapshot,
   RegistrySnapshotManifestEntry,
   RedisStatus,
+
   WorkflowRunParams,
   WorkflowRunsListOptions,
   WorkflowRunsListResult,

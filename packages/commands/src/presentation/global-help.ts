@@ -165,6 +165,15 @@ export function renderGlobalHelpNew(registry: {
   }
   content.push("");
 
+  content.push("Plugin Diagnostics:");
+  content.push("");
+  content.push(
+    `  ${colors.cyan("--limit")}  ${colors.dim(
+      "Print sandbox limits for a product or command without executing it",
+    )}`,
+  );
+  content.push("");
+
   content.push("Next Steps:");
   content.push("");
 

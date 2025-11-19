@@ -8,8 +8,11 @@ import * as path from 'node:path';
 import { glob } from 'glob';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 import { detectManifestVersion } from '@kb-labs/plugin-manifest';
+import { getLogger } from '@kb-labs/core-sys/logging';
 import type { DiscoveryStrategy, DiscoveryResult } from '../types.js';
 import type { PluginBrief } from '../../registry/plugin-registry.js';
+
+const logger = getLogger('DirStrategy');
 
 /**
  * Directory discovery strategy (.kb/plugins/)
@@ -19,15 +22,19 @@ export class DirStrategy implements DiscoveryStrategy {
   priority = 3;
 
   async discover(roots: string[]): Promise<DiscoveryResult> {
+    logger.debug('Starting discovery', { roots });
     const plugins: PluginBrief[] = [];
     const manifests = new Map();
     const errors: Array<{ path: string; error: string }> = [];
 
     for (const root of roots) {
       const pluginsDir = path.join(root, '.kb', 'plugins');
+      logger.debug('Checking plugins directory', { pluginsDir });
       if (!fs.existsSync(pluginsDir)) {
+        logger.debug('Plugins directory not found', { pluginsDir });
         continue;
       }
+      logger.debug('Found plugins directory', { pluginsDir });
 
       try {
         // Find all manifest files in .kb/plugins/
@@ -35,9 +42,11 @@ export class DirStrategy implements DiscoveryStrategy {
           cwd: pluginsDir,
           absolute: true,
         });
+        logger.debug('Found manifest files', { count: manifestFiles.length, pluginsDir });
 
         for (const manifestPath of manifestFiles) {
           try {
+            logger.debug('Loading manifest', { manifestPath });
             // Load and parse manifest
             const manifestModule = await import(manifestPath);
             const manifestData: unknown = manifestModule.default || manifestModule.manifest || manifestModule;
@@ -46,6 +55,7 @@ export class DirStrategy implements DiscoveryStrategy {
             if (version === 'v2') {
               const manifest = manifestData as ManifestV2;
               const pluginId = manifest.id || path.basename(path.dirname(manifestPath));
+              logger.debug('Successfully loaded manifest', { pluginId, manifestPath });
               
               // Try to find package.json for additional info
               const pkgPath = path.join(path.dirname(manifestPath), 'package.json');
@@ -79,8 +89,15 @@ export class DirStrategy implements DiscoveryStrategy {
               
               // Store manifest
               manifests.set(pluginId, manifest);
+            } else {
+              logger.debug('Manifest is not V2, skipping', { manifestPath, version });
             }
           } catch (error) {
+            logger.error('Error loading manifest', {
+              manifestPath,
+              error: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined
+            });
             errors.push({
               path: manifestPath,
               error: error instanceof Error ? error.message : String(error),
@@ -88,6 +105,11 @@ export class DirStrategy implements DiscoveryStrategy {
           }
         }
       } catch (error) {
+        logger.error('Error reading plugins directory', {
+          pluginsDir,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
         errors.push({
           path: pluginsDir,
           error: error instanceof Error ? error.message : String(error),
@@ -95,6 +117,11 @@ export class DirStrategy implements DiscoveryStrategy {
       }
     }
 
+    logger.debug('Discovery completed', { 
+      pluginsFound: plugins.length, 
+      manifestsFound: manifests.size,
+      errorsCount: errors.length 
+    });
     return { plugins, manifests, errors };
   }
 }

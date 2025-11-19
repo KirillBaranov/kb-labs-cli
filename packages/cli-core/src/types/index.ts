@@ -3,8 +3,6 @@
  * Public types for CLI core
  */
 
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
-
 /**
  * Source kind for discovered plugins
  */

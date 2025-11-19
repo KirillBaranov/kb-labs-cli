@@ -5,6 +5,9 @@
 
 import * as path from 'node:path';
 import { promises as fs } from 'node:fs';
+import { getLogger } from '@kb-labs/core-sys/logging';
+
+const logger = getLogger('PathValidator');
 
 /**
  * PathValidator - validates and normalizes file paths for security
@@ -23,7 +26,7 @@ export class PathValidator {
 
       // Check for .. traversal in normalized path
       if (normalized.includes('..')) {
-        console.warn(`[PathValidator] Path traversal detected: ${targetPath}`);
+        logger.warn('Path traversal detected', { targetPath });
         return false;
       }
 
@@ -34,15 +37,16 @@ export class PathValidator {
       });
 
       if (!isWithinRoot) {
-        console.warn(
-          `[PathValidator] Path outside allowed roots: ${targetPath}`
-        );
+        logger.warn('Path outside allowed roots', { targetPath, allowedRoots });
         return false;
       }
 
       return true;
     } catch (error) {
-      console.warn(`[PathValidator] Validation error for ${targetPath}:`, error);
+      logger.warn('Validation error', { 
+        targetPath,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return false;
     }
   }

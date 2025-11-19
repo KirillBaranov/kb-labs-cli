@@ -8,6 +8,9 @@ import type { ManifestV2, RestRouteDecl } from '@kb-labs/plugin-manifest';
 import { WatchManager } from './watch-manager.js';
 import semver from 'semver';
 import * as path from 'node:path';
+import { getLogger } from '@kb-labs/core-sys/logging';
+
+const logger = getLogger('PluginRegistry');
 
 /**
  * Source kind for discovered plugins
@@ -192,7 +195,7 @@ export class PluginRegistry {
     // Start watching after a short delay (allow initial refresh to complete)
     setTimeout(() => {
       this.watchManager?.start().catch(error => {
-        console.error('[PluginRegistry] Failed to start watch mode:', error);
+        logger.error('Failed to start watch mode', error instanceof Error ? error : new Error(String(error)));
       });
     }, 1000);
   }
@@ -222,14 +225,14 @@ export class PluginRegistry {
       
       for (const [id, manifest] of result.manifests) {
         this.manifests.set(id, manifest);
-        console.log(`[PluginRegistry] Stored manifest for ${id} (manifest.id=${manifest.id})`);
+        logger.debug(`Stored manifest for ${id} (manifest.id=${manifest.id})`);
       }
       
       // Log summary
-      console.log(`[PluginRegistry] Stored ${this.manifests.size} manifests for ${this.plugins.size} plugins`);
+      logger.debug(`Stored ${this.manifests.size} manifests for ${this.plugins.size} plugins`);
       if (this.plugins.size > 0 && this.manifests.size === 0) {
-        console.warn(`[PluginRegistry] WARNING: Found ${this.plugins.size} plugins but 0 manifests!`);
-        console.warn(`[PluginRegistry] Plugin IDs: ${Array.from(this.plugins.keys()).join(', ')}`);
+        logger.warn(`WARNING: Found ${this.plugins.size} plugins but 0 manifests!`);
+        logger.warn(`Plugin IDs: ${Array.from(this.plugins.keys()).join(', ')}`);
       }
       
       // Calculate diff
@@ -242,9 +245,7 @@ export class PluginRegistry {
       this.initialized = true;
       
       const duration = Date.now() - start;
-      console.log(
-        `[PluginRegistry] Discovery completed in ${duration}ms, found ${this.plugins.size} plugins`
-      );
+      logger.debug(`[PluginRegistry] Discovery completed in ${duration}ms, found ${this.plugins.size} plugins`);
       
       // Notify listeners
       if (diff.added.length > 0 || diff.removed.length > 0 || diff.changed.length > 0) {
@@ -252,7 +253,7 @@ export class PluginRegistry {
       }
     } catch (error) {
       const duration = Date.now() - start;
-      console.error(`[PluginRegistry] Discovery failed after ${duration}ms:`, error);
+      logger.error(`Discovery failed after ${duration}ms`, error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -339,10 +340,10 @@ export class PluginRegistry {
           outdir: path.join(plugin.source.path, 'out'),
         } satisfies ResolvedRoute;
       } catch (error) {
-        console.warn('[PluginRegistry] Failed to parse handler for route', {
+        logger.warn('Failed to parse handler for route', {
           pluginId,
           handler: route.handler,
-          error,
+          error: error instanceof Error ? error.message : String(error),
         });
         return null;
       }

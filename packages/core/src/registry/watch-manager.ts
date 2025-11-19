@@ -5,6 +5,9 @@
 
 import * as chokidar from 'chokidar';
 import * as path from 'node:path';
+import { getLogger } from '@kb-labs/core-sys/logging';
+
+const logger = getLogger('WatchManager');
 
 export interface WatchOptions {
   /** Root directories to watch */
@@ -30,15 +33,15 @@ export class WatchManager {
    */
   async start(): Promise<void> {
     if (this.watcher) {
-      console.warn('[WatchManager] Already watching');
+      logger.warn('Already watching');
       return;
     }
 
     const patterns = this.buildWatchPatterns();
     
-    console.log('[WatchManager] Starting file watch...', {
+    logger.info('Starting file watch', {
       roots: this.opts.roots,
-      patterns: patterns.length,
+      patternsCount: patterns.length,
     });
 
     this.watcher = chokidar.watch(patterns, {
@@ -63,11 +66,14 @@ export class WatchManager {
     this.watcher.on('unlink', (filePath) => this.handleChange('unlink', filePath));
 
     this.watcher.on('error', (error) => {
-      console.error('[WatchManager] Watcher error:', error);
+      logger.error('Watcher error', { 
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     });
 
     this.watcher.on('ready', () => {
-      console.log('[WatchManager] Initial scan complete, watching for changes...');
+      logger.info('Initial scan complete, watching for changes');
     });
   }
 
@@ -83,7 +89,7 @@ export class WatchManager {
     if (this.watcher) {
       await this.watcher.close();
       this.watcher = undefined;
-      console.log('[WatchManager] Stopped watching');
+      logger.info('Stopped watching');
     }
   }
 
@@ -122,7 +128,7 @@ export class WatchManager {
    * Handle file change event
    */
   private handleChange(event: 'add' | 'change' | 'unlink', filePath: string): void {
-    console.log(`[WatchManager] File ${event}: ${filePath}`);
+    logger.debug('File change detected', { event, filePath });
 
     // Debounce: wait for multiple changes to settle
     if (this.debounceTimer) {
@@ -141,22 +147,26 @@ export class WatchManager {
    */
   private async triggerRefresh(triggerFile: string): Promise<void> {
     if (this.isRefreshing) {
-      console.log('[WatchManager] Refresh already in progress, skipping');
+      logger.debug('Refresh already in progress, skipping', { triggerFile });
       return;
     }
 
     this.isRefreshing = true;
 
     try {
-      console.log('[WatchManager] Triggering refresh due to:', triggerFile);
+      logger.debug('Triggering refresh', { triggerFile });
       const start = Date.now();
       
       await this.opts.onChange();
       
       const duration = Date.now() - start;
-      console.log(`[WatchManager] Refresh completed in ${duration}ms`);
+      logger.debug('Refresh completed', { duration, triggerFile });
     } catch (error) {
-      console.error('[WatchManager] Refresh failed:', error);
+      logger.error('Refresh failed', {
+        triggerFile,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     } finally {
       this.isRefreshing = false;
     }

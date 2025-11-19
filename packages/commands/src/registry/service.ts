@@ -50,7 +50,7 @@ function manifestToCommand(registered: RegisteredCommand): Command {
     aliases: registered.manifest.aliases || [],
     flags: registered.manifest.flags,
     examples: registered.manifest.examples,
-    async run(ctx, argv, flags) {
+    async run(ctx, argv, flags, actualRest?: string[]) {
       const isSetupCommand =
         (registered.manifest as any).isSetup === true ||
         (registered.manifest as any).isSetupRollback === true;
@@ -114,6 +114,11 @@ function manifestToCommand(registered: RegisteredCommand): Command {
 
         let exitCode: number;
         try {
+          // Pass argv (actualRest) to executeCommand via context
+          // actualRest contains subcommand and remaining args
+          const commandArgv = actualRest ?? argv;
+          // Store argv in context so executeCommand can access it
+          (ctx as any).argv = commandArgv;
           exitCode = await executeCommand(
             cliCommand,
             manifestV2 as ManifestV2,

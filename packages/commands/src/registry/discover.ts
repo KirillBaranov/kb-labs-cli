@@ -230,6 +230,61 @@ async function computePluginsStateHash(cwd: string): Promise<string> {
 }
 
 /**
+ * Detect whether new workspace packages with manifests appeared since cache was written.
+ * If so, cached results are considered stale to ensure new commands are registered.
+ */
+async function detectNewWorkspacePackages(
+  cwd: string,
+  cachedPackages: Record<string, PackageCacheEntry> | undefined
+): Promise<boolean> {
+  if (!cachedPackages) {
+    return true;
+  }
+
+  try {
+    const workspaceYaml = path.join(cwd, 'pnpm-workspace.yaml');
+    const content = await fs.readFile(workspaceYaml, 'utf8');
+    const parsed = parseYaml(content) as { packages?: string[] };
+    if (!Array.isArray(parsed.packages)) {
+      return false;
+    }
+
+    const knownPackages = new Set(Object.keys(cachedPackages));
+
+    for (const pattern of parsed.packages) {
+      const pkgPattern = path.join(pattern, 'package.json');
+      const pkgFiles = await glob(pkgPattern, {
+        cwd,
+        absolute: false,
+        ignore: ['.kb/**', 'node_modules/**', '**/node_modules/**'],
+      });
+
+      for (const pkgFile of pkgFiles) {
+        const pkgRoot = path.dirname(path.join(cwd, pkgFile));
+        const pkg = await readPackageJson(path.join(cwd, pkgFile));
+        if (!pkg || !pkg.name) {
+          continue;
+        }
+
+        if (knownPackages.has(pkg.name)) {
+          continue;
+        }
+
+        const manifestInfo = await findManifestPath(pkgRoot, pkg);
+        if (manifestInfo.path) {
+          log('debug', `[plugins][cache] New workspace package detected: ${pkg.name}`);
+          return true;
+        }
+      }
+    }
+  } catch (error: any) {
+    log('debug', `[plugins][cache] Workspace scan skipped: ${error?.message || 'unknown error'}`);
+  }
+
+  return false;
+}
+
+/**
  * Load manifest with timeout protection
  */
 async function loadManifestWithTimeout(manifestPath: string, pkgName: string, pkgRoot?: string): Promise<CommandManifest[]> {
@@ -249,15 +304,29 @@ async function loadManifestWithTimeout(manifestPath: string, pkgName: string, pk
 }
 
 /**
- * Derive namespace from package name
+ * Prefer namespace from ManifestV2.id (e.g., '@kb-labs/release' -> 'release').
+ * Fallback to package name heuristic if id is missing.
+ */
+function getNamespaceFromManifest(manifestV2: ManifestV2 | undefined, packageName: string): string {
+  const manifestId = manifestV2?.id;
+  if (typeof manifestId === 'string' && manifestId.length > 0) {
+    // take last segment after slash, drop leading '@'
+    const seg = manifestId.split('/').pop() || manifestId;
+    return seg.replace(/^@/, '');
+  }
+  // Fallback: derive from package name (last path segment without org scope)
+  const parts = packageName.split('/');
+  const last = parts[parts.length - 1] || packageName;
+  return last.replace(/^@/, '');
+}
+
+/**
+ * Derive namespace from package name (legacy fallback)
  */
 function deriveNamespace(packageName: string): string {
-  // Extract namespace from package name
-  // @kb-labs/devlink-cli -> devlink
-  // @scope/name-cli -> name
   const parts = packageName.split('/');
   const lastPart = parts[parts.length - 1] || packageName;
-  return lastPart.replace(/-cli$/, '').replace(/^kb-labs-/, '');
+  return lastPart.replace(/^@/, '');
 }
 
 interface SetupCommandFactoryInput {
@@ -371,7 +440,7 @@ async function loadManifest(manifestPath: string, pkgName: string, pkgRoot?: str
     throw new Error(`Unsupported manifest format in ${pkgName}. Only ManifestV2 is supported.`);
   }
   
-  const namespace = deriveNamespace(pkgName);
+  const namespace = getNamespaceFromManifest(manifestV2, pkgName);
   const manifestDir = path.dirname(manifestPath);
   const baseRoot = pkgRoot || manifestDir;
   const cliCommands = Array.isArray(manifestV2.cli?.commands)
@@ -402,9 +471,11 @@ async function loadManifest(manifestPath: string, pkgName: string, pkgRoot?: str
   });
 
   if (manifestV2.setup) {
+    // Ensure setup/rollback registered under a stable namespace taken from manifest id
+    const setupNamespace = getNamespaceFromManifest(manifestV2, pkgName);
     const setupCommand = createSetupCommandManifest({
       manifestV2,
-      namespace,
+      namespace: setupNamespace,
       pkgName,
       pkgRoot: baseRoot,
     });
@@ -412,7 +483,7 @@ async function loadManifest(manifestPath: string, pkgName: string, pkgRoot?: str
 
     const rollbackCommand = createSetupRollbackCommandManifest({
       manifestV2,
-      namespace,
+      namespace: setupNamespace,
       pkgName,
       pkgRoot: baseRoot,
     });
@@ -1005,9 +1076,11 @@ async function saveCache(cwd: string, results: DiscoveryResult[]): Promise<void>
     try {
       const manifestHash = await computeManifestHash(result.manifestPath);
       
-      // Get package.json mtime
+      // Get package.json mtime and version
       const pkgJsonPath = path.join(result.pkgRoot.split('/').join(path.sep), 'package.json');
       const pkgStat = await fs.stat(pkgJsonPath);
+      const pkg = await readPackageJson(pkgJsonPath);
+      const version = pkg?.version || '0.1.0';
       
       // Get manifest mtime
       const manifestStat = await fs.stat(result.manifestPath.split('/').join(path.sep));
@@ -1024,7 +1097,7 @@ async function saveCache(cwd: string, results: DiscoveryResult[]): Promise<void>
       };
 
       packages[result.packageName] = {
-        version: '0.1.0', // TODO: Extract from package.json
+        version,
         manifestHash,
         manifestPath: result.manifestPath,
         pkgJsonMtime: pkgStat.mtimeMs,
@@ -1126,7 +1199,12 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
           freshResults.push(entry.result);
         }
       }
-      if (freshResults.length > 0) {
+      const hasNewWorkspacePackages = await detectNewWorkspacePackages(
+        cwd,
+        cached.packages,
+      );
+
+      if (freshResults.length > 0 && !hasNewWorkspacePackages) {
         const totalTime = Date.now() - startTime;
         const sourceCounts = freshResults.reduce((acc, r) => {
           acc[r.source] = (acc[r.source] || 0) + 1;
@@ -1145,6 +1223,10 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
         log('info', `[plugins][discover] ${totalTime}ms (cached: ${Object.entries(sourceCounts).map(([s, c]) => `${s}:${c}`).join(', ')})`);
         inProcDiscoveryCache = { timestamp: Date.now(), results: freshResults };
         return freshResults;
+      }
+
+      if (hasNewWorkspacePackages) {
+        log('debug', '[plugins][cache] invalidated: new workspace packages detected');
       }
     }
   }

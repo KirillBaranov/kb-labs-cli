@@ -13,20 +13,9 @@ import { DirStrategy } from './strategies/dir.js';
 import { FileStrategy } from './strategies/file.js';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 
-const DISCOVERY_DEBUG =
-  process.env.KB_DISCOVERY_DEBUG === '1' || process.env.KB_LOG_LEVEL === 'debug';
+import { getLogger } from '@kb-labs/core-sys/logging';
 
-function trace(message: string): void {
-  if (DISCOVERY_DEBUG) {
-    console.log(`[DiscoveryManager] ${message}`);
-  }
-}
-
-function traceWarn(message: string): void {
-  if (DISCOVERY_DEBUG) {
-    console.warn(`[DiscoveryManager] ${message}`);
-  }
-}
+const logger = getLogger('DiscoveryManager');
 
 /**
  * Discovery manager - coordinates all strategies with priority
@@ -52,8 +41,8 @@ export class DiscoveryManager {
 
     // Get roots (default to cwd)
     const roots = this.opts.roots || [process.cwd()];
-    trace(`Starting discovery with roots: ${roots.join(', ')}`);
-    trace(`Enabled strategies: ${this.opts.strategies.join(', ')}`);
+    logger.debug('Starting discovery', { roots });
+    logger.debug('Enabled strategies', { strategies: this.opts.strategies });
 
     // Execute strategies in parallel
     const enabledStrategies = this.opts.strategies
@@ -61,15 +50,14 @@ export class DiscoveryManager {
       .filter((s): s is DiscoveryStrategy => s !== undefined)
       .sort((a, b) => a.priority - b.priority);
 
-    trace(
-      `Found ${enabledStrategies.length} enabled strategies: ${enabledStrategies
-        .map((s) => s.name)
-        .join(', ')}`,
-    );
+    logger.debug('Found enabled strategies', { 
+      count: enabledStrategies.length,
+      strategies: enabledStrategies.map((s) => s.name)
+    });
 
     const results = await Promise.all(
       enabledStrategies.map((strategy) => {
-        trace(`Executing strategy: ${strategy.name}`);
+        logger.debug('Executing strategy', { strategyName: strategy.name });
         return strategy.discover(roots);
       }),
     );
@@ -94,24 +82,25 @@ export class DiscoveryManager {
       let manifest = allManifests.get(plugin.id);
       if (manifest) {
         deduplicatedManifests.set(plugin.id, manifest);
-        trace(`Found manifest for plugin ${plugin.id} by plugin.id`);
+        logger.debug('Found manifest for plugin by plugin.id', { pluginId: plugin.id });
       } else {
         // If not found by plugin.id, try to find by manifest.id from all manifests
         for (const [id, m] of allManifests) {
           if (m.id === plugin.id) {
             manifest = m;
             deduplicatedManifests.set(plugin.id, m);
-            trace(
-              `Found manifest for plugin ${plugin.id} by manifest.id (was stored as ${id})`,
-            );
+            logger.debug('Found manifest for plugin by manifest.id', { 
+              pluginId: plugin.id,
+              storedAs: id 
+            });
             break;
           }
         }
         if (!manifest) {
-          traceWarn(`WARNING: No manifest found for plugin ${plugin.id}`);
-          traceWarn(
-            `Available manifest IDs: ${Array.from(allManifests.keys()).join(', ')}`,
-          );
+          logger.warn('No manifest found for plugin', { pluginId: plugin.id });
+          logger.warn('Available manifest IDs', { 
+            manifestIds: Array.from(allManifests.keys()) 
+          });
         }
       }
     }

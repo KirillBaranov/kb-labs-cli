@@ -2,12 +2,15 @@ import type { Command } from '../../types'
 import { TimingTracker, box } from '@kb-labs/shared-cli-ui'
 import { createCliEngineLogger, resolveWorkflowSpec, formatRunHeader, statusBadge } from './utils'
 import { runWorkflow } from './service'
+import { createWorkflowRegistry } from '@kb-labs/workflow-runtime'
+import { WorkflowLoader } from '@kb-labs/workflow-engine'
 
 interface Flags {
   file?: string
   inline?: string
   stdin?: boolean
   specRef?: string
+  'workflow-id'?: string
   idempotency?: string
   'concurrency-group'?: string
   json?: boolean
@@ -20,6 +23,7 @@ export const wfRun: Command = {
   category: 'workflows',
   aliases: ['wf:run'],
   flags: [
+    { name: 'workflow-id', type: 'string', description: 'Workflow ID from registry (e.g. workspace:ai-ci)' },
     { name: 'file', type: 'string', description: 'Path to workflow specification file' },
     { name: 'inline', type: 'string', description: 'Inline workflow specification (JSON or YAML)' },
     { name: 'stdin', type: 'boolean', description: 'Read workflow spec from STDIN' },
@@ -30,6 +34,7 @@ export const wfRun: Command = {
     { name: 'verbose', type: 'boolean', description: 'Enable verbose logging' },
   ],
   examples: [
+    'kb wf run --workflow-id workspace:ai-ci',
     'kb wf run --file ./kb.workflow.yml',
     'kb wf run --inline "{\\"name\\":\\"demo\\",\\"on\\":{\\"manual\\":true},\\"jobs\\":{}}"',
     'cat kb.workflow.yml | kb wf run --stdin --idempotency run-123',
@@ -41,7 +46,36 @@ export const wfRun: Command = {
     const tracker = new TimingTracker()
 
     try {
-      const result = await resolveWorkflowSpec(ctx, flags, 'kb.workflow.yml')
+      let result: { spec: any; source: string }
+
+      // Приоритет: --workflow-id > --file > --inline > --stdin > default
+      if (flags['workflow-id']) {
+        const registry = await createWorkflowRegistry({
+          workspaceRoot: ctx.workspaceRoot ?? process.cwd(),
+        })
+        const resolved = await registry.resolve(flags['workflow-id'])
+
+        if (!resolved) {
+          const message = `Workflow '${flags['workflow-id']}' not found`
+          if (jsonMode) {
+            ctx.presenter.json({ ok: false, error: message })
+          } else {
+            ctx.presenter.error(message)
+          }
+          return 1
+        }
+
+        // Load from resolved path
+        const loader = new WorkflowLoader(logger)
+        const loaderResult = await loader.fromFile(resolved.filePath)
+        result = {
+          spec: loaderResult.spec,
+          source: `registry:${resolved.id}`,
+        }
+      } else {
+        result = await resolveWorkflowSpec(ctx, flags, 'kb.workflow.yml')
+      }
+
       tracker.checkpoint('spec')
       const run = await runWorkflow({
         spec: result.spec,
