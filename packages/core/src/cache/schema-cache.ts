@@ -5,7 +5,10 @@
 
 import { z } from 'zod';
 import * as crypto from 'node:crypto';
+import { getLogger } from '@kb-labs/core-sys/logging';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+
+const logger = getLogger('cli:schema-cache');
 
 /**
  * Schema cache for Zod schemas with checksum-based invalidation
@@ -35,7 +38,7 @@ export class SchemaCache {
     // Parse schemaRef: './schemas/review.ts#ReviewSchema'
     const [modulePath, exportName] = schemaRef.split('#');
     if (!exportName || !modulePath) {
-      console.warn(`[SchemaCache] Invalid schema ref: ${schemaRef}`);
+      logger.warn('Invalid schema ref', { schemaRef });
       return null;
     }
 
@@ -50,13 +53,20 @@ export class SchemaCache {
         this.checksums.set(schemaRef, manifestChecksum);
         return schema;
       } else {
-        console.warn(
-          `[SchemaCache] Export ${exportName} is not a valid Zod schema`
-        );
+        logger.warn('Export is not a valid Zod schema', {
+          exportName,
+          schemaRef,
+          modulePath,
+        });
         return null;
       }
     } catch (error) {
-      console.warn(`[SchemaCache] Failed to load schema ${schemaRef}:`, error);
+      logger.warn('Failed to load schema', {
+        schemaRef,
+        modulePath,
+        exportName,
+        error: error instanceof Error ? error.message : String(error),
+      });
       return null;
     }
   }

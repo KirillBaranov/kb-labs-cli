@@ -1,81 +1,89 @@
 /**
  * @module @kb-labs/cli-core/context/services/logger
  * Logger service implementation
+ * 
+ * Wrapper around @kb-labs/core-sys/logging for CLI context
  */
 
 import type { Logger } from '../../types/index.js';
-import * as fs from 'node:fs';
+import { getLogger, createFileSink, configureLogger, addSink } from '@kb-labs/core-sys/logging';
 import * as path from 'node:path';
 
+let fileSinkAdded = false;
+const logger = getLogger('cli:logger-service');
+
 /**
- * File logger implementation
+ * File logger implementation using new logging system
  */
 export class FileLogger implements Logger {
-  private logPath: string;
+  private coreLogger: ReturnType<typeof getLogger>;
 
   constructor(logPath?: string) {
-    this.logPath = logPath || path.join(process.cwd(), '.kb/logs/cli.log');
+    const defaultPath = logPath || path.join(process.cwd(), '.kb/logs/cli.jsonl');
     
-    // Ensure log directory exists
-    const logDir = path.dirname(this.logPath);
-    if (!fs.existsSync(logDir)) {
-      fs.mkdirSync(logDir, { recursive: true });
+    // Add file sink if not already added
+    if (!fileSinkAdded) {
+      try {
+        const fileSink = createFileSink({
+          path: defaultPath,
+          maxSize: '100MB',
+          maxAge: '7d',
+        });
+        addSink(fileSink);
+        fileSinkAdded = true;
+      } catch (error) {
+        logger.error('Failed to create file sink', {
+          error: error instanceof Error ? error.message : String(error),
+          path: defaultPath,
+        });
+      }
     }
-  }
-
-  private log(level: string, msg: string, meta?: object): void {
-    const timestamp = new Date().toISOString();
-    const metaStr = meta ? ` ${JSON.stringify(meta)}` : '';
-    const logLine = `[${timestamp}] [${level.toUpperCase()}] ${msg}${metaStr}\n`;
     
-    try {
-      fs.appendFileSync(this.logPath, logLine, 'utf8');
-    } catch (error) {
-      // Fallback to console if file write fails
-      console.error(`Failed to write log: ${error instanceof Error ? error.message : String(error)}`);
-    }
-
-    // Also log to console in debug mode
-    if (process.env.DEBUG) {
-      console.log(logLine.trim());
-    }
+    this.coreLogger = getLogger('cli:file');
   }
 
   debug(msg: string, meta?: object): void {
-    this.log('debug', msg, meta);
+    this.coreLogger.debug(msg, meta as Record<string, unknown> | undefined);
   }
 
   info(msg: string, meta?: object): void {
-    this.log('info', msg, meta);
+    this.coreLogger.info(msg, meta as Record<string, unknown> | undefined);
   }
 
   warn(msg: string, meta?: object): void {
-    this.log('warn', msg, meta);
+    this.coreLogger.warn(msg, meta as Record<string, unknown> | undefined);
   }
 
   error(msg: string, meta?: object): void {
-    this.log('error', msg, meta);
+    this.coreLogger.error(msg, meta as Record<string, unknown> | undefined);
   }
 }
 
 /**
  * Console logger implementation (for development)
+ * Uses new logging system
  */
 export class ConsoleLogger implements Logger {
+  private coreLogger: ReturnType<typeof getLogger>;
+
+  constructor() {
+    this.coreLogger = getLogger('cli:console');
+  }
+
   debug(msg: string, meta?: object): void {
-    console.debug(`[DEBUG] ${msg}`, meta || '');
+    this.coreLogger.debug(msg, meta as Record<string, unknown> | undefined);
   }
 
   info(msg: string, meta?: object): void {
-    console.info(`[INFO] ${msg}`, meta || '');
+    this.coreLogger.info(msg, meta as Record<string, unknown> | undefined);
   }
 
   warn(msg: string, meta?: object): void {
-    console.warn(`[WARN] ${msg}`, meta || '');
+    this.coreLogger.warn(msg, meta as Record<string, unknown> | undefined);
   }
 
   error(msg: string, meta?: object): void {
-    console.error(`[ERROR] ${msg}`, meta || '');
+    this.coreLogger.error(msg, meta as Record<string, unknown> | undefined);
   }
 }
 

@@ -1,4 +1,7 @@
 import { CliError, CLI_ERROR_CODES } from "./errors";
+import { getLogger } from '@kb-labs/core-sys/logging';
+
+const logger = getLogger('cli:flags');
 
 export type GlobalFlags = {
   json?: boolean;
@@ -103,7 +106,7 @@ export function parseArgs(argv: string[]): {
           break;
         case "--verbose":
           // Deprecated: show warning and map to --debug
-          console.warn('[DEPRECATED] --verbose is deprecated. Use --debug instead.');
+          logger.warn('[DEPRECATED] --verbose is deprecated. Use --debug instead.');
           global.debug = true;
           global.verbose = true; // Keep for backward compatibility
           global.logLevel = "debug";

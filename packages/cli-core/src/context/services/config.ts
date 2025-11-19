@@ -4,8 +4,11 @@
  */
 
 import type { ConfigService } from '../../types/index.js';
+import { getLogger } from '@kb-labs/core-sys/logging';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+
+const logger = getLogger('cli:config');
 
 /**
  * JSON config service implementation
@@ -26,7 +29,10 @@ export class JsonConfigService implements ConfigService {
         this.config = JSON.parse(content);
       }
     } catch (error) {
-      console.warn(`Failed to load config from ${this.configPath}: ${error instanceof Error ? error.message : String(error)}`);
+      logger.warn('Failed to load config', {
+        path: this.configPath,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

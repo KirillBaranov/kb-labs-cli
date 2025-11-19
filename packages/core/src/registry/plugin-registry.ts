@@ -443,7 +443,10 @@ export class PluginRegistry {
       try {
         listener(diff);
       } catch (error) {
-        console.error('Registry listener error:', error);
+        logger.error('Registry listener error', {
+          error: error instanceof Error ? error.message : String(error),
+          diff: { added: diff.added.length, removed: diff.removed.length, changed: diff.changed.length },
+        });
       }
     }
   }
