@@ -1,73 +1,89 @@
-import { box, keyValue, formatTiming, TimingTracker, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
 import { clearCache } from '../registry/plugins-state';
-import type { Command } from '../types/types';
-import { getContextCwd } from "@kb-labs/shared-cli-ui";
+import { getContextCwd } from '@kb-labs/shared-cli-ui';
+import { box, keyValue, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
 
-export const pluginsCacheClear: Command = {
-  name: 'plugins:clear-cache',
-  aliases: ['plugins cache clear'],
-  describe: 'Clear CLI plugin discovery cache',
-  flags: [
-    {
-      name: 'deep',
-      type: 'boolean',
-      description: 'Also clear Node.js module cache',
-    },
-  ],
-  async run(ctx: any, argv: string[], flags: Record<string, any>) {
-    const tracker = new TimingTracker();
-    const jsonMode = !!flags.json;
-    const deep = !!flags.deep;
-    
-    try {
-      const cwd = getContextCwd(ctx);
-      const result = await clearCache(cwd, { deep });
-      const totalTime = tracker.total();
-      
-      if (jsonMode) {
-        ctx.presenter.json({ 
-          ok: true, 
-          action: 'cache:clear',
-          files: result.files,
-          modules: result.modules,
-          count: result.files.length,
-          modulesCount: result.modules?.length || 0,
-          timing: totalTime 
-        });
-      } else {
-        const summary = keyValue({
-          'Action': 'Cache Cleared',
-          'Files Removed': result.files.length > 0 ? result.files.join(', ') : 'none',
-          ...(deep && result.modules ? { 'Modules Cleared': result.modules.length.toString() } : {}),
-          'Status': result.files.length > 0 ? safeSymbols.success + ' Success' : safeSymbols.info + ' No cache found',
-        });
-        
-        const output = box('Cache Management', [
-          ...summary, 
-          '',
-          result.files.length > 0 ? safeColors.dim(`Removed ${result.files.length} cache file(s)`) : safeColors.dim('No cache files to remove'),
-          ...(deep && result.modules && result.modules.length > 0 ? [safeColors.dim(`Cleared ${result.modules.length} module(s) from cache`)] : []),
-          '',
-          safeColors.dim(`Time: ${formatTiming(totalTime)}`)
-        ]);
-        ctx.presenter.write(output);
-      }
-      
-      return 0;
-    } catch (err: any) {
-      const totalTime = tracker.total();
-      const errorMessage = err.message || 'Unknown error';
-      
-      if (jsonMode) {
-        ctx.presenter.json({ 
-          ok: false, 
-          error: errorMessage,
-          timing: totalTime 
-        });
-      } else {
-        ctx.presenter.error(errorMessage);
-      }
-      return 1;
-    }
-  }
+type PluginsCacheClearFlags = {
+  deep: { type: 'boolean'; description?: string };
+  json: { type: 'boolean'; description?: string };
 };
+
+type PluginsCacheClearResult = CommandResult & {
+  action?: string;
+  files?: string[];
+  modules?: string[];
+  count?: number;
+  modulesCount?: number;
+};
+
+export const pluginsCacheClear = defineSystemCommand<PluginsCacheClearFlags, PluginsCacheClearResult>({
+  name: 'plugins:clear-cache',
+  description: 'Clear CLI plugin discovery cache',
+  category: 'system',
+  aliases: ['plugins cache clear'],
+  examples: ['kb plugins clear-cache', 'kb plugins clear-cache --deep'],
+  flags: {
+    deep: { type: 'boolean', description: 'Also clear Node.js module cache' },
+    json: { type: 'boolean', description: 'Output in JSON format' },
+  },
+  analytics: {
+    command: 'plugins:clear-cache',
+    startEvent: 'PLUGINS_CACHE_CLEAR_STARTED',
+    finishEvent: 'PLUGINS_CACHE_CLEAR_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
+    const deep = flags.deep; // Type-safe: boolean
+    const cwd = getContextCwd(ctx);
+    const result = await clearCache(cwd, { deep });
+
+    ctx.logger?.info('Cache cleared', {
+      filesCount: result.files.length,
+      modulesCount: result.modules?.length || 0,
+      deep,
+    });
+
+    return {
+      ok: true,
+      action: 'cache:clear',
+      files: result.files,
+      modules: result.modules,
+      count: result.files.length,
+      modulesCount: result.modules?.length || 0,
+    };
+  },
+  formatter(result, ctx, flags) {
+    if (flags.json) { // Type-safe: boolean
+      ctx.output?.json(result);
+    } else {
+      if (!ctx.output) {
+        throw new Error('Output not available');
+      }
+
+      const files = result.files ?? [];
+      const modules = result.modules ?? [];
+      const summary = keyValue({
+        Action: 'Cache Cleared',
+        'Files Removed': files.length > 0 ? files.join(', ') : 'none',
+        ...(flags.deep && modules.length > 0
+          ? { 'Modules Cleared': modules.length.toString() }
+          : {}),
+        Status:
+          files.length > 0
+            ? safeSymbols.success + ' Success'
+            : safeSymbols.info + ' No cache found',
+      });
+
+      const output = box('Cache Management', [
+        ...summary,
+        '',
+        files.length > 0
+          ? safeColors.dim(`Removed ${files.length} cache file(s)`)
+          : safeColors.dim('No cache files to remove'),
+        ...(flags.deep && modules.length > 0
+          ? [safeColors.dim(`Cleared ${modules.length} module(s) from cache`)]
+          : []),
+      ]);
+      ctx.output.write(output);
+    }
+  },
+});
