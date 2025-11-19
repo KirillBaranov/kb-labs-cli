@@ -7,7 +7,6 @@ export default defineConfig({
   resolve: {
     alias: {
       "@kb-labs/cli-core": resolve(__dirname, "./packages/core/src"),
-      "@kb-labs/cli-adapters": resolve(__dirname, "./packages/adapters/src"),
       "@kb-labs/cli-commands": resolve(__dirname, "./packages/commands/src"),
       "@kb-labs/cli-runtime": resolve(__dirname, "./packages/cli-runtime/src"),
       "@kb-labs/cli-api": resolve(__dirname, "./packages/cli-api/src"),

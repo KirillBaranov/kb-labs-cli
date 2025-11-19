@@ -6,7 +6,7 @@ packages:
   - "../kb-labs-mind"
   - "../kb-labs-mind/packages/*"
   - "../kb-labs-audit/packages/*"
-  - "../kb-labs-api-contracts/packages/*"
+  - "../kb-labs-rest-api/packages/*"
   - "../kb-labs-plugin-template/packages/*"
   - "../kb-labs-shared/packages/*"
   - "../kb-labs-core/packages/*"

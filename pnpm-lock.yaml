@@ -284,9 +284,6 @@ importers:
       '@kb-labs/core-workspace':
         specifier: link:../core
         version: link:../core
-      '@kb-labs/profile-schemas':
-        specifier: link:../../../kb-labs-profile-schemas
-        version: link:../../../kb-labs-profile-schemas
       '@kb-labs/shared-cli-ui':
         specifier: link:../../../kb-labs-shared/packages/cli-ui
         version: link:../../../kb-labs-shared/packages/cli-ui
@@ -428,9 +425,6 @@ importers:
       '@kb-labs/core-types':
         specifier: link:../types
         version: link:../types
-      '@kb-labs/profile-schemas':
-        specifier: link:../../../kb-labs-profile-schemas
-        version: link:../../../kb-labs-profile-schemas
       ajv:
         specifier: ^8.17.1
         version: 8.17.1
@@ -545,9 +539,6 @@ importers:
 
   ../kb-labs-core/packages/profile-toolkit:
     dependencies:
-      '@kb-labs/profile-schemas':
-        specifier: link:../../../kb-labs-profile-schemas
-        version: link:../../../kb-labs-profile-schemas
       ajv:
         specifier: ^8.17.1
         version: 8.17.1
@@ -582,9 +573,6 @@ importers:
       '@kb-labs/core-types':
         specifier: link:../types
         version: link:../types
-      '@kb-labs/profile-schemas':
-        specifier: link:../../../kb-labs-profile-schemas
-        version: link:../../../kb-labs-profile-schemas
       ajv:
         specifier: ^8.17.1
         version: 8.17.1

@@ -308,25 +308,6 @@ describe("CLI Smoke Tests", () => {
       });
     });
 
-    describe("init-profile command", () => {
-      it("should run init-profile command in text mode", async () => {
-        const exitCode = await run(["profiles", "init"]);
-
-        expect(exitCode).toBe(0); // 0 means success
-        expect(consoleLogSpy).toHaveBeenCalledWith(
-          expect.stringContaining("✅ Profile created successfully")
-        );
-      });
-
-      it("should run init-profile command in JSON mode", async () => {
-        const exitCode = await run(["profiles", "init", "--json"]);
-
-        expect(exitCode).toBe(0); // 0 means success
-        expect(consoleLogSpy).toHaveBeenCalledWith(
-          expect.stringContaining('{"ok":true,"created":')
-        );
-      });
-    });
   });
 
   describe("Runtime options", () => {
