@@ -158,28 +158,8 @@ registerManifests(manifests, registry);
 **Command Implementation:**
 ```typescript
 // @kb-labs/core/src/cli/profiles/init.ts
-export const run: CommandModule['run'] = async (ctx, argv, flags) => {
-  const tracker = new TimingTracker();
-  const jsonMode = !!flags.json;
-  
-  try {
-    // Business logic here
-    const result = await initProfile(flags);
-    
-    if (jsonMode) {
-      ctx.presenter.json({ ok: true, ...result, timing: tracker.total() });
-    } else {
-      const summary = keyValue({ 'Status': 'Success', 'Profile': result.name });
-      const output = box('Profile Initialized', [...summary, '', `Time: ${formatTiming(tracker.total())}`]);
-      ctx.presenter.write(output);
-    }
-    
-    return 0;
-  } catch (e: unknown) {
-    // Error handling
-    return 1;
-  }
-};
+// (Removed in Profiles v2 — profiles are now configured via kb.config.json and plugin setup handlers)
+export const run = undefined;
 ```
 
 ## References

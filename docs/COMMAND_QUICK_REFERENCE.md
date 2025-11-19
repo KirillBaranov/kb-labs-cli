@@ -8,6 +8,7 @@ All commands support these global flags:
 - `--quiet` - Suppress non-essential output
 - `--help` - Show command help
 - `--version` - Show CLI version
+- `--limit` - Print sandbox limits/permissions for the selected plugin/command without executing it
 
 ### JSON Mode
 
@@ -31,6 +32,18 @@ All JSON output follows this schema:
   warnings?: string[],    // Optional warnings
 }
 ```
+
+### Limit Inspection Mode
+
+Use `--limit` to inspect the sandbox configuration declared in a plugin manifest:
+
+```bash
+kb audit --limit               # Plugin-level limits (fs/net/env/artifacts/quotas)
+kb audit run --limit           # CLI command metadata + inherited limits
+kb mind verify --limit --json  # Same information in JSON form
+```
+
+When `--limit` is present the CLI prints the information and exits without running the handler. Command-specific flags such as `--limit 5` continue to work because the CLI only intercepts boolean `--limit` usage.
 
 **Error:**
 ```typescript

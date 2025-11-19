@@ -83,9 +83,7 @@ kb version --json
 | `diagnose` | Diagnose project health and configuration | 0 |
 | `init` | Initialize complete KB Labs workspace | 0/1/2 |
 | `init workspace` | Initialize workspace configuration file | 0/1/2 |
-| `init profile` | Initialize or link a profile | 0/1 |
 | `init policy` | Add policy scaffold to workspace config | 0/1 |
-| `init-profile` | (Legacy) Initialize a new profile configuration | 0 |
 
 #### Global Options
 
@@ -115,7 +113,7 @@ kb setup --yes
 
 # What gets created:
 # - kb-labs.config.yaml (workspace config)
-# - .kb/profiles/node-ts-lib/ (local profile scaffold)
+# - profiles[] section inside kb.config.json
 # - .kb/ai-review/ai-review.config.json (product config)
 # - .kb/lock.json (lockfile with versions)
 ```
@@ -198,7 +196,6 @@ kb-labs-cli/
 │   └── demo/                # Example app / playground
 ├── packages/                # Core packages
 │   ├── cli/                 # Main CLI package (@kb-labs/cli)
-│   ├── adapters/            # Adapters package (@kb-labs/cli-adapters)
 │   ├── commands/            # Commands package (@kb-labs/cli-commands)
 │   └── core/                # Core package (@kb-labs/cli-core)
 ├── docs/                    # Documentation
@@ -222,7 +219,6 @@ kb-labs-cli/
 | Package | Description |
 |---------|-------------|
 | [@kb-labs/cli](./packages/cli/) | Main CLI package with `kb` command entry point |
-| [@kb-labs/cli-adapters](./packages/adapters/) | File system, environment, and discovery adapters |
 | [@kb-labs/cli-commands](./packages/commands/) | Command implementations and registry |
 | [@kb-labs/cli-core](./packages/core/) | Core framework and utilities for command execution |
 
@@ -233,12 +229,6 @@ kb-labs-cli/
 - Command routing and execution
 - Help generation
 - Version display
-
-**@kb-labs/cli-adapters** provides adapters for external systems:
-- File system operations
-- Environment variable access
-- Package discovery
-- Telemetry sinks
 
 **@kb-labs/cli-commands** contains command implementations:
 - Built-in commands (init, setup, diagnose, etc.)
