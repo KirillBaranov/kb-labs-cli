@@ -1,25 +1,10 @@
-import config from "@kb-labs/devkit/tsup/node.js";
+import { defineConfig } from 'tsup';
+import nodePreset from '@kb-labs/devkit/tsup/node.js';
 
-export default {
-  ...config,
+export default defineConfig({
+  ...nodePreset,
   entry: { index: "src/index.ts" },
-  dts: { resolve: true },
+  tsconfig: "tsconfig.build.json", // Use build-specific tsconfig without paths
   clean: false,
-  skipNodeModulesBundle: true,
-  external: [
-    "@kb-labs/cli-core",
-    "@kb-labs/core-cli-adapters",
-    "@kb-labs/plugin-adapter-cli",
-    "@kb-labs/plugin-adapter-rest",
-    "@kb-labs/plugin-adapter-studio",
-  ],
-  esbuildOptions(options) {
-    options.external = [
-      "@kb-labs/cli-core",
-      "@kb-labs/core-cli-adapters",
-      "@kb-labs/plugin-adapter-cli",
-      "@kb-labs/plugin-adapter-rest",
-      "@kb-labs/plugin-adapter-studio",
-    ];
-  },
-};
+  dts: { resolve: true },
+});

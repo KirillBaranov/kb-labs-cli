@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@kb-labs/cli-core": "workspace:*",
+    "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/runtime",
     "@kb-labs/sandbox": "link:../../../kb-labs-core/packages/sandbox",
     "cli-table3": "^0.6.5",
     "yaml": "^2.8.0",
