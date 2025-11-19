@@ -1,76 +1,77 @@
-import type { Command } from '../../types'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
 import { createCliEngineLogger } from './utils'
 import {
   loadWorkflowConfig,
   saveWorkflowConfig,
   type RemoteMarketplaceSource,
 } from '@kb-labs/workflow-runtime'
+import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
 
-interface Flags {
-  name?: string
-  url?: string
-  ref?: string
-  path?: string
-  json?: boolean
-  verbose?: boolean
-}
+type MarketplaceAddResult = CommandResult & {
+  marketplace?: {
+    name: string;
+    url: string;
+    ref?: string;
+    path?: string;
+  };
+};
 
-export const wfMarketplaceAdd: Command = {
+type WfMarketplaceAddFlags = {
+  name: { type: 'string'; description?: string; required: true };
+  url: { type: 'string'; description?: string; required: true };
+  ref: { type: 'string'; description?: string };
+  path: { type: 'string'; description?: string };
+  json: { type: 'boolean'; description?: string };
+  verbose: { type: 'boolean'; description?: string };
+};
+
+export const wfMarketplaceAdd = defineSystemCommand<WfMarketplaceAddFlags, MarketplaceAddResult>({
   name: 'marketplace:add',
-  describe: 'Add a remote marketplace source',
+  description: 'Add a remote marketplace source',
   category: 'workflows',
   aliases: ['wf:marketplace:add'],
-  flags: [
-    { name: 'name', type: 'string', description: 'Marketplace name' },
-    { name: 'url', type: 'string', description: 'Git repository URL' },
-    { name: 'ref', type: 'string', description: 'Branch or tag (default: main)' },
-    { name: 'path', type: 'string', description: 'Subdirectory path in repo' },
-    { name: 'json', type: 'boolean', description: 'Output as JSON' },
-    { name: 'verbose', type: 'boolean', description: 'Enable verbose logging' },
-  ],
+  flags: {
+    name: { type: 'string', description: 'Marketplace name', required: true },
+    url: { type: 'string', description: 'Git repository URL', required: true },
+    ref: { type: 'string', description: 'Branch or tag (default: main)' },
+    path: { type: 'string', description: 'Subdirectory path in repo' },
+    json: { type: 'boolean', description: 'Output as JSON' },
+    verbose: { type: 'boolean', description: 'Enable verbose logging' },
+  },
   examples: [
     'kb wf marketplace:add --name kb-labs-official --url https://github.com/kb-labs/workflows',
     'kb wf marketplace:add --name my-workflows --url https://github.com/user/repo --ref v1.0.0',
   ],
-  async run(ctx, argv, rawFlags) {
-    const flags = rawFlags as Flags
-    const jsonMode = Boolean(flags.json)
-    const logger = createCliEngineLogger(ctx, Boolean(flags.verbose))
-
-    if (!flags.name || !flags.url) {
-      const message = 'Both --name and --url are required'
-      if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: message })
-      } else {
-        ctx.presenter.error(message)
-      }
-      return 1
-    }
+  async handler(ctx: EnhancedCliContext, argv: string[], flags) {
+    const jsonMode = flags.json // Type-safe: boolean
+    const logger = createCliEngineLogger(ctx, flags.verbose) // Type-safe: boolean
+    const name = flags.name // Type-safe: string (required)
+    const url = flags.url // Type-safe: string (required)
 
     try {
-      const workspaceRoot = ctx.workspaceRoot ?? process.cwd()
+      const workspaceRoot = process.cwd()
       const config = await loadWorkflowConfig(workspaceRoot)
 
       const remotes = config.remotes ?? []
 
       // Check if name already exists
-      const existing = remotes.find((r) => r.name === flags.name)
+      const existing = remotes.find((r) => r.name === name)
       if (existing) {
-        const message = `Marketplace "${flags.name}" already exists`
+        const message = `Marketplace "${name}" already exists`
         if (jsonMode) {
-          ctx.presenter.json({ ok: false, error: message })
+          ctx.output?.json({ ok: false, error: message })
         } else {
-          ctx.presenter.error(message)
+          ctx.output?.error(message)
         }
-        return 1
+        return { ok: false, error: message }
       }
 
       // Add new remote
       const newRemote: RemoteMarketplaceSource = {
-        name: flags.name!,
-        url: flags.url!,
-        ref: flags.ref,
-        path: flags.path,
+        name,
+        url,
+        ref: flags.ref, // Type-safe: string | undefined
+        path: flags.path, // Type-safe: string | undefined
       }
 
       await saveWorkflowConfig(workspaceRoot, {
@@ -78,174 +79,191 @@ export const wfMarketplaceAdd: Command = {
       })
 
       if (jsonMode) {
-        ctx.presenter.json({
+        ctx.output?.json({
           ok: true,
           marketplace: {
-            name: flags.name,
-            url: flags.url,
+            name,
+            url,
             ref: flags.ref,
             path: flags.path,
           },
         })
       } else {
-        ctx.presenter.success(`✓ Added marketplace: ${flags.name}`)
+        ctx.output?.write(`✓ Added marketplace: ${name}\n`)
       }
 
-      return 0
+      return { ok: true, marketplace: { name, url, ref: flags.ref, path: flags.path } }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: message })
+        ctx.output?.json({ ok: false, error: message })
       } else {
-        ctx.presenter.error(`Failed to add marketplace: ${message}`)
+        ctx.output?.error(`Failed to add marketplace: ${message}`)
       }
-      return 1
+      return { ok: false, error: message }
     }
   },
-}
+})
 
-export const wfMarketplaceList: Command = {
+type MarketplaceListResult = CommandResult & {
+  remotes?: RemoteMarketplaceSource[];
+};
+
+type WfMarketplaceListFlags = {
+  json: { type: 'boolean'; description?: string };
+  verbose: { type: 'boolean'; description?: string };
+};
+
+export const wfMarketplaceList = defineSystemCommand<WfMarketplaceListFlags, MarketplaceListResult>({
   name: 'marketplace:list',
-  describe: 'List configured remote marketplace sources',
+  description: 'List configured remote marketplace sources',
   category: 'workflows',
   aliases: ['wf:marketplace:list'],
-  flags: [
-    { name: 'json', type: 'boolean', description: 'Output as JSON' },
-    { name: 'verbose', type: 'boolean', description: 'Enable verbose logging' },
-  ],
+  flags: {
+    json: { type: 'boolean', description: 'Output as JSON' },
+    verbose: { type: 'boolean', description: 'Enable verbose logging' },
+  },
   examples: ['kb wf marketplace:list', 'kb wf marketplace:list --json'],
-  async run(ctx, argv, rawFlags) {
-    const flags = rawFlags as Flags
+  async handler(ctx: EnhancedCliContext, argv: string[], flags) {
     const jsonMode = Boolean(flags.json)
 
     try {
-      const workspaceRoot = ctx.workspaceRoot ?? process.cwd()
+      const workspaceRoot = process.cwd()
       const config = await loadWorkflowConfig(workspaceRoot)
 
       const remotes = config.remotes ?? []
 
       if (jsonMode) {
-        ctx.presenter.json({ ok: true, remotes })
+        ctx.output?.json({ ok: true, remotes })
       } else {
         if (remotes.length === 0) {
-          ctx.presenter.info('No remote marketplaces configured')
-          return 0
+          ctx.output?.info('No remote marketplaces configured')
+          return { ok: true, remotes: [] }
         }
 
-        ctx.presenter.write('\n📦 Remote Marketplaces\n')
+        ctx.output?.write('\n📦 Remote Marketplaces\n')
         for (const remote of remotes) {
-          ctx.presenter.write(`  • ${remote.name}`)
-          ctx.presenter.write(`    URL: ${remote.url}`)
+          ctx.output?.write(`  • ${remote.name}`)
+          ctx.output?.write(`    URL: ${remote.url}`)
           if (remote.ref) {
-            ctx.presenter.write(`    Ref: ${remote.ref}`)
+            ctx.output?.write(`    Ref: ${remote.ref}`)
           }
           if (remote.path) {
-            ctx.presenter.write(`    Path: ${remote.path}`)
+            ctx.output?.write(`    Path: ${remote.path}`)
           }
-          ctx.presenter.write('')
+          ctx.output?.write('')
         }
       }
 
-      return 0
+      return { ok: true, remotes }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: message })
+        ctx.output?.json({ ok: false, error: message })
       } else {
-        ctx.presenter.error(`Failed to list marketplaces: ${message}`)
+        ctx.output?.error(`Failed to list marketplaces: ${message}`)
       }
-      return 1
+      return { ok: false, error: message }
     }
   },
-}
+})
 
-export const wfMarketplaceRemove: Command = {
+type MarketplaceRemoveResult = CommandResult & {
+  removed?: string;
+};
+
+type WfMarketplaceRemoveFlags = {
+  name: { type: 'string'; description?: string; required: true };
+  json: { type: 'boolean'; description?: string };
+  verbose: { type: 'boolean'; description?: string };
+};
+
+export const wfMarketplaceRemove = defineSystemCommand<WfMarketplaceRemoveFlags, MarketplaceRemoveResult>({
   name: 'marketplace:remove',
-  describe: 'Remove a remote marketplace source',
+  description: 'Remove a remote marketplace source',
   category: 'workflows',
   aliases: ['wf:marketplace:remove'],
-  flags: [
-    { name: 'name', type: 'string', description: 'Marketplace name to remove' },
-    { name: 'json', type: 'boolean', description: 'Output as JSON' },
-    { name: 'verbose', type: 'boolean', description: 'Enable verbose logging' },
-  ],
+  flags: {
+    name: { type: 'string', description: 'Marketplace name to remove', required: true },
+    json: { type: 'boolean', description: 'Output as JSON' },
+    verbose: { type: 'boolean', description: 'Enable verbose logging' },
+  },
   examples: ['kb wf marketplace:remove --name kb-labs-official'],
-  async run(ctx, argv, rawFlags) {
-    const flags = rawFlags as Flags
-    const jsonMode = Boolean(flags.json)
-
-    if (!flags.name) {
-      const message = '--name is required'
-      if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: message })
-      } else {
-        ctx.presenter.error(message)
-      }
-      return 1
-    }
+  async handler(ctx: EnhancedCliContext, argv: string[], flags) {
+    const jsonMode = flags.json // Type-safe: boolean
+    const name = flags.name // Type-safe: string (required)
 
     try {
-      const workspaceRoot = ctx.workspaceRoot ?? process.cwd()
+      const workspaceRoot = process.cwd()
       const config = await loadWorkflowConfig(workspaceRoot)
 
       const remotes = config.remotes ?? []
-      const index = remotes.findIndex((r) => r.name === flags.name)
+      const index = remotes.findIndex((r) => r.name === name)
 
       if (index === -1) {
-        const message = `Marketplace "${flags.name}" not found`
+        const message = `Marketplace "${name}" not found`
         if (jsonMode) {
-          ctx.presenter.json({ ok: false, error: message })
+          ctx.output?.json({ ok: false, error: message })
         } else {
-          ctx.presenter.error(message)
+          ctx.output?.error(message)
         }
-        return 1
+        return { ok: false, error: message }
       }
 
-      const updatedRemotes = remotes.filter((r) => r.name !== flags.name)
+      const updatedRemotes = remotes.filter((r) => r.name !== name)
       await saveWorkflowConfig(workspaceRoot, {
         remotes: updatedRemotes,
       })
 
       if (jsonMode) {
-        ctx.presenter.json({ ok: true, removed: flags.name })
+        ctx.output?.json({ ok: true, removed: name })
       } else {
-        ctx.presenter.success(`✓ Removed marketplace: ${flags.name}`)
+        ctx.output?.write(`✓ Removed marketplace: ${name}\n`)
       }
 
-      return 0
+      return { ok: true, removed: name }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: message })
+        ctx.output?.json({ ok: false, error: message })
       } else {
-        ctx.presenter.error(`Failed to remove marketplace: ${message}`)
+        ctx.output?.error(`Failed to remove marketplace: ${message}`)
       }
-      return 1
+      return { ok: false, error: message }
     }
   },
-}
+})
 
-export const wfMarketplaceUpdate: Command = {
+type MarketplaceUpdateResult = CommandResult & {
+  updated?: string;
+};
+
+type WfMarketplaceUpdateFlags = {
+  name: { type: 'string'; description?: string };
+  json: { type: 'boolean'; description?: string };
+  verbose: { type: 'boolean'; description?: string };
+};
+
+export const wfMarketplaceUpdate = defineSystemCommand<WfMarketplaceUpdateFlags, MarketplaceUpdateResult>({
   name: 'marketplace:update',
-  describe: 'Update a remote marketplace source (refetch from git)',
+  description: 'Update a remote marketplace source (refetch from git)',
   category: 'workflows',
   aliases: ['wf:marketplace:update'],
-  flags: [
-    { name: 'name', type: 'string', description: 'Marketplace name to update (all if not specified)' },
-    { name: 'json', type: 'boolean', description: 'Output as JSON' },
-    { name: 'verbose', type: 'boolean', description: 'Enable verbose logging' },
-  ],
+  flags: {
+    name: { type: 'string', description: 'Marketplace name to update (all if not specified)' },
+    json: { type: 'boolean', description: 'Output as JSON' },
+    verbose: { type: 'boolean', description: 'Enable verbose logging' },
+  },
   examples: [
     'kb wf marketplace:update',
     'kb wf marketplace:update --name kb-labs-official',
   ],
-  async run(ctx, argv, rawFlags) {
-    const flags = rawFlags as Flags
-    const jsonMode = Boolean(flags.json)
-    const logger = createCliEngineLogger(ctx, Boolean(flags.verbose))
+  async handler(ctx: EnhancedCliContext, argv: string[], flags) {
+    const jsonMode = flags.json // Type-safe: boolean
+    const logger = createCliEngineLogger(ctx, flags.verbose) // Type-safe: boolean
 
     try {
-      const workspaceRoot = ctx.workspaceRoot ?? process.cwd()
+      const workspaceRoot = process.cwd()
       const { createWorkflowRegistry } = await import('@kb-labs/workflow-runtime')
 
       // Create registry to trigger refresh
@@ -253,34 +271,34 @@ export const wfMarketplaceUpdate: Command = {
         workspaceRoot,
       })
 
-      if (flags.name) {
+      const name = flags.name // Type-safe: string | undefined
+      if (name) {
         // Refresh specific remote
         await registry.refresh()
         if (jsonMode) {
-          ctx.presenter.json({ ok: true, updated: flags.name })
+          ctx.output?.json({ ok: true, updated: name })
         } else {
-          ctx.presenter.success(`✓ Updated marketplace: ${flags.name}`)
+          ctx.output?.write(`✓ Updated marketplace: ${name}\n`)
         }
       } else {
         // Refresh all remotes
         await registry.refresh()
         if (jsonMode) {
-          ctx.presenter.json({ ok: true, message: 'All marketplaces updated' })
+          ctx.output?.json({ ok: true, message: 'All marketplaces updated' })
         } else {
-          ctx.presenter.success('✓ Updated all marketplaces')
+          ctx.output?.write('✓ Updated all marketplaces\n')
         }
       }
 
-      return 0
+      return { ok: true, updated: name || 'all' }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: message })
+        ctx.output?.json({ ok: false, error: message })
       } else {
-        ctx.presenter.error(`Failed to update marketplace: ${message}`)
+        ctx.output?.error(`Failed to update marketplace: ${message}`)
       }
-      return 1
+      return { ok: false, error: message }
     }
   },
-}
-
+})
