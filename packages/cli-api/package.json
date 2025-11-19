@@ -35,7 +35,8 @@
     "@kb-labs/workflow-engine": "link:../../../kb-labs-workflow/packages/workflow-engine",
     "@kb-labs/workflow-contracts": "link:../../../kb-labs-workflow/packages/workflow-contracts",
     "@kb-labs/workflow-constants": "link:../../../kb-labs-workflow/packages/workflow-constants",
-    "redis": "^4.6.7"
+    "redis": "^4.6.7",
+    "yaml": "^2.8.0"
   },
   "devDependencies": {
     "@kb-labs/devkit": "link:../../../kb-labs-devkit",

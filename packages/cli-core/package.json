@@ -23,14 +23,19 @@
   "scripts": {
     "clean": "rimraf dist",
     "build": "tsup --config tsup.config.ts",
-    "dev": "tsup --config tsup.config.ts --watch"
+    "dev": "tsup --config tsup.config.ts --watch",
+    "lint": "eslint . --ignore-pattern 'dist/**'",
+    "lint:fix": "eslint . --fix --ignore-pattern 'dist/**'",
+    "test": "vitest run"
   },
   "dependencies": {
+    "chokidar": "^4.0.3",
     "@kb-labs/core-cli": "link:../../../kb-labs-core/packages/cli-core"
   },
   "devDependencies": {
     "rimraf": "^6.0.1",
-    "tsup": "^8.5.0"
+    "tsup": "^8.5.0",
+    "vitest": "^3.2.4"
   }
 }
 
