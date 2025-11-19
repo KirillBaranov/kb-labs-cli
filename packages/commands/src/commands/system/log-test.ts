@@ -11,42 +11,53 @@
  * - Helper functions
  */
 
-import type { Command } from "../../types/types";
-import { 
-  getLogger, 
-  setLogContext, 
-  clearLogContext, 
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+import {
+  getLogger,
+  setLogContext,
+  clearLogContext,
   withLogContext,
   logAction,
   logError,
   createPluginLogger,
-} from "@kb-labs/core-sys/logging";
-import { randomUUID } from "node:crypto";
+} from '@kb-labs/core-sys/logging';
+import { randomUUID } from 'node:crypto';
 
-export const logTest: Command = {
-  name: "log-test",
-  category: "system",
-  describe: "Comprehensive test of logging system (levels, context, redaction, etc.)",
-  flags: [],
-  examples: [
-    "kb log-test",
-    "kb log-test --debug",
-    "kb log-test --json",
-    "kb log-test --log-level info",
-  ],
+type LogTestResult = CommandResult & {
+  tests?: Array<{ name: string; passed: boolean }>;
+};
 
-  async run(ctx, argv, flags) {
+type LogTestFlags = {
+  json: { type: 'boolean'; description?: string };
+};
+
+export const logTest = defineSystemCommand<LogTestFlags, LogTestResult>({
+  name: 'log-test',
+  description: 'Comprehensive test of logging system (levels, context, redaction, etc.)',
+  category: 'system',
+  examples: ['kb log-test', 'kb log-test --debug', 'kb log-test --json', 'kb log-test --log-level info'],
+  flags: {
+    json: { type: 'boolean', description: 'Output in JSON format' },
+  },
+  analytics: {
+    command: 'log-test',
+    startEvent: 'LOG_TEST_STARTED',
+    finishEvent: 'LOG_TEST_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
     const logger = getLogger('log-test');
-    const jsonMode = Boolean(flags?.json);
+    const jsonMode = flags.json; // Type-safe: boolean
+    
+    ctx.logger?.info('Log test started', { jsonMode });
     
     if (!jsonMode) {
-      ctx.presenter.write("🧪 Comprehensive Logging System Test\n\n");
+      ctx.output?.write("🧪 Comprehensive Logging System Test\n\n");
     }
     
     // ============================================
     // 1. Test all log levels
     // ============================================
-    if (!jsonMode) ctx.presenter.write("1️⃣  Testing log levels:\n");
+    if (!jsonMode) ctx.output?.write("1️⃣  Testing log levels:\n");
     
     logger.debug("Debug message", { 
       test: "levels",
@@ -75,7 +86,7 @@ export const logTest: Command = {
     // ============================================
     // 2. Test context tracking (traceId, spanId, executionId, parentSpanId)
     // ============================================
-    if (!jsonMode) ctx.presenter.write("\n2️⃣  Testing context tracking:\n");
+    if (!jsonMode) ctx.output?.write("\n2️⃣  Testing context tracking:\n");
     
     const traceId = randomUUID();
     const executionId = randomUUID();
@@ -133,7 +144,7 @@ export const logTest: Command = {
     // ============================================
     // 3. Test redaction (sensitive data masking)
     // ============================================
-    if (!jsonMode) ctx.presenter.write("\n3️⃣  Testing redaction (sensitive data):\n");
+    if (!jsonMode) ctx.output?.write("\n3️⃣  Testing redaction (sensitive data):\n");
     
     logger.info("Log with API key", {
       test: "redaction",
@@ -167,7 +178,7 @@ export const logTest: Command = {
     // ============================================
     // 4. Test structured metadata
     // ============================================
-    if (!jsonMode) ctx.presenter.write("\n4️⃣  Testing structured metadata:\n");
+    if (!jsonMode) ctx.output?.write("\n4️⃣  Testing structured metadata:\n");
     
     logger.info("Log with complex metadata", {
       test: "metadata",
@@ -191,7 +202,7 @@ export const logTest: Command = {
     // ============================================
     // 5. Test error handling
     // ============================================
-    if (!jsonMode) ctx.presenter.write("\n5️⃣  Testing error handling:\n");
+    if (!jsonMode) ctx.output?.write("\n5️⃣  Testing error handling:\n");
     
     // Error with Error object
     try {
@@ -216,7 +227,7 @@ export const logTest: Command = {
     // ============================================
     // 6. Test child loggers
     // ============================================
-    if (!jsonMode) ctx.presenter.write("\n6️⃣  Testing child loggers:\n");
+    if (!jsonMode) ctx.output?.write("\n6️⃣  Testing child loggers:\n");
     
     const childLogger = logger.child({ 
       category: "log-test:child",
@@ -234,7 +245,7 @@ export const logTest: Command = {
     // ============================================
     // 7. Test helper functions
     // ============================================
-    if (!jsonMode) ctx.presenter.write("\n7️⃣  Testing helper functions:\n");
+    if (!jsonMode) ctx.output?.write("\n7️⃣  Testing helper functions:\n");
     
     // logAction
     logAction(logger, "User action completed", {
@@ -276,7 +287,7 @@ export const logTest: Command = {
     // ============================================
     // 8. Test workflow simulation
     // ============================================
-    if (!jsonMode) ctx.presenter.write("\n8️⃣  Testing workflow simulation:\n");
+    if (!jsonMode) ctx.output?.write("\n8️⃣  Testing workflow simulation:\n");
     
     const workflowId = randomUUID();
     setLogContext({
@@ -324,42 +335,45 @@ export const logTest: Command = {
     // Cleanup
     // ============================================
     clearLogContext();
-    
-    if (!jsonMode) {
-      ctx.presenter.write("\n✅ Logging test completed!\n\n");
-      ctx.presenter.write("📋 Summary:\n");
-      ctx.presenter.write("  • All log levels tested\n");
-      ctx.presenter.write("  • Context tracking (traceId, spanId, executionId, parentSpanId)\n");
-      ctx.presenter.write("  • Redaction (sensitive data masking)\n");
-      ctx.presenter.write("  • Structured metadata\n");
-      ctx.presenter.write("  • Error handling\n");
-      ctx.presenter.write("  • Child loggers\n");
-      ctx.presenter.write("  • Helper functions\n");
-      ctx.presenter.write("  • Workflow simulation\n\n");
-      ctx.presenter.write("💡 Tips:\n");
-      ctx.presenter.write("  • Use --debug to see all debug logs\n");
-      ctx.presenter.write("  • Use --json to see structured JSON output\n");
-      ctx.presenter.write("  • Check logs for traceId, spanId, executionId fields\n");
-      ctx.presenter.write("  • Verify sensitive data is masked (apiKey, password, token)\n");
-    } else {
-      ctx.presenter.json({
-        ok: true,
-        test: "logging-system",
-        completed: true,
-        tests: [
-          "log-levels",
-          "context-tracking",
-          "redaction",
-          "structured-metadata",
-          "error-handling",
-          "child-loggers",
-          "helper-functions",
-          "workflow-simulation",
-        ],
-      });
-    }
-    
-    return 0;
+
+    ctx.logger?.info('Log test completed');
+
+    return {
+      ok: true,
+      test: 'logging-system',
+      completed: true,
+      tests: [
+        'log-levels',
+        'context-tracking',
+        'redaction',
+        'structured-metadata',
+        'error-handling',
+        'child-loggers',
+        'helper-functions',
+        'workflow-simulation',
+      ],
+    };
   },
-};
+  formatter(result, ctx, flags) {
+    if (flags.json) {
+      ctx.output?.json(result);
+    } else {
+      ctx.output?.write('\n✅ Logging test completed!\n\n');
+      ctx.output?.write('📋 Summary:\n');
+      ctx.output?.write('  • All log levels tested\n');
+      ctx.output?.write('  • Context tracking (traceId, spanId, executionId, parentSpanId)\n');
+      ctx.output?.write('  • Redaction (sensitive data masking)\n');
+      ctx.output?.write('  • Structured metadata\n');
+      ctx.output?.write('  • Error handling\n');
+      ctx.output?.write('  • Child loggers\n');
+      ctx.output?.write('  • Helper functions\n');
+      ctx.output?.write('  • Workflow simulation\n\n');
+      ctx.output?.write('💡 Tips:\n');
+      ctx.output?.write('  • Use --debug to see all debug logs\n');
+      ctx.output?.write('  • Use --json to see structured JSON output\n');
+      ctx.output?.write('  • Check logs for traceId, spanId, executionId fields\n');
+      ctx.output?.write('  • Verify sensitive data is masked (apiKey, password, token)\n');
+    }
+  },
+});
 
