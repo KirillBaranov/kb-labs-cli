@@ -5,6 +5,7 @@
 import type { Command } from "../../types/types";
 import type { RegisteredCommand } from '../../registry/types';
 import { registry } from "../../registry/service";
+import { PluginRegistry } from "@kb-labs/cli-core";
 import { box, keyValue, formatTiming, TimingTracker, safeSymbols, safeColors, formatTable, type TableColumn } from "@kb-labs/shared-cli-ui";
 import { loadPluginsState, isPluginEnabled } from '../../registry/plugins-state';
 import { promises as fs } from 'node:fs';
@@ -37,9 +38,19 @@ export const pluginsList: Command = {
     try {
       tracker.checkpoint('discover');
       
+      // Use new DiscoveryManager via PluginRegistry
+      const pluginRegistry = new PluginRegistry({
+        strategies: ['workspace', 'pkg', 'dir', 'file'],
+        roots: [cwd],
+      });
+      await pluginRegistry.refresh();
+      
       const manifests = registry.listManifests();
       const productGroups = registry.listProductGroups();
       const state = await loadPluginsState(cwd);
+      
+      // Also get plugins from new registry for comparison
+      const newRegistryPlugins = pluginRegistry.list();
       
       // Group by package name
       const packages = new Map<string, {

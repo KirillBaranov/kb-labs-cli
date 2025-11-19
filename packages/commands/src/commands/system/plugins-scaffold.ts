@@ -85,7 +85,7 @@ export const pluginsScaffold: Command = {
         dependencies: {
           "@kb-labs/plugin-manifest": "workspace:*",
           "@kb-labs/shared-cli-ui": "workspace:*",
-          "@kb-labs/analytics-sdk-node": "workspace:*"
+          "@kb-labs/core-types": "workspace:*"
         },
         devDependencies: {
           "tsup": "^8.5.0",
@@ -159,63 +159,82 @@ export const manifest: ManifestV2 = {
       const commandContent = `import type { CommandModule } from '@kb-labs/cli-commands';
 import { box, keyValue, formatTiming, TimingTracker, safeColors } from '@kb-labs/shared-cli-ui';
 import { getContextCwd } from "@kb-labs/shared-cli-ui";
-import { runScope, type AnalyticsEventV1, type EmitResult } from '@kb-labs/analytics-sdk-node';
+import type { TelemetryEvent, TelemetryEmitResult } from '@kb-labs/core-types';
 
 export const run: CommandModule['run'] = async (ctx, argv, flags) => {
   const tracker = new TimingTracker();
   const jsonMode = !!flags.json;
   const quiet = !!flags.quiet;
   
-  return await runScope(
-    {
-      actor: '${pluginName}',
-      ctx: { workspace: getContextCwd(ctx) },
-    },
-    async (emit) => {
-      try {
-        tracker.checkpoint('start');
-        await emit({ type: 'COMMAND_STARTED', payload: {} });
-        
-        // Your command logic here
-        // Example: const result = await doSomething();
-        const result = { count: 1, message: 'Hello from ${pluginName} plugin!' };
-        
-        tracker.checkpoint('complete');
-        const duration = tracker.total();
-        
-        if (jsonMode) {
-          ctx.presenter.json({ ok: true, ...result, timing: duration });
-        } else {
-          if (!quiet) {
-            const summary = keyValue({
-              'Status': safeColors.success('✓ Success'),
-              'Message': result.message,
-            });
-            summary.push('', \`Time: \${formatTiming(duration)}\`);
-            ctx.presenter.write(box('${pluginName} Command', summary));
-          }
+  // Optional analytics - use dynamic import
+  let runScope: ((options: any, fn: (emit: (event: Partial<TelemetryEvent>) => Promise<TelemetryEmitResult>) => Promise<any>) => Promise<any>) | null = null;
+  try {
+    const analytics = await import('@kb-labs/analytics-sdk-node');
+    runScope = analytics.runScope as any;
+  } catch {
+    // analytics-sdk-node not available
+  }
+  
+  const executeWithAnalytics = async (emit: (event: Partial<TelemetryEvent>) => Promise<TelemetryEmitResult>) => {
+    try {
+      tracker.checkpoint('start');
+      await emit({ type: 'COMMAND_STARTED', payload: {} });
+      
+      // Your command logic here
+      // Example: const result = await doSomething();
+      const result = { count: 1, message: 'Hello from ${pluginName} plugin!' };
+      
+      tracker.checkpoint('complete');
+      const duration = tracker.total();
+      
+      if (jsonMode) {
+        ctx.presenter.json({ ok: true, ...result, timing: duration });
+      } else {
+        if (!quiet) {
+          const summary = keyValue({
+            'Status': safeColors.success('✓ Success'),
+            'Message': result.message,
+          });
+          summary.push('', \`Time: \${formatTiming(duration)}\`);
+          ctx.presenter.write(box('${pluginName} Command', summary));
         }
-        
-        await emit({ 
-          type: 'COMMAND_FINISHED', 
-          payload: { durationMs: duration, result: 'success' } 
-        });
-        return 0;
-      } catch (e: unknown) {
-        const errorMessage = e instanceof Error ? e.message : String(e);
-        if (jsonMode) {
-          ctx.presenter.json({ ok: false, error: errorMessage, timing: tracker.total() });
-        } else {
-          ctx.presenter.error(errorMessage);
-        }
-        await emit({ 
-          type: 'COMMAND_FINISHED', 
-          payload: { durationMs: tracker.total(), result: 'error', error: errorMessage } 
-        });
-        return 1;
       }
+      
+      await emit({ 
+        type: 'COMMAND_FINISHED', 
+        payload: { durationMs: duration, result: 'success' } 
+      });
+      return 0;
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      if (jsonMode) {
+        ctx.presenter.json({ ok: false, error: errorMessage, timing: tracker.total() });
+      } else {
+        ctx.presenter.error(errorMessage);
+      }
+      await emit({ 
+        type: 'COMMAND_FINISHED', 
+        payload: { durationMs: tracker.total(), result: 'error', error: errorMessage } 
+      });
+      return 1;
     }
-  );
+  };
+  
+  if (runScope) {
+    return await runScope(
+      {
+        actor: { type: 'agent', id: '${pluginName}' },
+        ctx: { workspace: getContextCwd(ctx) },
+      },
+      executeWithAnalytics
+    ) as number;
+  } else {
+    // No analytics - create no-op emitter
+    const noOpEmit = async (_event: Partial<TelemetryEvent>): Promise<TelemetryEmitResult> => {
+      return { queued: false, reason: 'Analytics not available' };
+    };
+    return await executeWithAnalytics(noOpEmit);
+  }
 };
 `;
       
