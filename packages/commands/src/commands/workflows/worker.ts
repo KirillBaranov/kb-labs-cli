@@ -1,24 +1,30 @@
-import type { Command } from '../../types'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
+import type { StringFlagSchema } from '@kb-labs/cli-command-kit/flags'
 import { createCliEngineLogger } from './utils'
 import { startWorkflowWorker } from './service'
-import { box, keyValue, safeColors, safeSymbols, formatTiming } from '@kb-labs/shared-cli-ui'
+import { box, keyValue, formatTiming } from '@kb-labs/shared-cli-ui'
 import type { EngineLogger } from '@kb-labs/workflow-engine'
+import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
 
-interface Flags {
-  concurrency?: number
-  'poll-interval'?: number
-  'heartbeat-interval'?: number
-  'lease-ttl'?: number
-  'redis-url'?: string
-  'redis-mode'?: 'standalone' | 'cluster' | 'sentinel'
-  'redis-namespace'?: string
-  root?: string
-  'artifacts-root'?: string
-  workspace?: string
-  verbose?: boolean
-  json?: boolean
-  quiet?: boolean
-}
+type WorkflowWorkerResult = CommandResult & {
+  failedJobs?: number;
+};
+
+type WfWorkerFlags = {
+  concurrency: { type: 'number'; description?: string };
+  'poll-interval': { type: 'number'; description?: string };
+  'heartbeat-interval': { type: 'number'; description?: string };
+  'lease-ttl': { type: 'number'; description?: string };
+  'redis-url': { type: 'string'; description?: string };
+  'redis-mode': { type: 'string'; description?: string; choices?: readonly string[] };
+  'redis-namespace': { type: 'string'; description?: string };
+  root: { type: 'string'; description?: string };
+  'artifacts-root': { type: 'string'; description?: string };
+  workspace: { type: 'string'; description?: string };
+  verbose: { type: 'boolean'; description?: string };
+  json: { type: 'boolean'; description?: string };
+  quiet: { type: 'boolean'; description?: string };
+};
 
 function parseRoots(input?: string): string[] | undefined {
   if (!input) {
@@ -31,40 +37,48 @@ function parseRoots(input?: string): string[] | undefined {
   return parts.length > 0 ? parts : undefined
 }
 
-export const wfWorker: Command = {
+export const wfWorker = defineSystemCommand<WfWorkerFlags, WorkflowWorkerResult>({
   name: 'worker',
-  describe: 'Start a workflow worker that processes jobs from the queue',
+  description: 'Start a workflow worker that processes jobs from the queue',
   category: 'workflows',
   aliases: ['wf:worker'],
-  flags: [
-    { name: 'concurrency', type: 'number', description: 'Maximum concurrent jobs (default: 1)' },
-    { name: 'poll-interval', type: 'number', description: 'Queue polling interval in milliseconds (default: 1000)' },
-    { name: 'heartbeat-interval', type: 'number', description: 'Lease heartbeat interval in milliseconds (default: half of lease TTL)' },
-    { name: 'lease-ttl', type: 'number', description: 'Lease time-to-live in milliseconds (default: 15000)' },
-    { name: 'redis-url', type: 'string', description: 'Redis connection string override' },
-    { name: 'redis-mode', type: 'string', description: 'Redis mode (standalone, cluster, sentinel)' },
-    { name: 'redis-namespace', type: 'string', description: 'Redis key namespace override' },
-    { name: 'root', type: 'string', description: 'Plugin discovery root (comma separated)' },
-    { name: 'artifacts-root', type: 'string', description: 'Directory to store workflow artifacts' },
-    { name: 'workspace', type: 'string', description: 'Default workspace directory for step execution' },
-    { name: 'verbose', type: 'boolean', description: 'Enable verbose logging' },
-    { name: 'json', type: 'boolean', description: 'Output events as JSON (useful for CI/logging)' },
-    { name: 'quiet', type: 'boolean', description: 'Suppress non-error output (useful for CI)' },
-  ],
+  flags: {
+    concurrency: { type: 'number', description: 'Maximum concurrent jobs (default: 1)' },
+    'poll-interval': { type: 'number', description: 'Queue polling interval in milliseconds (default: 1000)' },
+    'heartbeat-interval': { type: 'number', description: 'Lease heartbeat interval in milliseconds (default: half of lease TTL)' },
+    'lease-ttl': { type: 'number', description: 'Lease time-to-live in milliseconds (default: 15000)' },
+    'redis-url': { type: 'string', description: 'Redis connection string override' },
+    'redis-mode': { 
+      type: 'string', 
+      description: 'Redis mode (standalone, cluster, sentinel)',
+      choices: ['standalone', 'cluster', 'sentinel'] as readonly string[],
+    } as Omit<StringFlagSchema, 'name'>,
+    'redis-namespace': { type: 'string', description: 'Redis key namespace override' },
+    root: { type: 'string', description: 'Plugin discovery root (comma separated)' },
+    'artifacts-root': { type: 'string', description: 'Directory to store workflow artifacts' },
+    workspace: { type: 'string', description: 'Default workspace directory for step execution' },
+    verbose: { type: 'boolean', description: 'Enable verbose logging' },
+    json: { type: 'boolean', description: 'Output events as JSON (useful for CI/logging)' },
+    quiet: { type: 'boolean', description: 'Suppress non-error output (useful for CI)' },
+  },
   examples: [
     'kb wf worker --concurrency 2',
     'kb wf worker --redis-url redis://localhost:6379 --artifacts-root .kb/artifacts',
     'kb wf worker --root ./plugins,../extra-plugins',
     'kb wf worker --json --quiet  # CI mode: JSON output, minimal logging',
   ],
-  async run(ctx, argv, rawFlags) {
-    const flags = rawFlags as Flags
-    const verbose = Boolean(flags.verbose)
-    const jsonMode = Boolean(flags.json)
-    const quiet = Boolean(flags.quiet)
+  async handler(ctx: EnhancedCliContext, argv: string[], flags) {
+    const verbose = flags.verbose // Type-safe: boolean
+    const jsonMode = flags.json // Type-safe: boolean
+    const quiet = flags.quiet // Type-safe: boolean
+    
+    // Note: This command uses custom formatting and doesn't use the standard formatter
+    // because it's an interactive long-running process with custom JSON output
+    const output = ctx.output;
+    const ctxLogger = ctx.logger;
 
     // Create a logger that formats output nicely
-    const baseLogger = createCliEngineLogger(ctx, verbose)
+    const baseLogger = createCliEngineLogger(ctx, Boolean(verbose))
     const events: Array<{ type: string; timestamp: string; data: any }> = []
     
     const logger: EngineLogger = {
@@ -98,8 +112,14 @@ export const wfWorker: Command = {
           const pollInterval = (meta as any)?.pollIntervalMs
           const maxJobs = (meta as any)?.maxConcurrentJobs
           
+          logger?.info('Workflow worker started', {
+            workerId,
+            pollIntervalMs: pollInterval,
+            maxConcurrentJobs: maxJobs,
+          });
+          
           if (jsonMode) {
-            ctx.presenter.json?.({
+            output?.json({
               type: 'worker_started',
               workerId,
               pollIntervalMs: pollInterval,
@@ -113,9 +133,9 @@ export const wfWorker: Command = {
                 'Max Concurrent Jobs': String(maxJobs ?? 1),
               }),
               '',
-              safeColors.muted('Press Ctrl+C to stop.'),
+              output?.ui.colors.muted('Press Ctrl+C to stop.') ?? 'Press Ctrl+C to stop.',
             ]
-            ctx.presenter.write?.('\n' + box('Workflow Worker', summaryLines))
+            output?.write('\n' + box('Workflow Worker', summaryLines))
           }
         } else if (message.includes('Job processed successfully')) {
           const jobId = (meta as any)?.jobId
@@ -126,8 +146,16 @@ export const wfWorker: Command = {
           const jobName = jobId?.split(':')[1] ?? 'unknown'
           const runShort = runId ? `${runId.substring(0, 8)}...` : 'unknown'
           
+          logger?.info('Job processed successfully', {
+            jobId,
+            runId,
+            jobName,
+            processed,
+            active,
+          });
+          
           if (jsonMode) {
-            ctx.presenter.json?.({
+            output?.json({
               type: 'job_completed',
               jobId,
               runId,
@@ -136,24 +164,30 @@ export const wfWorker: Command = {
               active,
             })
           } else {
-            ctx.presenter.write?.(
-              `\n${safeSymbols.success} ${safeColors.success(`Job completed: ${jobName}`)} (run: ${runShort}, processed: ${processed}, active: ${active})\n`
+            output?.write(
+              `\n${output?.ui.symbols.success ?? '✓'} ${output?.ui.colors.success(`Job completed: ${jobName}`) ?? `Job completed: ${jobName}`} (run: ${runShort}, processed: ${processed}, active: ${active})\n`
             )
           }
         } else if (message.includes('Job completed with error')) {
           const jobId = (meta as any)?.jobId
           const jobName = jobId?.split(':')[1] ?? 'unknown'
           
+          logger?.error('Job completed with error', {
+            jobId,
+            jobName,
+            error: meta,
+          });
+          
           if (jsonMode) {
-            ctx.presenter.json?.({
+            output?.json({
               type: 'job_failed',
               jobId,
               jobName,
               error: meta,
             })
           } else {
-            ctx.presenter.write?.(
-              `\n${safeSymbols.error} ${safeColors.error(`Job failed: ${jobName}`)}\n`
+            output?.write(
+              `\n${output?.ui.symbols.error ?? '✗'} ${output?.ui.colors.error(`Job failed: ${jobName}`) ?? `Job failed: ${jobName}`}\n`
             )
           }
         } else {
@@ -188,23 +222,23 @@ export const wfWorker: Command = {
       type StartOptions = Parameters<typeof startWorkflowWorker>[0]
       const workerOptions: StartOptions = {
         logger,
-        pollIntervalMs: flags['poll-interval'],
-        heartbeatIntervalMs: flags['heartbeat-interval'],
-        leaseTtlMs: flags['lease-ttl'],
-        artifactsRoot: flags['artifacts-root'],
-        defaultWorkspace: flags.workspace,
+        pollIntervalMs: typeof flags['poll-interval'] === 'number' ? flags['poll-interval'] : undefined,
+        heartbeatIntervalMs: typeof flags['heartbeat-interval'] === 'number' ? flags['heartbeat-interval'] : undefined,
+        leaseTtlMs: typeof flags['lease-ttl'] === 'number' ? flags['lease-ttl'] : undefined,
+        artifactsRoot: typeof flags['artifacts-root'] === 'string' ? flags['artifacts-root'] : undefined,
+        defaultWorkspace: typeof flags.workspace === 'string' ? flags.workspace : undefined,
         redis: {
-          url: flags['redis-url'],
-          mode: flags['redis-mode'],
-          namespace: flags['redis-namespace'],
+          url: typeof flags['redis-url'] === 'string' ? flags['redis-url'] : undefined,
+          mode: typeof flags['redis-mode'] === 'string' ? flags['redis-mode'] as any : undefined,
+          namespace: typeof flags['redis-namespace'] === 'string' ? flags['redis-namespace'] : undefined,
         },
         discovery: {
-          roots: parseRoots(flags.root),
+          roots: parseRoots(typeof flags.root === 'string' ? flags.root : undefined),
         },
       }
 
       if (typeof flags.concurrency === 'number') {
-        workerOptions.maxConcurrentJobs = flags.concurrency
+        workerOptions.maxConcurrentJobs = flags.concurrency // Type-safe: number
       }
 
       const worker = await startWorkflowWorker(workerOptions)
@@ -212,8 +246,9 @@ export const wfWorker: Command = {
       const signal = await waitForTermination()
       
       if (!quiet) {
-        ctx.presenter.write?.(
-          `\n${safeSymbols.warning} ${safeColors.warning(`Received ${signal}. Shutting down workflow worker...`)}\n`
+        logger?.info('Received termination signal', { signal });
+        output?.write(
+          `\n${output?.ui.symbols.warning ?? '⚠'} ${output?.ui.colors.warn(`Received ${signal}. Shutting down workflow worker...`) ?? `Received ${signal}. Shutting down workflow worker...`}\n`
         )
       }
 
@@ -225,8 +260,14 @@ export const wfWorker: Command = {
         ? Date.now() - new Date(metrics.startedAt).getTime()
         : 0
 
+      logger?.info('Workflow worker stopped', {
+        signal,
+        metrics,
+        durationMs: duration,
+      });
+
       if (jsonMode) {
-        ctx.presenter.json?.({
+        output?.json({
           type: 'worker_stopped',
           signal,
           metrics: {
@@ -257,20 +298,21 @@ export const wfWorker: Command = {
               : 'n/a',
           }),
           '',
-          `${safeSymbols.success} ${safeColors.success('Workflow worker stopped')} · ${safeColors.muted(formatTiming(duration))}`,
+          `${output?.ui.symbols.success ?? '✓'} ${output?.ui.colors.success('Workflow worker stopped') ?? 'Workflow worker stopped'} · ${output?.ui.colors.muted(formatTiming(duration)) ?? formatTiming(duration)}`,
         ]
-        ctx.presenter.write?.('\n' + box('Worker Summary', summaryLines))
+        output?.write('\n' + box('Worker Summary', summaryLines))
       }
       
       // Exit with non-zero if there were failed jobs (useful for CI)
-      return metrics.failedJobs > 0 ? 1 : 0
+      return { ok: metrics.failedJobs === 0, failedJobs: metrics.failedJobs }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
-      ctx.presenter.error?.(`Failed to start workflow worker: ${message}`)
-      return 1
+      logger?.error('Failed to start workflow worker', { error: message });
+      output?.error(`Failed to start workflow worker: ${message}`)
+      return { ok: false, error: message }
     }
   },
-}
+})
 
 function waitForTermination(): Promise<NodeJS.Signals> {
   return new Promise((resolve) => {

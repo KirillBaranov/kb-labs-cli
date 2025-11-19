@@ -1,52 +1,48 @@
-import type { Command } from '../../types'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
 import { createCliEngineLogger } from './utils'
 import { createRedisClient, ApprovalStepHandler } from '@kb-labs/workflow-engine'
+import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
 
-interface Flags {
-  reject?: boolean
-  json?: boolean
-  verbose?: boolean
-}
+type WorkflowApproveResult = CommandResult & {
+  action?: 'approved' | 'rejected';
+  runId?: string;
+  stepId?: string;
+  actor?: string;
+  status?: string;
+};
 
-export const wfApprove: Command = {
+type WfApproveFlags = {
+  reject: { type: 'boolean'; description?: string };
+  json: { type: 'boolean'; description?: string };
+  verbose: { type: 'boolean'; description?: string };
+};
+
+export const wfApprove = defineSystemCommand<WfApproveFlags, WorkflowApproveResult>({
   name: 'approve',
-  describe: 'Approve or reject a pending approval step',
+  description: 'Approve or reject a pending approval step',
   category: 'workflows',
   aliases: ['wf:approve'],
-  flags: [
-    {
-      name: 'reject',
-      type: 'boolean',
-      description: 'Reject the approval request instead of approving',
-    },
-    {
-      name: 'json',
-      type: 'boolean',
-      description: 'Output as JSON',
-    },
-    {
-      name: 'verbose',
-      type: 'boolean',
-      description: 'Enable verbose logging',
-    },
-  ],
+  flags: {
+    reject: { type: 'boolean', description: 'Reject the approval request instead of approving' },
+    json: { type: 'boolean', description: 'Output as JSON' },
+    verbose: { type: 'boolean', description: 'Enable verbose logging' },
+  },
   examples: [
     'kb wf approve <runId> <stepId>',
     'kb wf approve <runId> <stepId> --reject',
     'kb wf approve <runId> <stepId> --json',
   ],
-  async run(ctx, argv, rawFlags) {
+  async handler(ctx: EnhancedCliContext, argv: string[], flags) {
     if (argv.length < 2) {
-      ctx.presenter.error('Usage: kb wf approve <runId> <stepId> [--reject]')
-      return 1
+      ctx.output?.error('Usage: kb wf approve <runId> <stepId> [--reject]')
+      return { ok: false, error: 'Missing runId or stepId arguments' }
     }
 
     const runId = argv[0]!
     const stepId = argv[1]!
-    const flags = rawFlags as Flags
-    const jsonMode = Boolean(flags.json)
-    const reject = Boolean(flags.reject)
-    const logger = createCliEngineLogger(ctx, Boolean(flags.verbose))
+    const jsonMode = flags.json // Type-safe: boolean
+    const reject = flags.reject // Type-safe: boolean
+    const logger = createCliEngineLogger(ctx, flags.verbose) // Type-safe: boolean
 
     try {
       // Create Redis client
@@ -76,21 +72,21 @@ export const wfApprove: Command = {
       if (!request) {
         const message = `No pending approval request found for run ${runId}, step ${stepId}`
         if (jsonMode) {
-          ctx.presenter.json({ ok: false, error: message })
+          ctx.output?.json({ ok: false, error: message })
         } else {
-          ctx.presenter.error(message)
+          ctx.output?.error(message)
         }
-        return 1
+        return { ok: false, error: message }
       }
 
       if (request.status !== 'pending') {
         const message = `Approval request is already ${request.status}`
         if (jsonMode) {
-          ctx.presenter.json({ ok: false, error: message, status: request.status })
+          ctx.output?.json({ ok: false, error: message, status: request.status })
         } else {
-          ctx.presenter.error(message)
+          ctx.output?.error(message)
         }
-        return 1
+        return { ok: false, error: message, status: request.status }
       }
 
       // Get actor (user) - use environment variable or default
@@ -104,15 +100,15 @@ export const wfApprove: Command = {
       if (!success) {
         const message = `Failed to ${reject ? 'reject' : 'approve'} approval request`
         if (jsonMode) {
-          ctx.presenter.json({ ok: false, error: message })
+          ctx.output?.json({ ok: false, error: message })
         } else {
-          ctx.presenter.error(message)
+          ctx.output?.error(message)
         }
-        return 1
+        return { ok: false, error: message }
       }
 
       if (jsonMode) {
-        ctx.presenter.json({
+        ctx.output?.json({
           ok: true,
           action: reject ? 'rejected' : 'approved',
           runId,
@@ -121,23 +117,21 @@ export const wfApprove: Command = {
           timestamp: new Date().toISOString(),
         })
       } else {
-        ctx.presenter.success(
-          `✓ Approval ${reject ? 'rejected' : 'approved'} by ${actor}`,
-        )
-        ctx.presenter.info(`Run: ${runId}`)
-        ctx.presenter.info(`Step: ${stepId}`)
+        ctx.output?.write(`✓ Approval ${reject ? 'rejected' : 'approved'} by ${actor}\n`)
+        ctx.output?.write(`Run: ${runId}\n`)
+        ctx.output?.write(`Step: ${stepId}\n`)
       }
 
-      return 0
+      return { ok: true, action: reject ? 'rejected' : 'approved', runId, stepId, actor }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: message })
+        ctx.output?.json({ ok: false, error: message })
       } else {
-        ctx.presenter.error(`Failed to ${reject ? 'reject' : 'approve'} approval: ${message}`)
+        ctx.output?.error(`Failed to ${reject ? 'reject' : 'approve'} approval: ${message}`)
       }
-      return 1
+      return { ok: false, error: message }
     }
   },
-}
+})
 

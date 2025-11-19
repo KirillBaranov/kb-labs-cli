@@ -1,68 +1,57 @@
-import type { Command } from '../../types'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
 import { createCliEngineLogger } from './utils'
 import { BudgetTracker, createRedisClient } from '@kb-labs/workflow-engine'
 import { loadWorkflowConfig } from '@kb-labs/workflow-runtime'
 import { box } from '@kb-labs/shared-cli-ui'
+import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
 
-interface Flags {
-  runId?: string
-  json?: boolean
-  verbose?: boolean
-}
+type BudgetStatusResult = CommandResult & {
+  status?: {
+    current: number;
+    period: string;
+    action: string;
+    limit?: number;
+    exceeded?: boolean;
+  };
+};
 
-export const wfBudgetStatus: Command = {
+type WfBudgetStatusFlags = {
+  runId: { type: 'string'; description?: string; required: true };
+  json: { type: 'boolean'; description?: string };
+  verbose: { type: 'boolean'; description?: string };
+};
+
+export const wfBudgetStatus = defineSystemCommand<WfBudgetStatusFlags, BudgetStatusResult>({
   name: 'budget:status',
-  describe: 'Show budget status for a workflow run',
+  description: 'Show budget status for a workflow run',
   category: 'workflows',
   aliases: ['wf:budget:status'],
-  flags: [
-    {
-      name: 'runId',
-      type: 'string',
-      description: 'Run ID to check budget for',
-    },
-    {
-      name: 'json',
-      type: 'boolean',
-      description: 'Output as JSON',
-    },
-    {
-      name: 'verbose',
-      type: 'boolean',
-      description: 'Enable verbose logging',
-    },
-  ],
+  flags: {
+    runId: { type: 'string', description: 'Run ID to check budget for', required: true },
+    json: { type: 'boolean', description: 'Output as JSON' },
+    verbose: { type: 'boolean', description: 'Enable verbose logging' },
+  },
   examples: [
     'kb wf budget:status --runId <runId>',
     'kb wf budget:status --runId <runId> --json',
   ],
-  async run(ctx, argv, rawFlags) {
-    const flags = rawFlags as Flags
+  async handler(ctx: EnhancedCliContext, argv: string[], flags) {
     const jsonMode = Boolean(flags.json)
     const logger = createCliEngineLogger(ctx, Boolean(flags.verbose))
-
-    if (!flags.runId) {
-      const message = '--runId is required'
-      if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: message })
-      } else {
-        ctx.presenter.error(message)
-      }
-      return 1
-    }
+    const runId = flags.runId // Type-safe: string (required)
 
     try {
-      const workspaceRoot = ctx.workspaceRoot ?? process.cwd()
+      const workspaceRoot = process.cwd()
       const workflowConfig = await loadWorkflowConfig(workspaceRoot)
 
       if (!workflowConfig.budget?.enabled) {
         const message = 'Budget tracking is not enabled'
         if (jsonMode) {
-          ctx.presenter.json({ ok: false, error: message })
+          ctx.output?.json({ ok: false, error: message })
         } else {
-          ctx.presenter.error(message)
+          ctx.output?.error(message)
         }
-        return 1
+        return { ok: false, error: message }
       }
 
       // Create budget tracker
@@ -84,10 +73,10 @@ export const wfBudgetStatus: Command = {
         },
       })
 
-      const status = await tracker.getBudgetStatus(redisClient, flags.runId)
+      const status = await tracker.getBudgetStatus(redisClient, runId)
 
       if (jsonMode) {
-        ctx.presenter.json({
+        ctx.output?.json({
           ok: true,
           status,
         })
@@ -105,19 +94,19 @@ export const wfBudgetStatus: Command = {
           lines.push(`Remaining: ${remaining > 0 ? remaining.toFixed(4) : '0.0000'}`)
         }
 
-        ctx.presenter.write('\n' + box('Budget Status', lines))
+        ctx.output?.write('\n' + box('Budget Status', lines))
       }
 
-      return 0
+      return { ok: true, status }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: message })
+        ctx.output?.json({ ok: false, error: message })
       } else {
-        ctx.presenter.error(`Failed to get budget status: ${message}`)
+        ctx.output?.error(`Failed to get budget status: ${message}`)
       }
-      return 1
+      return { ok: false, error: message }
     }
   },
-}
+})
 

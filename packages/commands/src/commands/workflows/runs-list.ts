@@ -1,4 +1,4 @@
-import type { Command } from '../../types'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
 import {
   TimingTracker,
   formatTable,
@@ -9,51 +9,40 @@ import {
 import { createCliEngineLogger, renderStatusLine, statusBadge } from './utils'
 import { listWorkflowRuns } from './service'
 import type { WorkflowRun } from '@kb-labs/workflow-contracts'
+import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
 
-interface Flags {
-  status?: string
-  limit?: number
-  json?: boolean
-  verbose?: boolean
-}
+type WorkflowRunsListResult = CommandResult & {
+  runs?: WorkflowRun[];
+  total?: number;
+};
 
-export const wfRunsList: Command = {
+type WfRunsListFlags = {
+  status: { type: 'string'; description?: string };
+  limit: { type: 'number'; description?: string };
+  json: { type: 'boolean'; description?: string };
+  verbose: { type: 'boolean'; description?: string };
+};
+
+export const wfRunsList = defineSystemCommand<WfRunsListFlags, WorkflowRunsListResult>({
   name: 'runs list',
   category: 'workflows',
-  describe: 'List recent workflow runs',
+  description: 'List recent workflow runs',
   aliases: ['wf:runs:list'],
-  flags: [
-    {
-      name: 'status',
-      type: 'string',
-      description: 'Filter by status (queued|running|success|failed|cancelled|skipped)',
-    },
-    {
-      name: 'limit',
-      type: 'number',
-      description: 'Maximum number of runs to return (default 20)',
-    },
-    {
-      name: 'json',
-      type: 'boolean',
-      description: 'Output results as JSON',
-    },
-    {
-      name: 'verbose',
-      type: 'boolean',
-      description: 'Enable verbose logging',
-    },
-  ],
+  flags: {
+    status: { type: 'string', description: 'Filter by status (queued|running|success|failed|cancelled|skipped)' },
+    limit: { type: 'number', description: 'Maximum number of runs to return (default 20)' },
+    json: { type: 'boolean', description: 'Output results as JSON' },
+    verbose: { type: 'boolean', description: 'Enable verbose logging' },
+  },
   examples: [
     'kb wf runs list',
     'kb wf runs list --status running',
     'kb wf runs list --limit 5 --json',
   ],
-  async run(ctx, argv, rawFlags) {
-    const flags = rawFlags as Flags
-    const logger = createCliEngineLogger(ctx, Boolean(flags.verbose))
+  async handler(ctx: EnhancedCliContext, argv: string[], flags) {
+    const logger = createCliEngineLogger(ctx, flags.verbose) // Type-safe: boolean
     const tracker = new TimingTracker()
-    const jsonMode = Boolean(flags.json)
+    const jsonMode = flags.json // Type-safe: boolean
 
     const limit = typeof flags.limit === 'number' && Number.isFinite(flags.limit)
       ? Math.max(1, Math.floor(flags.limit))
@@ -61,25 +50,25 @@ export const wfRunsList: Command = {
 
     try {
       const result = await listWorkflowRuns({
-        status: flags.status,
+        status: flags.status, // Type-safe: string | undefined
         limit,
         logger,
       })
       tracker.checkpoint('list')
 
       if (jsonMode) {
-        ctx.presenter.json?.({
+        ctx.output?.json({
           ok: true,
           runs: result.runs,
           total: result.total,
           timingMs: tracker.total(),
         })
-        return 0
+        return { ok: true, runs: result.runs, total: result.total }
       }
 
       if (result.runs.length === 0) {
-        ctx.presenter.info('No workflow runs found.')
-        return 0
+        ctx.output?.info('No workflow runs found.')
+        return { ok: true, runs: [], total: 0 }
       }
 
       const runColumns: TableColumn[] = [
@@ -108,7 +97,7 @@ export const wfRunsList: Command = {
       const summaryLines: string[] = [
         ...keyValue({
           Total: String(result.total),
-          Filter: flags.status ?? 'any',
+          Filter: flags.status ?? 'any', // Type-safe: string | undefined
           Limit: String(limit),
         }),
       ]
@@ -118,18 +107,18 @@ export const wfRunsList: Command = {
       summaryLines.push('')
       summaryLines.push(renderStatusLine('Fetched workflow runs', 'success', tracker.total()))
 
-      ctx.presenter.write?.('\n' + box('Workflow Runs', summaryLines))
-      return 0
+      ctx.output?.write('\n' + box('Workflow Runs', summaryLines))
+      return { ok: true, runs: result.runs, total: result.total }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (jsonMode) {
-        ctx.presenter.json?.({ ok: false, error: message })
+        ctx.output?.json({ ok: false, error: message })
       } else {
-        ctx.presenter.error(`Failed to list workflow runs: ${message}`)
+        ctx.output?.error(`Failed to list workflow runs: ${message}`)
       }
-      return 1
+      return { ok: false, error: message }
     }
   },
-}
+})
 
 

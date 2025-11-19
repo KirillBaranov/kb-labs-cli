@@ -1,44 +1,42 @@
-import type { Command } from '../../types'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
 import { TimingTracker, box } from '@kb-labs/shared-cli-ui'
 import { cancelWorkflowRun } from './service'
 import { createCliEngineLogger, formatRunHeader } from './utils'
+import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
+import type { WorkflowRun } from '@kb-labs/workflow-contracts'
 
-interface Flags {
-  json?: boolean
-  verbose?: boolean
-}
+type WorkflowCancelResult = CommandResult & {
+  run?: WorkflowRun;
+  warning?: string;
+};
 
-export const wfCancel: Command = {
+type WfCancelFlags = {
+  json: { type: 'boolean'; description?: string };
+  verbose: { type: 'boolean'; description?: string };
+};
+
+export const wfCancel = defineSystemCommand<WfCancelFlags, WorkflowCancelResult>({
   name: 'cancel',
   category: 'workflows',
-  describe: 'Cancel an in-flight workflow run',
+  description: 'Cancel an in-flight workflow run',
   aliases: ['wf:cancel'],
-  flags: [
-    {
-      name: 'json',
-      type: 'boolean',
-      description: 'Output result as JSON',
-    },
-    {
-      name: 'verbose',
-      type: 'boolean',
-      description: 'Enable verbose logging',
-    },
-  ],
+  flags: {
+    json: { type: 'boolean', description: 'Output result as JSON' },
+    verbose: { type: 'boolean', description: 'Enable verbose logging' },
+  },
   examples: [
     'kb wf cancel 01HFYQ7C9X1Y2Z3A4B5C6D7E8F',
     'kb wf cancel 01HFYQ7C9X1Y2Z3A4B5C6D7E8F --json',
   ],
-  async run(ctx, argv, rawFlags) {
+  async handler(ctx: EnhancedCliContext, argv: string[], flags) {
     if (argv.length === 0 || !argv[0]) {
-      ctx.presenter.error('Usage: kb wf cancel <runId>')
-      return 1
+      ctx.output?.error('Usage: kb wf cancel <runId>')
+      return { ok: false, error: 'Missing runId argument' }
     }
 
     const runId = argv[0]!
-    const flags = rawFlags as Flags
-    const jsonMode = Boolean(flags.json)
-    const logger = createCliEngineLogger(ctx, Boolean(flags.verbose))
+    const jsonMode = flags.json // Type-safe: boolean
+    const logger = createCliEngineLogger(ctx, flags.verbose) // Type-safe: boolean
     const tracker = new TimingTracker()
 
     try {
@@ -47,44 +45,44 @@ export const wfCancel: Command = {
 
       if (!run) {
         if (jsonMode) {
-          ctx.presenter.json?.({ ok: false, error: 'Run not found', runId })
+          ctx.output?.json({ ok: false, error: 'Run not found', runId })
         } else {
-          ctx.presenter.error(`Workflow run not found: ${runId}`)
+          ctx.output?.error(`Workflow run not found: ${runId}`)
         }
-        return 1
+        return { ok: false, error: 'Run not found', runId }
       }
 
       if (jsonMode) {
-        ctx.presenter.json?.({
+        ctx.output?.json({
           ok: run.status === 'cancelled',
           run,
           timingMs: tracker.total(),
         })
-        return run.status === 'cancelled' ? 0 : 2
+        return { ok: run.status === 'cancelled', run }
       }
 
       const lines = [
         ...formatRunHeader(run, tracker.total()),
       ]
 
-      ctx.presenter.write?.('\n' + box('Workflow Run Cancellation', lines))
+      ctx.output?.write('\n' + box('Workflow Run Cancellation', lines))
 
       if (run.status === 'cancelled') {
-        return 0
+        return { ok: true, run }
       }
 
-      ctx.presenter.warn(`Run is already in terminal state: ${run.status}`)
-      return 2
+      ctx.output?.warn(`Run is already in terminal state: ${run.status}`)
+      return { ok: false, run, warning: `Run is already in terminal state: ${run.status}` }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (jsonMode) {
-        ctx.presenter.json?.({ ok: false, error: message })
+        ctx.output?.json({ ok: false, error: message })
       } else {
-        ctx.presenter.error(`Failed to cancel workflow run: ${message}`)
+        ctx.output?.error(`Failed to cancel workflow run: ${message}`)
       }
-      return 1
+      return { ok: false, error: message }
     }
   },
-}
+})
 
 

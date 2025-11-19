@@ -1,51 +1,45 @@
-import type { Command } from '../../types'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
 import { createCliEngineLogger, formatRunHeader, statusBadge } from './utils'
 import { WorkflowEngine } from '@kb-labs/workflow-engine'
 import { box } from '@kb-labs/shared-cli-ui'
+import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
+import type { WorkflowRun } from '@kb-labs/workflow-contracts'
 
-interface Flags {
-  'from-step'?: string
-  json?: boolean
-  verbose?: boolean
-}
+type WorkflowReplayResult = CommandResult & {
+  run?: WorkflowRun;
+  fromStepId?: string;
+};
 
-export const wfReplay: Command = {
+type WfReplayFlags = {
+  'from-step': { type: 'string'; description?: string };
+  json: { type: 'boolean'; description?: string };
+  verbose: { type: 'boolean'; description?: string };
+};
+
+export const wfReplay = defineSystemCommand<WfReplayFlags, WorkflowReplayResult>({
   name: 'replay',
-  describe: 'Replay a workflow run from a snapshot',
+  description: 'Replay a workflow run from a snapshot',
   category: 'workflows',
   aliases: ['wf:replay'],
-  flags: [
-    {
-      name: 'from-step',
-      type: 'string',
-      description: 'Start replay from a specific step ID',
-    },
-    {
-      name: 'json',
-      type: 'boolean',
-      description: 'Output as JSON',
-    },
-    {
-      name: 'verbose',
-      type: 'boolean',
-      description: 'Enable verbose logging',
-    },
-  ],
+  flags: {
+    'from-step': { type: 'string', description: 'Start replay from a specific step ID' },
+    json: { type: 'boolean', description: 'Output as JSON' },
+    verbose: { type: 'boolean', description: 'Enable verbose logging' },
+  },
   examples: [
     'kb wf replay <runId>',
     'kb wf replay <runId> --from-step step-123',
     'kb wf replay <runId> --json',
   ],
-  async run(ctx, argv, rawFlags) {
+  async handler(ctx: EnhancedCliContext, argv: string[], flags) {
     if (argv.length === 0 || !argv[0]) {
-      ctx.presenter.error('Usage: kb wf replay <runId> [--from-step <stepId>]')
-      return 1
+      ctx.output?.error('Usage: kb wf replay <runId> [--from-step <stepId>]')
+      return { ok: false, error: 'Missing runId argument' }
     }
 
     const runId = argv[0]!
-    const flags = rawFlags as Flags
-    const jsonMode = Boolean(flags.json)
-    const logger = createCliEngineLogger(ctx, Boolean(flags.verbose))
+    const jsonMode = flags.json // Type-safe: boolean
+    const logger = createCliEngineLogger(ctx, flags.verbose) // Type-safe: boolean
 
     try {
       // Create engine with Redis
@@ -72,16 +66,16 @@ export const wfReplay: Command = {
       if (!snapshot) {
         const message = `No snapshot found for run ${runId}. Create a snapshot first.`
         if (jsonMode) {
-          ctx.presenter.json({ ok: false, error: message })
+          ctx.output?.json({ ok: false, error: message })
         } else {
-          ctx.presenter.error(message)
+          ctx.output?.error(message)
         }
-        return 1
+        return { ok: false, error: message }
       }
 
       // Replay the run
       const replayedRun = await engine.replayRun(runId, {
-        fromStepId: flags['from-step'],
+        fromStepId: flags['from-step'], // Type-safe: string | undefined
         stepOutputs: snapshot.stepOutputs,
         env: snapshot.env,
       })
@@ -89,18 +83,18 @@ export const wfReplay: Command = {
       if (!replayedRun) {
         const message = `Failed to replay run ${runId}`
         if (jsonMode) {
-          ctx.presenter.json({ ok: false, error: message })
+          ctx.output?.json({ ok: false, error: message })
         } else {
-          ctx.presenter.error(message)
+          ctx.output?.error(message)
         }
-        return 1
+        return { ok: false, error: message }
       }
 
       if (jsonMode) {
-        ctx.presenter.json({
+        ctx.output?.json({
           ok: true,
           run: replayedRun,
-          fromStepId: flags['from-step'],
+          fromStepId: flags['from-step'], // Type-safe: string | undefined
         })
       } else {
         const summaryLines: string[] = [
@@ -108,7 +102,7 @@ export const wfReplay: Command = {
         ]
 
         if (flags['from-step']) {
-          summaryLines.push(`\nReplaying from step: ${flags['from-step']}`)
+          summaryLines.push(`\nReplaying from step: ${flags['from-step']}`) // Type-safe: string
         }
 
         for (const job of replayedRun.jobs) {
@@ -117,20 +111,20 @@ export const wfReplay: Command = {
           )
         }
 
-        ctx.presenter.write('\n' + box('Workflow Replay', summaryLines))
-        ctx.presenter.success(`✓ Run ${runId} replayed successfully`)
+        ctx.output?.write('\n' + box('Workflow Replay', summaryLines))
+        ctx.output?.write(`✓ Run ${runId} replayed successfully\n`)
       }
 
-      return 0
+      return { ok: true, run: replayedRun }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: message })
+        ctx.output?.json({ ok: false, error: message })
       } else {
-        ctx.presenter.error(`Failed to replay workflow: ${message}`)
+        ctx.output?.error(`Failed to replay workflow: ${message}`)
       }
-      return 1
+      return { ok: false, error: message }
     }
   },
-}
+})
 
