@@ -2,56 +2,43 @@
  * replay command - Replay snapshot for debugging
  */
 
-import type { Command } from '../../types/types';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
 import { loadSnapshot, listSnapshots, diffSnapshots, searchSnapshots } from '@kb-labs/plugin-runtime';
 import { executeCommand } from '@kb-labs/plugin-adapter-cli';
-import type { CliContext } from '@kb-labs/cli-core';
 import { registry } from '../../registry/service';
-import { box, keyValue, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
-import { getContextCwd } from '../../utils/context';
+import { box, keyValue, safeColors } from '@kb-labs/shared-cli-ui';
+import { getContextCwd } from '@kb-labs/shared-cli-ui';
 import type { CliCommandDecl } from '@kb-labs/plugin-manifest';
 
-export const replay: Command = {
+type ReplayResult = CommandResult & {
+  mode?: 'list' | 'replay' | 'diff';
+  snapshots?: Array<{
+    id: string;
+    timestamp: string;
+    command: string;
+    pluginId: string;
+    result: any;
+    error?: string;
+    errorMessage?: string;
+  }>;
+  snapshot?: any;
+  diff?: any;
+};
+
+type ReplayFlags = {
+  list: { type: 'boolean'; description?: string };
+  last: { type: 'boolean'; description?: string };
+  json: { type: 'boolean'; description?: string };
+  diff: { type: 'string'; description?: string };
+  plugin: { type: 'string'; description?: string };
+  command: { type: 'string'; description?: string };
+  error: { type: 'boolean'; description?: string };
+};
+
+export const replay = defineSystemCommand<ReplayFlags, ReplayResult>({
   name: 'replay',
+  description: 'Replay command execution from snapshot',
   category: 'debug',
-  describe: 'Replay command execution from snapshot',
-  flags: [
-    {
-      name: 'list',
-      type: 'boolean',
-      description: 'List all available snapshots',
-    },
-    {
-      name: 'last',
-      type: 'boolean',
-      description: 'Replay the last snapshot',
-    },
-    {
-      name: 'json',
-      type: 'boolean',
-      description: 'Output in JSON format',
-    },
-    {
-      name: 'diff',
-      type: 'string',
-      description: 'Compare this snapshot with another',
-    },
-    {
-      name: 'plugin',
-      type: 'string',
-      description: 'Filter snapshots by plugin ID',
-    },
-    {
-      name: 'command',
-      type: 'string',
-      description: 'Filter snapshots by command',
-    },
-    {
-      name: 'error',
-      type: 'boolean',
-      description: 'Show only snapshots with errors',
-    },
-  ],
   examples: [
     'kb replay <snapshot-id>',
     'kb replay --list',
@@ -59,185 +46,120 @@ export const replay: Command = {
     'kb replay <id1> --diff <id2>',
     'kb replay --list --plugin @kb-labs/mind --error',
   ],
-
-  async run(ctx: CliContext, argv: string[], flags: Record<string, unknown>) {
-    const jsonMode = Boolean(flags.json);
-    const cwd = getContextCwd(ctx as Partial<CliContext> & { cwd?: string });
+  flags: {
+    list: { type: 'boolean', description: 'List all available snapshots' },
+    last: { type: 'boolean', description: 'Replay the last snapshot' },
+    json: { type: 'boolean', description: 'Output in JSON format' },
+    diff: { type: 'string', description: 'Compare this snapshot with another' },
+    plugin: { type: 'string', description: 'Filter snapshots by plugin ID' },
+    command: { type: 'string', description: 'Filter snapshots by command' },
+    error: { type: 'boolean', description: 'Show only snapshots with errors' },
+  },
+  analytics: {
+    command: 'replay',
+    startEvent: 'REPLAY_STARTED',
+    finishEvent: 'REPLAY_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
+    const cwd = getContextCwd(ctx);
 
     // List snapshots with filters
     if (flags.list) {
       let snapshots = await listSnapshots(cwd);
-      
+
       // Apply filters
-      if (flags.plugin || flags.command || typeof flags.error === 'boolean') {
+      if (flags.plugin || flags.command || flags.error) {
         const filtered = await searchSnapshots(
           {
-            pluginId: typeof flags.plugin === 'string' ? flags.plugin : undefined,
-            command: typeof flags.command === 'string' ? flags.command : undefined,
-            error: typeof flags.error === 'boolean' ? flags.error : undefined,
+            pluginId: flags.plugin, // Type-safe: string | undefined
+            command: flags.command, // Type-safe: string | undefined
+            error: flags.error, // Type-safe: boolean | undefined
           },
-          cwd
+          cwd,
         );
         snapshots = filtered;
       }
-      
-      if (jsonMode) {
-        ctx.presenter.json({
-          ok: true,
-          snapshots: snapshots.map(s => ({
-            id: s.id,
-            timestamp: s.timestamp,
-            command: s.command,
-            pluginId: s.pluginId,
-            result: s.result,
-            error: s.error?.code,
-          })),
-        });
-        return 0;
-      }
 
-      if (snapshots.length === 0) {
-        ctx.presenter.info('No snapshots found');
-        return 0;
-      }
+      ctx.logger?.info('Snapshots listed', { count: snapshots.length });
 
-      ctx.presenter.info(`Found ${snapshots.length} snapshot(s):\n`);
-      for (const snapshot of snapshots) {
-        const status = snapshot.result === 'error' ? '✗' : '✓';
-        const errorInfo = snapshot.error ? ` (${snapshot.error.code})` : '';
-        ctx.presenter.info(
-          `${status} ${snapshot.id} - ${snapshot.command}${errorInfo}`
-        );
-        ctx.presenter.info(`   ${snapshot.timestamp}`);
-        if (snapshot.error) {
-          ctx.presenter.info(`   Error: ${snapshot.error.message}`);
-        }
-      }
-      return 0;
+      return {
+        ok: true,
+        mode: 'list',
+        snapshots: snapshots.map((s) => ({
+          id: s.id,
+          timestamp: s.timestamp,
+          command: s.command,
+          pluginId: s.pluginId,
+          result: s.result,
+          error: s.error?.code,
+          errorMessage: s.error?.message,
+        })),
+      };
     }
 
     // Diff snapshots if requested
-    if (flags.diff && typeof flags.diff === 'string') {
+    if (flags.diff) { // Type-safe: string | undefined
       const snapshotId = argv[0];
       if (!snapshotId) {
-        ctx.presenter.error('Please provide first snapshot ID');
-        return 1;
+        throw new Error('Please provide first snapshot ID');
       }
-      
-      try {
-        const diff = await diffSnapshots(snapshotId, flags.diff, cwd);
-        
-        if (jsonMode) {
-          ctx.presenter.json({
-            ok: true,
-            ...diff,
-          });
-          return 0;
-        }
-        
-        const diffLines = (diff.differences ?? []).flatMap((difference) => [
-          `  ${safeColors.dim('Field:')} ${difference.field}`,
-          `    ${safeColors.error('-')} ${JSON.stringify(difference.value1, null, 2)}`,
-          `    ${safeColors.success('+')} ${JSON.stringify(difference.value2, null, 2)}`,
-        ]);
-        
-        const summary = keyValue({
-          'Snapshot 1': diff.id1,
-          'Snapshot 2': diff.id2,
-          'Differences': diff.differences.length.toString(),
-        });
-        
-        const output = box('Snapshot Comparison', [
-          ...summary,
-          '',
-          ...diffLines,
-        ]);
-        
-        ctx.presenter.write(output);
-        return 0;
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        ctx.presenter.error(`Diff failed: ${message}`);
-        return 1;
-      }
+
+      const diff = await diffSnapshots(snapshotId, flags.diff, cwd);
+
+      ctx.logger?.info('Snapshots compared', { id1: diff.id1, id2: diff.id2, differences: diff.differences.length });
+
+      return {
+        ok: true,
+        mode: 'diff',
+        ...diff,
+      };
     }
-    
+
     // Replay snapshot
     let snapshotId: string | undefined;
-    
+
     if (flags.last) {
       const snapshots = await listSnapshots(cwd);
       const [latestSnapshot] = snapshots;
       if (!latestSnapshot) {
-        ctx.presenter.error('No snapshots found');
-        return 1;
+        throw new Error('No snapshots found');
       }
       snapshotId = latestSnapshot.id;
     } else if (argv.length > 0) {
       snapshotId = argv[0];
     } else {
-      ctx.presenter.error('Please provide snapshot ID or use --last flag');
-      ctx.presenter.info('Use `kb replay --list` to see available snapshots');
-      return 1;
+      throw new Error('Please provide snapshot ID or use --last flag');
     }
 
     if (!snapshotId) {
-      ctx.presenter.error('Snapshot ID is required');
-      return 1;
+      throw new Error('Snapshot ID is required');
     }
 
     // Load snapshot
     const snapshot = await loadSnapshot(snapshotId, cwd);
     if (!snapshot) {
-      ctx.presenter.error(`Snapshot not found: ${snapshotId}`);
-      ctx.presenter.info('Use `kb replay --list` to see available snapshots');
-      return 1;
+      throw new Error(`Snapshot not found: ${snapshotId}`);
     }
 
-    if (jsonMode) {
-      ctx.presenter.json({
-        ok: true,
-        snapshot: {
-          id: snapshot.id,
-          timestamp: snapshot.timestamp,
-          command: snapshot.command,
-          pluginId: snapshot.pluginId,
-          input: snapshot.input,
-          context: snapshot.context,
-          result: snapshot.result,
-        },
-      });
-      return 0;
-    }
-
-    ctx.presenter.info(`Replaying snapshot: ${snapshot.id}`);
-    ctx.presenter.info(`Command: ${snapshot.command}`);
-    ctx.presenter.info(`Timestamp: ${snapshot.timestamp}`);
-    ctx.presenter.info(`Plugin: ${snapshot.pluginId}@${snapshot.pluginVersion}`);
-    ctx.presenter.info('');
+    ctx.logger?.info('Snapshot loaded', { snapshotId, command: snapshot.command, pluginId: snapshot.pluginId });
 
     // Find the plugin in registry
     const manifests = registry.listManifests?.() ?? [];
-    const registered = manifests.find((m) =>
-      m.manifest.manifestV2?.id === snapshot.pluginId ||
-      m.manifest.package === snapshot.pluginId
+    const registered = manifests.find(
+      (m) => m.manifest.manifestV2?.id === snapshot.pluginId || m.manifest.package === snapshot.pluginId,
     );
 
     if (!registered) {
-      ctx.presenter.error(`Plugin ${snapshot.pluginId} not found in registry`);
-      ctx.presenter.info('Make sure the plugin is installed and registered');
-      return 1;
+      throw new Error(`Plugin ${snapshot.pluginId} not found in registry`);
     }
 
     if (!registered.available) {
-      ctx.presenter.error(`Plugin ${snapshot.pluginId} is not available: ${registered.unavailableReason}`);
-      return 1;
+      throw new Error(`Plugin ${snapshot.pluginId} is not available: ${registered.unavailableReason}`);
     }
 
     const manifestV2 = registered.manifest.manifestV2;
     if (!manifestV2) {
-      ctx.presenter.error(`Plugin ${snapshot.pluginId} has no ManifestV2`);
-      return 1;
+      throw new Error(`Plugin ${snapshot.pluginId} has no ManifestV2`);
     }
 
     // Find CLI command in manifest
@@ -246,55 +168,143 @@ export const replay: Command = {
       : snapshot.command;
 
     const cliCommands = manifestV2.cli?.commands ?? [];
-    const cliCommand: CliCommandDecl | undefined =
-      cliCommands.find((c) => c.id === commandId || c.id === snapshot.command);
+    const cliCommand: CliCommandDecl | undefined = cliCommands.find(
+      (c) => c.id === commandId || c.id === snapshot.command,
+    );
 
     if (!cliCommand || !cliCommand.handler) {
-      ctx.presenter.error(`Command ${snapshot.command} not found in plugin manifest`);
-      return 1;
+      throw new Error(`Command ${snapshot.command} not found in plugin manifest`);
     }
 
     // Restore workdir from snapshot
     const workdir = snapshot.context?.workdir ?? snapshot.context?.cwd ?? cwd;
 
-    ctx.presenter.info(`Replaying with:`);
-    ctx.presenter.info(`  Input: ${JSON.stringify(snapshot.input)}`);
-    ctx.presenter.info(`  Workdir: ${workdir}`);
-    ctx.presenter.info('');
+    ctx.logger?.info('Replaying snapshot', { snapshotId, workdir });
 
     // Execute command with same input/flags
-    try {
-      const exitCode = await executeCommand(
-        cliCommand,
-        manifestV2,
-        ctx,
-        snapshot.input as Record<string, unknown>,
-        manifestV2.capabilities ?? [],
-        registered.pkgRoot ?? cwd,
-        workdir,
-        snapshot.context?.outdir,
-        undefined
-      );
+    const exitCode = await executeCommand(
+      cliCommand,
+      manifestV2,
+      ctx as any,
+      snapshot.input as Record<string, unknown>,
+      manifestV2.capabilities ?? [],
+      registered.pkgRoot ?? cwd,
+      workdir,
+      snapshot.context?.outdir,
+      undefined,
+    );
 
-      if (exitCode === 0) {
-        ctx.presenter.info(`✓ Replay completed successfully`);
+    const originalResult = snapshot.result;
+    const replaySuccess = exitCode === 0;
+
+    ctx.logger?.info('Replay completed', {
+      snapshotId,
+      exitCode,
+      originalResult,
+      replaySuccess,
+      regression: originalResult === 'success' && !replaySuccess,
+      fixed: originalResult === 'error' && replaySuccess,
+    });
+
+    return {
+      ok: replaySuccess,
+      mode: 'replay',
+      snapshotId,
+      snapshot: {
+        id: snapshot.id,
+        timestamp: snapshot.timestamp,
+        command: snapshot.command,
+        pluginId: snapshot.pluginId,
+        input: snapshot.input,
+        context: snapshot.context,
+        result: snapshot.result,
+      },
+      exitCode,
+      originalResult,
+      replaySuccess,
+      regression: originalResult === 'success' && !replaySuccess,
+      fixed: originalResult === 'error' && replaySuccess,
+    };
+  },
+  formatter(result, ctx, flags) {
+    const resultData = result as any;
+
+    if (flags.json) {
+      ctx.output?.json(resultData);
+      return;
+    }
+
+    if (!ctx.output) {
+      throw new Error('Output not available');
+    }
+
+    // List mode
+    if (resultData.mode === 'list') {
+      const snapshots = resultData.snapshots;
+      if (snapshots.length === 0) {
+        ctx.output?.info('No snapshots found');
+        return;
+      }
+
+      ctx.output?.info(`Found ${snapshots.length} snapshot(s):\n`);
+      for (const snapshot of snapshots) {
+        const status = snapshot.result === 'error' ? '✗' : '✓';
+        const errorInfo = snapshot.error ? ` (${snapshot.error})` : '';
+        ctx.output?.info(`${status} ${snapshot.id} - ${snapshot.command}${errorInfo}`);
+        ctx.output?.info(`   ${snapshot.timestamp}`);
+        if (snapshot.errorMessage) {
+          ctx.output?.info(`   Error: ${snapshot.errorMessage}`);
+        }
+      }
+      return;
+    }
+
+    // Diff mode
+    if (resultData.mode === 'diff') {
+      const diffLines = (resultData.differences ?? []).flatMap((difference: any) => [
+        `  ${safeColors.dim('Field:')} ${difference.field}`,
+        `    ${safeColors.error('-')} ${JSON.stringify(difference.value1, null, 2)}`,
+        `    ${safeColors.success('+')} ${JSON.stringify(difference.value2, null, 2)}`,
+      ]);
+
+      const summary = keyValue({
+        'Snapshot 1': resultData.id1,
+        'Snapshot 2': resultData.id2,
+        Differences: resultData.differences.length.toString(),
+      });
+
+      const output = box('Snapshot Comparison', [...summary, '', ...diffLines]);
+      ctx.output.write(output);
+      return;
+    }
+
+    // Replay mode
+    if (resultData.mode === 'replay') {
+      const snapshot = resultData.snapshot;
+      ctx.output?.info(`Replaying snapshot: ${snapshot.id}`);
+      ctx.output?.info(`Command: ${snapshot.command}`);
+      ctx.output?.info(`Timestamp: ${snapshot.timestamp}`);
+      ctx.output?.info(`Plugin: ${snapshot.pluginId}`);
+      ctx.output?.info('');
+
+      const workdir = snapshot.context?.workdir ?? snapshot.context?.cwd ?? getContextCwd(ctx);
+      ctx.output?.info(`Replaying with:`);
+      ctx.output?.info(`  Input: ${JSON.stringify(snapshot.input)}`);
+      ctx.output?.info(`  Workdir: ${workdir}`);
+      ctx.output?.info('');
+
+      if (resultData.exitCode === 0) {
+        ctx.output?.info(`✓ Replay completed successfully`);
       } else {
-        ctx.presenter.warn(`⚠ Replay completed with exit code ${exitCode}`);
+        ctx.output?.warn(`⚠ Replay completed with exit code ${resultData.exitCode}`);
       }
 
-      // Compare with original result if available
-      if (snapshot.result === 'error' && exitCode === 0) {
-        ctx.presenter.warn(`⚠ Original run failed, but replay succeeded (bug may be fixed)`);
-      } else if (snapshot.result === 'success' && exitCode !== 0) {
-        ctx.presenter.warn(`⚠ Original run succeeded, but replay failed (regression detected)`);
+      // Compare with original result
+      if (resultData.regression) {
+        ctx.output?.warn(`⚠ Original run succeeded, but replay failed (regression detected)`);
+      } else if (resultData.fixed) {
+        ctx.output?.warn(`⚠ Original run failed, but replay succeeded (bug may be fixed)`);
       }
-
-      return exitCode;
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      ctx.presenter.error(`Replay failed: ${message}`);
-      return 1;
     }
   },
-};
-
+});

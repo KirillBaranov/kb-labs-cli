@@ -2,15 +2,14 @@
  * repl command - Interactive REPL for plugin commands
  */
 
-import type { Command } from '../../types/types';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
 import { executeCommand } from '@kb-labs/plugin-adapter-cli';
-import type { CliContext } from '@kb-labs/cli-core';
 import { registry } from '../../registry/service';
 import type { ManifestV2, CliCommandDecl } from '@kb-labs/plugin-manifest';
 import * as readline from 'node:readline';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
-import { getContextCwd } from '../../utils/context';
+import { getContextCwd } from '@kb-labs/shared-cli-ui';
 import { registerShutdownHook } from '../../utils/shutdown';
 
 interface ReplSession {
@@ -27,30 +26,34 @@ interface ReplSession {
   }>;
 }
 
-export const repl: Command = {
+type ReplResult = CommandResult & {
+  command?: string;
+  pluginId?: string;
+  ready?: boolean;
+  sessionId?: string;
+};
+
+type ReplFlags = {
+  json: { type: 'boolean'; description?: string };
+};
+
+export const repl = defineSystemCommand<ReplFlags, ReplResult>({
   name: 'repl',
+  description: 'Interactive REPL for plugin commands',
   category: 'debug',
-  describe: 'Interactive REPL for plugin commands',
-  flags: [
-    {
-      name: 'json',
-      type: 'boolean',
-      description: 'Output in JSON format',
-    },
-  ],
-  examples: [
-    'kb repl mind:query',
-    'kb repl mind:init',
-  ],
-
-  async run(ctx: CliContext, argv: string[], flags: Record<string, unknown>) {
-    const jsonMode = Boolean(flags.json);
-
+  examples: ['kb repl mind:query', 'kb repl mind:init'],
+  flags: {
+    json: { type: 'boolean', description: 'Output in JSON format' },
+  },
+  analytics: {
+    command: 'repl',
+    startEvent: 'REPL_STARTED',
+    finishEvent: 'REPL_FINISHED',
+  },
+  async handler(ctx, argv, flags) {
     // Parse command name (e.g., "mind:query")
     if (argv.length === 0) {
-      ctx.presenter.error('Please provide command name (e.g., mind:query)');
-      ctx.presenter.info('Usage: kb repl <plugin>:<command>');
-      return 1;
+      throw new Error('Please provide command name (e.g., mind:query)');
     }
 
     const commandName = argv[0]!;
@@ -67,20 +70,16 @@ export const repl: Command = {
     });
 
     if (!registered) {
-      ctx.presenter.error(`Plugin ${pluginName} not found`);
-      ctx.presenter.info('Use `kb plugins` to see available plugins');
-      return 1;
+      throw new Error(`Plugin ${pluginName} not found`);
     }
 
     if (!registered.available) {
-      ctx.presenter.error(`Plugin ${pluginName} is not available: ${registered.unavailableReason}`);
-      return 1;
+      throw new Error(`Plugin ${pluginName} is not available: ${registered.unavailableReason}`);
     }
 
     const manifestV2 = registered.manifest.manifestV2 as ManifestV2 | undefined;
     if (!manifestV2) {
-      ctx.presenter.error(`Plugin ${pluginName} has no ManifestV2`);
-      return 1;
+      throw new Error(`Plugin ${pluginName} has no ManifestV2`);
     }
 
     // Find CLI command
@@ -90,18 +89,16 @@ export const repl: Command = {
       : cliCommands[0];
 
     if (!cliCommand || !cliCommand.handler) {
-      ctx.presenter.error(`Command ${commandName} not found in plugin manifest`);
-      return 1;
+      throw new Error(`Command ${commandName} not found in plugin manifest`);
     }
 
-    if (jsonMode) {
-      ctx.presenter.json({
+    if (flags.json) { // Type-safe: boolean
+      return {
         ok: true,
         command: commandName,
         pluginId: manifestV2.id,
         ready: true,
-      });
-      return 0;
+      };
     }
 
     // Start REPL session
@@ -115,18 +112,18 @@ export const repl: Command = {
     };
     let sessionSaved = false;
 
-    ctx.presenter.info(`🔧 Interactive REPL for ${commandName}`);
-    ctx.presenter.info(`Plugin: ${manifestV2.id}@${manifestV2.version || 'unknown'}`);
-    ctx.presenter.info('');
-    ctx.presenter.info('Commands:');
-    ctx.presenter.info('  run <flags>  - Run command with flags (e.g., run --query "test")');
-    ctx.presenter.info('  compare <n> <m> - Compare run n and m');
-    ctx.presenter.info('  reload      - Reload handler from disk');
-    ctx.presenter.info('  history     - Show run history');
-    ctx.presenter.info('  exit        - Exit REPL');
-    ctx.presenter.info('');
-    ctx.presenter.info('Type "exit" to quit, or use Ctrl+C');
-    ctx.presenter.info('');
+    ctx.output?.info(`🔧 Interactive REPL for ${commandName}`);
+    ctx.output?.info(`Plugin: ${manifestV2.id}@${manifestV2.version || 'unknown'}`);
+    ctx.output?.info('');
+    ctx.output?.info('Commands:');
+    ctx.output?.info('  run <flags>  - Run command with flags (e.g., run --query "test")');
+    ctx.output?.info('  compare <n> <m> - Compare run n and m');
+    ctx.output?.info('  reload      - Reload handler from disk');
+    ctx.output?.info('  history     - Show run history');
+    ctx.output?.info('  exit        - Exit REPL');
+    ctx.output?.info('');
+    ctx.output?.info('Type "exit" to quit, or use Ctrl+C');
+    ctx.output?.info('');
 
     // Setup readline interface with history support
     const rl = readline.createInterface({
@@ -225,7 +222,7 @@ export const repl: Command = {
     (rl as any).setCompleter(completer);
 
     // Helper to save session
-    const cwd = getContextCwd(ctx as Partial<CliContext> & { cwd?: string });
+    const cwd = getContextCwd(ctx);
     const saveSession = async () => {
       try {
         const sessionsDir = path.join(cwd, '.kb', 'debug', 'tmp', 'sessions');
@@ -250,7 +247,7 @@ export const repl: Command = {
 
       if (trimmedCmd === 'exit' || trimmedCmd === 'quit' || trimmedCmd === 'q') {
         await saveSession();
-        ctx.presenter.info('👋 Goodbye!');
+        ctx.output?.info('👋 Goodbye!');
         rl.close();
         return;
       }
@@ -261,12 +258,12 @@ export const repl: Command = {
         const startTime = Date.now();
 
         try {
-          ctx.presenter.info(`Running ${commandName}...`);
-          
+          ctx.output?.info(`Running ${commandName}...`);
+
           const exitCode = await executeCommand(
             cliCommand,
             manifestV2,
-            ctx,
+            ctx as any,
             runFlags,
             manifestV2.capabilities ?? [],
             registered.pkgRoot ?? cwd,
@@ -276,7 +273,7 @@ export const repl: Command = {
           );
 
           const duration = Date.now() - startTime;
-          
+
           session.runs.push({
             id: runId,
             timestamp: new Date().toISOString(),
@@ -285,13 +282,13 @@ export const repl: Command = {
             duration,
           });
 
-          ctx.presenter.info(`✓ Run completed in ${duration}ms (exit code: ${exitCode})`);
-          ctx.presenter.info(`  Run ID: ${runId}`);
-          ctx.presenter.info('');
+          ctx.output?.info(`✓ Run completed in ${duration}ms (exit code: ${exitCode})`);
+          ctx.output?.info(`  Run ID: ${runId}`);
+          ctx.output?.info('');
         } catch (error: unknown) {
           const message = error instanceof Error ? error.message : String(error);
-          ctx.presenter.error(`Run failed: ${message}`);
-          ctx.presenter.info('');
+          ctx.output?.error(`Run failed: ${message}`);
+          ctx.output?.info('');
         }
 
         rl.prompt();
@@ -300,8 +297,8 @@ export const repl: Command = {
 
       if (trimmedCmd === 'compare' || trimmedCmd === 'c') {
         if (args.length < 2) {
-          ctx.presenter.error('Usage: compare <run-n> <run-m>');
-          ctx.presenter.info('Use "history" to see run numbers');
+          ctx.output?.error('Usage: compare <run-n> <run-m>');
+          ctx.output?.info('Use "history" to see run numbers');
           rl.prompt();
           return;
         }
@@ -310,7 +307,7 @@ export const repl: Command = {
         const m = Number.parseInt(args[1] ?? '', 10) - 1;
 
         if (n < 0 || m < 0 || n >= session.runs.length || m >= session.runs.length) {
-          ctx.presenter.error('Invalid run numbers');
+          ctx.output?.error('Invalid run numbers');
           rl.prompt();
           return;
         }
@@ -318,61 +315,61 @@ export const repl: Command = {
         const runN = session.runs[n]!;
         const runM = session.runs[m]!;
 
-        ctx.presenter.info(`Comparing run ${n + 1} and ${m + 1}:`);
-        ctx.presenter.info(`  Run ${n + 1}: exit=${runN.exitCode}, duration=${runN.duration}ms`);
-        ctx.presenter.info(`  Run ${m + 1}: exit=${runM.exitCode}, duration=${runM.duration}ms`);
-        
+        ctx.output?.info(`Comparing run ${n + 1} and ${m + 1}:`);
+        ctx.output?.info(`  Run ${n + 1}: exit=${runN.exitCode}, duration=${runN.duration}ms`);
+        ctx.output?.info(`  Run ${m + 1}: exit=${runM.exitCode}, duration=${runM.duration}ms`);
+
         const inputDiff = JSON.stringify(runN.input) !== JSON.stringify(runM.input);
         if (inputDiff) {
-          ctx.presenter.info('  Input differences:');
-          ctx.presenter.info(`    Run ${n + 1}: ${JSON.stringify(runN.input)}`);
-          ctx.presenter.info(`    Run ${m + 1}: ${JSON.stringify(runM.input)}`);
+          ctx.output?.info('  Input differences:');
+          ctx.output?.info(`    Run ${n + 1}: ${JSON.stringify(runN.input)}`);
+          ctx.output?.info(`    Run ${m + 1}: ${JSON.stringify(runM.input)}`);
         }
-        ctx.presenter.info('');
+        ctx.output?.info('');
 
         rl.prompt();
         return;
       }
 
       if (trimmedCmd === 'reload' || trimmedCmd === 'rl') {
-        ctx.presenter.info('Reloading handler from disk...');
+        ctx.output?.info('Reloading handler from disk...');
         // TODO: Implement actual reload (invalidate module cache)
-        ctx.presenter.info('⚠ Reload not yet implemented (requires module cache invalidation)');
-        ctx.presenter.info('');
+        ctx.output?.warn('⚠ Reload not yet implemented (requires module cache invalidation)');
+        ctx.output?.info('');
         rl.prompt();
         return;
       }
 
       if (trimmedCmd === 'history' || trimmedCmd === 'h') {
         if (session.runs.length === 0) {
-          ctx.presenter.info('No runs yet');
+          ctx.output?.info('No runs yet');
         } else {
-          ctx.presenter.info(`Run history (${session.runs.length} runs):`);
+          ctx.output?.info(`Run history (${session.runs.length} runs):`);
           session.runs.forEach((run, i) => {
-            ctx.presenter.info(`  ${i + 1}. ${run.id} - exit=${run.exitCode}, ${run.duration}ms`);
-            ctx.presenter.info(`     Input: ${JSON.stringify(run.input)}`);
+            ctx.output?.info(`  ${i + 1}. ${run.id} - exit=${run.exitCode}, ${run.duration}ms`);
+            ctx.output?.info(`     Input: ${JSON.stringify(run.input)}`);
           });
         }
-        ctx.presenter.info('');
+        ctx.output?.info('');
         rl.prompt();
         return;
       }
 
       if (trimmedCmd === '' || trimmedCmd === 'help') {
-        ctx.presenter.info('Commands:');
-        ctx.presenter.info('  run <flags>     - Run command (e.g., run --query "test")');
-        ctx.presenter.info('  compare <n> <m> - Compare two runs');
-        ctx.presenter.info('  reload          - Reload handler');
-        ctx.presenter.info('  history         - Show history');
-        ctx.presenter.info('  exit            - Exit');
-        ctx.presenter.info('');
+        ctx.output?.info('Commands:');
+        ctx.output?.info('  run <flags>     - Run command (e.g., run --query "test")');
+        ctx.output?.info('  compare <n> <m> - Compare two runs');
+        ctx.output?.info('  reload          - Reload handler');
+        ctx.output?.info('  history         - Show history');
+        ctx.output?.info('  exit            - Exit');
+        ctx.output?.info('');
         rl.prompt();
         return;
       }
 
-      ctx.presenter.warn(`Unknown command: ${trimmedCmd}`);
-      ctx.presenter.info('Type "help" for available commands');
-      ctx.presenter.info('');
+      ctx.output?.warn(`Unknown command: ${trimmedCmd}`);
+      ctx.output?.info('Type "help" for available commands');
+      ctx.output?.info('');
       rl.prompt();
     });
 
@@ -390,12 +387,18 @@ export const repl: Command = {
 
     registerShutdownHook(async () => {
       await handleShutdown();
-      ctx.presenter.info('\n👋 Goodbye!');
+      ctx.output?.info('\n👋 Goodbye!');
       rl.close();
     });
 
     rl.prompt();
     return new Promise(() => {});
   },
-};
+  formatter(result, ctx, flags) {
+    if (flags.json && result) {
+      ctx.output?.json(result);
+    }
+    // Interactive mode is handled in handler
+  },
+});
 
