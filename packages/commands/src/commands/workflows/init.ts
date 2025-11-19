@@ -1,4 +1,5 @@
-import type { Command } from '../../types'
+import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit'
+import type { StringFlagSchema } from '@kb-labs/cli-command-kit/flags'
 import { writeFile, mkdir, readFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { minimatch } from 'minimatch'
@@ -10,6 +11,19 @@ import {
   safeSymbols,
   formatTiming,
 } from '@kb-labs/shared-cli-ui'
+import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
+
+type WorkflowInitResult = CommandResult & {
+  id?: string;
+  template?: string;
+  filePath?: string;
+};
+
+type WfInitFlags = {
+  id: { type: 'string'; description?: string; required: true };
+  template: { type: 'string'; description?: string; choices?: readonly string[]; required: true };
+  dir: { type: 'string'; description?: string; default?: string };
+};
 
 const TEMPLATES = {
   'ai-ci-standard': `name: ai-ci-standard
@@ -75,54 +89,52 @@ async function readJSON(filePath: string): Promise<any> {
   }
 }
 
-interface Flags {
-  id?: string
-  template?: string
-  dir?: string
-}
-
-export const wfInit: Command = {
+export const wfInit = defineSystemCommand<WfInitFlags, WorkflowInitResult>({
   name: 'init',
-  describe: 'Initialize a new workflow',
+  description: 'Initialize a new workflow',
   category: 'workflows',
   aliases: ['wf:init'],
-  flags: [
-    { name: 'id', type: 'string', description: 'Workflow ID (filename without extension)' },
-    { name: 'template', type: 'string', description: 'Template to use', choices: Object.keys(TEMPLATES) },
-    { name: 'dir', type: 'string', description: 'Output directory', default: '.kb/workflows' },
-  ],
+  flags: {
+    id: { type: 'string', description: 'Workflow ID (filename without extension)', required: true },
+    template: { 
+      type: 'string', 
+      description: 'Template to use', 
+      choices: Object.keys(TEMPLATES) as readonly string[],
+      required: true,
+    } as Omit<StringFlagSchema, 'name'>,
+    dir: { type: 'string', description: 'Output directory', default: '.kb/workflows' },
+  },
   examples: [
     'kb wf init --id my-workflow --template empty',
     'kb wf init --id ai-ci --template ai-ci-standard',
   ],
-  async run(ctx, argv, rawFlags) {
-    const flags = rawFlags as Flags
+  async handler(ctx: EnhancedCliContext, argv: string[], flags) {
     const tracker = new TimingTracker()
 
     try {
       tracker.checkpoint('start')
-      // Validate required flags
-      if (!flags.id || !flags.template) {
-        ctx.presenter.error('Both --id and --template are required. Use --help for examples.')
-        return 1
-      }
+      const output = ctx.output;
+      const logger = ctx.logger;
+      
+      const id = String(flags.id) // Type-safe: string (required)
+      const template = String(flags.template) // Type-safe: string (required)
+      const dir = (flags.dir as string | undefined) ?? '.kb/workflows' // Type-safe: string | undefined -> string
 
       // Validate template
-      if (!(flags.template in TEMPLATES)) {
-        ctx.presenter.error(`Invalid template: ${flags.template}. Available: ${Object.keys(TEMPLATES).join(', ')}`)
-        return 1
+      if (!(template in TEMPLATES)) {
+        logger?.error('Invalid template', { template, available: Object.keys(TEMPLATES) });
+        output?.error(`Invalid template: ${template}. Available: ${Object.keys(TEMPLATES).join(', ')}`)
+        return { ok: false, error: `Invalid template: ${template}` }
       }
 
       // Validate ID format
-      if (!/^[a-z0-9-]+$/.test(flags.id)) {
-        ctx.presenter.error('Workflow ID must contain only lowercase letters, numbers, and hyphens')
-        return 1
+      if (!/^[a-z0-9-]+$/.test(id)) {
+        logger?.error('Invalid workflow ID format', { id });
+        output?.error('Workflow ID must contain only lowercase letters, numbers, and hyphens')
+        return { ok: false, error: 'Invalid workflow ID format' }
       }
 
-      const id = flags.id
-      const template = flags.template
-      const dir = flags.dir ?? '.kb/workflows'
-      const workspaceRoot = ctx.workspaceRoot ?? process.cwd()
+      const workspaceRoot = process.cwd()
 
       // 2. Create file
       const filePath = join(workspaceRoot, dir, `${id}.yml`)
@@ -145,8 +157,8 @@ export const wfInit: Command = {
 
       const summaryLines: string[] = [
         ...keyValue({
-          'Workflow ID': id,
-          Template: template,
+          'Workflow ID': String(id),
+          Template: String(template),
           'File Path': filePath,
         }),
       ]
@@ -154,28 +166,44 @@ export const wfInit: Command = {
       if (!isMatched) {
         summaryLines.push('')
         summaryLines.push(
-          safeColors.muted(`💡 Add "${dir}/**/*.yml" to kb.config.json workflow.workspaces to discover this workflow`),
+          `${output?.ui.colors.muted(`💡 Add "${dir}/**/*.yml" to kb.config.json workflow.workspaces to discover this workflow`) ?? `💡 Add "${dir}/**/*.yml" to kb.config.json workflow.workspaces to discover this workflow`}`,
         )
       }
 
       summaryLines.push('')
       summaryLines.push(
-        `${safeSymbols.success} ${safeColors.success('Created workflow')} · ${safeColors.muted(formatTiming(tracker.total()))}`,
+        `${output?.ui.symbols.success ?? '✓'} ${output?.ui.colors.success('Created workflow') ?? 'Created workflow'} · ${output?.ui.colors.muted(formatTiming(tracker.total())) ?? formatTiming(tracker.total())}`,
       )
 
-      ctx.presenter.write('\n' + box('Workflow Initialized', summaryLines))
+      logger?.info('Workflow initialized successfully', {
+        id,
+        template,
+        filePath,
+        durationMs: tracker.total(),
+      });
 
-      return 0
+      output?.write('\n' + box('Workflow Initialized', summaryLines))
+
+      return { ok: true, id, template, filePath }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
+      const output = ctx.output;
+      const logger = ctx.logger;
+      
+      logger?.error('Failed to initialize workflow', {
+        error: message,
+        id: flags.id as string | undefined,
+        template: flags.template as string | undefined,
+        durationMs: tracker.total(),
+      });
+      
       const summaryLines: string[] = [
-        safeColors.error(message),
+        output?.ui.colors.error(message) ?? message,
         '',
-        `${safeSymbols.error} ${safeColors.error('Failed to initialize workflow')} · ${safeColors.muted(formatTiming(tracker.total()))}`,
+        `${output?.ui.symbols.error ?? '✗'} ${output?.ui.colors.error('Failed to initialize workflow') ?? 'Failed to initialize workflow'} · ${output?.ui.colors.muted(formatTiming(tracker.total())) ?? formatTiming(tracker.total())}`,
       ]
-      ctx.presenter.write('\n' + box('Workflow Initialization', summaryLines))
-      return 1
+      output?.write('\n' + box('Workflow Initialization', summaryLines))
+      return { ok: false, error: message }
     }
   },
-}
-
+})

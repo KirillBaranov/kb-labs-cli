@@ -1,46 +1,51 @@
-import type { Command } from '../../types'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
 import { TimingTracker, box } from '@kb-labs/shared-cli-ui'
 import { createCliEngineLogger, resolveWorkflowSpec, formatRunHeader, statusBadge } from './utils'
 import { runWorkflow } from './service'
 import { createWorkflowRegistry } from '@kb-labs/workflow-runtime'
 import { WorkflowLoader } from '@kb-labs/workflow-engine'
+import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
+import type { WorkflowRun } from '@kb-labs/workflow-contracts'
 
-interface Flags {
-  file?: string
-  inline?: string
-  stdin?: boolean
-  specRef?: string
-  'workflow-id'?: string
-  idempotency?: string
-  'concurrency-group'?: string
-  json?: boolean
-  verbose?: boolean
-}
+type WorkflowRunResult = CommandResult & {
+  run?: WorkflowRun;
+};
 
-export const wfRun: Command = {
+type WfRunFlags = {
+  'workflow-id': { type: 'string'; description?: string };
+  file: { type: 'string'; description?: string };
+  inline: { type: 'string'; description?: string };
+  stdin: { type: 'boolean'; description?: string };
+  'spec-ref': { type: 'string'; description?: string };
+  idempotency: { type: 'string'; description?: string };
+  'concurrency-group': { type: 'string'; description?: string };
+  json: { type: 'boolean'; description?: string };
+  verbose: { type: 'boolean'; description?: string };
+};
+
+export const wfRun = defineSystemCommand<WfRunFlags, WorkflowRunResult>({
   name: 'run',
-  describe: 'Execute a workflow specification',
+  description: 'Execute a workflow specification',
   category: 'workflows',
   aliases: ['wf:run'],
-  flags: [
-    { name: 'workflow-id', type: 'string', description: 'Workflow ID from registry (e.g. workspace:ai-ci)' },
-    { name: 'file', type: 'string', description: 'Path to workflow specification file' },
-    { name: 'inline', type: 'string', description: 'Inline workflow specification (JSON or YAML)' },
-    { name: 'stdin', type: 'boolean', description: 'Read workflow spec from STDIN' },
-    { name: 'spec-ref', type: 'string', description: 'Specification reference (registry/location)' },
-    { name: 'idempotency', type: 'string', description: 'Idempotency key for the workflow run' },
-    { name: 'concurrency-group', type: 'string', description: 'Concurrency group identifier' },
-    { name: 'json', type: 'boolean', description: 'Output run details as JSON' },
-    { name: 'verbose', type: 'boolean', description: 'Enable verbose logging' },
-  ],
+  flags: {
+    'workflow-id': { type: 'string', description: 'Workflow ID from registry (e.g. workspace:ai-ci)' },
+    file: { type: 'string', description: 'Path to workflow specification file' },
+    inline: { type: 'string', description: 'Inline workflow specification (JSON or YAML)' },
+    stdin: { type: 'boolean', description: 'Read workflow spec from STDIN' },
+    'spec-ref': { type: 'string', description: 'Specification reference (registry/location)' },
+    idempotency: { type: 'string', description: 'Idempotency key for the workflow run' },
+    'concurrency-group': { type: 'string', description: 'Concurrency group identifier' },
+    json: { type: 'boolean', description: 'Output run details as JSON' },
+    verbose: { type: 'boolean', description: 'Enable verbose logging' },
+  },
   examples: [
     'kb wf run --workflow-id workspace:ai-ci',
     'kb wf run --file ./kb.workflow.yml',
     'kb wf run --inline "{\\"name\\":\\"demo\\",\\"on\\":{\\"manual\\":true},\\"jobs\\":{}}"',
     'cat kb.workflow.yml | kb wf run --stdin --idempotency run-123',
   ],
-  async run(ctx, argv, rawFlags) {
-    const flags = rawFlags as Flags
+  async handler(ctx: EnhancedCliContext, argv: string[], flags) {
     const jsonMode = Boolean(flags.json)
     const logger = createCliEngineLogger(ctx, Boolean(flags.verbose))
     const tracker = new TimingTracker()
@@ -50,19 +55,20 @@ export const wfRun: Command = {
 
       // Приоритет: --workflow-id > --file > --inline > --stdin > default
       if (flags['workflow-id']) {
+        const workflowId = flags['workflow-id']
         const registry = await createWorkflowRegistry({
-          workspaceRoot: ctx.workspaceRoot ?? process.cwd(),
+          workspaceRoot: process.cwd(),
         })
-        const resolved = await registry.resolve(flags['workflow-id'])
+        const resolved = await registry.resolve(workflowId)
 
         if (!resolved) {
-          const message = `Workflow '${flags['workflow-id']}' not found`
+          const message = `Workflow '${workflowId}' not found`
           if (jsonMode) {
-            ctx.presenter.json({ ok: false, error: message })
+            ctx.output?.json({ ok: false, error: message })
           } else {
-            ctx.presenter.error(message)
+            ctx.output?.error(message)
           }
-          return 1
+          return { ok: false, error: message }
         }
 
         // Load from resolved path
@@ -73,7 +79,7 @@ export const wfRun: Command = {
           source: `registry:${resolved.id}`,
         }
       } else {
-        result = await resolveWorkflowSpec(ctx, flags, 'kb.workflow.yml')
+        result = await resolveWorkflowSpec(ctx, flags as any, 'kb.workflow.yml')
       }
 
       tracker.checkpoint('spec')
@@ -90,12 +96,12 @@ export const wfRun: Command = {
       tracker.checkpoint('run')
 
       if (jsonMode) {
-        ctx.presenter.json({
+        ctx.output?.json({
           ok: true,
           run,
           timing: tracker.breakdown(),
         })
-        return 0
+        return { ok: true, run }
       }
 
       const summaryLines: string[] = [
@@ -108,18 +114,18 @@ export const wfRun: Command = {
         )
       }
 
-      ctx.presenter.write('\n' + box('Workflow Run', summaryLines))
-      return 0
+      ctx.output?.write('\n' + box('Workflow Run', summaryLines))
+      return { ok: true, run }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (jsonMode) {
-        ctx.presenter.json({ ok: false, error: message })
+        ctx.output?.json({ ok: false, error: message })
       } else {
-        ctx.presenter.error(`Workflow run failed: ${message}`)
+        ctx.output?.error(`Workflow run failed: ${message}`)
       }
-      return 1
+      return { ok: false, error: message }
     }
   },
-}
+})
 
 

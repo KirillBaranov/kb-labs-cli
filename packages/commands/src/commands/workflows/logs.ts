@@ -1,55 +1,48 @@
-import type { Command } from '../../types'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
 import process from 'node:process'
 import { createCliEngineLogger } from './utils'
 import { streamWorkflowLogs, type WorkflowLogEvent } from './service'
 import { safeColors, TimingTracker, box, keyValue } from '@kb-labs/shared-cli-ui'
+import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
 
-interface Flags {
-  follow?: boolean
-  json?: boolean
-  verbose?: boolean
-}
+type WorkflowLogsResult = CommandResult & {
+  runId?: string;
+  events?: WorkflowLogEvent[];
+};
 
-export const wfLogs: Command = {
+type WfLogsFlags = {
+  follow: { type: 'boolean'; description?: string };
+  json: { type: 'boolean'; description?: string };
+  verbose: { type: 'boolean'; description?: string };
+};
+
+export const wfLogs = defineSystemCommand<WfLogsFlags, WorkflowLogsResult>({
   name: 'logs',
   category: 'workflows',
-  describe: 'Stream workflow run events and logs',
+  description: 'Stream workflow run events and logs',
   aliases: ['wf:logs', 'wf:runs:logs'],
-  flags: [
-    {
-      name: 'follow',
-      type: 'boolean',
-      description: 'Continue streaming logs until interrupted',
-    },
-    {
-      name: 'json',
-      type: 'boolean',
-      description: 'Output events as JSON (disabled with --follow)',
-    },
-    {
-      name: 'verbose',
-      type: 'boolean',
-      description: 'Enable verbose logging',
-    },
-  ],
+  flags: {
+    follow: { type: 'boolean', description: 'Continue streaming logs until interrupted' },
+    json: { type: 'boolean', description: 'Output events as JSON (disabled with --follow)' },
+    verbose: { type: 'boolean', description: 'Enable verbose logging' },
+  },
   examples: [
     'kb wf logs 01HFYQ7C9X1Y2Z3A4B5C6D7E8F',
     'kb wf logs 01HFYQ7C9X1Y2Z3A4B5C6D7E8F --follow',
     'kb wf logs 01HFYQ7C9X1Y2Z3A4B5C6D7E8F --json',
   ],
-  async run(ctx, argv, rawFlags) {
+  async handler(ctx: EnhancedCliContext, argv: string[], flags) {
     if (argv.length === 0 || !argv[0]) {
-      ctx.presenter.error('Usage: kb wf logs <runId> [--follow]')
-      return 1
+      ctx.output?.error('Usage: kb wf logs <runId> [--follow]')
+      return { ok: false, error: 'Missing runId argument' }
     }
     const runId = argv[0]!
-    const flags = rawFlags as Flags
-    const jsonMode = Boolean(flags.json)
-    const follow = Boolean(flags.follow)
+    const jsonMode = flags.json // Type-safe: boolean
+    const follow = flags.follow // Type-safe: boolean
 
     if (jsonMode && follow) {
-      ctx.presenter.error('JSON output is not supported with --follow')
-      return 1
+      ctx.output?.error('JSON output is not supported with --follow')
+      return { ok: false, error: 'JSON output is not supported with --follow' }
     }
 
     const logger = createCliEngineLogger(ctx, Boolean(flags.verbose))
@@ -72,25 +65,25 @@ export const wfLogs: Command = {
           if (jsonMode) {
             return
           }
-          ctx.presenter.write?.(formatEvent(event))
+          ctx.output?.write(formatEvent(event))
         },
         signal: controller.signal,
       })
       tracker.checkpoint('stream')
 
       if (jsonMode) {
-        ctx.presenter.json?.({
+        ctx.output?.json({
           ok: true,
           runId,
           events,
           timingMs: tracker.total(),
         })
-        return 0
+        return { ok: true, runId, events }
       }
 
       if (events.length === 0) {
-        ctx.presenter.info('No workflow events received.')
-        return 0
+        ctx.output?.info('No workflow events received.')
+        return { ok: true, events: [] }
       }
 
       const summaryLines = [
@@ -101,21 +94,21 @@ export const wfLogs: Command = {
         }),
       ]
 
-      ctx.presenter.write?.('\n' + box('Workflow Log Summary', summaryLines))
-      return 0
+      ctx.output?.write('\n' + box('Workflow Log Summary', summaryLines))
+      return { ok: true, runId, events }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (jsonMode) {
-        ctx.presenter.json?.({ ok: false, error: message })
+        ctx.output?.json({ ok: false, error: message })
       } else {
-        ctx.presenter.error(`Failed to stream workflow logs: ${message}`)
+        ctx.output?.error(`Failed to stream workflow logs: ${message}`)
       }
-      return 1
+      return { ok: false, error: message }
     } finally {
       process.off('SIGINT', handleInterrupt)
     }
   },
-}
+})
 
 function formatEvent(event: WorkflowLogEvent): string {
   const timestamp = event.timestamp ?? new Date().toISOString()

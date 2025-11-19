@@ -1,4 +1,4 @@
-import type { Command } from '../../types'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
 import { createWorkflowRegistry } from '@kb-labs/workflow-runtime'
 import {
   TimingTracker,
@@ -9,12 +9,7 @@ import {
   formatTiming,
   bulletList,
 } from '@kb-labs/shared-cli-ui'
-
-interface Flags {
-  source?: string
-  tag?: string
-  json?: boolean
-}
+import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
 
 function groupBy<T>(array: T[], key: keyof T): Record<string, T[]> {
   return array.reduce((acc, item) => {
@@ -27,18 +22,28 @@ function groupBy<T>(array: T[], key: keyof T): Record<string, T[]> {
   }, {} as Record<string, T[]>)
 }
 
-export const wfList: Command = {
+type WorkflowListResult = CommandResult & {
+  workflows?: Array<{ id: string; source: string; tags?: string[] }>;
+  total?: number;
+};
+
+type WfListFlags = {
+  source: { type: 'string'; description?: string; default: 'all' };
+  tag: { type: 'string'; description?: string };
+  json: { type: 'boolean'; description?: string };
+};
+
+export const wfList = defineSystemCommand<WfListFlags, WorkflowListResult>({
   name: 'list',
-  describe: 'List all discovered workflows',
+  description: 'List all discovered workflows',
   category: 'workflows',
   aliases: ['wf:list'],
-  flags: [
-    { name: 'source', type: 'string', description: 'Filter by source (workspace|plugin|all)', default: 'all' },
-    { name: 'tag', type: 'string', description: 'Filter by tag' },
-    { name: 'json', type: 'boolean', description: 'Output as JSON' },
-  ],
-  async run(ctx, argv, rawFlags) {
-    const flags = rawFlags as Flags
+  flags: {
+    source: { type: 'string', description: 'Filter by source (workspace|plugin|all)', default: 'all' },
+    tag: { type: 'string', description: 'Filter by tag' },
+    json: { type: 'boolean', description: 'Output as JSON' },
+  },
+  async handler(ctx: EnhancedCliContext, argv: string[], flags) {
     const tracker = new TimingTracker()
     const jsonMode = Boolean(flags.json)
 
@@ -47,7 +52,7 @@ export const wfList: Command = {
 
       // 1. Create registry
       const registry = await createWorkflowRegistry({
-        workspaceRoot: ctx.workspaceRoot ?? process.cwd(),
+        workspaceRoot: process.cwd(),
       })
 
       // 2. List workflows
@@ -56,21 +61,21 @@ export const wfList: Command = {
 
       // 3. Filter
       if (flags.source && flags.source !== 'all') {
-        workflows = workflows.filter((w) => w.source === flags.source)
+        workflows = workflows.filter((w) => w.source === flags.source as string)
       }
       if (flags.tag) {
-        workflows = workflows.filter((w) => w.tags?.includes(flags.tag!))
+        workflows = workflows.filter((w) => w.tags?.includes(flags.tag as string))
       }
 
       // 4. Output
       if (jsonMode) {
-        ctx.presenter.json({
+        ctx.output?.json({
           ok: true,
           workflows,
           total: workflows.length,
           timingMs: tracker.total(),
         })
-        return 0
+        return { ok: true, workflows, total: workflows.length }
       }
 
       // Human-readable
@@ -80,8 +85,8 @@ export const wfList: Command = {
           '',
           safeColors.muted('💡 Create workflows in .kb/workflows/ or declare them in plugin manifests.'),
         ]
-        ctx.presenter.write('\n' + box('Available Workflows', summaryLines))
-        return 0
+        ctx.output?.write('\n' + box('Available Workflows', summaryLines))
+        return { ok: true, workflows: [], total: 0 }
       }
 
       const bySource = groupBy(workflows, 'source')
@@ -111,7 +116,7 @@ export const wfList: Command = {
       summaryLines.push(
         ...keyValue({
           Total: String(workflows.length),
-          Source: flags.source ?? 'all',
+          Source: (flags.source as string | undefined) ?? 'all',
         }),
       )
       summaryLines.push('')
@@ -119,21 +124,21 @@ export const wfList: Command = {
         `${safeSymbols.success} ${safeColors.success('Listed workflows')} · ${safeColors.muted(formatTiming(tracker.total()))}`,
       )
 
-      ctx.presenter.write('\n' + box('Available Workflows', summaryLines))
-      return 0
+      ctx.output?.write('\n' + box('Available Workflows', summaryLines))
+      return { ok: true, workflows, total: workflows.length }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (jsonMode) {
-        ctx.presenter.json({
+        ctx.output?.json({
           ok: false,
           error: message,
           timingMs: tracker.total(),
         })
       } else {
-        ctx.presenter.error(`Failed to list workflows: ${message}`)
+        ctx.output?.error(`Failed to list workflows: ${message}`)
       }
-      return 1
+      return { ok: false, error: message }
     }
   },
-}
+})
 
