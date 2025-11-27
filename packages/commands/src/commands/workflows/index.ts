@@ -19,7 +19,8 @@ import {
 import { wfBudgetStatus } from './budget'
 
 export const workflowCommandGroup: CommandGroup = {
-  name: 'wf',
+  name: 'workflow',
+  aliases: ['wf'],
   describe: 'Workflow engine commands',
   commands: [
     wfList,

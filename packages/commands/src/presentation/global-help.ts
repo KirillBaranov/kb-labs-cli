@@ -7,6 +7,7 @@ import {
   type CommandGroup,
   type ProductGroup,
 } from "./shared";
+import { sideBorderBox, type SectionContent } from "@kb-labs/shared-cli-ui";
 
 export function renderGlobalHelp(
   groups: ProductGroup[],
@@ -79,7 +80,7 @@ export function renderGlobalHelpNew(registry: {
 }): string {
   const products = registry.listProductGroups();
   const systemGroups = registry.listGroups?.() || [];
-  
+
   // Get all command names and aliases from groups to exclude them from standalone
   const commandsInGroups = new Set<string>();
   for (const group of systemGroups) {
@@ -91,7 +92,7 @@ export function renderGlobalHelpNew(registry: {
       }
     }
   }
-  
+
   // Filter standalone commands - exclude commands that are already in groups
   const standalone = registry
     .list()
@@ -104,80 +105,78 @@ export function renderGlobalHelpNew(registry: {
       return (!cmd.category || cmd.category === "system");
     });
 
-  const content: string[] = [];
+  const sections: SectionContent[] = [];
 
   // Products section - simplified format: name (count)
   if (products.length > 0) {
-    content.push("Products:");
-    content.push("");
-
     const maxProductNameLength = Math.max(
       ...products.map((p) => p.name.length),
       12,
     );
 
-    for (const product of products.sort((a, b) =>
-      a.name.localeCompare(b.name),
-    )) {
-      const availableCount = product.commands.filter(
-        (c) => c.available && !c.shadowed,
-      ).length;
-      const badge = colors.green(`(${availableCount})`);
-      
-      content.push(
-        `  ${colors.cyan(
+    const productItems = products
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((product) => {
+        const availableCount = product.commands.filter(
+          (c) => c.available && !c.shadowed,
+        ).length;
+        const badge = colors.green(`(${availableCount})`);
+
+        return `${colors.cyan(
           product.name.padEnd(maxProductNameLength),
-        )}  ${badge}`,
-      );
-    }
-    content.push("");
+        )}  ${badge}`;
+      });
+
+    sections.push({
+      header: "Products",
+      items: productItems,
+    });
   }
 
   // System Commands section - compact format: group name (count)
   if (systemGroups.length > 0) {
-    content.push("System Commands:");
-    content.push("");
-
     const maxGroupNameLength = Math.max(
       ...systemGroups.map((g) => g.name.length),
       20,
     );
 
-    for (const group of systemGroups.sort((a, b) => a.name.localeCompare(b.name))) {
-      const commandCount = group.commands.length;
-      const badge = colors.green(`(${commandCount})`);
-      
-      content.push(
-        `  ${colors.cyan(group.name.padEnd(maxGroupNameLength))}  ${badge}`,
-      );
-    }
-    content.push("");
+    const groupItems = systemGroups
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((group) => {
+        const commandCount = group.commands.length;
+        const badge = colors.green(`(${commandCount})`);
+
+        return `${colors.cyan(group.name.padEnd(maxGroupNameLength))}  ${badge}`;
+      });
+
+    sections.push({
+      header: "System Commands",
+      items: groupItems,
+    });
   }
 
   // Other Commands section - only show if there are standalone commands
   if (standalone.length > 0) {
-    content.push("Other Commands:");
-    content.push("");
-
     const maxCommandNameLength = Math.max(
       ...standalone.map((c) => c.name.length),
       12,
     );
 
-    for (const cmd of standalone.sort((a, b) => a.name.localeCompare(b.name))) {
-      content.push(
-        `  ${colors.cyan(cmd.name.padEnd(maxCommandNameLength))}  ${colors.dim(
+    const standaloneItems = standalone
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((cmd) =>
+        `${colors.cyan(cmd.name.padEnd(maxCommandNameLength))}  ${colors.dim(
           cmd.describe,
-        )}`,
+        )}`
       );
-    }
-    content.push("");
+
+    sections.push({
+      header: "Other Commands",
+      items: standaloneItems,
+    });
   }
 
   // Global Options section
-  content.push("Global Options:");
-  content.push("");
-
   const globalOptions = [
     { name: "--help", desc: "Show help information" },
     { name: "--version", desc: "Show CLI version" },
@@ -190,23 +189,24 @@ export function renderGlobalHelpNew(registry: {
     12,
   );
 
-  for (const option of globalOptions) {
-    content.push(
-      `  ${colors.cyan(option.name.padEnd(maxOptionNameLength))}  ${colors.dim(
-        option.desc,
-      )}`,
-    );
-  }
-  content.push("");
+  const optionItems = globalOptions.map((option) =>
+    `${colors.cyan(option.name.padEnd(maxOptionNameLength))}  ${colors.dim(
+      option.desc,
+    )}`
+  );
 
-  // Next Steps section - simplified to 2-3 most important examples
-  content.push("Next Steps:");
-  content.push("");
+  sections.push({
+    header: "Global Options",
+    items: optionItems,
+  });
+
+  // Next Steps section
+  const nextStepsItems: string[] = [];
 
   const firstProduct = products[0];
   if (firstProduct) {
-    content.push(
-      `  ${colors.cyan(
+    nextStepsItems.push(
+      `${colors.cyan(
         `kb ${firstProduct.name} --help`,
       )}  ${colors.dim("Explore product commands")}`,
     );
@@ -214,17 +214,26 @@ export function renderGlobalHelpNew(registry: {
 
   const pluginsGroup = systemGroups.find((g: CommandGroup) => g.name === "system:plugins");
   if (pluginsGroup) {
-    content.push(
-      `  ${colors.cyan("kb plugins")}  ${colors.dim("List and manage plugins")}`,
+    nextStepsItems.push(
+      `${colors.cyan("kb plugins")}  ${colors.dim("List and manage plugins")}`,
     );
   }
 
-  content.push("");
-  content.push(
+  nextStepsItems.push("");
+  nextStepsItems.push(
     colors.dim("Use 'kb <product> --help' or 'kb <group> --help' to see commands for a specific product or group."),
   );
 
-  return box("KB Labs CLI", content);
+  sections.push({
+    header: "Next Steps",
+    items: nextStepsItems,
+  });
+
+  return sideBorderBox({
+    title: "KB Labs CLI",
+    sections,
+    status: "info",
+  });
 }
 
 export function renderPluginsHelp(registry: {
@@ -239,11 +248,9 @@ export function renderPluginsHelp(registry: {
         cmd.name?.startsWith("plugins:") || cmd.category === "system",
     );
 
-  const content: string[] = [];
+  const sections: SectionContent[] = [];
 
-  content.push(colors.bold("Plugin Management Commands:"));
-  content.push("");
-
+  // Plugin Management Commands section
   const commandMap: Record<string, string> = {
     "plugins:ls": "List all discovered plugins",
     "plugins:enable": "Enable a plugin",
@@ -261,39 +268,39 @@ export function renderPluginsHelp(registry: {
     20,
   );
 
-  for (const [cmdName, desc] of Object.entries(commandMap)) {
-    content.push(
-      `  ${colors.cyan(cmdName.padEnd(maxLength))}  ${colors.dim(desc)}`,
-    );
-  }
-
-  content.push("");
-  content.push(colors.bold("Examples:"));
-  content.push("");
-  content.push(
-    `  ${colors.dim("kb plugins ls")}                      ${colors.dim("List all plugins")}`,
-  );
-  content.push(
-    `  ${colors.dim("kb plugins enable @kb-labs/devlink-cli")}  ${colors.dim(
-      "Enable a plugin",
-    )}`,
-  );
-  content.push(
-    `  ${colors.dim("kb plugins doctor")}                 ${colors.dim("Diagnose plugin issues")}`,
-  );
-  content.push(
-    `  ${colors.dim("kb plugins scaffold my-plugin")}      ${colors.dim(
-      "Generate plugin template",
-    )}`,
+  const commandItems = Object.entries(commandMap).map(([cmdName, desc]) =>
+    `${colors.cyan(cmdName.padEnd(maxLength))}  ${colors.dim(desc)}`
   );
 
-  content.push("");
-  content.push(colors.dim("Use 'kb plugins <command> --help' for detailed help"));
+  sections.push({
+    header: "Plugin Management Commands",
+    items: commandItems,
+  });
 
-  const totalTime = tracker.total();
-  content.push("");
-  content.push(`Time: ${formatTiming(totalTime)}`);
+  // Examples section
+  const examples = [
+    `kb plugins ls                      ${colors.dim("List all plugins")}`,
+    `kb plugins enable @kb-labs/devlink-cli  ${colors.dim("Enable a plugin")}`,
+    `kb plugins doctor                 ${colors.dim("Diagnose plugin issues")}`,
+    `kb plugins scaffold my-plugin      ${colors.dim("Generate plugin template")}`,
+  ];
 
-  return box("🧩 Plugin Management", content);
+  sections.push({
+    header: "Examples",
+    items: examples.map(ex => colors.dim(ex)),
+  });
+
+  // Next steps
+  sections.push({
+    header: "Next Steps",
+    items: [colors.dim("Use 'kb plugins <command> --help' for detailed help")],
+  });
+
+  return sideBorderBox({
+    title: "🧩 Plugin Management",
+    sections,
+    status: "info",
+    timing: tracker.total(),
+  });
 }
 

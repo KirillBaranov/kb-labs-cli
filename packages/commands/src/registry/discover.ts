@@ -13,27 +13,26 @@ import { parse as parseYaml } from 'yaml';
 import { glob } from 'glob';
 import type { CommandManifest, DiscoveryResult, CacheFile, PackageCacheEntry, CommandModule } from './types';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
-import { getLogger } from '@kb-labs/core-sys/logging';
 import { toPosixPath } from '../utils/path';
 import { telemetry } from './telemetry';
 import { validateManifests, normalizeManifest } from './schema';
 
-// Helper function for logging (replaces deprecated log())
+// Check if DEBUG_MODE is enabled
+const DEBUG_MODE = process.env.DEBUG_SANDBOX === '1' || process.env.NODE_ENV === 'development';
+
+// Helper function for logging - only outputs in DEBUG_MODE to avoid polluting user output
+// In production, discovery logs are suppressed unless user explicitly enables --debug
 const log = (level: 'debug' | 'info' | 'warn' | 'error', message: string, fields?: Record<string, unknown>): void => {
-  const logger = getLogger('commands:discover');
-  switch (level) {
-    case 'debug':
-      logger.debug(message, fields);
-      break;
-    case 'info':
-      logger.info(message, fields);
-      break;
-    case 'warn':
-      logger.warn(message, fields);
-      break;
-    case 'error':
-      logger.error(message, fields);
-      break;
+  if (!DEBUG_MODE) return;
+
+  // In debug mode, use console for immediate output (no lazy logger initialization)
+  const prefix = level === 'error' ? '✗' : level === 'warn' ? '⚠' : level === 'info' ? 'ℹ' : '🔍';
+  const logFn = level === 'error' ? console.error : level === 'warn' ? console.warn : console.log;
+
+  if (fields) {
+    logFn(`${prefix} [discover] ${message}`, fields);
+  } else {
+    logFn(`${prefix} [discover] ${message}`);
   }
 };
 
@@ -470,7 +469,8 @@ async function loadManifest(manifestPath: string, pkgName: string, pkgRoot?: str
   }
   
   const commandManifests: CommandManifest[] = cliCommands.map((cmd: any) => {
-    const commandId = cmd.id.includes(':') ? cmd.id : `${cmd.group || namespace}:${cmd.id}`;
+    // Use ID as-is without adding group prefix (breaking change)
+    const commandId = cmd.id;
     const commandManifest: CommandManifest = {
       manifestVersion: '1.0' as const,
       id: commandId,
@@ -1159,7 +1159,8 @@ async function saveCache(cwd: string, results: DiscoveryResult[]): Promise<void>
   };
   
   try {
-    await fs.writeFile(cachePath, JSON.stringify(cache, null, 2), 'utf8');
+    // CRITICAL OOM FIX: Use compact JSON to avoid split('\n') memory issues on large manifests (1.6MB+)
+    await fs.writeFile(cachePath, JSON.stringify(cache), 'utf8');
   } catch (err: any) {
     log('debug', `Failed to save cache: ${err.message}`);
   }

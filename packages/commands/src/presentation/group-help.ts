@@ -1,42 +1,64 @@
-import { colors, type CommandGroup } from "./shared";
+import { type CommandGroup } from "./shared";
+import { sideBorderBox, type SectionContent, safeColors, TimingTracker } from "@kb-labs/shared-cli-ui";
 
 export function renderGroupHelp(group: CommandGroup): string {
-  const lines: string[] = [];
-
-  lines.push(
-    colors.cyan(colors.bold(`📦 ${group.name}`)) +
-      " - " +
-      colors.dim(group.describe),
-  );
-  lines.push("");
-  lines.push(colors.bold("Available commands:"));
-  lines.push("");
+  const tracker = new TimingTracker();
 
   const sortedCommands = [...group.commands].sort((a, b) =>
     a.name.localeCompare(b.name),
   );
 
-  const maxNameLength = Math.max(...sortedCommands.map((cmd) => cmd.name.length));
+  const sections: SectionContent[] = [];
 
-  for (const cmd of sortedCommands) {
-    const paddedName = cmd.name.padEnd(maxNameLength);
+  // Summary section
+  sections.push({
+    items: [
+      `${safeColors.bold('Description')}: ${group.describe}`,
+      `${safeColors.bold('Commands')}: ${sortedCommands.length}`,
+    ],
+  });
+
+  // Commands section
+  // Convert command IDs to user-friendly format (replace : with space for display)
+  const commandDisplayNames = sortedCommands.map((cmd) => {
+    // Replace first colon with space for display (e.g., "plugins:list" -> "plugins list")
+    return cmd.name.replace(':', ' ');
+  });
+  const maxNameLength = Math.max(...commandDisplayNames.map((name) => name.length));
+  const commandItems: string[] = [];
+
+  for (let i = 0; i < sortedCommands.length; i++) {
+    const cmd = sortedCommands[i];
+    const displayName = commandDisplayNames[i];
+    const paddedName = displayName.padEnd(maxNameLength);
     const description = cmd.describe || "No description";
-    lines.push(`  ${colors.cyan(paddedName)}  ${colors.dim(description)}`);
+    commandItems.push(`${safeColors.primary(paddedName)}  ${safeColors.muted(description)}`);
 
     if (cmd.examples && cmd.examples.length > 0) {
       for (const example of cmd.examples.slice(0, 2)) {
-        lines.push(`    ${colors.dim(example)}`);
+        commandItems.push(`  ${safeColors.muted(example)}`);
       }
     }
   }
 
-  lines.push("");
-  lines.push(
-    colors.dim(
-      `Use 'kb ${group.name} <command> --help' for more information on a command.`,
-    ),
-  );
+  sections.push({
+    header: 'Available commands',
+    items: commandItems,
+  });
 
-  return lines.join("\n");
+  // Help section
+  sections.push({
+    header: 'Next Steps',
+    items: [
+      `kb ${group.name} <command> --help  ${safeColors.muted('Get help for a specific command')}`,
+    ],
+  });
+
+  return sideBorderBox({
+    title: `📦 ${group.name}`,
+    sections,
+    status: 'success',
+    timing: tracker.total(),
+  });
 }
 

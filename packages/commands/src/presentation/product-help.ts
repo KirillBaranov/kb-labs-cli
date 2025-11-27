@@ -1,28 +1,26 @@
 import {
   colors,
   collectManifestVersions,
-  box,
   formatTiming,
   TimingTracker,
   type RegisteredCommand,
 } from "./shared";
+import { sideBorderBox, type SectionContent } from "@kb-labs/shared-cli-ui";
 
 export function renderProductHelp(
   groupName: string,
   commands: RegisteredCommand[],
 ): string {
   const tracker = new TimingTracker();
-  const content: string[] = [];
+  const sections: SectionContent[] = [];
 
   const manifestVersions = collectManifestVersions(commands);
   if (manifestVersions.length > 0) {
-    content.push(colors.bold("Manifest:"));
-    content.push(`  ${colors.cyan(manifestVersions.join(" + "))}`);
-    content.push("");
+    sections.push({
+      header: "Manifest",
+      items: [colors.cyan(manifestVersions.join(" + "))],
+    });
   }
-
-  content.push(colors.bold("Available commands:"));
-  content.push("");
 
   const availableMap = new Map<string, RegisteredCommand>();
   const unavailableMap = new Map<string, RegisteredCommand>();
@@ -49,49 +47,58 @@ export function renderProductHelp(
     20,
   );
 
+  // Available commands section
+  const availableItems: string[] = [];
   for (const cmd of available) {
     const status = colors.green("✓");
     const paddedId = cmd.manifest.id.padEnd(maxLength);
-    content.push(
-      `  ${status} ${colors.cyan(paddedId)}  ${colors.dim(
+    availableItems.push(
+      `${status} ${colors.cyan(paddedId)}  ${colors.dim(
         cmd.manifest.describe,
       )}`,
     );
 
     if (cmd.manifest.examples && cmd.manifest.examples.length > 0) {
       for (const example of cmd.manifest.examples.slice(0, 2) as string[]) {
-        content.push(`     ${colors.dim(example)}`);
+        availableItems.push(`   ${colors.dim(example)}`);
       }
     }
   }
 
+  sections.push({
+    header: "Available Commands",
+    items: availableItems,
+  });
+
+  // Unavailable commands section (if any)
   if (unavailable.length > 0) {
-    content.push("");
-    content.push(colors.dim("Unavailable:"));
+    const unavailableItems: string[] = [];
     for (const cmd of unavailable) {
       const status = colors.red("✗");
       const paddedId = cmd.manifest.id.padEnd(maxLength);
-      content.push(
-        `  ${status} ${colors.dim(paddedId)}  ${colors.dim(
+      unavailableItems.push(
+        `${status} ${colors.dim(paddedId)}  ${colors.dim(
           cmd.manifest.describe,
         )}`,
       );
 
       if (cmd.unavailableReason) {
-        content.push(
-          `     ${colors.red(`Reason: ${cmd.unavailableReason}`)}`,
+        unavailableItems.push(
+          `   ${colors.red(`Reason: ${cmd.unavailableReason}`)}`,
         );
       }
       if (cmd.hint) {
-        content.push(`     ${colors.yellow(`Hint: ${cmd.hint}`)}`);
+        unavailableItems.push(`   ${colors.yellow(`Hint: ${cmd.hint}`)}`);
       }
     }
+
+    sections.push({
+      header: "Unavailable",
+      items: unavailableItems,
+    });
   }
 
-  content.push("");
-  content.push(colors.bold("Next Steps:"));
-  content.push("");
-
+  // Next Steps section
   const uniqueCommands = new Map<string, RegisteredCommand>();
   for (const cmd of available) {
     if (!uniqueCommands.has(cmd.manifest.id)) {
@@ -99,36 +106,41 @@ export function renderProductHelp(
     }
   }
 
-  const nextSteps = Array.from(uniqueCommands.values())
+  const nextStepsItems = Array.from(uniqueCommands.values())
     .slice(0, 3)
     .map(
       (cmd) =>
-        `  ${colors.cyan(`kb ${cmd.manifest.id}`)}  ${colors.dim(
+        `${colors.cyan(`kb ${cmd.manifest.id}`)}  ${colors.dim(
           cmd.manifest.describe,
         )}`,
     );
 
-  if (nextSteps.length === 0) {
-    nextSteps.push(`  ${colors.dim("No available commands in this product")}`);
+  if (nextStepsItems.length === 0) {
+    nextStepsItems.push(colors.dim("No available commands in this product"));
   } else {
-    nextSteps.push("");
-    nextSteps.push(
-      `  ${colors.dim(
+    nextStepsItems.push("");
+    nextStepsItems.push(
+      colors.dim(
         `Use 'kb ${groupName}:<command> --help' for detailed help`,
-      )}`,
+      ),
     );
   }
 
-  content.push(...nextSteps);
-  content.push("");
-  content.push(
+  nextStepsItems.push("");
+  nextStepsItems.push(
     colors.dim("Use 'kb --help' to see all products and system commands."),
   );
 
-  const totalTime = tracker.total();
-  content.push("");
-  content.push(`Time: ${formatTiming(totalTime)}`);
+  sections.push({
+    header: "Next Steps",
+    items: nextStepsItems,
+  });
 
-  return box(groupName, content);
+  return sideBorderBox({
+    title: groupName,
+    sections,
+    status: "info",
+    timing: tracker.total(),
+  });
 }
 
