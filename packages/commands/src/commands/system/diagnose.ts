@@ -1,22 +1,22 @@
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand } from '@kb-labs/cli-command-kit';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
-
-type DiagnoseResult = CommandResult & {
-  node?: string;
-  platform?: string;
-  repoRoot?: string;
-  cwd?: string;
-};
 
 type DiagnoseFlags = {
   json: { type: 'boolean'; description?: string };
+};
+
+type DiagnoseResult = {
+  node: string;
+  platform: string;
+  repoRoot: string;
+  cwd: string;
 };
 
 export const diagnose = defineSystemCommand<DiagnoseFlags, DiagnoseResult>({
   name: 'diagnose',
   description: 'Quick environment & repo diagnosis',
   longDescription: 'Performs a quick diagnosis of the current environment and repository state',
-  category: 'system',
+  category: 'info',
   examples: ['kb diagnose'],
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
@@ -34,8 +34,8 @@ export const diagnose = defineSystemCommand<DiagnoseFlags, DiagnoseResult>({
 
     ctx.logger?.info('Diagnose command executed', { nodeVersion, platform, repoRoot, cwd });
 
+    // Return typed data
     return {
-      ok: true,
       node: nodeVersion,
       platform,
       repoRoot,
@@ -43,23 +43,28 @@ export const diagnose = defineSystemCommand<DiagnoseFlags, DiagnoseResult>({
     };
   },
   formatter(result, ctx, flags) {
-    if (flags.json) { // Type-safe: boolean
-      ctx.output?.json(result);
+    // Auto-handle JSON mode
+    if (flags.json) {
+      console.log(JSON.stringify(result, null, 2));
     } else {
-      if (!ctx.output) {
-        throw new Error('Output not available');
-      }
-
-      const summary = ctx.output.ui.keyValue({
-        'Node Version': result.node ?? '',
-        Platform: result.platform ?? '',
-        'Repository Root': result.repoRoot ?? '',
-        'Current Directory': result.cwd ?? '',
-        Status: ctx.output.ui.colors.success(`${ctx.output.ui.symbols.success} Environment OK`),
+      // Use new ctx.output.ui.sideBox() for modern UI
+      const output = ctx.output.ui.sideBox({
+        title: 'Environment Diagnosis',
+        sections: [
+          {
+            header: 'Environment',
+            items: [
+              `Node Version: ${result.node}`,
+              `Platform: ${result.platform}`,
+              `Repository Root: ${result.repoRoot}`,
+              `Current Directory: ${result.cwd}`,
+            ],
+          },
+        ],
+        status: 'info',
+        timing: ctx.tracker.total(),
       });
-
-      const output = ctx.output.ui.box('Environment Diagnosis', summary);
-      ctx.output.write(output);
+      console.log(output);
     }
   },
 });

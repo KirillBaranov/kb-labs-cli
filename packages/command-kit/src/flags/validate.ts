@@ -314,7 +314,12 @@ export async function validateFlags<T extends FlagSchemaDefinition>(
 
   if (errors.length > 0) {
     const firstError = errors[0]!;
-    throw new FlagValidationError(firstError.flag, firstError.message, firstError.value);
+    throw new FlagValidationError(
+      firstError.flag,
+      firstError.message,
+      firstError.value,
+      schema // Pass schema for usage generation
+    );
   }
 
   return result as InferFlags<T>;

@@ -19,9 +19,9 @@ type PluginsScaffoldFlags = {
 };
 
 export const pluginsScaffold = defineSystemCommand<PluginsScaffoldFlags, PluginsScaffoldResult>({
-  name: 'plugins:scaffold',
+  name: 'scaffold',
   description: 'Generate a new KB CLI plugin template',
-  category: 'system',
+  category: 'plugins',
   examples: ['kb plugins scaffold my-plugin', 'kb plugins scaffold my-plugin --format cjs'],
   flags: {
     format: {
@@ -317,7 +317,12 @@ dist
       ctx.output.ui.colors.muted('See docs/plugin-development.md for more details'),
     ];
 
-    const output = ctx.output.ui.box('Plugin Scaffold', sections);
+    const output = ctx.output.ui.sideBox({
+      title: 'Plugin Scaffold',
+      sections: [{ items: sections }],
+      status: 'success',
+      timing: ctx.tracker.total(),
+    });
     ctx.output.write(output);
   },
 });

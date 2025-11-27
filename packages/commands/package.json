@@ -34,6 +34,7 @@
     "@kb-labs/cli-api": "workspace:*",
     "@kb-labs/cli-bin": "workspace:*",
     "@kb-labs/cli-command-kit": "workspace:*",
+    "@kb-labs/cli-contracts": "workspace:*",
     "@kb-labs/cli-core": "workspace:*",
     "@kb-labs/core-bundle": "workspace:*",
     "@kb-labs/core-cli-adapters": "workspace:*",

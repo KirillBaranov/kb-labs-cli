@@ -19,9 +19,9 @@ type PluginsLinkResult = CommandResult & {
 type PluginsLinkFlags = Record<string, never>;
 
 export const pluginsLink = defineSystemCommand<PluginsLinkFlags, PluginsLinkResult>({
-  name: 'plugins:link',
+  name: 'link',
   description: 'Link a local plugin for development',
-  category: 'system',
+  category: 'plugins',
   examples: ['kb plugins link ./packages/my-plugin', 'kb plugins link ../kb-labs-devlink'],
   flags: {},
   analytics: {

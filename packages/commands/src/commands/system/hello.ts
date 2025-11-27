@@ -1,21 +1,14 @@
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
-import { keyValue } from '@kb-labs/shared-cli-ui';
-import type { EnhancedCliContext } from '@kb-labs/cli-command-kit';
-
-type HelloResult = CommandResult & {
-  message?: string;
-  who?: string;
-};
+import { defineSystemCommand, type CommandOutput } from '@kb-labs/cli-command-kit';
 
 type HelloFlags = {
   json: { type: 'boolean'; description?: string };
 };
 
-export const hello = defineSystemCommand<HelloFlags, HelloResult>({
+export const hello = defineSystemCommand<HelloFlags, CommandOutput>({
   name: 'hello',
   description: 'Print a friendly greeting',
   longDescription: 'Prints a simple greeting message for testing CLI functionality',
-  category: 'system',
+  category: 'info',
   examples: ['kb hello'],
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
@@ -31,20 +24,26 @@ export const hello = defineSystemCommand<HelloFlags, HelloResult>({
 
     ctx.logger?.info('Hello command executed', { who });
 
-    return { ok: true, message, who };
+    // Use new ctx.success() helper for modern UI
+    return ctx.success('Greeting', {
+      summary: {
+        'Message': message,
+        'User': who,
+      },
+      timing: ctx.tracker.total(),
+      json: {
+        message,
+        who,
+        status: 'ready',
+      },
+    });
   },
   formatter(result, ctx, flags) {
-    if (flags.json) { // Type-safe: boolean
-      ctx.output?.json(result);
+    // Auto-handle JSON mode
+    if (flags.json) {
+      console.log(JSON.stringify(result.json, null, 2));
     } else {
-      const summary = ctx.output?.ui.keyValue({
-        Message: result.message ?? '',
-        User: result.who ?? '',
-        Status: ctx.output.ui.colors.success(`${ctx.output.ui.symbols.success} Ready`),
-      }) ?? [];
-
-      const output = ctx.output?.ui.box('KB Labs CLI', summary ?? []);
-      ctx.output?.write(output ?? '');
+      console.log(result.human);
     }
   },
 });

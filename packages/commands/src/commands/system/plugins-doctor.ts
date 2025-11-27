@@ -35,9 +35,9 @@ type PluginsDoctorFlags = {
 };
 
 export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResult>({
-  name: 'plugins:doctor',
+  name: 'doctor',
   description: 'Diagnose plugin issues and suggest fixes',
-  category: 'system',
+  category: 'plugins',
   examples: ['kb plugins doctor', 'kb plugins doctor @kb-labs/devlink-cli', 'kb plugins doctor --json'],
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
@@ -213,13 +213,13 @@ export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResul
     const errorCount = summary.errors;
     const warningCount = summary.warnings;
 
-    const summaryLines = ctx.output.ui.keyValue({
-      'Total Issues': `${issues.length}`,
-      Errors: errorCount > 0 ? `${ctx.output.ui.colors.error(errorCount.toString())}` : 'none',
-      Warnings: warningCount > 0 ? `${ctx.output.ui.colors.warn(warningCount.toString())}` : 'none',
-    });
+    const summaryItems = [
+      `Total Issues: ${issues.length}`,
+      `Errors: ${errorCount > 0 ? ctx.output.ui.colors.error(errorCount.toString()) : 'none'}`,
+      `Warnings: ${warningCount > 0 ? ctx.output.ui.colors.warn(warningCount.toString()) : 'none'}`,
+    ];
 
-    const issueLines: string[] = [];
+    const issueItems: string[] = [];
     const byPackage = new Map<string, DoctorIssue[]>();
 
     for (const issue of issues) {
@@ -230,30 +230,43 @@ export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResul
     }
 
     for (const [pkg, pkgIssues] of Array.from(byPackage.entries()).sort()) {
-      issueLines.push(ctx.output.ui.colors.bold(`\n${pkg}:`));
+      issueItems.push(ctx.output.ui.colors.bold(`${pkg}:`));
 
       for (const issue of pkgIssues) {
         const icon = issue.severity === 'error' ? ctx.output.ui.symbols.error : ctx.output.ui.symbols.warning;
         const color = issue.severity === 'error' ? ctx.output.ui.colors.error : ctx.output.ui.colors.warn;
 
-        issueLines.push(`  ${icon} ${color(issue.code)}: ${issue.message}`);
+        issueItems.push(`  ${icon} ${color(issue.code)}: ${issue.message}`);
         if (issue.fix) {
-          issueLines.push(`     ${ctx.output.ui.colors.info(`Fix: ${issue.fix}`)}`);
+          issueItems.push(`     ${ctx.output.ui.colors.info(`Fix: ${issue.fix}`)}`);
         }
       }
     }
 
-    const sections = [
-      ctx.output.ui.colors.bold('Plugin Health Check:'),
-      ...summaryLines,
-      ...issueLines,
-      '',
-      ctx.output.ui.colors.bold('Next Steps:'),
-      `  ${ctx.output.ui.colors.info('kb plugins enable <name>')}  ${ctx.output.ui.colors.muted('Enable a disabled plugin')}`,
-      `  ${ctx.output.ui.colors.info('kb plugins clear-cache')}  ${ctx.output.ui.colors.muted('Clear cache and rediscover')}`,
+    const nextStepsItems = [
+      `kb plugins enable <name>  ${ctx.output.ui.colors.muted('Enable a disabled plugin')}`,
+      `kb plugins clear-cache  ${ctx.output.ui.colors.muted('Clear cache and rediscover')}`,
     ];
 
-    const output = ctx.output.ui.box('Plugin Diagnostics', sections);
+    const output = ctx.output.ui.sideBox({
+      title: 'Plugin Diagnostics',
+      sections: [
+        {
+          header: 'Summary',
+          items: summaryItems,
+        },
+        {
+          header: 'Issues',
+          items: issueItems,
+        },
+        {
+          header: 'Next Steps',
+          items: nextStepsItems,
+        },
+      ],
+      status: errorCount > 0 ? 'error' : warningCount > 0 ? 'warning' : 'success',
+      timing: ctx.tracker.total(),
+    });
     ctx.output.write(output);
   },
 });

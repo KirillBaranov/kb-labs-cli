@@ -16,9 +16,9 @@ type LoggingInitFlags = {
 };
 
 export const loggingInit = defineSystemCommand<LoggingInitFlags, LoggingInitResult>({
-  name: 'logging:init',
+  name: 'init',
   description: 'Initialize logging configuration interactively',
-  category: 'system',
+  category: 'logging',
   examples: ['kb logging:init', 'kb logging:init --force'],
   flags: {
     force: { type: 'boolean', description: 'Overwrite existing configuration' },

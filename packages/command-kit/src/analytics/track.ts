@@ -6,7 +6,7 @@
 import type { TrackingConfig, TrackingResult, AnalyticsEmit, AnalyticsScope } from './types.js';
 // CliContext type is used in JSDoc comments and type inference
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { CliContext } from '@kb-labs/cli-core/public';
+import type { CliContext } from '@kb-labs/cli-contracts';
 
 /**
  * Create analytics tracking helper

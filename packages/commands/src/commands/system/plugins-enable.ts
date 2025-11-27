@@ -17,9 +17,9 @@ type PluginsEnableFlags = {
 };
 
 export const pluginsEnable = defineSystemCommand<PluginsEnableFlags, PluginsEnableResult>({
-  name: 'plugins:enable',
+  name: 'enable',
   description: 'Enable a plugin',
-  category: 'system',
+  category: 'plugins',
   examples: [
     'kb plugins enable @kb-labs/devlink-cli',
     'kb plugins enable @kb-labs/devlink-cli --perm fs.write',

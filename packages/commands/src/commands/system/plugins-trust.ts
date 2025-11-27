@@ -15,9 +15,9 @@ type PluginsTrustFlags = {
 };
 
 export const pluginsTrust = defineSystemCommand<PluginsTrustFlags, PluginsTrustResult>({
-  name: 'plugins:trust',
+  name: 'trust',
   description: 'Promote plugin to locally trusted (no audit, at your own risk)',
-  category: 'system',
+  category: 'plugins',
   flags: {
     force: { type: 'boolean', description: 'Skip confirmation prompt' },
   },
@@ -45,9 +45,9 @@ type PluginsUntrustResult = CommandResult & {
 type PluginsUntrustFlags = Record<string, never>;
 
 export const pluginsUntrust = defineSystemCommand<PluginsUntrustFlags, PluginsUntrustResult>({
-  name: 'plugins:untrust',
+  name: 'untrust',
   description: 'Demote plugin to untrusted (Docker isolation)',
-  category: 'system',
+  category: 'plugins',
   examples: ['kb plugins untrust @author/my-plugin'],
   flags: {},
   analytics: {
@@ -71,9 +71,9 @@ type PluginsTrustStatusFlags = {
 };
 
 export const pluginsTrustStatus = defineSystemCommand<PluginsTrustStatusFlags, PluginsTrustStatusResult>({
-  name: 'plugins:trust-status',
+  name: 'trust-status',
   description: 'Show plugin trust level and audit status',
-  category: 'system',
+  category: 'plugins',
   flags: {
     json: { type: 'boolean', description: 'Output as JSON' },
   },

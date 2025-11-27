@@ -2,13 +2,13 @@
  * diag command - Unified diagnostics command combining all system checks
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand } from '@kb-labs/cli-command-kit';
 import { registry } from '../../registry/service.js';
 import { discoverManifests } from '../../registry/discover.js';
 import { loadPluginsState } from '../../registry/plugins-state.js';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { getContextCwd } from '@kb-labs/shared-cli-ui';
+import { getContextCwd, safeColors, safeSymbols } from '@kb-labs/shared-cli-ui';
 
 type DiagDetails = {
   category: string;
@@ -24,9 +24,9 @@ type DiagSummary = {
   errors: number;
 };
 
-type DiagResult = CommandResult & {
-  diagnostics?: DiagDetails[];
-  summary?: DiagSummary;
+type DiagResult = {
+  diagnostics: DiagDetails[];
+  summary: DiagSummary;
 };
 
 type DiagFlags = {
@@ -36,7 +36,7 @@ type DiagFlags = {
 export const diag = defineSystemCommand<DiagFlags, DiagResult>({
   name: 'diag',
   description: 'Comprehensive system diagnostics (plugins, cache, environment, versions)',
-  category: 'system',
+  category: 'info',
   examples: ['kb diag', 'kb diag --json'],
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
@@ -226,87 +226,88 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
 
     ctx.logger?.info('Diag command completed', summary);
 
-    const hasErrors = summary.errors > 0;
-
+    // Return typed data
     return {
-      ok: !hasErrors,
       diagnostics,
       summary,
     };
   },
   formatter(result, ctx, flags) {
-    if (flags.json) { // Type-safe: boolean
-      ctx.output?.json(result);
+    // Auto-handle JSON mode
+    if (flags.json) {
+      console.log(JSON.stringify(result, null, 2));
     } else {
-      if (!ctx.output) {
-        throw new Error('Output not available');
-      }
+      // Build UI from result data
+      const hasErrors = result.summary.errors > 0;
+      const hasWarnings = result.summary.warnings > 0;
 
-      if (!result.summary || !result.diagnostics) {
-        ctx.output?.error('Invalid diagnostic result');
-        return;
-      }
-
-      const summary = ctx.output.ui.keyValue({
-        'Total Checks': `${result.summary.total}`,
-        OK: `${result.summary.ok}`,
-        Warnings: `${result.summary.warnings}`,
-        Errors: `${result.summary.errors}`,
-      });
-
-      const sections: string[] = [
-        ctx.output.ui.colors.bold('System Diagnostics:'),
-        ...summary,
-        '',
-        ctx.output.ui.colors.bold('Details:'),
-        '',
+      // Summary items
+      const summaryItems = [
+        `${safeColors.bold('Total Checks')}: ${result.summary.total}`,
+        `${safeColors.success('OK')}: ${result.summary.ok}`,
+        `${safeColors.warning('Warnings')}: ${result.summary.warnings}`,
+        `${safeColors.error('Errors')}: ${result.summary.errors}`,
       ];
 
+      // Diagnostics details
+      const diagItems: string[] = [];
       for (const diag of result.diagnostics) {
         const icon =
           diag.status === 'ok'
-            ? ctx.output.ui.symbols.success
+            ? safeSymbols.success
             : diag.status === 'warning'
-              ? ctx.output.ui.symbols.warning
-              : ctx.output.ui.symbols.error;
-        const color =
+              ? safeSymbols.warning
+              : safeSymbols.error;
+        const colorize =
           diag.status === 'ok'
-            ? ctx.output.ui.colors.success
+            ? safeColors.success
             : diag.status === 'warning'
-              ? ctx.output.ui.colors.warn
-              : ctx.output.ui.colors.error;
+              ? safeColors.warning
+              : safeColors.error;
 
-        sections.push(`${icon} ${color(ctx.output.ui.colors.bold(diag.category))}: ${diag.message}`);
+        diagItems.push(`${icon} ${colorize(safeColors.bold(diag.category))}: ${diag.message}`);
 
         if (diag.status === 'warning' && diag.details?.issues) {
           for (const issue of diag.details.issues) {
-            sections.push(
-              `   ${ctx.output.ui.colors.warn(`→ ${issue.plugin}: requires ${issue.required}, found ${issue.current}`)}`,
+            diagItems.push(
+              `   ${safeColors.warning(`→ ${issue.plugin}: requires ${issue.required}, found ${issue.current}`)}`,
             );
           }
         }
-        sections.push('');
       }
 
-      sections.push(ctx.output.ui.colors.bold('Next Steps:'));
-      sections.push('');
-
-      if (result.summary.errors > 0) {
-        sections.push(
-          `  ${ctx.output.ui.colors.info('kb plugins doctor')}  ${ctx.output.ui.colors.muted('Diagnose plugin issues')}`,
-        );
+      // Next steps
+      const nextSteps: string[] = [];
+      if (hasErrors) {
+        nextSteps.push(`kb plugins doctor  ${safeColors.muted('Diagnose plugin issues')}`);
       }
-      if (result.summary.warnings > 0) {
-        sections.push(
-          `  ${ctx.output.ui.colors.info('kb plugins ls')}  ${ctx.output.ui.colors.muted('List all plugins')}`,
-        );
+      if (hasWarnings) {
+        nextSteps.push(`kb plugins ls  ${safeColors.muted('List all plugins')}`);
       }
-      sections.push(
-        `  ${ctx.output.ui.colors.info('kb diagnose')}  ${ctx.output.ui.colors.muted('Quick environment check')}`,
-      );
+      nextSteps.push(`kb diagnose  ${safeColors.muted('Quick environment check')}`);
 
-      const output = ctx.output.ui.box('System Diagnostics', sections);
-      ctx.output.write(output);
+      // Build output using ctx.output.ui.sideBox()
+      const output = ctx.output.ui.sideBox({
+        title: 'System Diagnostics',
+        sections: [
+          {
+            header: 'Summary',
+            items: summaryItems,
+          },
+          {
+            header: 'Details',
+            items: diagItems,
+          },
+          {
+            header: 'Next Steps',
+            items: nextSteps,
+          },
+        ],
+        status: hasErrors ? 'error' : hasWarnings ? 'warning' : 'success',
+        timing: ctx.tracker.total(),
+      });
+
+      console.log(output);
     }
   },
 });

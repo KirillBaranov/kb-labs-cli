@@ -34,7 +34,7 @@ type LogTestFlags = {
 export const logTest = defineSystemCommand<LogTestFlags, LogTestResult>({
   name: 'log-test',
   description: 'Comprehensive test of logging system (levels, context, redaction, etc.)',
-  category: 'system',
+  category: 'logging',
   examples: ['kb log-test', 'kb log-test --debug', 'kb log-test --json', 'kb log-test --log-level info'],
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },

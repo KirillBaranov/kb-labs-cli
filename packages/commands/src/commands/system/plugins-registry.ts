@@ -242,9 +242,9 @@ type PluginsRegistryFlags = {
 };
 
 export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, PluginsRegistryResult>({
-  name: 'plugins:registry',
+  name: 'registry',
   description: 'List all REST API plugin manifests for REST API server',
-  category: 'system',
+  category: 'plugins',
   examples: ['kb plugins:registry', 'kb plugins:registry --json'],
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
@@ -258,6 +258,8 @@ export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, Plugins
     const cwd = getContextCwd(ctx);
     const repoRoot = ctx.repoRoot || detectRepoRoot(cwd);
 
+    ctx.tracker.checkpoint('discover');
+
     // Discover REST API plugins from workspace
     const restApiPlugins = await discoverRestApiPlugins(repoRoot);
 
@@ -268,7 +270,64 @@ export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, Plugins
       pluginRoot: p.pluginRoot,
     }));
 
+    ctx.tracker.checkpoint('complete');
+
     ctx.logger?.info('Plugins registry scan completed', { count: manifests.length });
+
+    if (flags.json) {
+      ctx.output?.json({
+        ok: true,
+        manifests: manifests.map((p) => p.manifest),
+        manifestsWithPaths,
+        total: manifests.length,
+      });
+      return {
+        ok: true,
+        manifests: manifests.map((p) => p.manifest),
+        manifestsWithPaths,
+        total: manifests.length,
+        plugins: manifests,
+      };
+    }
+
+    const sections: Array<{ header?: string; items: string[] }> = [
+      {
+        header: 'Summary',
+        items: [
+          `Found: ${manifests.length} REST API plugin(s)`,
+          `Repository: ${repoRoot}`,
+        ],
+      },
+    ];
+
+    if (manifests.length > 0) {
+      const pluginItems: string[] = [];
+      for (const plugin of manifests) {
+        const displayName = plugin.manifest.display?.name || plugin.manifest.id;
+        const routesCount = plugin.manifest.rest?.routes?.length || 0;
+        pluginItems.push(
+          `${ctx.output!.ui.symbols.success} ${plugin.manifest.id}@${plugin.manifest.version} - ${displayName}`
+        );
+        pluginItems.push(`  Path: ${plugin.manifestPath}`);
+        pluginItems.push(`  Routes: ${routesCount}`);
+      }
+      sections.push({
+        header: 'Plugins',
+        items: pluginItems,
+      });
+    } else {
+      sections.push({
+        items: ['No REST API plugins found'],
+      });
+    }
+
+    const outputText = ctx.output!.ui.sideBox({
+      title: 'Plugins Registry',
+      sections,
+      status: 'info',
+      timing: ctx.tracker.total(),
+    });
+    ctx.output?.write(outputText);
 
     return {
       ok: true,
@@ -277,29 +336,5 @@ export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, Plugins
       total: manifests.length,
       plugins: manifests,
     };
-  },
-  formatter(result, ctx, flags) {
-    if (flags.json) { // Type-safe: boolean
-      ctx.output?.json({
-        ok: true,
-        manifests: result.manifests,
-        manifestsWithPaths: (result as any).manifestsWithPaths,
-        total: result.total,
-      });
-      return;
-    }
-
-    if (!ctx.output) {
-      throw new Error('Output not available');
-    }
-
-    const manifests = (result as any).plugins ?? [];
-    ctx.output.info(`Found ${manifests.length} REST API plugin(s):`);
-    for (const plugin of manifests) {
-      const displayName = plugin.manifest.display?.name || plugin.manifest.id;
-      ctx.output.info(`  ${plugin.manifest.id}@${plugin.manifest.version} - ${displayName}`);
-      ctx.output.info(`    Path: ${plugin.manifestPath}`);
-      ctx.output.info(`    Routes: ${plugin.manifest.rest?.routes?.length || 0}`);
-    }
   },
 });

@@ -26,9 +26,9 @@ type LoggingCheckFlags = {
 };
 
 export const loggingCheck = defineSystemCommand<LoggingCheckFlags, LoggingCheckResult>({
-  name: 'logging:check',
+  name: 'check',
   description: 'Check logging configuration and test logging system',
-  category: 'system',
+  category: 'logging',
   examples: ['kb logging:check', 'kb logging:check --json'],
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },

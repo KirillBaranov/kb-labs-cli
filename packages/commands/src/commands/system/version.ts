@@ -1,20 +1,14 @@
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
-
-type VersionResult = CommandResult & {
-  version?: string;
-  nodeVersion?: string;
-  platform?: string;
-};
+import { defineSystemCommand, type CommandOutput } from '@kb-labs/cli-command-kit';
 
 type VersionFlags = {
   json: { type: 'boolean'; description?: string };
 };
 
-export const version = defineSystemCommand<VersionFlags, VersionResult>({
+export const version = defineSystemCommand<VersionFlags, CommandOutput>({
   name: 'version',
   description: 'Show CLI version',
   longDescription: 'Displays the current version of the KB Labs CLI',
-  category: 'system',
+  category: 'info',
   examples: ['kb version'],
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
@@ -26,26 +20,37 @@ export const version = defineSystemCommand<VersionFlags, VersionResult>({
   },
   async handler(ctx, argv, flags) {
     const v = (ctx as any)?.cliVersion ?? (ctx as any)?.env?.CLI_VERSION ?? '0.0.0';
-    const version = String(v);
+    const cliVersion = String(v);
     const nodeVersion = process.version;
     const platform = `${process.platform} ${process.arch}`;
 
-    ctx.logger?.info('Version command executed', { version, nodeVersion, platform });
+    ctx.logger?.info('Version command executed', {
+      version: cliVersion,
+      nodeVersion,
+      platform
+    });
 
-    return { ok: true, version, nodeVersion, platform };
+    // Use new ctx.success() helper for modern UI
+    return ctx.success('KB Labs CLI', {
+      summary: {
+        'CLI Version': cliVersion,
+        'Node': nodeVersion,
+        'Platform': platform,
+      },
+      timing: ctx.tracker.total(),
+      json: {
+        version: cliVersion,
+        nodeVersion,
+        platform,
+      },
+    });
   },
   formatter(result, ctx, flags) {
-    if (flags.json) { // Type-safe: boolean
-      ctx.output?.json(result);
+    // Auto-handle JSON mode
+    if (flags.json) {
+      console.log(JSON.stringify(result.json, null, 2));
     } else {
-      const summary = ctx.output?.ui.keyValue({
-        Version: result.version ?? '',
-        Node: result.nodeVersion ?? '',
-        Platform: result.platform ?? '',
-      }) || [];
-
-      const output = ctx.output?.ui.box('KB Labs CLI', summary);
-      ctx.output?.write(output);
+      console.log(result.human);
     }
   },
 });

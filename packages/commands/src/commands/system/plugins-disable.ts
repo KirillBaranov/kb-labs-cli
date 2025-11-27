@@ -14,9 +14,9 @@ type PluginsDisableResult = CommandResult & {
 type PluginsDisableFlags = Record<string, never>;
 
 export const pluginsDisable = defineSystemCommand<PluginsDisableFlags, PluginsDisableResult>({
-  name: 'plugins:disable',
+  name: 'disable',
   description: 'Disable a plugin',
-  category: 'system',
+  category: 'plugins',
   examples: ['kb plugins disable @kb-labs/devlink-cli'],
   flags: {},
   analytics: {

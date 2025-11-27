@@ -4,7 +4,7 @@
 
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
 import { formatTable, formatRelativeTime, keyValue } from '@kb-labs/shared-cli-ui';
-import type { Output } from '@kb-labs/cli-core/public';
+import type { Output } from '@kb-labs/cli-contracts';
 import type { StringFlagSchema } from '@kb-labs/cli-command-kit/flags';
 
 interface HeaderDebugEntry {
@@ -186,9 +186,9 @@ type HeadersDebugFlags = {
 };
 
 export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugResult>({
-  name: 'headers:debug',
+  name: 'headers-debug',
   description: 'Stream recent header policy decisions from the REST API debug buffer',
-  category: 'system',
+  category: 'registry',
   examples: [
     'kb headers:debug',
     'kb headers:debug --plugin payments --blocked',
@@ -339,7 +339,12 @@ export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugR
       } else {
         lines.push(`${ctx.output.ui.symbols.warning} No entries matched the current filters.`);
       }
-      const outputText = ctx.output.ui.box('Header Policy Debug', lines);
+      const outputText = ctx.output.ui.sideBox({
+        title: 'Header Policy Debug',
+        sections: [{ items: lines }],
+        status: 'warning',
+        timing: ctx.tracker.total(),
+      });
       ctx.output.write(outputText);
       return;
     }
@@ -374,7 +379,12 @@ export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugR
       ),
     );
 
-    const outputText = ctx.output.ui.box('Header Policy Debug', lines);
+    const outputText = ctx.output.ui.sideBox({
+      title: 'Header Policy Debug',
+      sections: [{ items: lines }],
+      status: 'info',
+      timing: ctx.tracker.total(),
+    });
     ctx.output.write(outputText);
   },
 });

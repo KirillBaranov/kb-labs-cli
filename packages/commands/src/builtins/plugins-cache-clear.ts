@@ -17,10 +17,9 @@ type PluginsCacheClearResult = CommandResult & {
 };
 
 export const pluginsCacheClear = defineSystemCommand<PluginsCacheClearFlags, PluginsCacheClearResult>({
-  name: 'plugins:clear-cache',
+  name: 'clear-cache',
   description: 'Clear CLI plugin discovery cache',
-  category: 'system',
-  aliases: ['plugins cache clear'],
+  category: 'plugins',
   examples: ['kb plugins clear-cache', 'kb plugins clear-cache --deep'],
   flags: {
     deep: { type: 'boolean', description: 'Also clear Node.js module cache' },

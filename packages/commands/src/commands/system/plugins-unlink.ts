@@ -17,9 +17,9 @@ type PluginsUnlinkResult = CommandResult & {
 type PluginsUnlinkFlags = Record<string, never>;
 
 export const pluginsUnlink = defineSystemCommand<PluginsUnlinkFlags, PluginsUnlinkResult>({
-  name: 'plugins:unlink',
+  name: 'unlink',
   description: 'Unlink a local plugin',
-  category: 'system',
+  category: 'plugins',
   examples: ['kb plugins unlink ./packages/my-plugin', 'kb plugins unlink @kb-labs/devlink-cli'],
   flags: {},
   analytics: {

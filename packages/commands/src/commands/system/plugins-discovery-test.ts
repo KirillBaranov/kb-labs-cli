@@ -26,9 +26,9 @@ type PluginsDiscoveryTestFlags = {
 };
 
 export const pluginsDiscoveryTest = defineSystemCommand<PluginsDiscoveryTestFlags, PluginsDiscoveryTestResult>({
-  name: 'plugins:discovery-test',
+  name: 'discovery-test',
   description: 'Test new DiscoveryManager with debug logs',
-  category: 'system',
+  category: 'plugins',
   examples: ['kb plugins:discovery-test', 'kb plugins:discovery-test --json', 'kb plugins:discovery-test --debug'],
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },

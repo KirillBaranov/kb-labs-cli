@@ -19,9 +19,9 @@ type PluginsWatchFlags = {
 };
 
 export const pluginsWatch = defineSystemCommand<PluginsWatchFlags, PluginsWatchResult>({
-  name: 'plugins:watch',
+  name: 'watch',
   description: 'Watch for plugin manifest changes and hot-reload',
-  category: 'system',
+  category: 'plugins',
   examples: ['kb plugins watch'],
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },

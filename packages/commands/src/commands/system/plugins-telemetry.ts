@@ -18,9 +18,9 @@ type PluginsTelemetryFlags = {
 };
 
 export const pluginsTelemetry = defineSystemCommand<PluginsTelemetryFlags, PluginsTelemetryResult>({
-  name: 'plugins:telemetry',
+  name: 'telemetry',
   description: 'Show telemetry metrics (requires opt-in)',
-  category: 'system',
+  category: 'plugins',
   examples: ['kb plugins telemetry', 'kb plugins telemetry --json', 'kb plugins telemetry --clear'],
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
@@ -135,7 +135,12 @@ export const pluginsTelemetry = defineSystemCommand<PluginsTelemetryFlags, Plugi
       `  ${ctx.output.ui.colors.info('kb plugins telemetry --clear')}  ${ctx.output.ui.colors.muted('Clear collected metrics')}`,
     );
 
-    const output = ctx.output.ui.box('Telemetry Metrics', sections);
+    const output = ctx.output.ui.sideBox({
+      title: 'Telemetry Metrics',
+      sections: [{ items: sections }],
+      status: 'info',
+      timing: ctx.tracker.total(),
+    });
     ctx.output.write(output);
   },
 });

@@ -49,9 +49,9 @@ const WILDCARD_PATTERNS = [/^\*$/, /^\.\*$/, /^.*$/, /^\^?\.\*\$?$/];
 const MAX_RULES_THRESHOLD = 64;
 
 export const registryLint = defineSystemCommand<RegistryLintFlags, RegistryLintResult>({
-  name: 'registry:lint',
+  name: 'lint',
   description: 'Validate header policies declared in REST plugin manifests',
-  category: 'system',
+  category: 'registry',
   examples: ['kb registry:lint', 'kb registry:lint --json', 'kb registry:lint --strict'],
   flags: {
     json: { type: 'boolean', description: 'Output JSON report' },
