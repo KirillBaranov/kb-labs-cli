@@ -6,7 +6,7 @@ import {
   CliError,
   mapCliErrorToExitCode,
   type ExecutionLimits,
-} from "@kb-labs/cli-core/public";
+} from "@kb-labs/cli-core";
 import {
   findCommand,
   registerBuiltinCommands,
@@ -95,33 +95,72 @@ export async function executeCli(
 
   // Set log level based on --debug flag or explicit --log-level
   // This must happen BEFORE registerCommands/discovery
-  const logLevel = global.debug 
-    ? 'debug' 
-    : resolveLogLevel(global.logLevel ?? env.KB_LOG_LEVEL);
-  
+  // Default to 'silent' to completely suppress logs (user can use --debug for full logs)
+  const logLevel = global.debug
+    ? 'debug'
+    : resolveLogLevel(global.logLevel ?? env.KB_LOG_LEVEL ?? 'silent');
+
+  // Set env vars BEFORE any logger initialization (including auto-init)
+  // This ensures that even lazy-loaded loggers respect the correct level
+  if (!process.env.LOG_LEVEL && !process.env.KB_LOG_LEVEL) {
+    process.env.KB_LOG_LEVEL = logLevel;
+  }
+
+  // Set DEBUG_SANDBOX env var so child processes and CliAPI know about debug mode
+  if (global.debug) {
+    process.env.DEBUG_SANDBOX = '1';
+  }
+
   // Initialize logging with unified system
+  // Force replaceSinks=true to ensure we replace any sinks from auto-init
   initLogging({
     level: logLevel,
     quiet: global.quiet,
     debug: global.debug,
     mode: global.json ? 'json' : 'auto',
+    replaceSinks: true, // Always replace sinks to avoid duplicate output
   });
-  
+
   // Initialize telemetry for plugin-runtime (optional, won't fail if analytics unavailable)
   await initializeTelemetry().catch(() => {
     // Silently ignore if telemetry initialization fails
   });
-  
+
+  // Create logger early for registerCommands - MUST be after initLogging()
+  const cliLogger = getLogger('cli');
+
   const registerCommands =
     options.registerBuiltinCommands ?? registerBuiltinCommands;
-  await registerCommands({ cwd, env });
+  // Pass logger to registerCommands so it can pass to discovery and registration
+  await registerCommands({ cwd, env, logger: cliLogger });
 
   // Try to find command by progressively shorter paths
   // e.g., ["mind", "sync", "add"] -> try ["mind", "sync", "add"], then ["mind", "sync"], then ["mind"]
   let normalizedCmdPath = normalizeCmdPath(cmdPath);
   let actualRest = rest;
   let cmd = find(normalizedCmdPath);
-  
+
+
+  // If command not found and path has 2 parts, try to find as group + command
+  // e.g., ["plugins", "clear-cache"] -> group "plugins" + command "clear-cache"
+  if (!cmd && cmdPath.length === 2) {
+    const [groupName, commandName] = cmdPath;
+
+    // Find group (e.g., "plugins")
+    const maybeGroup = find([groupName]);
+
+    if (maybeGroup && isCommandGroup(maybeGroup)) {
+      // Search through group's commands for matching name or alias
+      for (const groupCmd of maybeGroup.commands) {
+        if (groupCmd.name === commandName || groupCmd.aliases?.includes(commandName)) {
+          cmd = groupCmd;
+          normalizedCmdPath = [groupCmd.name];
+          break;
+        }
+      }
+    }
+  }
+
   // If command not found and cmdPath has more than 2 elements, try shorter paths
   if (!cmd && cmdPath.length > 2) {
     for (let i = cmdPath.length - 1; i >= 1; i--) {
@@ -248,6 +287,39 @@ export async function executeCli(
     cmd = find(normalizedCmdPath);
   }
 
+  // Handle system groups (e.g., "kb system" shows all system:* groups)
+  if (cmdPath.length === 1 && cmdPath[0] && !cmd) {
+    const groupPrefix = cmdPath[0];
+    const matchingGroups = registryStore.getGroupsByPrefix?.(groupPrefix);
+
+    if (matchingGroups && matchingGroups.length > 0) {
+      if (global.json) {
+        presenter.json({
+          ok: true,
+          groups: matchingGroups.map(g => ({
+            name: g.name,
+            describe: g.describe,
+            commands: g.commands.map(c => ({ name: c.name, describe: c.describe }))
+          }))
+        });
+      } else {
+        const colors = presenter.colors || { bold: (s: string) => s, cyan: (s: string) => s, dim: (s: string) => s };
+        const lines: string[] = [];
+        lines.push(colors.bold(`${groupPrefix} groups:`));
+        lines.push('');
+
+        for (const group of matchingGroups) {
+          lines.push(`  ${colors.cyan(group.name.padEnd(20))}  ${colors.dim(group.describe)}`);
+        }
+
+        lines.push('');
+        lines.push(colors.dim(`Use 'kb ${groupPrefix}:<group> --help' to see commands for a specific group.`));
+        presenter.write(lines.join('\n'));
+      }
+      return 0;
+    }
+  }
+
   if (cmdPath.length === 1 && cmdPath[0]) {
     const productCommands = registryStore.getCommandsByGroup(cmdPath[0]);
     if (productCommands.length > 0) {
@@ -300,7 +372,8 @@ export async function executeCli(
 
   try {
     const runtime = await runtimeFactory(runtimeInitOptions);
-    const context = runtime.context;
+    // Use cliContext instead of runtime.context because runtime.context doesn't have output
+    const context = cliContext;
     ctx = context;
 
     if (global.json && hasSetContext(presenter)) {
@@ -382,18 +455,20 @@ function normalizeCmdPath(argvCmd: string[]): string[] {
 
 function resolveLogLevel(level: unknown): LogLevel {
   if (!level) {
-    return "info";
+    return "silent";  // Default: completely silent
   }
   const normalized = String(level).toLowerCase();
   if (
+    normalized === "trace" ||
     normalized === "debug" ||
     normalized === "info" ||
     normalized === "warn" ||
-    normalized === "error"
+    normalized === "error" ||
+    normalized === "silent"
   ) {
-    return normalized;
+    return normalized as LogLevel;
   }
-  return "info";
+  return "silent";  // Default for invalid values
 }
 
 function isCommandGroup(

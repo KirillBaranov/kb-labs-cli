@@ -38,6 +38,7 @@
   "dependencies": {
     "@kb-labs/analytics-sdk-node": "workspace:*",
     "@kb-labs/cli-commands": "workspace:*",
+    "@kb-labs/cli-contracts": "workspace:*",
     "@kb-labs/cli-core": "workspace:*",
     "@kb-labs/cli-runtime": "workspace:*",
     "@kb-labs/core-cli-adapters": "workspace:*",

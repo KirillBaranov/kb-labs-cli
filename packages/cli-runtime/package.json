@@ -25,6 +25,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@kb-labs/cli-contracts": "workspace:*",
     "@kb-labs/cli-core": "workspace:*",
     "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/runtime",
     "@kb-labs/sandbox": "link:../../../kb-labs-core/packages/sandbox",

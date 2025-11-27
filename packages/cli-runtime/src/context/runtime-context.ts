@@ -3,7 +3,7 @@ import {
   type CliContext,
   type Logger,
   type Presenter,
-} from "@kb-labs/cli-core/public";
+} from "@kb-labs/cli-contracts";
 
 export interface RuntimeContextOptions {
   presenter: Presenter;

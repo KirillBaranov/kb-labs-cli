@@ -231,7 +231,10 @@ export class CliAPIImpl implements CliAPI {
       debounceMs: opts?.discovery?.debounceMs,
     } as const;
 
-    const logLevel: LogLevel = opts?.logger?.level ?? 'info';
+    // Default to 'silent' to avoid log spam. Only show logs with --debug or explicit level
+    const isDebug = process.env.DEBUG_SANDBOX === '1' || process.env.NODE_ENV === 'development';
+    const defaultLevel: LogLevel = isDebug ? 'debug' : 'silent';
+    const logLevel: LogLevel = opts?.logger?.level ?? defaultLevel;
     this.traceId = resolveTraceId();
     this.logger = createStructuredLogger(logLevel, {
       traceId: this.traceId,
