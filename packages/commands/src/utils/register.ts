@@ -1,11 +1,11 @@
 import { registry } from "../registry/service";
 import type { RegisteredCommand } from "../registry/types.js";
 import {
-  systemInfoGroup,
-  systemPluginsGroup,
-  systemLoggingGroup,
-  systemRegistryGroup,
-  systemDebugGroup,
+  infoGroup,
+  pluginsGroup,
+  loggingGroup,
+  registryGroup,
+  debugGroup,
 } from "../commands/system/groups";
 import { pluginsList } from "../commands/system/plugins-list";
 import { pluginsDoctor } from "../commands/system/plugins-doctor";
@@ -25,12 +25,7 @@ import { workflowCommandGroup } from "../commands/workflows";
 import { PluginRegistry } from "@kb-labs/cli-core";
 import { registerShutdownHook } from "./shutdown";
 import { getContextCwd } from "@kb-labs/shared-cli-ui";
-
-// Simple logging helper
-function log(level: 'info' | 'warn' | 'error', message: string): void {
-  const prefix = level === 'error' ? '✗' : level === 'warn' ? '⚠' : 'ℹ';
-  console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](`${prefix} ${message}`);
-}
+import { type Logger, createNoOpLogger } from "@kb-labs/core-sys/logging";
 
 let _registered = false;
 const registeredCommands: any[] = [];
@@ -38,11 +33,14 @@ const registeredCommands: any[] = [];
 export interface RegisterBuiltinCommandsInput {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
+  logger?: Logger;
 }
 
 export async function registerBuiltinCommands(
   input: RegisterBuiltinCommandsInput = {},
 ) {
+  const log = input.logger ?? createNoOpLogger();
+
   if (_registered) {
     return;
   }
@@ -51,13 +49,13 @@ export async function registerBuiltinCommands(
   registeredCommands.length = 0;
 
   // Register system command groups (migrated commands)
-  registry.registerGroup(systemInfoGroup);
-  registry.registerGroup(systemPluginsGroup);
-  registry.registerGroup(systemLoggingGroup);
-  registry.registerGroup(systemRegistryGroup);
-  registry.registerGroup(systemDebugGroup);
+  registry.registerGroup(infoGroup);
+  registry.registerGroup(pluginsGroup);
+  registry.registerGroup(loggingGroup);
+  registry.registerGroup(registryGroup);
+  registry.registerGroup(debugGroup);
   registry.registerGroup(workflowCommandGroup);
-  
+
   // Convert CliCommand to Command for introspect
   const introspectCliCommand = createPluginsIntrospectCommand();
   registry.register({
@@ -69,7 +67,7 @@ export async function registerBuiltinCommands(
       return introspectCliCommand.run(ctx, argv, flags);
     },
   });
-  
+
   try {
     const cwd = getContextCwd({ cwd: input.cwd });
     const env = input.env ?? process.env;
@@ -79,18 +77,18 @@ export async function registerBuiltinCommands(
     const discovered = await discoverManifests(cwd, noCache);
 
     if (discovered.length > 0) {
-      log('info', `Discovered ${discovered.length} packages with CLI manifests`);
-      const { valid: readyToRegister, skipped: preflightSkipped } = preflightManifests(discovered);
+      log.info(`Discovered ${discovered.length} packages with CLI manifests`);
+      const { valid: readyToRegister, skipped: preflightSkipped } = preflightManifests(discovered, log);
 
       if (preflightSkipped.length > 0) {
-        log('warn', `Preflight skipped ${preflightSkipped.length} manifest(s) during validation`);
+        log.warn(`Preflight skipped ${preflightSkipped.length} manifest(s) during validation`);
         for (const skipped of preflightSkipped) {
-          log('warn', `  • ${skipped.id} [${skipped.source}] → ${skipped.reason}`);
+          log.warn(`  • ${skipped.id} [${skipped.source}] → ${skipped.reason}`);
         }
       }
 
       if (readyToRegister.length === 0) {
-        log('error', 'All discovered manifests were skipped during preflight validation');
+        log.error('All discovered manifests were skipped during preflight validation');
         registry.markPartial(true);
         _registered = false;
         return;
@@ -98,17 +96,15 @@ export async function registerBuiltinCommands(
 
       const result = await registerManifests(readyToRegister, registry, {
         cwd,
+        logger: log,
       });
       if (result.registered.length > 0) {
-        log('info', `Registered ${result.registered.length} commands from manifests`);
+        log.info(`Registered ${result.registered.length} commands from manifests`);
         registeredCommands.push(...result.registered);
       }
       if (result.skipped.length > 0) {
         for (const skipped of result.skipped) {
-          log(
-            'error',
-            `Skipped manifest ${skipped.id} from ${skipped.source}: ${skipped.reason}`
-          );
+          log.error(`Skipped manifest ${skipped.id} from ${skipped.source}: ${skipped.reason}`);
         }
       }
       if (result.skipped.length > 0 || preflightSkipped.length > 0) {
@@ -127,17 +123,17 @@ export async function registerBuiltinCommands(
     const plugins = pluginRegistry.list();
 
     if (plugins.length > 0) {
-      log('info', `Discovered ${plugins.length} plugins via cli-core`);
+      log.info(`Discovered ${plugins.length} plugins via cli-core`);
     }
   } catch (err: any) {
-    log('warn', `Discovery failed: ${err.message}`);
+    log.warn(`Discovery failed: ${err.message}`);
     registry.markPartial(true);
     _registered = false;
     return;
   }
 
   registerShutdownHook(async () => {
-    await disposeAllPlugins(registry);
+    await disposeAllPlugins(registry, log);
   });
 }
 

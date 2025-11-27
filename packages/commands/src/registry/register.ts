@@ -10,27 +10,8 @@ import { checkRequires } from './availability';
 export interface RegisterManifestsOptions {
   cwd?: string;
 }
-import { getLogger, getLogLevel } from '@kb-labs/core-sys/logging';
+import { getLogLevel, type Logger, createNoOpLogger } from '@kb-labs/core-sys/logging';
 import { telemetry } from './telemetry';
-
-// Helper function for logging (replaces deprecated log())
-const log = (level: 'debug' | 'info' | 'warn' | 'error', message: string, fields?: Record<string, unknown>): void => {
-  const logger = getLogger('commands:registry');
-  switch (level) {
-    case 'debug':
-      logger.debug(message, fields);
-      break;
-    case 'info':
-      logger.info(message, fields);
-      break;
-    case 'warn':
-      logger.warn(message, fields);
-      break;
-    case 'error':
-      logger.error(message, fields);
-      break;
-  }
-};
 
 const ajv = new Ajv();
 
@@ -57,7 +38,7 @@ const manifestSchema = {
   additionalProperties: true,
   properties: {
     manifestVersion: { type: 'string', enum: ['1.0'] },
-    id: { type: 'string', pattern: '^[a-z0-9-]+(?::[a-z0-9-]+){1,2}$' }, // 2-3 levels
+    id: { type: 'string', pattern: '^[a-z0-9-]+(?::[a-z0-9-]+)*$' }, // Simple or namespaced (colon-separated)
     aliases: { type: 'array', items: { type: 'string' } },
     group: { type: 'string' },
     describe: { type: 'string' },
@@ -144,17 +125,8 @@ const SOURCE_PRIORITY: Record<string, number> = {
  * Normalize command ID to ensure it follows namespace:command format
  */
 function normalizeCommandId(id: string, namespace: string): string {
-  if (id.includes(':')) {
-    // Already has namespace, ensure it matches
-    const [ns, ...cmdParts] = id.split(':');
-    if (ns !== namespace) {
-      // Fix namespace mismatch
-      return `${namespace}:${cmdParts.join(':')}`;
-    }
-    return id;
-  }
-  // No namespace, add it
-  return `${namespace}:${id}`;
+  // IDs are now simple (no namespace prefix) - return as-is
+  return id;
 }
 
 /**
@@ -172,28 +144,29 @@ function generateWhitespaceAliases(id: string): string[] {
 /**
  * Normalize aliases: ensure they're valid and add whitespace variants
  */
-function normalizeAliases(manifest: CommandManifest): string[] {
+function normalizeAliases(manifest: CommandManifest, logger?: Logger): string[] {
+  const log = logger ?? createNoOpLogger();
   const aliases = new Set<string>();
   const namespace = manifest.namespace || manifest.group;
-  
+
   // Add existing aliases
   if (manifest.aliases) {
     for (const alias of manifest.aliases) {
       // Validate alias format (no spaces, no special chars except hyphens)
       if (!/^[a-z0-9-:]+$/i.test(alias)) {
-        log('warn', `Invalid alias "${alias}" in ${manifest.id}: aliases must be alphanumeric with hyphens or colons`);
+        log.warn(`Invalid alias "${alias}" in ${manifest.id}: aliases must be alphanumeric with hyphens or colons`);
         continue;
       }
       aliases.add(alias);
     }
   }
-  
+
   // Add whitespace alias for scoped commands
   const whitespaceAliases = generateWhitespaceAliases(manifest.id);
   for (const alias of whitespaceAliases) {
     aliases.add(alias);
   }
-  
+
   return Array.from(aliases);
 }
 
@@ -205,17 +178,17 @@ function checkNamespaceCollision(
   existing: RegisteredCommand,
   namespace: string
 ): void {
-  const [existingNs] = existing.manifest.id.split(':');
-  const [currentNs, currentCmd] = manifest.id.split(':');
-  
-  // If both are in the same namespace and have same command name, that's a collision
-  if (existingNs === currentNs && existingNs === namespace) {
-    const [existingCmd] = existing.manifest.id.split(':').slice(1);
-    if (existingCmd === currentCmd) {
-      // Same namespace + same command = collision
+  // IDs are now simple (no colon prefix), check group instead
+  const existingGroup = existing.manifest.group || '';
+  const currentGroup = manifest.group || '';
+
+  // If both are in the same group and have same command ID, that's a collision
+  if (existingGroup === currentGroup && existingGroup === namespace) {
+    if (existing.manifest.id === manifest.id) {
+      // Same group + same ID = collision
       throw new Error(
-        `Command collision in namespace "${namespace}": "${manifest.id}" conflicts with existing "${existing.manifest.id}". ` +
-        `Rename one of the commands to use a different base name (e.g., "${namespace}:${currentCmd}2" or use --alias to create a different alias).`
+        `Command collision in group "${namespace}": "${manifest.id}" conflicts with existing "${existing.manifest.id}". ` +
+        `Rename one of the commands to use a different ID (e.g., "${manifest.id}2" or use --alias to create a different alias).`
       );
     }
   }
@@ -276,8 +249,10 @@ export interface ManifestRegistrationResult {
 }
 
 export function preflightManifests(
-  discoveryResults: DiscoveryResult[]
+  discoveryResults: DiscoveryResult[],
+  logger?: Logger
 ): { valid: DiscoveryResult[]; skipped: SkippedManifest[] } {
+  const log = logger ?? createNoOpLogger();
   const valid: DiscoveryResult[] = [];
   const skipped: SkippedManifest[] = [];
 
@@ -297,7 +272,7 @@ export function preflightManifests(
           reason,
         });
         telemetry.recordSchemaError(manifestId, reason);
-        log('warn', `Preflight skipped manifest ${manifestId}: ${reason}`);
+        log.warn(`Preflight skipped manifest ${manifestId}: ${reason}`);
       }
     }
 
@@ -318,8 +293,9 @@ export function preflightManifests(
 export async function registerManifests(
   discoveryResults: DiscoveryResult[],
   registry: any, // CommandRegistry interface
-  options: RegisterManifestsOptions = {}
+  options: RegisterManifestsOptions & { logger?: Logger } = {}
 ): Promise<ManifestRegistrationResult> {
+  const log = options.logger ?? createNoOpLogger();
   const registered: RegisteredCommand[] = [];
   const skipped: SkippedManifest[] = [];
   const globalIds = new Map<string, RegisteredCommand>();
@@ -350,11 +326,11 @@ export async function registerManifests(
 
         const normalizedId = normalizeCommandId(manifest.id, namespace);
         if (normalizedId !== manifest.id) {
-          log('warn', `Command ID "${manifest.id}" normalized to "${normalizedId}"`);
+          log.warn(`Command ID "${manifest.id}" normalized to "${normalizedId}"`);
           manifest.id = normalizedId;
         }
 
-        const normalizedAliases = normalizeAliases(manifest);
+        const normalizedAliases = normalizeAliases(manifest, log);
         if (normalizedAliases.length > 0) {
           manifest.aliases = normalizedAliases;
         }
@@ -398,7 +374,7 @@ export async function registerManifests(
             (cmd as any)._disposeHook = manifestModule.dispose;
           }
         } catch (hookError: any) {
-          log('debug', `Lifecycle hooks unavailable for ${manifest.id}: ${hookError.message}`);
+          log.debug(`Lifecycle hooks unavailable for ${manifest.id}: ${hookError.message}`);
         }
 
         const existing = globalIds.get(manifest.id);
@@ -408,12 +384,12 @@ export async function registerManifests(
             existing.shadowed = true;
             globalIds.set(manifest.id, cmd);
             if (logLevel === 'info' || logLevel === 'debug') {
-              log('info', `${manifest.id} from ${result.source} shadows ${existing.source} version`);
+              log.info(`${manifest.id} from ${result.source} shadows ${existing.source} version`);
             }
           } else {
             cmd.shadowed = true;
             if (logLevel === 'info' || logLevel === 'debug') {
-              log('info', `${manifest.id} from ${result.source} shadowed by ${existing.source} version`);
+              log.info(`${manifest.id} from ${result.source} shadowed by ${existing.source} version`);
             }
           }
         } else {
@@ -435,11 +411,11 @@ export async function registerManifests(
               existingAlias.shadowed = true;
               globalAliases.set(alias, cmd);
               if (logLevel === 'info' || logLevel === 'debug') {
-                log('info', `Alias "${alias}" from ${result.source} shadows ${existingAlias.source} version`);
+                log.info(`Alias "${alias}" from ${result.source} shadows ${existingAlias.source} version`);
               }
             } else if (currentPriority < existingPriority) {
               if (logLevel === 'info' || logLevel === 'debug') {
-                log('info', `Alias "${alias}" from ${result.source} shadowed by ${existingAlias.source} version`);
+                log.info(`Alias "${alias}" from ${result.source} shadowed by ${existingAlias.source} version`);
               }
               continue;
             } else {
@@ -457,7 +433,7 @@ export async function registerManifests(
             const currentPriority = getSourcePriority(result.source);
 
             if (currentPriority > existingPriority) {
-              log('warn', `Alias "${alias}" conflicts with command ID "${alias}". Alias will shadow command.`);
+              log.warn(`Alias "${alias}" conflicts with command ID "${alias}". Alias will shadow command.`);
               globalAliases.set(alias, cmd);
             } else {
               throw new Error(
@@ -483,16 +459,16 @@ export async function registerManifests(
           source: result.source,
           reason,
         });
-        log('error', `Skipped manifest ${manifestId} (${result.source}): ${reason}`);
+        log.error(`Skipped manifest ${manifestId} (${result.source}): ${reason}`);
         continue;
       }
     }
   }
 
   if (skipped.length > 0) {
-    log('warn', `Skipped ${skipped.length} manifest(s) during registration`);
+    log.warn(`Skipped ${skipped.length} manifest(s) during registration`);
     for (const skip of skipped) {
-      log('warn', `  • ${skip.id} [${skip.source}] → ${skip.reason}`);
+      log.warn(`  • ${skip.id} [${skip.source}] → ${skip.reason}`);
     }
   }
 
@@ -513,10 +489,11 @@ export async function registerManifests(
 /**
  * Dispose all plugins by calling their dispose hooks
  */
-export async function disposeAllPlugins(registry: any): Promise<void> {
+export async function disposeAllPlugins(registry: any, logger?: Logger): Promise<void> {
+  const log = logger ?? createNoOpLogger();
   const manifests = registry.listManifests();
   const disposePromises: Promise<void>[] = [];
-  
+
   for (const cmd of manifests) {
     const disposeHook = (cmd as any)._disposeHook;
     if (disposeHook && typeof disposeHook === 'function') {
@@ -525,12 +502,12 @@ export async function disposeAllPlugins(registry: any): Promise<void> {
           registry,
           command: cmd,
         })).catch((err: any) => {
-          log('warn', `Dispose hook failed for ${cmd.manifest.id}: ${err.message}`);
+          log.warn(`Dispose hook failed for ${cmd.manifest.id}: ${err.message}`);
         })
       );
     }
   }
-  
+
   await Promise.allSettled(disposePromises);
 }
 

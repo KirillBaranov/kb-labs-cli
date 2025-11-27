@@ -123,9 +123,10 @@ export async function runCommand(
     return 1;
   }
   
-  const commandId = cmd.manifest.id.split(':').pop() || cmd.manifest.id;
-  const cliCommand = manifestV2.cli?.commands?.find((c: any) => 
-    c.id === commandId || c.id === cmd.manifest.id
+  // ID is now simple (no namespace prefix)
+  const commandId = cmd.manifest.id;
+  const cliCommand = manifestV2.cli?.commands?.find((c: any) =>
+    c.id === commandId
   );
   if (!cliCommand) {
     ctx.logger?.error('Command not declared in manifest', { command: cmd.manifest.id });

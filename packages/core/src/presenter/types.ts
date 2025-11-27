@@ -1,10 +1,2 @@
-export interface Presenter {
-  isTTY: boolean;
-  isQuiet: boolean;
-  isJSON: boolean;
-  write(line: string): void;
-  info(line: string): void;
-  warn(line: string): void;
-  error(line: string): void;
-  json(payload: unknown): void;
-}
+// Re-export types from cli-contracts (source of truth)
+export type { Presenter } from "@kb-labs/cli-contracts";

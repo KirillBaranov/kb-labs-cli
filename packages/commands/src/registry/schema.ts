@@ -67,17 +67,13 @@ export const CommandManifestSchema = z.object({
   manifestV2: z.any().optional(), // Full ManifestV2 for sandbox execution
 }).refine(
   (data) => {
-    // If namespace is provided, it should match group or be derived from id
+    // IDs are now simple (no namespace prefix), just check namespace matches group
     if (data.namespace && data.group && data.namespace !== data.group) {
-      // Allow if namespace matches the part before ':' in id
-      const idNamespace = data.id.split(':')[0];
-      if (data.namespace !== idNamespace) {
-        return false;
-      }
+      return false;
     }
     return true;
   },
-  { message: 'namespace must match group or id prefix' }
+  { message: 'namespace must match group' }
 ).refine(
   (data) => {
     // Validate requires entries are semver-compatible if they include version
@@ -168,11 +164,8 @@ export function normalizeManifest(manifest: CommandManifest, packageName: string
     normalized.package = packageName;
   }
   
-  // Ensure id follows namespace:command format
-  if (!normalized.id.includes(':')) {
-    const group = normalized.group || normalized.namespace || 'unknown';
-    normalized.id = `${group}:${normalized.id}`;
-  }
+  // ID should be simple without group prefix (breaking change)
+  // No longer enforcing namespace:command format
   
   return normalized;
 }

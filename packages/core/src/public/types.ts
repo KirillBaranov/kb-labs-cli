@@ -1,8 +1,10 @@
-export type { CliCommand } from "../command";
+// Re-export types from cli-contracts (breaking circular dependency)
 export type {
+  CliCommand,
   CliContext,
   Profile,
-} from "../context";
-export type { Presenter } from "../presenter/types";
-// Logger is exported from contracts.ts to avoid duplication
+  Presenter,
+  FlagBuilder,
+} from "@kb-labs/cli-contracts";
+// Note: Logger is exported from contracts.ts (core-sys Logger, not cli-contracts Logger)
 

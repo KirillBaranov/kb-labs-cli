@@ -4,9 +4,8 @@ import type { ManifestV2, CliCommandDecl } from "@kb-labs/plugin-manifest";
 import { getContextCwd } from "@kb-labs/shared-cli-ui";
 
 function manifestToCommand(registered: RegisteredCommand): Command {
-  const name = registered.manifest.id.includes(":")
-    ? registered.manifest.id.replace(":", " ")
-    : registered.manifest.id;
+  // ID is now simple without group prefix
+  const name = registered.manifest.id;
 
   async function executeLoaderCommand(
     ctx: any,
@@ -94,11 +93,11 @@ function manifestToCommand(registered: RegisteredCommand): Command {
         return 1;
       }
 
-      const commandId =
-        registered.manifest.id.split(":").pop() || registered.manifest.id;
+      // ID is now simple (no namespace prefix)
+      const commandId = registered.manifest.id;
       const cliCommand = manifestV2.cli?.commands?.find(
         (c: CliCommandDecl) =>
-          c.id === commandId || c.id === registered.manifest.id,
+          c.id === commandId,
       );
 
       if (!cliCommand || !cliCommand.handler) {
@@ -197,6 +196,12 @@ class InMemoryRegistry implements CommandRegistry {
     this.byName.set(cmd.manifest.id, commandAdapter);
     this.byName.set(commandAdapter.name, commandAdapter);
 
+    // Register with full group + command format for invocation
+    if (cmd.manifest.group) {
+      const fullName = `${cmd.manifest.group} ${cmd.manifest.id}`;
+      this.byName.set(fullName, commandAdapter);
+    }
+
     if (cmd.manifest.aliases) {
       for (const alias of cmd.manifest.aliases) {
         this.byName.set(alias, commandAdapter);
@@ -280,6 +285,21 @@ class InMemoryRegistry implements CommandRegistry {
       }
     }
 
+    // Try to find command in groups by prefix (e.g., ["system", "hello"] -> "system:info hello")
+    if (Array.isArray(nameOrPath) && nameOrPath.length >= 2) {
+      const [groupPrefix, ...cmdParts] = nameOrPath;
+      const cmdName = cmdParts.join(" ");
+
+      for (const group of this.groups.values()) {
+        if (group.name === groupPrefix || group.name.startsWith(groupPrefix + ':')) {
+          const fullName = `${group.name} ${cmdName}`;
+          if (this.byName.has(fullName)) {
+            return this.byName.get(fullName);
+          }
+        }
+      }
+    }
+
     return undefined;
   }
 
@@ -295,6 +315,26 @@ class InMemoryRegistry implements CommandRegistry {
 
   listGroups(): CommandGroup[] {
     return Array.from(this.groups.values());
+  }
+
+  getGroupsByPrefix(prefix: string): CommandGroup[] {
+    const result: CommandGroup[] = [];
+    for (const group of this.groups.values()) {
+      if (group.name === prefix || group.name.startsWith(prefix + ':')) {
+        result.push(group);
+      }
+    }
+    return result;
+  }
+
+  getCommandsByGroupPrefix(prefix: string): Command[] {
+    const result: Command[] = [];
+    for (const group of this.groups.values()) {
+      if (group.name === prefix || group.name.startsWith(prefix + ':')) {
+        result.push(...group.commands);
+      }
+    }
+    return result;
   }
 
   listProductGroups(): ProductGroup[] {

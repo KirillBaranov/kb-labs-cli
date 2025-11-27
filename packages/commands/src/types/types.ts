@@ -27,6 +27,7 @@ export interface Command {
 
 export interface CommandGroup {
   name: string;                    // "devlink"
+  aliases?: string[];              // ["wf"] для алиасов группы
   describe: string;                // "Workspace linking and dependency management"
   commands: Command[];
 }
@@ -41,7 +42,11 @@ export interface CommandRegistry extends CommandLookup {
   registerGroup(group: CommandGroup): void;
   has(name: string): boolean;
   listGroups(): CommandGroup[];
-  
+
+  // New: System groups support
+  getGroupsByPrefix?: (prefix: string) => CommandGroup[];
+  getCommandsByGroupPrefix?: (prefix: string) => Command[];
+
   // New: Manifest support
   registerManifest?: (cmd: any) => void; // any to avoid circular dependency with registry types
   getManifest?: (id: string) => any;

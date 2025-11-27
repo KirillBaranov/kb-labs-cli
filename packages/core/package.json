@@ -32,6 +32,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@kb-labs/cli-contracts": "workspace:*",
     "@kb-labs/core-sys": "link:../../../kb-labs-core/packages/sys",
     "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui",
     "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",

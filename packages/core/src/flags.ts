@@ -30,17 +30,34 @@ export function validateCommandFlags(
 
     // Type validation
     if (def.type === "boolean" && typeof value !== "boolean") {
+      const errorMsg = [
+        `❌ Invalid type for --${def.name}`,
+        '',
+        `Expected: boolean`,
+        `Got: ${typeof value}`,
+        '',
+        'Hint: Try --help for more information'
+      ].join('\n');
+
       throw new CliError(
         CLI_ERROR_CODES.E_INVALID_FLAGS,
-        `Flag --${def.name} must be a boolean`
+        errorMsg
       );
     }
 
     // Choice validation
     if (def.choices && !def.choices.includes(String(value))) {
+      const errorMsg = [
+        `❌ Invalid value for --${def.name}: ${value}`,
+        '',
+        `Must be one of: ${def.choices.join(', ')}`,
+        '',
+        'Hint: Try --help for more information'
+      ].join('\n');
+
       throw new CliError(
         CLI_ERROR_CODES.E_INVALID_FLAGS,
-        `Invalid value for --${def.name}: ${value}. Must be one of: ${def.choices.join(", ")}`
+        errorMsg
       );
     }
   }

@@ -1,4 +1,7 @@
-import type { Presenter } from "./presenter/types";
+// Re-export types from cli-contracts (source of truth)
+export type { CliContext, Profile, Logger } from "@kb-labs/cli-contracts";
+
+import type { CliContext, Presenter } from "@kb-labs/cli-contracts";
 import type { Output } from "@kb-labs/core-sys/output";
 import type { Logger as CoreLogger } from "@kb-labs/core-sys/logging";
 import path from "node:path";
@@ -16,35 +19,6 @@ function detectRepoRoot(start: string): string {
     }
     cur = parent;
   }
-}
-
-export interface Logger {
-  info?: (message: string) => void;
-  warn?: (message: string) => void;
-  error?: (message: string) => void;
-  debug?: (message: string) => void;
-}
-
-export interface Profile {
-  name: string;
-  [key: string]: any;
-}
-
-export interface CliContext {
-  repoRoot?: string;
-  cwd: string;
-  logger?: CoreLogger; // ✅ Unified Logger interface (for structured logging)
-  output?: Output; // ✅ Unified Output interface (for user-facing messages)
-  /** 
-   * @deprecated Use `output` API instead (e.g., `ctx.output.write()` instead of `ctx.presenter.write()`)
-   * This will be removed in a future version. Migrate to output API for better consistency.
-   */
-  presenter: Presenter;
-  env: NodeJS.ProcessEnv;
-  profile?: Profile;
-  config?: Record<string, any>;
-  diagnostics: string[];
-  sentJSON?: boolean;
 }
 
 export interface CreateContextOptions {
