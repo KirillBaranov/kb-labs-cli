@@ -6,6 +6,9 @@ import {
   loggingGroup,
   registryGroup,
   debugGroup,
+  workerGroup,
+  jobsGroup,
+  docsGroup,
 } from "../commands/system/groups";
 import { pluginsList } from "../commands/system/plugins-list";
 import { pluginsDoctor } from "../commands/system/plugins-doctor";
@@ -55,6 +58,9 @@ export async function registerBuiltinCommands(
   registry.registerGroup(registryGroup);
   registry.registerGroup(debugGroup);
   registry.registerGroup(workflowCommandGroup);
+  registry.registerGroup(workerGroup);
+  registry.registerGroup(jobsGroup);
+  registry.registerGroup(docsGroup);
 
   // Convert CliCommand to Command for introspect
   const introspectCliCommand = createPluginsIntrospectCommand();

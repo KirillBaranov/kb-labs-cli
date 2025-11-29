@@ -31,3 +31,11 @@ export {
   wfCancel,
   workflowCommandGroup,
 } from "./commands/workflows";
+export { worker } from "./commands/worker";
+export {
+  jobsList,
+  jobsEnable,
+  jobsDisable,
+  jobsStatus,
+  jobsTrigger,
+} from "./commands/jobs";
