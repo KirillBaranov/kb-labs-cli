@@ -1,4 +1,5 @@
 import { defineSystemCommand, type CommandOutput } from '@kb-labs/cli-command-kit';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type HelloFlags = {
   json: { type: 'boolean'; description?: string };
@@ -9,7 +10,9 @@ export const hello = defineSystemCommand<HelloFlags, CommandOutput>({
   description: 'Print a friendly greeting',
   longDescription: 'Prints a simple greeting message for testing CLI functionality',
   category: 'info',
-  examples: ['kb hello'],
+  examples: generateExamples('hello', 'kb', [
+    { flags: {} },
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
   },

@@ -9,6 +9,7 @@ import { health } from './health.js';
 import { diagnose } from './diagnose.js';
 import { diag } from './diag.js';
 import { pluginsList } from './plugins-list.js';
+import { pluginsCommands } from './plugins-commands.js';
 import { pluginsEnable } from './plugins-enable.js';
 import { pluginsDisable } from './plugins-disable.js';
 import { pluginsLink } from './plugins-link.js';
@@ -34,6 +35,9 @@ import { trace } from '../debug/trace.js';
 import { fixture } from '../debug/fixture.js';
 import { repl } from '../debug/repl.js';
 import { dev } from '../debug/dev.js';
+import { worker } from '../worker.js';
+import { jobsList, jobsEnable, jobsDisable, jobsStatus, jobsTrigger } from '../jobs/index.js';
+import { docsGenerateCliReference } from './docs-generate-cli-reference.js';
 
 /**
  * Info Commands Group
@@ -53,6 +57,7 @@ export const infoGroup = defineSystemCommandGroup('info', 'System information co
  */
 export const pluginsGroup = defineSystemCommandGroup('plugins', 'Plugin management commands', [
   pluginsList,
+  pluginsCommands,
   pluginsEnable,
   pluginsDisable,
   pluginsLink,
@@ -103,3 +108,30 @@ export const loggingGroup = defineSystemCommandGroup('logging', 'Logging configu
   loggingInit,
 ]);
 
+/**
+ * Worker Commands Group
+ * Background job worker daemon
+ */
+export const workerGroup = defineSystemCommandGroup('worker', 'Background job worker daemon commands', [
+  worker,
+]);
+
+/**
+ * Jobs Commands Group
+ * Job scheduling and management
+ */
+export const jobsGroup = defineSystemCommandGroup('jobs', 'Job scheduling and management commands', [
+  jobsList,
+  jobsEnable,
+  jobsDisable,
+  jobsStatus,
+  jobsTrigger,
+]);
+
+/**
+ * Docs Commands Group
+ * Documentation generation and maintenance
+ */
+export const docsGroup = defineSystemCommandGroup('docs', 'Documentation generation commands', [
+  docsGenerateCliReference,
+]);

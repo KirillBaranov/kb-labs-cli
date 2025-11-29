@@ -5,6 +5,7 @@
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
 import { PluginRegistry } from '@kb-labs/cli-core';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsDiscoveryTestResult = CommandResult & {
   plugins?: Array<{
@@ -29,7 +30,10 @@ export const pluginsDiscoveryTest = defineSystemCommand<PluginsDiscoveryTestFlag
   name: 'discovery-test',
   description: 'Test new DiscoveryManager with debug logs',
   category: 'plugins',
-  examples: ['kb plugins:discovery-test', 'kb plugins:discovery-test --json', 'kb plugins:discovery-test --debug'],
+  examples: generateExamples('discovery-test', 'plugins', [
+    { flags: {} },
+    { flags: { json: true } },
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
   },

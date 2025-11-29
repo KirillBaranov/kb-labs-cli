@@ -1,6 +1,7 @@
 import { createCliAPI } from '@kb-labs/cli-api';
 import { defineSystemCommand } from '@kb-labs/cli-command-kit';
 import type { HealthSnapshot } from '@kb-labs/cli-api';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type HealthFlags = {
   json: { type: 'boolean'; description?: string };
@@ -17,7 +18,10 @@ export const health = defineSystemCommand<HealthFlags, HealthResult>({
   description: 'Report overall CLI health snapshot',
   longDescription: 'Shows the kb.health/1 snapshot shared with REST and Studio.',
   category: 'info',
-  examples: ['kb health', 'kb health --json'],
+  examples: generateExamples('health', 'kb', [
+    { flags: {} },
+    { flags: { json: true } },
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
   },

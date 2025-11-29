@@ -5,6 +5,7 @@
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
 import { disablePlugin } from '../../registry/plugins-state.js';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsDisableResult = CommandResult & {
   packageName?: string;
@@ -17,7 +18,9 @@ export const pluginsDisable = defineSystemCommand<PluginsDisableFlags, PluginsDi
   name: 'disable',
   description: 'Disable a plugin',
   category: 'plugins',
-  examples: ['kb plugins disable @kb-labs/devlink-cli'],
+  examples: generateExamples('disable', 'plugins', [
+    { flags: {} },  // kb plugins disable (requires <package> arg)
+  ]),
   flags: {},
   analytics: {
     command: 'plugins:disable',

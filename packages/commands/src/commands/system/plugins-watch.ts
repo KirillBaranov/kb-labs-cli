@@ -11,6 +11,7 @@ import { registerManifests } from '../../registry/register';
 import { registry } from '../../registry/service';
 import { registerShutdownHook } from '../../utils/shutdown';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsWatchResult = CommandResult;
 
@@ -22,7 +23,9 @@ export const pluginsWatch = defineSystemCommand<PluginsWatchFlags, PluginsWatchR
   name: 'watch',
   description: 'Watch for plugin manifest changes and hot-reload',
   category: 'plugins',
-  examples: ['kb plugins watch'],
+  examples: generateExamples('watch', 'plugins', [
+    { flags: {} },
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
   },

@@ -7,6 +7,7 @@ import { linkPlugin } from '../../registry/plugins-state.js';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsLinkResult = CommandResult & {
   packageName?: string;
@@ -22,7 +23,9 @@ export const pluginsLink = defineSystemCommand<PluginsLinkFlags, PluginsLinkResu
   name: 'link',
   description: 'Link a local plugin for development',
   category: 'plugins',
-  examples: ['kb plugins link ./packages/my-plugin', 'kb plugins link ../kb-labs-devlink'],
+  examples: generateExamples('link', 'plugins', [
+    { flags: {} },  // kb plugins link (requires <path> arg)
+  ]),
   flags: {},
   analytics: {
     command: 'plugins:link',

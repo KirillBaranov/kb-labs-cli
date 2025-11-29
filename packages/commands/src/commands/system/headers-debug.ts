@@ -6,6 +6,7 @@ import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } fr
 import { formatTable, formatRelativeTime, keyValue } from '@kb-labs/shared-cli-ui';
 import type { Output } from '@kb-labs/cli-contracts';
 import type { StringFlagSchema } from '@kb-labs/cli-command-kit/flags';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 interface HeaderDebugEntry {
   timestamp: number;
@@ -189,11 +190,11 @@ export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugR
   name: 'headers-debug',
   description: 'Stream recent header policy decisions from the REST API debug buffer',
   category: 'registry',
-  examples: [
-    'kb headers:debug',
-    'kb headers:debug --plugin payments --blocked',
-    'kb headers:debug --dry --direction inbound --limit 20',
-  ],
+  examples: generateExamples('headers-debug', 'kb', [
+    { flags: {} },
+    { flags: { plugin: 'payments', blocked: true } },
+    { flags: { dry: true, direction: 'inbound', limit: 20 } },
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output raw entries in JSON' },
     limit: { type: 'number', description: 'Number of recent decisions to fetch (1-200)' },

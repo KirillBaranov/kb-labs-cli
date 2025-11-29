@@ -4,6 +4,7 @@
 
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
 import { telemetry } from '../../registry/telemetry.js';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsTelemetryResult = CommandResult & {
   message?: string;
@@ -21,7 +22,11 @@ export const pluginsTelemetry = defineSystemCommand<PluginsTelemetryFlags, Plugi
   name: 'telemetry',
   description: 'Show telemetry metrics (requires opt-in)',
   category: 'plugins',
-  examples: ['kb plugins telemetry', 'kb plugins telemetry --json', 'kb plugins telemetry --clear'],
+  examples: generateExamples('telemetry', 'plugins', [
+    { flags: {} },
+    { flags: { json: true } },
+    { flags: { clear: true } },
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
     clear: { type: 'boolean', description: 'Clear collected metrics' },

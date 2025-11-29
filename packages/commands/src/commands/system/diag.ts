@@ -9,6 +9,7 @@ import { loadPluginsState } from '../../registry/plugins-state.js';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd, safeColors, safeSymbols } from '@kb-labs/shared-cli-ui';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type DiagDetails = {
   category: string;
@@ -37,7 +38,10 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
   name: 'diag',
   description: 'Comprehensive system diagnostics (plugins, cache, environment, versions)',
   category: 'info',
-  examples: ['kb diag', 'kb diag --json'],
+  examples: generateExamples('diag', 'kb', [
+    { flags: {} },
+    { flags: { json: true } },
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
   },

@@ -6,6 +6,7 @@ import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } fr
 import { createCliAPI } from '@kb-labs/cli-api';
 import { resolveHeaderPolicy } from '@kb-labs/plugin-adapter-rest';
 import type { ManifestV2, RestRouteDecl } from '@kb-labs/plugin-manifest';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type LintLevel = 'error' | 'warn';
 
@@ -30,6 +31,11 @@ type RegistryLintResult = CommandResult & {
   };
 };
 
+type RegistryLintFlags = {
+  json: { type: 'boolean'; description?: string };
+  strict: { type: 'boolean'; description?: string };
+};
+
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
   'keep-alive',
@@ -52,7 +58,11 @@ export const registryLint = defineSystemCommand<RegistryLintFlags, RegistryLintR
   name: 'lint',
   description: 'Validate header policies declared in REST plugin manifests',
   category: 'registry',
-  examples: ['kb registry:lint', 'kb registry:lint --json', 'kb registry:lint --strict'],
+  examples: generateExamples('lint', 'registry', [
+    { flags: {} },
+    { flags: { json: true } },
+    { flags: { strict: true } },
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output JSON report' },
     strict: { type: 'boolean', description: 'Treat warnings as failures (exit 1 on warnings)' },

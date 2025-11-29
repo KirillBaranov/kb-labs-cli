@@ -6,6 +6,7 @@ import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } fr
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { getLogger } from '@kb-labs/core-sys/logging';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type LoggingCheckResult = CommandResult & {
   configFile?: string;
@@ -29,7 +30,10 @@ export const loggingCheck = defineSystemCommand<LoggingCheckFlags, LoggingCheckR
   name: 'check',
   description: 'Check logging configuration and test logging system',
   category: 'logging',
-  examples: ['kb logging:check', 'kb logging:check --json'],
+  examples: generateExamples('check', 'logging', [
+    { flags: {} },
+    { flags: { json: true } },
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
   },

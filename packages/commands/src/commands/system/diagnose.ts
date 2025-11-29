@@ -1,5 +1,6 @@
 import { defineSystemCommand } from '@kb-labs/cli-command-kit';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type DiagnoseFlags = {
   json: { type: 'boolean'; description?: string };
@@ -17,7 +18,9 @@ export const diagnose = defineSystemCommand<DiagnoseFlags, DiagnoseResult>({
   description: 'Quick environment & repo diagnosis',
   longDescription: 'Performs a quick diagnosis of the current environment and repository state',
   category: 'info',
-  examples: ['kb diagnose'],
+  examples: generateExamples('diagnose', 'kb', [
+    { flags: {} },
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
   },

@@ -1,10 +1,11 @@
 /**
  * plugins:trust commands - Trust management for plugins (future feature)
- * 
+ *
  * These commands are stubs for future marketplace integration (~6 months)
  */
 
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsTrustResult = CommandResult & {
   message?: string;
@@ -21,10 +22,10 @@ export const pluginsTrust = defineSystemCommand<PluginsTrustFlags, PluginsTrustR
   flags: {
     force: { type: 'boolean', description: 'Skip confirmation prompt' },
   },
-  examples: [
-    'kb plugins trust @author/my-plugin',
-    'kb plugins trust ./local-plugin --force',
-  ],
+  examples: generateExamples('trust', 'plugins', [
+    { flags: {} },  // kb plugins trust (requires <plugin> arg)
+    { flags: { force: true } },
+  ]),
   analytics: {
     command: 'plugins:trust',
     startEvent: 'PLUGINS_TRUST_STARTED',
@@ -48,7 +49,9 @@ export const pluginsUntrust = defineSystemCommand<PluginsUntrustFlags, PluginsUn
   name: 'untrust',
   description: 'Demote plugin to untrusted (Docker isolation)',
   category: 'plugins',
-  examples: ['kb plugins untrust @author/my-plugin'],
+  examples: generateExamples('untrust', 'plugins', [
+    { flags: {} },  // kb plugins untrust (requires <plugin> arg)
+  ]),
   flags: {},
   analytics: {
     command: 'plugins:untrust',
@@ -77,7 +80,9 @@ export const pluginsTrustStatus = defineSystemCommand<PluginsTrustStatusFlags, P
   flags: {
     json: { type: 'boolean', description: 'Output as JSON' },
   },
-  examples: ['kb plugins trust-status @author/my-plugin'],
+  examples: generateExamples('trust-status', 'plugins', [
+    { flags: {} },  // kb plugins trust-status (requires <plugin> arg)
+  ]),
   analytics: {
     command: 'plugins:trust-status',
     startEvent: 'PLUGINS_TRUST_STATUS_STARTED',

@@ -22,6 +22,7 @@ import {
   createPluginLogger,
 } from '@kb-labs/core-sys/logging';
 import { randomUUID } from 'node:crypto';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type LogTestResult = CommandResult & {
   tests?: Array<{ name: string; passed: boolean }>;
@@ -35,7 +36,10 @@ export const logTest = defineSystemCommand<LogTestFlags, LogTestResult>({
   name: 'log-test',
   description: 'Comprehensive test of logging system (levels, context, redaction, etc.)',
   category: 'logging',
-  examples: ['kb log-test', 'kb log-test --debug', 'kb log-test --json', 'kb log-test --log-level info'],
+  examples: generateExamples('log-test', 'kb', [
+    { flags: {} },
+    { flags: { json: true } },
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
   },

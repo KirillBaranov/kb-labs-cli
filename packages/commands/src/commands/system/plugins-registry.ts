@@ -10,6 +10,7 @@ import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { glob } from 'glob';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 interface PluginManifestWithPath {
   manifest: ManifestV2;
@@ -245,7 +246,10 @@ export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, Plugins
   name: 'registry',
   description: 'List all REST API plugin manifests for REST API server',
   category: 'plugins',
-  examples: ['kb plugins:registry', 'kb plugins:registry --json'],
+  examples: generateExamples('registry', 'plugins', [
+    { flags: {} },
+    { flags: { json: true } },
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
   },

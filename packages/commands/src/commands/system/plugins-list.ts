@@ -11,6 +11,7 @@ import { loadPluginsState, isPluginEnabled } from '../../registry/plugins-state'
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginInfo = {
   name: string;
@@ -37,7 +38,11 @@ export const pluginsList = defineSystemCommand<PluginsListFlags, CommandOutput>(
   name: 'list',
   description: 'List all discovered CLI plugins',
   category: 'plugins',
-  examples: ['kb plugins list', 'kb plugins list --json'],
+  // Type-safe examples using generateExamples()
+  examples: generateExamples('list', 'plugins', [
+    { flags: {} },  // kb plugins list
+    { flags: { json: true } },  // kb plugins list --json
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
   },

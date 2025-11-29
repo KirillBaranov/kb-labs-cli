@@ -5,6 +5,7 @@
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
 import { enablePlugin } from '../../registry/plugins-state.js';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsEnableResult = CommandResult & {
   packageName?: string;
@@ -20,10 +21,10 @@ export const pluginsEnable = defineSystemCommand<PluginsEnableFlags, PluginsEnab
   name: 'enable',
   description: 'Enable a plugin',
   category: 'plugins',
-  examples: [
-    'kb plugins enable @kb-labs/devlink-cli',
-    'kb plugins enable @kb-labs/devlink-cli --perm fs.write',
-  ],
+  examples: generateExamples('enable', 'plugins', [
+    { flags: {} },  // kb plugins enable (will need <package> arg in actual usage)
+    { flags: { perm: ['fs.write'] } },  // kb plugins enable --perm fs.write
+  ]),
   flags: {
     perm: {
       type: 'array',

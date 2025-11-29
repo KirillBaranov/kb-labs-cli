@@ -7,6 +7,7 @@ import { unlinkPlugin, loadPluginsState } from '../../registry/plugins-state.js'
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsUnlinkResult = CommandResult & {
   identifier?: string;
@@ -20,7 +21,9 @@ export const pluginsUnlink = defineSystemCommand<PluginsUnlinkFlags, PluginsUnli
   name: 'unlink',
   description: 'Unlink a local plugin',
   category: 'plugins',
-  examples: ['kb plugins unlink ./packages/my-plugin', 'kb plugins unlink @kb-labs/devlink-cli'],
+  examples: generateExamples('unlink', 'plugins', [
+    { flags: {} },  // kb plugins unlink (requires <path-or-name> arg)
+  ]),
   flags: {},
   analytics: {
     command: 'plugins:unlink',

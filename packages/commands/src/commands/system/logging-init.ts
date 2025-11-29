@@ -5,6 +5,7 @@
 import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
 import { existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type LoggingInitResult = CommandResult & {
   configPath?: string;
@@ -19,7 +20,10 @@ export const loggingInit = defineSystemCommand<LoggingInitFlags, LoggingInitResu
   name: 'init',
   description: 'Initialize logging configuration interactively',
   category: 'logging',
-  examples: ['kb logging:init', 'kb logging:init --force'],
+  examples: generateExamples('init', 'logging', [
+    { flags: {} },
+    { flags: { force: true } },
+  ]),
   flags: {
     force: { type: 'boolean', description: 'Overwrite existing configuration' },
   },

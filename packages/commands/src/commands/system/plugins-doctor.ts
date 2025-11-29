@@ -9,6 +9,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 const require = createRequire(import.meta.url);
 
@@ -38,7 +39,10 @@ export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResul
   name: 'doctor',
   description: 'Diagnose plugin issues and suggest fixes',
   category: 'plugins',
-  examples: ['kb plugins doctor', 'kb plugins doctor @kb-labs/devlink-cli', 'kb plugins doctor --json'],
+  examples: generateExamples('doctor', 'plugins', [
+    { flags: {} },  // kb plugins doctor
+    { flags: { json: true } },  // kb plugins doctor --json
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
   },

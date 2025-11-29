@@ -1,4 +1,5 @@
 import { defineSystemCommand, type CommandOutput } from '@kb-labs/cli-command-kit';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type VersionFlags = {
   json: { type: 'boolean'; description?: string };
@@ -9,7 +10,9 @@ export const version = defineSystemCommand<VersionFlags, CommandOutput>({
   description: 'Show CLI version',
   longDescription: 'Displays the current version of the KB Labs CLI',
   category: 'info',
-  examples: ['kb version'],
+  examples: generateExamples('version', 'kb', [
+    { flags: {} },
+  ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
   },

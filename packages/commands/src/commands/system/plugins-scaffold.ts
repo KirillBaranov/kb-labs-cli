@@ -7,6 +7,7 @@ import type { StringFlagSchema } from '@kb-labs/cli-command-kit/flags';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
+import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsScaffoldResult = CommandResult & {
   pluginName?: string;
@@ -22,7 +23,10 @@ export const pluginsScaffold = defineSystemCommand<PluginsScaffoldFlags, Plugins
   name: 'scaffold',
   description: 'Generate a new KB CLI plugin template',
   category: 'plugins',
-  examples: ['kb plugins scaffold my-plugin', 'kb plugins scaffold my-plugin --format cjs'],
+  examples: generateExamples('scaffold', 'plugins', [
+    { flags: {} },  // kb plugins scaffold (requires <name> arg)
+    { flags: { format: 'cjs' } },
+  ]),
   flags: {
     format: {
       type: 'string',
