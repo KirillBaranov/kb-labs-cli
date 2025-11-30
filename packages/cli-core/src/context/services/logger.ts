@@ -1,89 +1,114 @@
 /**
  * @module @kb-labs/cli-core/context/services/logger
- * Logger service implementation
+ * Logging service with structured logging support
  * 
  * Wrapper around @kb-labs/core-sys/logging for CLI context
  */
 
-import type { Logger } from '../../types/index.js';
-import { getLogger, createFileSink, configureLogger, addSink } from '@kb-labs/core-sys/logging';
-import * as path from 'node:path';
-
-let fileSinkAdded = false;
-const logger = getLogger('cli:logger-service');
+import { getLogger, type Logger as CoreLogger } from '@kb-labs/core-sys/logging';
 
 /**
- * File logger implementation using new logging system
+ * Log level type (backward compatible)
  */
-export class FileLogger implements Logger {
-  private coreLogger: ReturnType<typeof getLogger>;
+export type LogLevel = 'silent' | 'error' | 'warn' | 'info' | 'debug';
 
-  constructor(logPath?: string) {
-    const defaultPath = logPath || path.join(process.cwd(), '.kb/logs/cli.jsonl');
+/**
+ * Logger interface for CLI operations with structured logging support
+ */
+export interface Logger {
+  info(message: string, meta?: Record<string, unknown>): void;
+  warn(message: string, meta?: Record<string, unknown>): void;
+  error(message: string, meta?: Record<string, unknown>): void;
+  debug(message: string, meta?: Record<string, unknown>): void;
+  
+  // Structured logs for observability
+  metric(name: string, value: number, tags?: Record<string, string>): void;
+  span<T>(name: string, fn: () => Promise<T>): Promise<T>;
+}
+
+/**
+ * Adapter wrapper around core logger
+ */
+class CoreLoggerAdapter implements Logger {
+  private coreLogger: CoreLogger;
+
+  constructor(category: string = 'cli', level: LogLevel = 'info') {
+    this.coreLogger = getLogger(`cli:${category}`);
     
-    // Add file sink if not already added
-    if (!fileSinkAdded) {
-      try {
-        const fileSink = createFileSink({
-          path: defaultPath,
-          maxSize: '100MB',
-          maxAge: '7d',
-        });
-        addSink(fileSink);
-        fileSinkAdded = true;
-      } catch (error) {
-        logger.error('Failed to create file sink', {
-          error: error instanceof Error ? error.message : String(error),
-          path: defaultPath,
-        });
-      }
+    // Map silent to error level (only errors)
+    if (level === 'silent') {
+      // Silent logger will be handled separately
     }
-    
-    this.coreLogger = getLogger('cli:file');
   }
 
-  debug(msg: string, meta?: object): void {
-    this.coreLogger.debug(msg, meta as Record<string, unknown> | undefined);
+  info(message: string, meta?: Record<string, unknown>): void {
+    this.coreLogger.info(message, meta);
   }
 
-  info(msg: string, meta?: object): void {
-    this.coreLogger.info(msg, meta as Record<string, unknown> | undefined);
+  warn(message: string, meta?: Record<string, unknown>): void {
+    this.coreLogger.warn(message, meta);
   }
 
-  warn(msg: string, meta?: object): void {
-    this.coreLogger.warn(msg, meta as Record<string, unknown> | undefined);
+  error(message: string, meta?: Record<string, unknown>): void {
+    this.coreLogger.error(message, meta);
   }
 
-  error(msg: string, meta?: object): void {
-    this.coreLogger.error(msg, meta as Record<string, unknown> | undefined);
+  debug(message: string, meta?: Record<string, unknown>): void {
+    this.coreLogger.debug(message, meta);
+  }
+
+  metric(name: string, value: number, tags?: Record<string, string>): void {
+    this.coreLogger.debug(`[METRIC] ${name}=${value}`, { tags });
+  }
+
+  async span<T>(name: string, fn: () => Promise<T>): Promise<T> {
+    const start = Date.now();
+    try {
+      const result = await fn();
+      const duration = Date.now() - start;
+      this.metric(`${name}.duration`, duration, { status: 'success' });
+      return result;
+    } catch (error) {
+      const duration = Date.now() - start;
+      this.metric(`${name}.duration`, duration, { status: 'error' });
+      throw error;
+    }
   }
 }
 
 /**
- * Console logger implementation (for development)
- * Uses new logging system
+ * Console logger with structured logging support (backward compatible)
+ * @deprecated Use createLogger() instead, which now uses the new logging system
  */
-export class ConsoleLogger implements Logger {
-  private coreLogger: ReturnType<typeof getLogger>;
-
-  constructor() {
-    this.coreLogger = getLogger('cli:console');
+export class ConsoleLogger extends CoreLoggerAdapter {
+  constructor(level: LogLevel = 'info') {
+    super('console', level);
   }
+}
 
-  debug(msg: string, meta?: object): void {
-    this.coreLogger.debug(msg, meta as Record<string, unknown> | undefined);
+/**
+ * Silent logger (no output)
+ */
+export class SilentLogger implements Logger {
+  info(): void {}
+  warn(): void {}
+  error(): void {}
+  debug(): void {}
+  metric(): void {}
+  async span<T>(_name: string, fn: () => Promise<T>): Promise<T> {
+    return fn();
   }
+}
 
-  info(msg: string, meta?: object): void {
-    this.coreLogger.info(msg, meta as Record<string, unknown> | undefined);
+/**
+ * Create logger based on level
+ * @param level - Log level
+ * @returns Logger instance
+ */
+export function createLogger(level: LogLevel = 'info', category?: string): Logger {
+  if (level === 'silent') {
+    return new SilentLogger();
   }
-
-  warn(msg: string, meta?: object): void {
-    this.coreLogger.warn(msg, meta as Record<string, unknown> | undefined);
-  }
-
-  error(msg: string, meta?: object): void {
-    this.coreLogger.error(msg, meta as Record<string, unknown> | undefined);
-  }
+  return new CoreLoggerAdapter(category, level);
 }
 

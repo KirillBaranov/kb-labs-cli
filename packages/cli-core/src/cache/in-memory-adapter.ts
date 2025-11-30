@@ -3,7 +3,7 @@
  * In-memory cache adapter implementation
  */
 
-import type { CacheAdapter } from './cache-adapter.js';
+import type { CacheAdapter } from './cache-adapter';
 
 interface CacheEntry {
   value: unknown;

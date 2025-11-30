@@ -1,42 +1,88 @@
-/**
- * @module @kb-labs/cli-core
- * Core domain logic for KB Labs CLI
- */
+// Core types and interfaces
+export * from "./types/index";
+export * from "./command";
+export * from "./context";
+export * from "./flags";
 
-// Types
-export type {
-  SourceKind,
-  PluginBrief,
-  RegistrySnapshot,
-  RegistryDiff,
-  ExplainResult,
-  DiscoveryOptions,
-  PluginDependency,
-  ExecutionLimits,
-  PluginLifecycle,
-  Logger,
-  ConfigService,
-  TelemetryService,
-  KeyValueStore,
-  ResourceTracker,
-  Disposable,
-  CliContext,
-  ContextOptions,
-  RouteRef,
-  HandlerRef,
-} from './types/index.js';
+// Error handling
+export { EXIT_CODES, CLI_ERROR_CODES, CliError, mapCliErrorToExitCode } from "./errors";
+
+// I/O and adapters
+export * from "./io/types";
+
+// Plugins system
+export * from "./plugins/types";
+
+// Presenters
+export * from "./presenter/types";
+export * from "./presenter/text";
+export * from "./presenter/json";
+export * from "./presenter/colors";
+export * from "./presenter/loader";
+
+// Telemetry
+export * from "./telemetry/types";
+
+// Registry
+export * from "./registry";
+export {
+  PluginRegistry,
+  type PluginBrief,
+  type RegistrySnapshot,
+  type RegistryDiff,
+  type ExplainResult,
+  type DiscoveryOptions,
+  type CacheOptions,
+  type RouteRef,
+  type HandlerRef,
+  type SourceKind,
+} from "./registry/plugin-registry";
+export { WatchManager } from "./registry/watch-manager";
+
+// Re-export specific functions that are imported by other packages
+export { createLoader } from "./presenter/loader";
+export { createContext } from "./context";
 
 // Cache
-export type { CacheAdapter } from './cache/cache-adapter.js';
-export { InMemoryCacheAdapter } from './cache/in-memory-adapter.js';
+export type { CacheAdapter } from "./cache/cache-adapter";
+export { InMemoryCacheAdapter } from "./cache/in-memory-adapter";
+export {
+  SchemaCache,
+  calculateManifestChecksum,
+  getSchemaCache,
+  resetSchemaCache,
+} from "./cache/schema-cache";
 
-// Context
-export { createBaseContext } from './context/base-context.js';
+// Generators
+export {
+  generateOpenAPISpec,
+  mergeOpenAPISpecs,
+  type OpenAPISpec,
+} from "./generators/openapi";
+export {
+  generateStudioRegistry,
+  type StudioRegistry,
+  type StudioRegistryEntry,
+} from "./generators/studio-registry";
 
-// Will be added in next steps:
-// - PluginRegistry
-// - Discovery strategies
-// - Lifecycle management
-// - Resource tracking
-// - Generators
+// Discovery
+export {
+  DependencyResolver,
+  type PluginDependency,
+  type ResolvedGraph,
+  type ValidationResult,
+} from "./discovery/dependency-resolver";
+export { PathValidator } from "./discovery/path-validator";
 
+// Lifecycle
+export {
+  LifecycleManager,
+  type PluginLifecycle,
+  type ExecutionLimits,
+} from "./lifecycle/lifecycle-manager";
+
+// Layered surface exports (structured access points)
+export * as framework from "./public/framework";
+export * as presenters from "./public/presenters";
+export * as errors from "./public/errors";
+export * as publicTypes from "./public/types";
