@@ -38,30 +38,18 @@
   "dependencies": {
     "@kb-labs/analytics-sdk-node": "workspace:*",
     "@kb-labs/cli-commands": "workspace:*",
-    "@kb-labs/cli-contracts": "workspace:*",
     "@kb-labs/cli-core": "workspace:*",
     "@kb-labs/cli-runtime": "workspace:*",
-    "@kb-labs/core-cli-adapters": "workspace:*",
-    "@kb-labs/core-types": "workspace:*",
+    "@kb-labs/core-sandbox": "workspace:*",
     "@kb-labs/core-sys": "workspace:*",
-    "@kb-labs/plugin-adapter-cli": "workspace:*",
+    "@kb-labs/core-types": "workspace:*",
+    "@kb-labs/plugin-manifest": "workspace:*",
     "@kb-labs/plugin-runtime": "workspace:*",
-    "@kb-labs/shared-cli-ui": "workspace:*",
-    "cli-table3": "^0.6.5",
-    "fast-glob": "^3.3.3",
-    "glob": "^11.0.3",
-    "picomatch": "^4.0.2",
-    "uuidv7": "^1.0.0",
-    "yaml": "^2.8.0",
-    "execa": "^9.4.0",
-    "chokidar": "^4.0.3",
-    "semver": "^7.6.3",
-    "zod": "^4.1.5"
+    "@kb-labs/shared-cli-ui": "workspace:*"
   },
   "devDependencies": {
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",
-    "tsx": "^4.19.2",
     "vitest": "^3.2.4"
   }
 }
