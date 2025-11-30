@@ -3,11 +3,11 @@
  * Command execution with lazy loading, timeouts, guards, and permissions
  */
 
-import type { RegisteredCommand } from './types.js';
-import { loadPluginsState } from './plugins-state.js';
-import { telemetry } from './telemetry.js';
+import type { RegisteredCommand } from './types';
+import { loadPluginsState } from './plugins-state';
+import { telemetry } from './telemetry';
 import { executeCommand } from '@kb-labs/plugin-adapter-cli';
-import { getContextCwd } from '../utils/context.js';
+import { getContextCwd } from '../utils/context';
 
 // Global flags that are always passed to commands
 const GLOBAL_FLAGS = ['json', 'onlyAvailable', 'noCache', 'verbose', 'debug', 'quiet', 'help', 'version', 'dryRun'];
@@ -201,7 +201,7 @@ export async function runCommand(
     ctx.logger?.debug('Crash report', { crashReport });
     
     // Record crash for quarantine
-    const { recordCrash } = await import('./plugins-state.js');
+    const { recordCrash } = await import('./plugins-state');
     await recordCrash(currentCwd, cmd.manifest.package || cmd.manifest.group);
     
     // Record telemetry

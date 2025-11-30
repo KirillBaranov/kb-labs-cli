@@ -2,8 +2,8 @@
  * plugins:doctor command - Diagnose plugin issues
  */
 
-import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
-import { registry } from '../../registry/service.js';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
+import { registry } from '../../registry/service';
 import { formatTiming } from '@kb-labs/shared-cli-ui';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';

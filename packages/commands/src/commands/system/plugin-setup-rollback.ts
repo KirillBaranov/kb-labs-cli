@@ -1,7 +1,7 @@
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import type { Command } from '../../types/index.js';
+import type { Command } from '../../types/index';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 import type { JournalEntry } from '@kb-labs/setup-engine';
 

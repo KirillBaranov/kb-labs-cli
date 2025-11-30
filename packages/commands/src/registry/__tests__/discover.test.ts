@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { CommandManifest } from "../types.js";
+import type { CommandManifest } from "../types";
 
 const fsPromisesMock = vi.hoisted(() => ({
   readFile: vi.fn(),
@@ -53,7 +53,7 @@ vi.mock('../../commands/system/plugin-setup-rollback.js', () => ({
   createPluginSetupRollbackCommand: rollbackCommandMocks.create,
 }));
 
-const importDiscoverModule = () => import('../discover.js');
+const importDiscoverModule = () => import('../discover');
 
 describe('discoverManifests', () => {
   beforeEach(() => {
@@ -199,7 +199,7 @@ describe('discoverManifests', () => {
   });
 
   it('should rehydrate loader stub for cached manifest entries', async () => {
-    const { __test } = await import('../discover.js') as any;
+    const { __test } = await import('../discover') as any;
 
     const manifest = {
       manifestVersion: '1.0',
@@ -217,7 +217,7 @@ describe('discoverManifests', () => {
   });
 
   it('should rehydrate setup loader and delegate to setup command module', async () => {
-    const { __test } = await import('../discover.js') as any;
+    const { __test } = await import('../discover') as any;
     setupCommandMocks.create.mockClear();
     setupCommandMocks.run.mockClear();
 
@@ -263,7 +263,7 @@ describe('discoverManifests', () => {
   });
 
   it('should rehydrate setup rollback loader and delegate to rollback module', async () => {
-    const { __test } = await import('../discover.js') as any;
+    const { __test } = await import('../discover') as any;
     rollbackCommandMocks.create.mockClear();
     rollbackCommandMocks.run.mockClear();
 

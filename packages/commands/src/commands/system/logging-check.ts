@@ -2,7 +2,7 @@
  * logging:check command - Check logging configuration
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { getLogger } from '@kb-labs/core-sys/logging';

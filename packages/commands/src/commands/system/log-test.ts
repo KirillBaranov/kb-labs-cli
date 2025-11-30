@@ -11,7 +11,7 @@
  * - Helper functions
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
 import {
   getLogger,
   setLogContext,

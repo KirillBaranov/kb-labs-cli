@@ -1,11 +1,11 @@
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit'
 import { createCliEngineLogger } from './utils'
 import {
   loadWorkflowConfig,
   saveWorkflowConfig,
   type RemoteMarketplaceSource,
 } from '@kb-labs/workflow-runtime'
-import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
+import type { EnhancedCliContext } from '@kb-labs/shared-command-kit'
 
 type MarketplaceAddResult = CommandResult & {
   marketplace?: {

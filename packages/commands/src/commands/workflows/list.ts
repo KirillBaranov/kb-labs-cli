@@ -1,4 +1,4 @@
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit'
 import { createWorkflowRegistry } from '@kb-labs/workflow-runtime'
 import {
   TimingTracker,
@@ -9,7 +9,7 @@ import {
   formatTiming,
   bulletList,
 } from '@kb-labs/shared-cli-ui'
-import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
+import type { EnhancedCliContext } from '@kb-labs/shared-command-kit'
 
 function groupBy<T>(array: T[], key: keyof T): Record<string, T[]> {
   return array.reduce((acc, item) => {

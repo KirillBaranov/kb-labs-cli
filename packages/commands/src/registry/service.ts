@@ -1,5 +1,5 @@
 import type { Command, CommandGroup, CommandRegistry } from "../types";
-import type { RegisteredCommand } from "./types.js";
+import type { RegisteredCommand } from "./types";
 import type { ManifestV2, CliCommandDecl } from "@kb-labs/plugin-manifest";
 import { getContextCwd } from "@kb-labs/shared-cli-ui";
 

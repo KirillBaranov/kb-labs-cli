@@ -2,7 +2,7 @@
  * replay command - Replay snapshot for debugging
  */
 
-import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { loadSnapshot, listSnapshots, diffSnapshots, searchSnapshots } from '@kb-labs/plugin-runtime';
 import { executeCommand } from '@kb-labs/plugin-adapter-cli';
 import { registry } from '../../registry/service';

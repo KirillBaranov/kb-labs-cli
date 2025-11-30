@@ -6,5 +6,5 @@ export default defineConfig({
   entry: { index: "src/index.ts" },
   tsconfig: "tsconfig.build.json", // Use build-specific tsconfig without paths
   clean: false,
-  dts: false, // Temporarily disabled due to cli-core DTS issue
+  dts: true, // Temporarily disabled due to cli-core DTS issue
 });

@@ -2,7 +2,7 @@
  * fix command - Quick fix for common errors
  */
 
-import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { listSnapshots, getSuggestions, formatSuggestions } from '@kb-labs/plugin-runtime';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
 

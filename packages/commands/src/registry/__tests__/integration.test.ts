@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { registerManifests } from "../register.js";
-import { runCommand } from "../run.js";
-import { renderHelp } from "../../utils/help-generator.js";
+import { registerManifests } from "../register";
+import { runCommand } from "../run";
+import { renderHelp } from "../../utils/help-generator";
 import type { ManifestV2 } from "@kb-labs/plugin-manifest";
-import type { CommandManifest } from "../types.js";
+import type { CommandManifest } from "../types";
 
 const executeCommandMock = vi.hoisted(() =>
   vi.fn(async (_manifest, implementation, ctx, flags) => {

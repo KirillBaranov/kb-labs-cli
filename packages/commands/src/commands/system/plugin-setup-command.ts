@@ -30,8 +30,8 @@ import {
   ADAPTER_TYPES,
   CURRENT_CONTEXT_VERSION,
   validateAdapterMetadata,
-} from '@kb-labs/sandbox';
-import type { AdapterMetadata } from '@kb-labs/sandbox';
+} from '@kb-labs/core-sandbox';
+import type { AdapterMetadata } from '@kb-labs/core-sandbox';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { createInterface } from 'node:readline/promises';
@@ -42,8 +42,8 @@ import type {
   PresenterMessageOptions,
 } from '@kb-labs/plugin-runtime';
 import type { OperationWithMetadata } from '@kb-labs/setup-operations';
-import { renderSetupDiff } from '../../utils/render-diff.js';
-import type { Command } from '../../types/index.js';
+import { renderSetupDiff } from '../../utils/render-diff';
+import type { Command } from '../../types/index';
 
 type SetupHandlerResult = {
   configDefaults?: Record<string, unknown>;

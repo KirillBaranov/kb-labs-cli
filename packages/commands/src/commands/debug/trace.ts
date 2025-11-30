@@ -2,7 +2,7 @@
  * trace command - Visualize cross-plugin traces
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
 import { loadTrace, listTraces, formatFlamegraph, exportChromeFormat, type TraceData } from '@kb-labs/plugin-runtime';
 import * as path from 'node:path';
 import { promises as fs } from 'node:fs';

@@ -1,5 +1,5 @@
-import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit'
-import type { StringFlagSchema } from '@kb-labs/cli-command-kit/flags'
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit'
+import type { StringFlagSchema } from '@kb-labs/shared-command-kit/flags'
 import { writeFile, mkdir, readFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { minimatch } from 'minimatch'
@@ -11,7 +11,7 @@ import {
   safeSymbols,
   formatTiming,
 } from '@kb-labs/shared-cli-ui'
-import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
+import type { EnhancedCliContext } from '@kb-labs/shared-command-kit'
 
 type WorkflowInitResult = CommandResult & {
   id?: string;

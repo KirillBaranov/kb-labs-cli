@@ -5,8 +5,8 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 import type { OperationWithMetadata } from '@kb-labs/setup-operations';
-import { createPluginSetupCommand } from '../commands/system/plugin-setup-command.js';
-import { createPluginSetupRollbackCommand } from '../commands/system/plugin-setup-rollback.js';
+import { createPluginSetupCommand } from '../commands/system/plugin-setup-command';
+import { createPluginSetupRollbackCommand } from '../commands/system/plugin-setup-rollback';
 
 const fs = await import('node:fs/promises');
 

@@ -1,4 +1,4 @@
-import { defineSystemCommand, type CommandOutput } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandOutput } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type HelloFlags = {

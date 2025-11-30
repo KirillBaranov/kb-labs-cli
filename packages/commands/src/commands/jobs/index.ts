@@ -3,8 +3,8 @@
  * Job management commands
  */
 
-export { jobsList } from './list.js';
-export { jobsEnable } from './enable.js';
-export { jobsDisable } from './disable.js';
-export { jobsStatus } from './status.js';
-export { jobsTrigger } from './trigger.js';
+export { jobsList } from './list';
+export { jobsEnable } from './enable';
+export { jobsDisable } from './disable';
+export { jobsStatus } from './status';
+export { jobsTrigger } from './trigger';

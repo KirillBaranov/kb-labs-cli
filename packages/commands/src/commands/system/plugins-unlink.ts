@@ -2,8 +2,8 @@
  * plugins:unlink command - Unlink a local plugin
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
-import { unlinkPlugin, loadPluginsState } from '../../registry/plugins-state.js';
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { unlinkPlugin, loadPluginsState } from '../../registry/plugins-state';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';

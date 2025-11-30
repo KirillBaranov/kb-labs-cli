@@ -2,10 +2,10 @@
  * diag command - Unified diagnostics command combining all system checks
  */
 
-import { defineSystemCommand } from '@kb-labs/cli-command-kit';
-import { registry } from '../../registry/service.js';
-import { discoverManifests } from '../../registry/discover.js';
-import { loadPluginsState } from '../../registry/plugins-state.js';
+import { defineSystemCommand } from '@kb-labs/shared-command-kit';
+import { registry } from '../../registry/service';
+import { discoverManifests } from '../../registry/discover';
+import { loadPluginsState } from '../../registry/plugins-state';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd, safeColors, safeSymbols } from '@kb-labs/shared-cli-ui';

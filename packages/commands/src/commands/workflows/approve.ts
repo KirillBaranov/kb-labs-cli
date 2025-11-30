@@ -1,7 +1,7 @@
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit'
 import { createCliEngineLogger } from './utils'
 import { createRedisClient, ApprovalStepHandler } from '@kb-labs/workflow-engine'
-import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
+import type { EnhancedCliContext } from '@kb-labs/shared-command-kit'
 
 type WorkflowApproveResult = CommandResult & {
   action?: 'approved' | 'rejected';

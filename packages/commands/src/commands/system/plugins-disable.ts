@@ -2,8 +2,8 @@
  * plugins:disable command - Disable a plugin
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
-import { disablePlugin } from '../../registry/plugins-state.js';
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { disablePlugin } from '../../registry/plugins-state';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
 import { generateExamples } from '@kb-labs/plugin-manifest';
 

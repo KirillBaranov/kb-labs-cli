@@ -2,7 +2,7 @@
  * plugins:watch command - Watch for manifest changes and hot-reload
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
 import { watch } from 'node:fs';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';

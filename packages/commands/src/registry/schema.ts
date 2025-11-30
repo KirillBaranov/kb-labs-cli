@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import type { CommandManifest, FlagDefinition } from './types.js';
+import type { CommandManifest, FlagDefinition } from './types';
 
 // Semver regex approximation (not full semver, but covers most cases)
 const semverPattern = /^[\^~]?[\d]+\.[\d]+(\.[\d]+)?(-[\w\.-]+)?(\+[\w\.-]+)?$/;

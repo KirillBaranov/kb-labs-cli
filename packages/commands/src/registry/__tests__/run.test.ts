@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { runCommand } from "../run.js";
-import type { RegisteredCommand } from "../types.js";
+import { runCommand } from "../run";
+import type { RegisteredCommand } from "../types";
 import type { ManifestV2 } from "@kb-labs/plugin-manifest";
 
 const mockExecuteCommand = vi.hoisted(() =>

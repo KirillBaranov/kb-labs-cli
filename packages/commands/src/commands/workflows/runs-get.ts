@@ -1,9 +1,9 @@
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit'
 import { TimingTracker, box, formatTable, type TableColumn, safeColors } from '@kb-labs/shared-cli-ui'
 import type { JobRun, StepRun, WorkflowRun } from '@kb-labs/workflow-contracts'
 import { createCliEngineLogger, statusBadge, formatRunHeader } from './utils'
 import { getWorkflowRun } from './service'
-import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
+import type { EnhancedCliContext } from '@kb-labs/shared-command-kit'
 
 type WorkflowRunsGetResult = CommandResult & {
   run?: WorkflowRun;

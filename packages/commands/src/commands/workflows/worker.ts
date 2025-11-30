@@ -1,10 +1,10 @@
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
-import type { StringFlagSchema } from '@kb-labs/cli-command-kit/flags'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit'
+import type { StringFlagSchema } from '@kb-labs/shared-command-kit/flags'
 import { createCliEngineLogger } from './utils'
 import { startWorkflowWorker } from './service'
 import { box, keyValue, formatTiming } from '@kb-labs/shared-cli-ui'
 import type { EngineLogger } from '@kb-labs/workflow-engine'
-import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
+import type { EnhancedCliContext } from '@kb-labs/shared-command-kit'
 
 type WorkflowWorkerResult = CommandResult & {
   failedJobs?: number;

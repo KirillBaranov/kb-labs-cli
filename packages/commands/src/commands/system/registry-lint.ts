@@ -2,7 +2,7 @@
  * registry:lint command — validate manifest header policies
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
 import { createCliAPI } from '@kb-labs/cli-api';
 import { resolveHeaderPolicy } from '@kb-labs/plugin-adapter-rest';
 import type { ManifestV2, RestRouteDecl } from '@kb-labs/plugin-manifest';

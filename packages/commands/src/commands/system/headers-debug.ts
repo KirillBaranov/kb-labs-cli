@@ -2,10 +2,10 @@
  * headers:debug command — inspect recent header policy decisions emitted by REST API
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
 import { formatTable, formatRelativeTime, keyValue } from '@kb-labs/shared-cli-ui';
 import type { Output } from '@kb-labs/cli-contracts';
-import type { StringFlagSchema } from '@kb-labs/cli-command-kit/flags';
+import type { StringFlagSchema } from '@kb-labs/shared-command-kit/flags';
 import { generateExamples } from '@kb-labs/plugin-manifest';
 
 interface HeaderDebugEntry {

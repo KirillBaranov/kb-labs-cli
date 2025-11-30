@@ -1,4 +1,4 @@
-import { defineSystemCommand } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand } from '@kb-labs/shared-command-kit';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
 import { generateExamples } from '@kb-labs/plugin-manifest';
 

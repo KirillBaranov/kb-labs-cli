@@ -1,5 +1,5 @@
 import { registry } from "../registry/service";
-import type { RegisteredCommand } from "../registry/types.js";
+import type { RegisteredCommand } from "../registry/types";
 import {
   infoGroup,
   pluginsGroup,
@@ -22,7 +22,7 @@ import { repl } from "../commands/debug/repl";
 import { dev } from "../commands/debug/dev";
 import { trace } from "../commands/debug/trace";
 import { fixture } from "../commands/debug/fixture";
-import { createPluginsIntrospectCommand } from "../plugins-introspect.js";
+import { createPluginsIntrospectCommand } from "../plugins-introspect";
 import { registerManifests, disposeAllPlugins, preflightManifests } from "../registry/register";
 import { workflowCommandGroup } from "../commands/workflows";
 import { PluginRegistry } from "@kb-labs/cli-core";
@@ -79,7 +79,7 @@ export async function registerBuiltinCommands(
     const env = input.env ?? process.env;
     const noCache =
       process.argv.includes("--no-cache") || env.KB_PLUGIN_NO_CACHE === "1";
-    const { discoverManifests } = await import('../registry/discover.js');
+    const { discoverManifests } = await import('../registry/discover');
     const discovered = await discoverManifests(cwd, noCache);
 
     if (discovered.length > 0) {

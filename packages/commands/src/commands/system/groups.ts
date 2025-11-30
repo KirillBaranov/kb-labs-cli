@@ -2,42 +2,42 @@
  * System command groups - Organized categories for system commands
  */
 
-import { defineSystemCommandGroup } from '@kb-labs/cli-command-kit';
-import { hello } from './hello.js';
-import { version } from './version.js';
-import { health } from './health.js';
-import { diagnose } from './diagnose.js';
-import { diag } from './diag.js';
-import { pluginsList } from './plugins-list.js';
-import { pluginsCommands } from './plugins-commands.js';
-import { pluginsEnable } from './plugins-enable.js';
-import { pluginsDisable } from './plugins-disable.js';
-import { pluginsLink } from './plugins-link.js';
-import { pluginsUnlink } from './plugins-unlink.js';
-import { pluginsWatch } from './plugins-watch.js';
-import { pluginsTelemetry } from './plugins-telemetry.js';
-import { pluginsDiscoveryTest } from './plugins-discovery-test.js';
-import { pluginsCacheClear } from '../../builtins/plugins-cache-clear.js';
-import { pluginsTrust, pluginsUntrust, pluginsTrustStatus } from './plugins-trust.js';
-import { pluginsRegistry } from './plugins-registry.js';
-import { pluginsDoctor } from './plugins-doctor.js';
-import { pluginsScaffold } from './plugins-scaffold.js';
-import { pluginValidate } from './plugins-validate.js';
-import { pluginGenerate } from './plugins-generate.js';
-import { loggingCheck } from './logging-check.js';
-import { loggingInit } from './logging-init.js';
-import { logTest } from './log-test.js';
-import { registryLint } from './registry-lint.js';
-import { headersDebug } from './headers-debug.js';
-import { replay } from '../debug/replay.js';
-import { fix } from '../debug/fix.js';
-import { trace } from '../debug/trace.js';
-import { fixture } from '../debug/fixture.js';
-import { repl } from '../debug/repl.js';
-import { dev } from '../debug/dev.js';
-import { worker } from '../worker.js';
-import { jobsList, jobsEnable, jobsDisable, jobsStatus, jobsTrigger } from '../jobs/index.js';
-import { docsGenerateCliReference } from './docs-generate-cli-reference.js';
+import { defineSystemCommandGroup } from '@kb-labs/shared-command-kit';
+import { hello } from './hello';
+import { version } from './version';
+import { health } from './health';
+import { diagnose } from './diagnose';
+import { diag } from './diag';
+import { pluginsList } from './plugins-list';
+import { pluginsCommands } from './plugins-commands';
+import { pluginsEnable } from './plugins-enable';
+import { pluginsDisable } from './plugins-disable';
+import { pluginsLink } from './plugins-link';
+import { pluginsUnlink } from './plugins-unlink';
+import { pluginsWatch } from './plugins-watch';
+import { pluginsTelemetry } from './plugins-telemetry';
+import { pluginsDiscoveryTest } from './plugins-discovery-test';
+import { pluginsCacheClear } from '../../builtins/plugins-cache-clear';
+import { pluginsTrust, pluginsUntrust, pluginsTrustStatus } from './plugins-trust';
+import { pluginsRegistry } from './plugins-registry';
+import { pluginsDoctor } from './plugins-doctor';
+import { pluginsScaffold } from './plugins-scaffold';
+import { pluginValidate } from './plugins-validate';
+import { pluginGenerate } from './plugins-generate';
+import { loggingCheck } from './logging-check';
+import { loggingInit } from './logging-init';
+import { logTest } from './log-test';
+import { registryLint } from './registry-lint';
+import { headersDebug } from './headers-debug';
+import { replay } from '../debug/replay';
+import { fix } from '../debug/fix';
+import { trace } from '../debug/trace';
+import { fixture } from '../debug/fixture';
+import { repl } from '../debug/repl';
+import { dev } from '../debug/dev';
+import { worker } from '../worker';
+import { jobsList, jobsEnable, jobsDisable, jobsStatus, jobsTrigger } from '../jobs/index';
+import { docsGenerateCliReference } from './docs-generate-cli-reference';
 
 /**
  * Info Commands Group

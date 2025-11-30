@@ -2,7 +2,7 @@
  * plugins:list command - List all discovered CLI plugins
  */
 
-import { defineSystemCommand, type CommandOutput } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandOutput } from '@kb-labs/shared-command-kit';
 import type { RegisteredCommand } from '../../registry/types';
 import { registry } from '../../registry/service';
 import { PluginRegistry } from '@kb-labs/cli-core';

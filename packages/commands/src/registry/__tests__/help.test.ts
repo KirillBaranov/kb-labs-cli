@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { renderHelp } from '../../utils/help-generator.js';
-import type { RegisteredCommand } from '../types.js';
+import { renderHelp } from '../../utils/help-generator';
+import type { RegisteredCommand } from '../types';
 
 describe('renderHelp', () => {
   const createMockCommand = (overrides: Partial<RegisteredCommand> = {}): RegisteredCommand => ({

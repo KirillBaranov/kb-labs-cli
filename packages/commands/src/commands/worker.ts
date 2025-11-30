@@ -2,8 +2,8 @@
  * worker command - Run background job worker daemon
  */
 
-import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
-import type { StringFlagSchema, NumberFlagSchema } from '@kb-labs/cli-command-kit/flags';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
+import type { StringFlagSchema, NumberFlagSchema } from '@kb-labs/shared-command-kit/flags';
 import {
   createWorkflowWorker,
   createRedisClient,
@@ -13,7 +13,7 @@ import {
 import type { CreateRedisClientOptions } from '@kb-labs/workflow-engine';
 import { DegradationController } from '@kb-labs/plugin-runtime';
 import { PluginRegistry } from '@kb-labs/cli-core';
-import { loadPluginJobs } from '../jobs/loader.js';
+import { loadPluginJobs } from '../jobs/loader';
 import { randomUUID } from 'node:crypto';
 
 type WorkerRole = 'all' | 'job-worker' | 'cron-worker' | 'auto';

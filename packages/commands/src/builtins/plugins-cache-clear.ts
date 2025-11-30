@@ -1,4 +1,4 @@
-import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { clearCache } from '../registry/plugins-state';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
 import { box, keyValue, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';

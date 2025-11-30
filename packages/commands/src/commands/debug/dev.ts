@@ -2,7 +2,7 @@
  * dev command - Watch mode with hot reload
  */
 
-import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { executeCommand } from '@kb-labs/plugin-adapter-cli';
 import { registry } from '../../registry/service';
 import type { ManifestV2, CliCommandDecl } from '@kb-labs/plugin-manifest';

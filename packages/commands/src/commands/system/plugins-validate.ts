@@ -2,7 +2,7 @@
  * plugin:validate command - Validate plugin manifest and contracts
  */
 
-import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { validateManifestV2 } from '@kb-labs/plugin-manifest';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';

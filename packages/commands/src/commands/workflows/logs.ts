@@ -1,9 +1,9 @@
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit'
 import process from 'node:process'
 import { createCliEngineLogger } from './utils'
 import { streamWorkflowLogs, type WorkflowLogEvent } from './service'
 import { safeColors, TimingTracker, box, keyValue } from '@kb-labs/shared-cli-ui'
-import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
+import type { EnhancedCliContext } from '@kb-labs/shared-command-kit'
 
 type WorkflowLogsResult = CommandResult & {
   runId?: string;

@@ -3,7 +3,7 @@
  * List all scheduled jobs
  */
 
-import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { createRedisClient } from '@kb-labs/workflow-engine';
 
 interface JobInfo {

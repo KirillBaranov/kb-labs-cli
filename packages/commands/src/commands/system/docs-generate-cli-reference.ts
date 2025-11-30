@@ -2,7 +2,7 @@
  * docs:generate-cli-reference command - Generate CLI reference documentation
  */
 
-import { defineSystemCommand, type CommandOutput } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandOutput } from '@kb-labs/shared-command-kit';
 import { registry } from '../../registry/service';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';

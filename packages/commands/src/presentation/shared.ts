@@ -2,8 +2,8 @@ import { colors } from "@kb-labs/cli-core";
 import { box, formatTiming, TimingTracker } from "@kb-labs/shared-cli-ui";
 
 import type { Command, CommandGroup } from "../types";
-import type { RegisteredCommand } from "../registry/types.js";
-import type { ProductGroup } from "../registry/service.js";
+import type { RegisteredCommand } from "../registry/types";
+import type { ProductGroup } from "../registry/service";
 
 export {
   colors,

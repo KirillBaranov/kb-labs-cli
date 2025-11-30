@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { checkRequires } from "../availability.js";
-import type { CommandManifest } from "../types.js";
+import { checkRequires } from "../availability";
+import type { CommandManifest } from "../types";
 
 const mockResolve = vi.hoisted(() => vi.fn());
 const mockExistsSync = vi.hoisted(() => vi.fn(() => false));

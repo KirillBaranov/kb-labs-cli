@@ -2,7 +2,7 @@
  * plugin:generate command - Generate contracts or schemas from manifest
  */
 
-import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import {
   extractContractsFromManifest,
   generateZodSchemasFromContracts,

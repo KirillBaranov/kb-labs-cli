@@ -2,8 +2,8 @@
  * plugins:link command - Link a local plugin for development
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
-import { linkPlugin } from '../../registry/plugins-state.js';
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { linkPlugin } from '../../registry/plugins-state';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';

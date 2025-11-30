@@ -4,7 +4,7 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 import type { JournalEntry } from '@kb-labs/setup-engine';
-import { createPluginSetupRollbackCommand } from '../commands/system/plugin-setup-rollback.js';
+import { createPluginSetupRollbackCommand } from '../commands/system/plugin-setup-rollback';
 
 const manifest: ManifestV2 = {
   schema: 'kb.plugin/2',

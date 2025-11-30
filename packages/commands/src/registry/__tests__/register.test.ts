@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { registerManifests } from '../register.js';
-import type { DiscoveryResult, CommandManifest } from '../types.js';
+import { registerManifests } from '../register';
+import type { DiscoveryResult, CommandManifest } from '../types';
 
 // Mock dependencies
 vi.mock('../availability.js', () => ({

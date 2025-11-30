@@ -1,5 +1,5 @@
 import { createCliAPI } from '@kb-labs/cli-api';
-import { defineSystemCommand } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand } from '@kb-labs/shared-command-kit';
 import type { HealthSnapshot } from '@kb-labs/cli-api';
 import { generateExamples } from '@kb-labs/plugin-manifest';
 

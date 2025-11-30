@@ -9,7 +9,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
-import type { CommandManifest, AvailabilityCheck } from './types.js';
+import type { CommandManifest, AvailabilityCheck } from './types';
 
 // Create require from this module (ESM-safe, doesn't depend on cwd)
 const req = createRequire(import.meta.url);

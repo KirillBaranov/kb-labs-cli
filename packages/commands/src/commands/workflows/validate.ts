@@ -1,4 +1,4 @@
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit'
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit'
 import { resolveWorkflowSpec } from './utils'
 import {
   TimingTracker,
@@ -6,7 +6,7 @@ import {
   keyValue,
   formatTiming,
 } from '@kb-labs/shared-cli-ui'
-import type { EnhancedCliContext } from '@kb-labs/cli-command-kit'
+import type { EnhancedCliContext } from '@kb-labs/shared-command-kit'
 
 type WorkflowValidateResult = CommandResult & {
   source?: string;

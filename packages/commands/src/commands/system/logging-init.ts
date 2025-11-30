@@ -2,7 +2,7 @@
  * logging:init command - Initialize logging configuration
  */
 
-import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { generateExamples } from '@kb-labs/plugin-manifest';

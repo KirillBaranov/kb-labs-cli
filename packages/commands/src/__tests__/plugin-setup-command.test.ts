@@ -91,7 +91,7 @@ vi.mock('@kb-labs/setup-engine', () => {
 });
 
 import { execute } from '@kb-labs/plugin-runtime';
-import { createPluginSetupCommand } from '../commands/system/plugin-setup-command.js';
+import { createPluginSetupCommand } from '../commands/system/plugin-setup-command';
 
 const executeMock = vi.mocked(execute);
 

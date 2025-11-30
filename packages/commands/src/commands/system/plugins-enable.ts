@@ -2,8 +2,8 @@
  * plugins:enable command - Enable a plugin
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
-import { enablePlugin } from '../../registry/plugins-state.js';
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { enablePlugin } from '../../registry/plugins-state';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
 import { generateExamples } from '@kb-labs/plugin-manifest';
 
@@ -52,7 +52,7 @@ export const pluginsEnable = defineSystemCommand<PluginsEnableFlags, PluginsEnab
     await enablePlugin(cwd, packageName);
 
     if (permissions.length > 0) {
-      const { grantPermissions } = await import('../../registry/plugins-state.js');
+      const { grantPermissions } = await import('../../registry/plugins-state');
       await grantPermissions(cwd, packageName, permissions);
       ctx.logger?.info('Plugin enabled with permissions', { packageName, permissions });
       return {

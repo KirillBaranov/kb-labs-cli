@@ -2,7 +2,7 @@
  * fixture command - Create and manage test fixtures
  */
 
-import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { registry } from '../../registry/service';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';

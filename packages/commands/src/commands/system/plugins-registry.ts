@@ -2,7 +2,7 @@
  * plugins:registry command - List all REST API plugin manifests
  */
 
-import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 import { detectRepoRoot } from '@kb-labs/core-cli-adapters';
 import { promises as fs } from 'node:fs';

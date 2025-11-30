@@ -2,7 +2,7 @@
  * plugins:commands command - Show all plugin commands with real invocation syntax
  */
 
-import { defineSystemCommand, type CommandOutput } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandOutput } from '@kb-labs/shared-command-kit';
 import { registry } from '../../registry/service';
 import type { RegisteredCommand } from '../../registry/types';
 import { safeColors, type SectionContent } from '@kb-labs/shared-cli-ui';

@@ -2,8 +2,8 @@
  * plugins:scaffold command - Generate plugin template
  */
 
-import { defineSystemCommand, type CommandResult } from '@kb-labs/cli-command-kit';
-import type { StringFlagSchema } from '@kb-labs/cli-command-kit/flags';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
+import type { StringFlagSchema } from '@kb-labs/shared-command-kit/flags';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
@@ -159,7 +159,7 @@ export const manifest: ManifestV2 = {
     await fs.writeFile(path.join(dir, 'src', 'kb', `manifest.${extension}`), manifestContent, 'utf8');
 
     // Command implementation with full typing (Level 3 - Recommended)
-    const commandContent = `import { defineCommand, type CommandResult } from '@kb-labs/cli-command-kit';
+    const commandContent = `import { defineCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 
 // Define flag types for type safety
 type ${pluginName.charAt(0).toUpperCase() + pluginName.slice(1)}HelloFlags = {

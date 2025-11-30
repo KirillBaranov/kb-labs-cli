@@ -4,7 +4,7 @@
  * These commands are stubs for future marketplace integration (~6 months)
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsTrustResult = CommandResult & {

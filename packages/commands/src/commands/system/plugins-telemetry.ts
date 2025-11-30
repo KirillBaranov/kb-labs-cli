@@ -2,8 +2,8 @@
  * plugins:telemetry command - Show telemetry metrics (if opt-in enabled)
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/cli-command-kit';
-import { telemetry } from '../../registry/telemetry.js';
+import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { telemetry } from '../../registry/telemetry';
 import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsTelemetryResult = CommandResult & {
