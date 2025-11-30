@@ -20,15 +20,20 @@ export type {
   FlagBuilderV1,
 } from './command/index.js';
 
-// Context contracts
+// Context contracts (legacy - use SystemContext instead)
 export type {
+  /** @deprecated Use SystemContext instead */
   CliContext,
+  /** @deprecated Use SystemContext instead */
   CliContextV1,
   Logger,
   LoggerV1,
   Profile,
   ProfileV1,
 } from './context/index.js';
+
+// System context (new, simplified)
+export type { SystemContext } from './system-context.js';
 
 // Presenter contracts
 export type {

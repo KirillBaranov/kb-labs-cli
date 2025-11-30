@@ -3,17 +3,17 @@
  * System Command Definition - For KB Labs official commands with full privileges
  */
 
-import { 
-  defineCommand, 
-  type CommandConfig, 
-  type FlagSchemaDefinition, 
-  type CommandResult, 
+import {
+  defineCommand,
+  type CommandConfig,
+  type FlagSchemaDefinition,
+  type CommandResult,
   type InferFlags,
   type CommandHandler,
   type CommandFormatter,
   type TrackingConfig,
-  type EnhancedCliContext,
 } from './index.js';
+import type { SystemContext } from '@kb-labs/cli-contracts';
 import type { Command, CommandGroup, FlagDefinition } from '@kb-labs/cli-commands';
 
 /**
@@ -157,8 +157,8 @@ export function defineSystemCommand<TResult extends CommandResult>(
     examples?: string[];
     flags: FlagSchemaDefinition;
     analytics?: Omit<TrackingConfig, 'command'> & { command?: string };
-    handler: (ctx: EnhancedCliContext, argv: string[], flags: Record<string, unknown>) => Promise<number | TResult> | number | TResult;
-    formatter?: (result: TResult, ctx: EnhancedCliContext, flags: Record<string, unknown>, argv?: string[]) => void;
+    handler: (ctx: SystemContext, argv: string[], flags: Record<string, unknown>) => Promise<number | TResult> | number | TResult;
+    formatter?: (result: TResult, ctx: SystemContext, flags: Record<string, unknown>, argv?: string[]) => void;
   }
 ): Command;
 // Overload for explicit TFlags and TResult
