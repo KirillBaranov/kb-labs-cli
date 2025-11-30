@@ -8,29 +8,29 @@ export {
   MiddlewareManager,
   type CommandMiddleware,
   type MiddlewareConfig,
-} from './middleware/middleware-manager.js';
+} from './middleware/middleware-manager';
 
 // Formatters
 export {
   FormattersRegistry,
   type OutputFormatter,
-} from './formatters/formatters-registry.js';
-export { jsonFormatter } from './formatters/builtin/json.js';
-export { yamlFormatter } from './formatters/builtin/yaml.js';
-export { tableFormatter } from './formatters/builtin/table.js';
-export { markdownFormatter } from './formatters/builtin/markdown.js';
+} from './formatters/formatters-registry';
+export { jsonFormatter } from './formatters/builtin/json';
+export { yamlFormatter } from './formatters/builtin/yaml';
+export { tableFormatter } from './formatters/builtin/table';
+export { markdownFormatter } from './formatters/builtin/markdown';
 
 // Runtime context helpers
-export { createRuntimeContext } from './context/runtime-context.js';
+export { createRuntimeContext } from './context/runtime-context';
 export {
   createCliRuntime,
   type CliRuntime,
   type RuntimeSetupOptions,
-} from "./runtime.js";
+} from "./runtime";
 
 // Event bridge
 export {
   StdoutEventBridge,
   type StdoutEventBridgeOptions,
-} from './events/stdout-event-bridge.js';
+} from './events/stdout-event-bridge';
 

@@ -4,7 +4,7 @@
  */
 
 import Table from 'cli-table3';
-import type { OutputFormatter } from '../formatters-registry.js';
+import type { OutputFormatter } from '../formatters-registry';
 
 export const tableFormatter: OutputFormatter = {
   name: 'table',

@@ -4,7 +4,7 @@
  */
 
 import { stringify } from 'yaml';
-import type { OutputFormatter } from '../formatters-registry.js';
+import type { OutputFormatter } from '../formatters-registry';
 
 export const yamlFormatter: OutputFormatter = {
   name: 'yaml',

@@ -3,7 +3,7 @@
  * JSON formatter
  */
 
-import type { OutputFormatter } from '../formatters-registry.js';
+import type { OutputFormatter } from '../formatters-registry';
 
 export const jsonFormatter: OutputFormatter = {
   name: 'json',

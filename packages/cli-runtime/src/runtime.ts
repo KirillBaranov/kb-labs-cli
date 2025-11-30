@@ -3,19 +3,19 @@ import type { CliContext, ExecutionLimits } from "@kb-labs/cli-contracts";
 import {
   MiddlewareManager,
   type MiddlewareConfig,
-} from "./middleware/middleware-manager.js";
+} from "./middleware/middleware-manager";
 import {
   FormattersRegistry,
   type OutputFormatter,
-} from "./formatters/formatters-registry.js";
+} from "./formatters/formatters-registry";
 import {
   createRuntimeContext,
   type RuntimeContextOptions,
-} from "./context/runtime-context.js";
-import { jsonFormatter } from "./formatters/builtin/json.js";
-import { yamlFormatter } from "./formatters/builtin/yaml.js";
-import { tableFormatter } from "./formatters/builtin/table.js";
-import { markdownFormatter } from "./formatters/builtin/markdown.js";
+} from "./context/runtime-context";
+import { jsonFormatter } from "./formatters/builtin/json";
+import { yamlFormatter } from "./formatters/builtin/yaml";
+import { tableFormatter } from "./formatters/builtin/table";
+import { markdownFormatter } from "./formatters/builtin/markdown";
 
 const DEFAULT_EXECUTION_LIMITS: ExecutionLimits = {
   lifecycleTimeoutMs: 30_000,
