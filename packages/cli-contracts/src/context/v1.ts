@@ -5,7 +5,7 @@
  * Contains environment info, configuration, and utilities.
  */
 
-import type { PresenterV1 } from '../presenter/v1.js';
+import type { PresenterV1 } from '../presenter/v1';
 
 /**
  * Simple logger interface

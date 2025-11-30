@@ -26,7 +26,7 @@ import type {
   WorkflowEventsListResult,
   WorkflowEventStreamOptions,
   WorkflowEventEnvelope,
-} from './types.js'
+} from './types'
 import { RedisEventBridge } from '@kb-labs/workflow-engine'
 import type { PluginEventEnvelope } from '@kb-labs/plugin-runtime'
 

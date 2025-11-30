@@ -3,7 +3,7 @@
  * System command context - for KB Labs official commands with full privileges
  */
 
-import type { ProfileV1, LoggerV1 } from './context/v1.js';
+import type { ProfileV1, LoggerV1 } from './context/v1';
 
 // For now, Output is just a simple interface
 // In the future we might import from @kb-labs/core-sys
@@ -26,7 +26,7 @@ export interface Output {
  *
  * @example
  * ```typescript
- * import { defineSystemCommand, type SystemContext } from '@kb-labs/cli-command-kit';
+ * import { defineSystemCommand, type SystemContext } from '@kb-labs/shared-command-kit';
  *
  * export const myCommand = defineSystemCommand({
  *   name: 'my:command',

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { createCliAPI, type CliAPI, type StudioRegistryEntry } from '../index.js';
+import { createCliAPI, type CliAPI, type StudioRegistryEntry } from '../index';
 
 describe('CliAPI', () => {
   let api: CliAPI;

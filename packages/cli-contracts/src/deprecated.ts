@@ -6,7 +6,7 @@
  * Please migrate to the new types as soon as possible
  */
 
-import type { SystemContext } from './system-context.js';
+import type { SystemContext } from './system-context';
 
 /**
  * @deprecated Use SystemContext instead

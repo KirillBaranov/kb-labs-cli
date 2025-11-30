@@ -36,8 +36,8 @@ import type {
   WorkflowEventsListOptions,
   WorkflowEventsListResult,
   WorkflowEventStreamOptions,
-} from './types.js';
-import { WorkflowService } from './workflows.js';
+} from './types';
+import { WorkflowService } from './workflows';
 import type { RedisClientType, RedisClientOptions } from 'redis';
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';

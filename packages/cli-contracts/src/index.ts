@@ -18,7 +18,7 @@ export type {
   CliCommandV1,
   FlagBuilder,
   FlagBuilderV1,
-} from './command/index.js';
+} from './command/index';
 
 // Context contracts (legacy - use SystemContext instead)
 export type {
@@ -30,13 +30,13 @@ export type {
   LoggerV1,
   Profile,
   ProfileV1,
-} from './context/index.js';
+} from './context/index';
 
 // System context (new, simplified)
-export type { SystemContext } from './system-context.js';
+export type { SystemContext } from './system-context';
 
 // Presenter contracts
 export type {
   Presenter,
   PresenterV1,
-} from './presenter/index.js';
+} from './presenter/index';

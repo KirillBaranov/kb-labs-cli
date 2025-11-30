@@ -3,8 +3,8 @@
  * Factory for creating CLI API instances
  */
 
-import type { CliAPI, CliInitOptions } from './types.js';
-import { CliAPIImpl } from './cli-api-impl.js';
+import type { CliAPI, CliInitOptions } from './types';
+import { CliAPIImpl } from './cli-api-impl';
 
 /**
  * Create CLI API instance

@@ -13,7 +13,9 @@
   },
   "typesVersions": {
     "*": {
-      "*": ["src/*"]
+      "*": [
+        "src/*"
+      ]
     }
   },
   "files": [
@@ -32,11 +34,11 @@
   "dependencies": {
     "@kb-labs/cli-core": "workspace:*",
     "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
-    "@kb-labs/workflow-engine": "link:../../../kb-labs-workflow/packages/workflow-engine",
-    "@kb-labs/workflow-contracts": "link:../../../kb-labs-workflow/packages/workflow-contracts",
+    "@kb-labs/plugin-runtime": "workspace:*",
     "@kb-labs/workflow-constants": "link:../../../kb-labs-workflow/packages/workflow-constants",
-    "redis": "^4.6.7",
-    "yaml": "^2.8.0"
+    "@kb-labs/workflow-contracts": "link:../../../kb-labs-workflow/packages/workflow-contracts",
+    "@kb-labs/workflow-engine": "link:../../../kb-labs-workflow/packages/workflow-engine",
+    "redis": "^4.6.7"
   },
   "devDependencies": {
     "@kb-labs/devkit": "link:../../../kb-labs-devkit",
@@ -49,4 +51,3 @@
     "node": ">=18.18.0"
   }
 }
-

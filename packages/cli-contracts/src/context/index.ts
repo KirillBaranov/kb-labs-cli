@@ -3,11 +3,11 @@
  * Context and profile interface contracts
  */
 
-export type { CliContextV1, LoggerV1, ProfileV1 } from './v1.js';
+export type { CliContextV1, LoggerV1, ProfileV1 } from './v1';
 
 // Re-export V1 as default version (for convenience)
 export type {
   CliContextV1 as CliContext,
   LoggerV1 as Logger,
   ProfileV1 as Profile,
-} from './v1.js';
+} from './v1';

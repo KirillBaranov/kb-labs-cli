@@ -26,11 +26,11 @@ export type {
   WorkflowEventsListResult,
   WorkflowEventStreamOptions,
   WorkflowWorkerOptions,
-} from './types.js';
+} from './types';
 
 // Factory
-export { createCliAPI } from './factory.js';
-export { WorkflowService } from './workflows.js';
+export { createCliAPI } from './factory';
+export { WorkflowService } from './workflows';
 
 // Re-export useful types from core CLI package
 export type {

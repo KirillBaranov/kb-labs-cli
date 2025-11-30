@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { createCliAPI, type CliAPI } from '../index.js';
+import { createCliAPI, type CliAPI } from '../index';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 

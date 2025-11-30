@@ -5,7 +5,7 @@
  * This is a type-only contract with zero runtime dependencies.
  */
 
-import type { CliContextV1 } from '../context/v1.js';
+import type { CliContextV1 } from '../context/v1';
 
 /**
  * Function to build command flags (e.g., yargs options)
