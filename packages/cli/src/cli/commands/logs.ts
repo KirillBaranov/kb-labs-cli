@@ -12,7 +12,7 @@ import {
   parseLogs,
   type LogQuery,
   type LogEntry,
-} from '@kb-labs/sandbox/debug/log-query';
+} from '@kb-labs/core-sandbox/debug/log-query';
 
 /**
  * Load logs from snapshots
