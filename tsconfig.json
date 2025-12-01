@@ -2,7 +2,7 @@
   "files": [],
   "references": [
     { "path": "packages/cli" },
-    { "path": "packages/core" },
+    { "path": "packages/core-framework" },
     { "path": "packages/commands" },
     { "path": "packages/adapters" },
     { "path": "apps/demo" }
