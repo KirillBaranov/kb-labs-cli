@@ -16,10 +16,10 @@
         "packages/cli-api/src/*"
       ],
       "@kb-labs/cli-commands": [
-        "packages/commands/src/index.ts"
+        "packages/cli-commands/src/index.ts"
       ],
       "@kb-labs/cli-commands/*": [
-        "packages/commands/src/*"
+        "packages/cli-commands/src/*"
       ],
       "@kb-labs/cli-contracts": [
         "packages/cli-contracts/src/index.ts"
@@ -136,46 +136,46 @@
         "../kb-labs-plugin/packages/adapters/studio/src/*"
       ],
       "@kb-labs/plugin-manifest": [
-        "../kb-labs-plugin/packages/manifest/src/index.ts"
+        "../kb-labs-plugin/packages/plugin-manifest/src/index.ts"
       ],
       "@kb-labs/plugin-manifest/*": [
-        "../kb-labs-plugin/packages/manifest/src/*"
+        "../kb-labs-plugin/packages/plugin-manifest/src/*"
       ],
       "@kb-labs/plugin-runtime": [
-        "../kb-labs-plugin/packages/runtime/src/index.ts"
+        "../kb-labs-plugin/packages/plugin-runtime/src/index.ts"
       ],
       "@kb-labs/plugin-runtime/*": [
-        "../kb-labs-plugin/packages/runtime/src/*"
+        "../kb-labs-plugin/packages/plugin-runtime/src/*"
       ],
-      "@kb-labs/release-cli": [
-        "../kb-labs-release-manager/packages/release-cli/src/index.ts"
+      "@kb-labs/release-manager-cli": [
+        "../kb-labs-release-manager/packages/release-manager-cli/src/index.ts"
       ],
-      "@kb-labs/release-cli/*": [
-        "../kb-labs-release-manager/packages/release-cli/src/*"
+      "@kb-labs/release-manager-cli/*": [
+        "../kb-labs-release-manager/packages/release-manager-cli/src/*"
       ],
-      "@kb-labs/release-core": [
-        "../kb-labs-release-manager/packages/release-core/src/index.ts"
+      "@kb-labs/release-manager-core": [
+        "../kb-labs-release-manager/packages/release-manager-core/src/index.ts"
       ],
-      "@kb-labs/release-core/*": [
-        "../kb-labs-release-manager/packages/release-core/src/*"
+      "@kb-labs/release-manager-core/*": [
+        "../kb-labs-release-manager/packages/release-manager-core/src/*"
       ],
-      "@kb-labs/setup-engine": [
-        "../kb-labs-setup-engine/packages/setup-engine/src/index.ts"
+      "@kb-labs/setup-engine-core": [
+        "../kb-labs-setup-engine/packages/setup-engine-core/src/index.ts"
       ],
-      "@kb-labs/setup-engine/*": [
-        "../kb-labs-setup-engine/packages/setup-engine/src/*"
+      "@kb-labs/setup-engine-core/*": [
+        "../kb-labs-setup-engine/packages/setup-engine-core/src/*"
       ],
-      "@kb-labs/setup-operations": [
-        "../kb-labs-setup-engine/packages/setup-operations/src/index.ts"
+      "@kb-labs/setup-engine-operations": [
+        "../kb-labs-setup-engine/packages/setup-engine-operations/src/index.ts"
       ],
-      "@kb-labs/setup-operations/*": [
-        "../kb-labs-setup-engine/packages/setup-operations/src/*"
+      "@kb-labs/setup-engine-operations/*": [
+        "../kb-labs-setup-engine/packages/setup-engine-operations/src/*"
       ],
       "@kb-labs/shared-cli-ui": [
-        "../kb-labs-shared/packages/cli-ui/src/index.ts"
+        "../kb-labs-shared/packages/shared-cli-ui/src/index.ts"
       ],
       "@kb-labs/shared-cli-ui/*": [
-        "../kb-labs-shared/packages/cli-ui/src/*"
+        "../kb-labs-shared/packages/shared-cli-ui/src/*"
       ],
       "@kb-labs/shared-command-kit": [
         "../kb-labs-shared/packages/shared-command-kit/src/index.ts"
