@@ -1,4 +1,5 @@
-import type { CliContext, ExecutionLimits } from "@kb-labs/cli-contracts";
+import type { CliContext } from "@kb-labs/cli-contracts";
+import type { ExecutionLimits } from "@kb-labs/cli-core";
 
 import {
   MiddlewareManager,

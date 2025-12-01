@@ -34,7 +34,7 @@
   "dependencies": {
     "@kb-labs/cli-contracts": "workspace:*",
     "@kb-labs/core-sys": "link:../../../kb-labs-core/packages/core-sys",
-    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
+    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/plugin-manifest",
     "@kb-labs/plugin-adapter-rest": "link:../../../kb-labs-plugin/packages/adapters/rest",
     "colorette": "^2.0.20",
     "semver": "^7.6.3",

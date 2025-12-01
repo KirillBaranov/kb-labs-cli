@@ -33,8 +33,8 @@
   },
   "dependencies": {
     "@kb-labs/cli-core": "workspace:*",
-    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
-    "@kb-labs/plugin-runtime": "workspace:*",
+    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/plugin-manifest",
+    "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/plugin-runtime",
     "@kb-labs/workflow-constants": "link:../../../kb-labs-workflow/packages/workflow-constants",
     "@kb-labs/workflow-contracts": "link:../../../kb-labs-workflow/packages/workflow-contracts",
     "@kb-labs/workflow-engine": "link:../../../kb-labs-workflow/packages/workflow-engine",

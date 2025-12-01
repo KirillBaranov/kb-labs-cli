@@ -37,9 +37,9 @@
     "// ——— core": "────────────────────────────────────────",
     "clean": "rimraf dist",
     "build": "pnpm run build:commands && pnpm run build:bin",
-    "build:commands": "pnpm -C packages/commands run build",
-    "build:bin": "pnpm -C packages/cli run build",
-    "build:clean": "pnpm -C packages/commands run clean && pnpm -C packages/commands run build && pnpm -C packages/cli run clean && pnpm -C packages/cli run build",
+    "build:commands": "pnpm -C packages/cli-commands run build",
+    "build:bin": "pnpm -C packages/cli-bin run build",
+    "build:clean": "pnpm -C packages/cli-commands run clean && pnpm -C packages/cli-commands run build && pnpm -C packages/cli-bin run clean && pnpm -C packages/cli-bin run build",
     "dev": "pnpm -r --parallel --filter @kb-labs/cli-* run dev",
     "// ——— quality": "────────────────────────────────────────",
     "lint": "pnpm -r run lint",
@@ -55,7 +55,7 @@
     "// ——— cleanup": "────────────────────────────────────────",
     "clean:all": "rimraf node_modules packages/*/node_modules apps/*/node_modules dist",
     "// ——— cli": "────────────────────────────────────────",
-    "kb": "node packages/cli/dist/bin.js"
+    "kb": "node packages/cli-bin/dist/bin.js"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md,yml,yaml}": [
@@ -68,15 +68,15 @@
   "dependencies": {
     "@kb-labs/core": "link:../kb-labs-core",
     "@kb-labs/devkit": "link:../kb-labs-devkit",
-    "@kb-labs/devlink-core": "link:../kb-labs-devlink/packages/core",
+    "@kb-labs/devlink-core": "link:../kb-labs-devlink/packages/devlink-core",
     "@kb-labs/mind-cli": "link:../kb-labs-mind/packages/mind-cli",
     "@kb-labs/mind-core": "link:../kb-labs-mind/packages/mind-core",
     "@kb-labs/mind-indexer": "link:../kb-labs-mind/packages/mind-indexer",
     "@kb-labs/mind-query": "link:../kb-labs-mind/packages/mind-query",
     "@kb-labs/mind-types": "link:../kb-labs-mind/packages/mind-types",
-    "@kb-labs/core-cli": "link:../kb-labs-core/packages/cli",
-    "@kb-labs/release-cli": "link:../kb-labs-release-manager/packages/release-cli",
-    "@kb-labs/release-core": "link:../kb-labs-release-manager/packages/release-core",
+    "@kb-labs/core-cli": "link:../kb-labs-core/packages/core-cli",
+    "@kb-labs/release-manager-cli": "link:../kb-labs-release-manager/packages/release-manager-cli",
+    "@kb-labs/release-manager-core": "link:../kb-labs-release-manager/packages/release-manager-core",
     "zod": "^4.1.5"
   },
   "devDependencies": {

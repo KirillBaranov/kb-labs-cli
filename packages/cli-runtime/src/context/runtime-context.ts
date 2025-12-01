@@ -1,9 +1,6 @@
-import {
-  createContext,
-  type CliContext,
-  type Logger,
-  type Presenter,
-} from "@kb-labs/cli-contracts";
+import type { CliContext, Presenter } from "@kb-labs/cli-contracts";
+import type { Logger } from "@kb-labs/core-sys/logging";
+import { createContext } from "@kb-labs/cli-core";
 
 export interface RuntimeContextOptions {
   presenter: Presenter;

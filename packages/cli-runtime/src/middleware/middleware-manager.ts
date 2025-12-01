@@ -3,7 +3,7 @@
  * Middleware chain management
  */
 
-import type { ExecutionLimits } from "@kb-labs/cli-contracts";
+import type { ExecutionLimits } from "@kb-labs/cli-core";
 
 export type CommandMiddleware<T = unknown> = (
   ctx: any,
