@@ -2,6 +2,7 @@ import type { Command, CommandGroup, CommandRegistry } from "../types";
 import type { RegisteredCommand } from "./types";
 import type { ManifestV2, CliCommandDecl } from "@kb-labs/plugin-manifest";
 import { getContextCwd } from "@kb-labs/shared-cli-ui";
+import { ensurePluginSetup } from "./middleware/lazy-setup";
 
 function manifestToCommand(registered: RegisteredCommand): Command {
   // ID is now simple without group prefix
@@ -104,6 +105,13 @@ function manifestToCommand(registered: RegisteredCommand): Command {
         ctx.presenter.error(
           `Command ${registered.manifest.id} has no handler in manifest. Add 'handler: "./cli/command#run"' to CLI command declaration.`,
         );
+        return 1;
+      }
+
+      // ADR-0009: Lazy setup on first command invocation
+      const setupResult = await ensurePluginSetup(manifestV2, ctx, flags, findCommand);
+      if (!setupResult.ok) {
+        ctx.presenter.error(setupResult.error!);
         return 1;
       }
 

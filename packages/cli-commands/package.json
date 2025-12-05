@@ -35,6 +35,7 @@
     "@kb-labs/core-config": "link:../../../kb-labs-core/packages/core-config",
     "@kb-labs/core-sandbox": "link:../../../kb-labs-core/packages/core-sandbox",
     "@kb-labs/core-sys": "link:../../../kb-labs-core/packages/core-sys",
+    "@kb-labs/state-broker": "link:../../../kb-labs-core/packages/core-state-broker",
     "@kb-labs/plugin-adapter-cli": "link:../../../kb-labs-plugin/packages/adapters/cli",
     "@kb-labs/plugin-adapter-rest": "link:../../../kb-labs-plugin/packages/adapters/rest",
     "@kb-labs/plugin-adapter-studio": "link:../../../kb-labs-plugin/packages/adapters/studio",
