@@ -14,6 +14,7 @@ export const jobsDisable = defineSystemCommand<Record<string, never>, JobsDisabl
   name: 'disable',
   description: 'Disable a scheduled job',
   category: 'jobs',
+  flags: {},
   examples: [
     'kb jobs disable @kb-labs/mind:auto-index',
   ],
@@ -39,7 +40,7 @@ export const jobsDisable = defineSystemCommand<Record<string, never>, JobsDisabl
 
       if (schedule.status === 'paused') {
         ctx.output?.write(`Job ${jobId} is already disabled\n`);
-        return { success: true, jobId };
+        return { ok: true, jobId };
       }
 
       // Update status
@@ -53,7 +54,7 @@ export const jobsDisable = defineSystemCommand<Record<string, never>, JobsDisabl
 
       ctx.output?.write(`✓ Job ${jobId} disabled\n`);
 
-      return { success: true, jobId };
+      return { ok: true, jobId };
     } finally {
       await redis.client.quit();
     }

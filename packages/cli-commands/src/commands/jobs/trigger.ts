@@ -59,7 +59,7 @@ export const jobsTrigger = defineSystemCommand<Record<string, never>, JobsTrigge
       ctx.output?.write(`  Worker will execute this job shortly\n`);
       ctx.output?.write(`  Use 'kb jobs status ${jobId}' to check schedule status\n`);
 
-      return { ok: true, success: true, jobId };
+      return { ok: true, jobId };
     } finally {
       await redis.client.quit();
     }

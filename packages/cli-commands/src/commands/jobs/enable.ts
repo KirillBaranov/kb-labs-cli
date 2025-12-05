@@ -15,6 +15,7 @@ export const jobsEnable = defineSystemCommand<Record<string, never>, JobsEnableR
   name: 'enable',
   description: 'Enable a scheduled job',
   category: 'jobs',
+  flags: {},
   examples: [
     'kb jobs enable @kb-labs/mind:auto-index',
   ],
@@ -40,7 +41,7 @@ export const jobsEnable = defineSystemCommand<Record<string, never>, JobsEnableR
 
       if (schedule.status === 'active') {
         ctx.output?.write(`Job ${jobId} is already enabled\n`);
-        return { success: true, jobId };
+        return { ok: true, jobId };
       }
 
       // Update status
@@ -66,7 +67,7 @@ export const jobsEnable = defineSystemCommand<Record<string, never>, JobsEnableR
       ctx.output?.write(`  Next run: ${nextRunDate}\n`);
       ctx.output?.write(`  Schedule: ${schedule.schedule.cron || schedule.schedule}\n`);
 
-      return { success: true, jobId, nextRun: nextRunDate };
+      return { ok: true, jobId, nextRun: nextRunDate };
     } finally {
       await redis.client.quit();
     }

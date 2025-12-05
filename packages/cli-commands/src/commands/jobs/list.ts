@@ -90,7 +90,7 @@ export const jobsList = defineSystemCommand<
       } else {
         if (jobs.length === 0) {
           ctx.output?.write('No scheduled jobs found\n');
-          return { success: true, jobs: [] };
+          return { ok: true, jobs: [] };
         }
 
         ctx.output?.write(`\nScheduled Jobs (${jobs.length}):\n\n`);
@@ -108,7 +108,7 @@ export const jobsList = defineSystemCommand<
         }
       }
 
-      return { success: true, jobs };
+      return { ok: true, jobs };
     } finally {
       await redis.client.quit();
     }

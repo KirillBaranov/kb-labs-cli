@@ -1,4 +1,4 @@
-import { defineSystemCommand } from '@kb-labs/shared-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
 import { generateExamples } from '@kb-labs/plugin-manifest';
 
@@ -6,11 +6,11 @@ type DiagnoseFlags = {
   json: { type: 'boolean'; description?: string };
 };
 
-type DiagnoseResult = {
-  node: string;
-  platform: string;
-  repoRoot: string;
-  cwd: string;
+type DiagnoseResult = CommandResult & {
+  node?: string;
+  platform?: string;
+  repoRoot?: string;
+  cwd?: string;
 };
 
 export const diagnose = defineSystemCommand<DiagnoseFlags, DiagnoseResult>({
@@ -39,6 +39,7 @@ export const diagnose = defineSystemCommand<DiagnoseFlags, DiagnoseResult>({
 
     // Return typed data
     return {
+      ok: true,
       node: nodeVersion,
       platform,
       repoRoot,
@@ -64,7 +65,7 @@ export const diagnose = defineSystemCommand<DiagnoseFlags, DiagnoseResult>({
             ],
           },
         ],
-        status: 'info',
+        status: 'success',
         timing: ctx.tracker.total(),
       });
       console.log(output);

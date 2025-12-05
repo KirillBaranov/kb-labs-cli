@@ -6,7 +6,7 @@ import { box } from '@kb-labs/shared-cli-ui'
 import type { EnhancedCliContext } from '@kb-labs/shared-command-kit'
 
 type BudgetStatusResult = CommandResult & {
-  status?: {
+  budgetStatus?: {
     current: number;
     period: string;
     action: string;
@@ -78,7 +78,7 @@ export const wfBudgetStatus = defineSystemCommand<WfBudgetStatusFlags, BudgetSta
       if (jsonMode) {
         ctx.output?.json({
           ok: true,
-          status,
+          budgetStatus: status,
         })
       } else {
         const lines: string[] = [
@@ -97,7 +97,7 @@ export const wfBudgetStatus = defineSystemCommand<WfBudgetStatusFlags, BudgetSta
         ctx.output?.write('\n' + box('Budget Status', lines))
       }
 
-      return { ok: true, status }
+      return { ok: true, budgetStatus: status }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (jsonMode) {

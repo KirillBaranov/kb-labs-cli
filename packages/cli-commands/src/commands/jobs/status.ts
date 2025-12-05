@@ -87,7 +87,7 @@ export const jobsStatus = defineSystemCommand<
         ctx.output?.write('\n');
       }
 
-      return { success: true, jobId, status: status.status };
+      return { ok: true, jobId, status: status.status };
     } finally {
       await redis.client.quit();
     }
