@@ -28,8 +28,8 @@ import {
 } from "@kb-labs/cli-runtime";
 import { handleLimitFlag } from "./limits";
 import { getDefaultMiddlewares } from "./middlewares";
-import { initializeTelemetry } from "./telemetry-adapter";
 import { loadEnvFile } from "./env-loader";
+import { initializePlatform } from "./platform-init";
 
 type RuntimeInitOptions = RuntimeSetupOptions;
 type CliRuntimeInstance = Awaited<ReturnType<typeof createCliRuntime>>;
@@ -65,10 +65,13 @@ export async function executeCli(
   options: CliRuntimeOptions = {},
 ): Promise<number | void> {
   const cwd = options.cwd ?? process.cwd();
-  
+
   // Загружаем .env файл если есть (не перезаписываем существующие переменные)
   loadEnvFile(cwd);
-  
+
+  // Initialize platform adapters from kb.config.json (before any plugin execution)
+  await initializePlatform(cwd);
+
   const env = options.env ?? process.env;
   const version = resolveVersion(options.version, env);
   const parse = options.parseArgs ?? parseArgs;
@@ -119,11 +122,6 @@ export async function executeCli(
     debug: global.debug,
     mode: global.json ? 'json' : 'auto',
     replaceSinks: true, // Always replace sinks to avoid duplicate output
-  });
-
-  // Initialize telemetry for plugin-runtime (optional, won't fail if analytics unavailable)
-  await initializeTelemetry().catch(() => {
-    // Silently ignore if telemetry initialization fails
   });
 
   // Create logger early for registerCommands - MUST be after initLogging()

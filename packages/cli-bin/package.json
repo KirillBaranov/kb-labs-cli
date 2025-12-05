@@ -36,10 +36,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@kb-labs/analytics-sdk-node": "link:../../../kb-labs-analytics/packages/analytics-sdk-node",
     "@kb-labs/cli-commands": "workspace:*",
     "@kb-labs/cli-core": "workspace:*",
     "@kb-labs/cli-runtime": "workspace:*",
+    "@kb-labs/core-config": "link:../../../kb-labs-core/packages/core-config",
+    "@kb-labs/core-platform": "link:../../../kb-labs-core/packages/core-platform",
+    "@kb-labs/core-runtime": "link:../../../kb-labs-core/packages/core-runtime",
     "@kb-labs/core-sandbox": "link:../../../kb-labs-core/packages/core-sandbox",
     "@kb-labs/core-sys": "link:../../../kb-labs-core/packages/core-sys",
     "@kb-labs/core-types": "link:../../../kb-labs-core/packages/core-types",
