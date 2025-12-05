@@ -1,0 +1,78 @@
+/**
+ * Platform initialization for KB Labs CLI.
+ * Loads adapters from kb.config.json and initializes the platform singleton.
+ */
+
+import { initPlatform, type PlatformConfig } from '@kb-labs/core-runtime';
+import { findNearestConfig, readJsonWithDiagnostics } from '@kb-labs/core-config';
+import { getLogger } from '@kb-labs/core-sys/logging';
+
+const logger = getLogger('platform');
+
+/**
+ * Initialize platform adapters from kb.config.json.
+ * Falls back to NoOp adapters if config not found.
+ * @returns The platform config that was used for initialization
+ */
+export async function initializePlatform(cwd: string): Promise<PlatformConfig> {
+  try {
+    // Try to find kb.config.json
+    const { path: configPath } = await findNearestConfig({
+      startDir: cwd,
+      filenames: [
+        '.kb/kb.config.json',
+        'kb.config.json',
+      ],
+    });
+
+    if (!configPath) {
+      logger.debug('No kb.config.json found, using NoOp adapters');
+      // Initialize with empty config (all NoOp adapters)
+      const fallbackConfig = { adapters: {} };
+      await initPlatform(fallbackConfig);
+      return fallbackConfig;
+    }
+
+    // Read config
+    const result = await readJsonWithDiagnostics<{ platform?: PlatformConfig }>(configPath);
+    if (!result.ok) {
+      logger.warn('Failed to read kb.config.json, using NoOp adapters', {
+        errors: result.diagnostics.map(d => d.message),
+      });
+      const fallbackConfig = { adapters: {} };
+      await initPlatform(fallbackConfig);
+      return fallbackConfig;
+    }
+
+    // Extract platform config
+    const platformConfig = result.data.platform;
+    if (!platformConfig) {
+      logger.debug('No platform config in kb.config.json, using NoOp adapters');
+      const fallbackConfig = { adapters: {} };
+      await initPlatform(fallbackConfig);
+      return fallbackConfig;
+    }
+
+    // Initialize platform with config
+    logger.info('Initializing platform adapters', {
+      configPath,
+      adapters: Object.keys(platformConfig.adapters ?? {}),
+      hasAdapterOptions: !!platformConfig.adapterOptions,
+    });
+    await initPlatform(platformConfig);
+    logger.info('Platform adapters initialized', {
+      configPath,
+      adapters: Object.keys(platformConfig.adapters ?? {}),
+    });
+    return platformConfig;
+
+  } catch (error) {
+    logger.warn('Platform initialization failed, using NoOp adapters', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    // Fallback to NoOp adapters on error
+    const fallbackConfig = { adapters: {} };
+    await initPlatform(fallbackConfig);
+    return fallbackConfig;
+  }
+}

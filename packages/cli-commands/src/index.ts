@@ -22,20 +22,6 @@ export { diagnose } from "./commands/system/diagnose";
 export { loggingCheck } from "./commands/system/logging-check";
 export { loggingInit } from "./commands/system/logging-init";
 export { createPluginsIntrospectCommand } from "./plugins-introspect";
-export {
-  wfRun,
-  wfValidate,
-  wfRunsList,
-  wfRunsGet,
-  wfLogs,
-  wfCancel,
-  workflowCommandGroup,
-} from "./commands/workflows";
+export * from "./commands/workflows";
 export { worker } from "./commands/worker";
-export {
-  jobsList,
-  jobsEnable,
-  jobsDisable,
-  jobsStatus,
-  jobsTrigger,
-} from "./commands/jobs";
+export * from "./commands/jobs";

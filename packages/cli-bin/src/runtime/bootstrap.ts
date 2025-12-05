@@ -70,7 +70,10 @@ export async function executeCli(
   loadEnvFile(cwd);
 
   // Initialize platform adapters from kb.config.json (before any plugin execution)
-  await initializePlatform(cwd);
+  const platformConfig = await initializePlatform(cwd);
+
+  // Store platformConfig globally so CLI adapter can pass it to ExecutionContext
+  (globalThis as any).__KB_PLATFORM_CONFIG__ = platformConfig;
 
   const env = options.env ?? process.env;
   const version = resolveVersion(options.version, env);

@@ -7,6 +7,7 @@ export default defineConfig({
     index: "src/index.ts",
   },
   tsconfig: "tsconfig.build.json", // Use build-specific tsconfig without paths
+  dts: true, // generate types for exports
   // nodePreset already includes all @kb-labs packages as external
 });
 
