@@ -60,6 +60,18 @@
       "@kb-labs/core-config/*": [
         "../kb-labs-core/packages/core-config/src/*"
       ],
+      "@kb-labs/core-platform": [
+        "../kb-labs-core/packages/core-platform/src/index.ts"
+      ],
+      "@kb-labs/core-platform/*": [
+        "../kb-labs-core/packages/core-platform/src/*"
+      ],
+      "@kb-labs/core-runtime": [
+        "../kb-labs-core/packages/core-runtime/src/index.ts"
+      ],
+      "@kb-labs/core-runtime/*": [
+        "../kb-labs-core/packages/core-runtime/src/*"
+      ],
       "@kb-labs/core-sandbox": [
         "../kb-labs-core/packages/core-sandbox/src/index.ts"
       ],
@@ -105,12 +117,6 @@
       "@kb-labs/mind-indexer/*": [
         "../kb-labs-mind/packages/mind-indexer/src/*"
       ],
-      "@kb-labs/mind-query": [
-        "../kb-labs-mind/packages/mind-query/src/index.ts"
-      ],
-      "@kb-labs/mind-query/*": [
-        "../kb-labs-mind/packages/mind-query/src/*"
-      ],
       "@kb-labs/mind-types": [
         "../kb-labs-mind/packages/mind-types/src/index.ts"
       ],
@@ -146,18 +152,6 @@
       ],
       "@kb-labs/plugin-runtime/*": [
         "../kb-labs-plugin/packages/plugin-runtime/src/*"
-      ],
-      "@kb-labs/release-manager-cli": [
-        "../kb-labs-release-manager/packages/release-manager-cli/src/index.ts"
-      ],
-      "@kb-labs/release-manager-cli/*": [
-        "../kb-labs-release-manager/packages/release-manager-cli/src/*"
-      ],
-      "@kb-labs/release-manager-core": [
-        "../kb-labs-release-manager/packages/release-manager-core/src/index.ts"
-      ],
-      "@kb-labs/release-manager-core/*": [
-        "../kb-labs-release-manager/packages/release-manager-core/src/*"
       ],
       "@kb-labs/setup-engine-core": [
         "../kb-labs-setup-engine/packages/setup-engine-core/src/index.ts"
