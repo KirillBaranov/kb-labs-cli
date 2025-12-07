@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 
 // CRITICAL: Set default log level BEFORE any imports to prevent log spam
 // This must happen before auto-init in lazy-loaded loggers

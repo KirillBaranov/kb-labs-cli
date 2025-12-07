@@ -49,8 +49,8 @@ export async function ensurePluginSetup(
 
   try {
     // Import State Broker dynamically (optional dependency)
-    const { createStateBroker } = await import('@kb-labs/state-broker');
-    const stateBroker = createStateBroker();
+    const { detectStateBroker } = await import('@kb-labs/state-broker');
+    const stateBroker = await detectStateBroker();
 
     // Check if setup already completed
     const setupKey = `plugin:${manifestV2.id}:setup-done`;
@@ -104,13 +104,14 @@ export async function ensurePluginSetup(
     }
 
     // Mark setup as complete (persist forever)
+    // Use large number instead of Infinity (JSON.stringify converts Infinity to null)
     await stateBroker.set(
       setupKey,
       {
         timestamp: Date.now(),
         version: manifestV2.version,
       },
-      Infinity
+      Number.MAX_SAFE_INTEGER
     );
 
     ctx.presenter.info(`✅ Setup complete for ${manifestV2.id}`);

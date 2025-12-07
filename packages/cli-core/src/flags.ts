@@ -179,5 +179,12 @@ export function parseArgs(argv: string[]): {
     }
   }
   const rest = args;
+
+  // Fallback to KB_PROFILE env var if --profile not provided
+  // Priority: --profile flag > KB_PROFILE env var > default
+  if (!global.profile && process.env.KB_PROFILE) {
+    global.profile = process.env.KB_PROFILE;
+  }
+
   return { cmdPath, rest, global, flagsObj };
 }

@@ -12,7 +12,7 @@ export {
 export { registerBuiltinCommands } from "./utils/register";
 export * from "./utils/help-generator";
 export { TimingTracker } from "@kb-labs/shared-cli-ui";
-export { discoverManifestsByNamespace } from "./registry/discover";
+export { discoverManifestsByNamespace, discoverManifests } from "./registry/discover";
 export { telemetry } from "./registry/telemetry";
 
 export { hello } from "./commands/system/hello";

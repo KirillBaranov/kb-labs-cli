@@ -68,6 +68,9 @@ export interface CliContextV1 {
   /** Active user profile */
   profile?: ProfileV1;
 
+  /** Active profile ID (Profiles v2) */
+  profileId?: string;
+
   /** Global configuration object */
   config?: Record<string, any>;
 

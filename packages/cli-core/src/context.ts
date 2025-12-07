@@ -29,6 +29,7 @@ export interface CreateContextOptions {
   cwd?: string;
   repoRoot?: string;
   config?: Record<string, any>;
+  profileId?: string;
 }
 
 export async function createContext({
@@ -39,6 +40,7 @@ export async function createContext({
   cwd,
   repoRoot,
   config = {},
+  profileId,
 }: CreateContextOptions): Promise<CliContext> {
   const resolvedEnv = env ?? process.env;
   const resolvedCwd = cwd ?? process.cwd();
@@ -52,6 +54,7 @@ export async function createContext({
     repoRoot: resolvedRepoRoot,
     cwd: resolvedCwd,
     env: resolvedEnv,
+    profileId,
     diagnostics: [],
     sentJSON: false,
   };

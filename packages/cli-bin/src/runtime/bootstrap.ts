@@ -207,6 +207,7 @@ export async function executeCli(
     output,
     env,
     cwd,
+    profileId: global.profile, // Pass global --profile flag or KB_PROFILE env var
   });
   
   const runtimeInitOptions: RuntimeInitOptions = {

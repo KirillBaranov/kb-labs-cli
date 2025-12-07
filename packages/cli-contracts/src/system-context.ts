@@ -75,6 +75,19 @@ export interface SystemContext {
   readonly profile?: ProfileV1;
 
   /**
+   * Profile ID from --profile flag or KB_PROFILE env var
+   *
+   * Priority: --profile flag > KB_PROFILE env var > default
+   *
+   * @example
+   * ```bash
+   * kb --profile strict ai-review:check
+   * KB_PROFILE=ci-strict kb workflow:run
+   * ```
+   */
+  readonly profileId?: string;
+
+  /**
    * Output interface for terminal messages
    */
   readonly output: Output;

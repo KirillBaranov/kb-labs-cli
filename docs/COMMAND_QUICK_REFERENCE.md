@@ -9,6 +9,21 @@ All commands support these global flags:
 - `--help` - Show command help
 - `--version` - Show CLI version
 - `--limit` - Print sandbox limits/permissions for the selected plugin/command without executing it
+- `--profile <id>` - Select profile to use (can also use `KB_PROFILE` env var)
+
+### Profile Selection
+
+Use `--profile` to select which profile configuration to use:
+
+```bash
+# Use specific profile for command
+kb --profile strict ai-review:check src/
+
+# Via environment variable (useful for CI/CD)
+KB_PROFILE=ci-strict kb workflow:run deploy
+
+# Priority: --profile flag > KB_PROFILE env var > default
+```
 
 ### JSON Mode
 

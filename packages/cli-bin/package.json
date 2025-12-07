@@ -5,7 +5,7 @@
   "private": true,
   "description": "KB Labs CLI tool for project management and automation",
   "bin": {
-    "kb": "dist/bin.js"
+    "kb": "dist/bin.cjs"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -27,9 +27,9 @@
   "sideEffects": false,
   "scripts": {
     "clean": "rimraf dist",
-    "build": "tsup --config tsup.config.ts",
+    "build": "pnpm clean && tsup --config tsup.bin.config.ts && tsup --config tsup.lib.config.ts",
     "dev": "tsup --config tsup.config.ts --watch",
-    "smoke": "node ./dist/bin.js hello",
+    "smoke": "node ./dist/bin.cjs hello",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "type-check": "tsc --noEmit",

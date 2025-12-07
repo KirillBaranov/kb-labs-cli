@@ -10,7 +10,7 @@ import { executeCommand } from '@kb-labs/plugin-adapter-cli';
 import { getContextCwd } from '../utils/context';
 
 // Global flags that are always passed to commands
-const GLOBAL_FLAGS = ['json', 'onlyAvailable', 'noCache', 'verbose', 'debug', 'quiet', 'help', 'version', 'dryRun'];
+const GLOBAL_FLAGS = ['json', 'onlyAvailable', 'noCache', 'verbose', 'debug', 'quiet', 'help', 'version', 'dryRun', 'yes'];
 
 // Execution limits
 const COMMAND_TIMEOUT = 5 * 60 * 1000; // 5 minutes
