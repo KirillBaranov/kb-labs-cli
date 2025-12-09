@@ -65,6 +65,11 @@ export const CommandManifestSchema = z.object({
   permissions: z.array(z.string()).optional(), // e.g., ["fs.read", "git.read", "net.fetch"]
   telemetry: z.enum(['opt-in', 'off']).optional(),
   manifestV2: z.any().optional(), // Full ManifestV2 for sandbox execution
+
+  // Internal flags for auto-generated commands
+  isSetup: z.boolean().optional(), // Auto-generated setup command
+  isSetupRollback: z.boolean().optional(), // Auto-generated setup rollback command
+  pkgRoot: z.string().optional(), // Package root path for handler resolution
 }).refine(
   (data) => {
     // IDs are now simple (no namespace prefix), just check namespace matches group
