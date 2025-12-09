@@ -100,6 +100,7 @@ export function parseArgs(argv: string[]): {
               break;
             case "--dry-run":
               global.dryRun = true;
+              flagsObj['dry-run'] = true; // Also add to command flags
               break;
             case "--save-snapshot":
               global.saveSnapshot = true;

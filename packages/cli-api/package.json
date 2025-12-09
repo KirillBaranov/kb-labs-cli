@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/cli-api",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "Programmatic API for KB Labs CLI - stable interface for REST API, webhooks, and agents",
   "type": "module",
   "main": "./dist/index.js",
