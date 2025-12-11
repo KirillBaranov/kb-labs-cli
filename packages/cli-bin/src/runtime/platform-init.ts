@@ -9,12 +9,17 @@ import { getLogger } from '@kb-labs/core-sys/logging';
 
 const logger = getLogger('platform');
 
+export interface PlatformInitResult {
+  platformConfig: PlatformConfig;
+  rawConfig?: any; // Full kb.config.json for ctx.config extraction
+}
+
 /**
  * Initialize platform adapters from kb.config.json.
  * Falls back to NoOp adapters if config not found.
- * @returns The platform config that was used for initialization
+ * @returns The platform config and raw config that was loaded
  */
-export async function initializePlatform(cwd: string): Promise<PlatformConfig> {
+export async function initializePlatform(cwd: string): Promise<PlatformInitResult> {
   try {
     // Try to find kb.config.json
     const { path: configPath } = await findNearestConfig({
@@ -30,7 +35,7 @@ export async function initializePlatform(cwd: string): Promise<PlatformConfig> {
       // Initialize with empty config (all NoOp adapters)
       const fallbackConfig = { adapters: {} };
       await initPlatform(fallbackConfig);
-      return fallbackConfig;
+      return { platformConfig: fallbackConfig };
     }
 
     // Read config
@@ -41,7 +46,7 @@ export async function initializePlatform(cwd: string): Promise<PlatformConfig> {
       });
       const fallbackConfig = { adapters: {} };
       await initPlatform(fallbackConfig);
-      return fallbackConfig;
+      return { platformConfig: fallbackConfig };
     }
 
     // Extract platform config
@@ -50,7 +55,7 @@ export async function initializePlatform(cwd: string): Promise<PlatformConfig> {
       logger.debug('No platform config in kb.config.json, using NoOp adapters');
       const fallbackConfig = { adapters: {} };
       await initPlatform(fallbackConfig);
-      return fallbackConfig;
+      return { platformConfig: fallbackConfig, rawConfig: result.data };
     }
 
     // Initialize platform with config
@@ -64,7 +69,7 @@ export async function initializePlatform(cwd: string): Promise<PlatformConfig> {
       configPath,
       adapters: Object.keys(platformConfig.adapters ?? {}),
     });
-    return platformConfig;
+    return { platformConfig, rawConfig: result.data };
 
   } catch (error) {
     logger.warn('Platform initialization failed, using NoOp adapters', {
@@ -73,6 +78,6 @@ export async function initializePlatform(cwd: string): Promise<PlatformConfig> {
     // Fallback to NoOp adapters on error
     const fallbackConfig = { adapters: {} };
     await initPlatform(fallbackConfig);
-    return fallbackConfig;
+    return { platformConfig: fallbackConfig };
   }
 }

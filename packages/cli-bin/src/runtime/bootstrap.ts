@@ -70,10 +70,25 @@ export async function executeCli(
   loadEnvFile(cwd);
 
   // Initialize platform adapters from kb.config.json (before any plugin execution)
-  const platformConfig = await initializePlatform(cwd);
+  const { platformConfig, rawConfig } = await initializePlatform(cwd);
+
+  console.log('[bootstrap] rawConfig:', rawConfig ? 'EXISTS' : 'UNDEFINED');
+  if (rawConfig) {
+    console.log('[bootstrap] rawConfig keys:', Object.keys(rawConfig));
+  }
 
   // Store platformConfig globally so CLI adapter can pass it to ExecutionContext
   (globalThis as any).__KB_PLATFORM_CONFIG__ = platformConfig;
+
+  // Store rawConfig globally so useConfig() can access it (parent process)
+  (globalThis as any).__KB_RAW_CONFIG__ = rawConfig;
+
+  // Also store in env var so child processes can access it
+  if (rawConfig) {
+    process.env.KB_RAW_CONFIG_JSON = JSON.stringify(rawConfig);
+  }
+
+  console.log('[bootstrap] Stored in globalThis.__KB_RAW_CONFIG__:', (globalThis as any).__KB_RAW_CONFIG__ ? 'EXISTS' : 'UNDEFINED');
 
   const env = options.env ?? process.env;
   const version = resolveVersion(options.version, env);
@@ -199,7 +214,7 @@ export async function executeCli(
   
   const runtimeMiddlewares =
     options.runtimeMiddlewares ?? getDefaultMiddlewares();
-  
+
   // Create context with output and logger
   const cliContext = await createContext({
     presenter,
