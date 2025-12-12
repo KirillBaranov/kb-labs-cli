@@ -5,7 +5,7 @@
 
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
 import {
-  execute,
+  executePlugin,
   createId,
   createPluginContext,
   getTrackedOperations,
@@ -303,7 +303,7 @@ async function confirmDangerousWrite(patterns: string[]): Promise<boolean> {
     return false;
   }
 
-  const rl = createInterface({ input, output, terminal: true });
+  const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true });
   try {
     const answer = await rl.question(
       `Continue with modifications outside .kb/ (${patterns.join(', ')})? [y/N] `,
@@ -556,10 +556,14 @@ export function createPluginSetupCommand(
     ],
     flags: COMMAND_FLAGS,
     async run(ctx, argv, rawFlags): Promise<number> {
+      console.error('[plugin-setup-command] RUN FUNCTION CALLED', { namespace, packageName });
+
       const cliPresenter = ctx.presenter ?? {};
       const setupPresenter = new SetupPresenterFacade(cliPresenter, ctx.output, ctx.logger);
       const cwd = getContextCwd(ctx) ?? process.cwd();
-      
+
+      console.error('[plugin-setup-command] Got cwd and presenters', { cwd });
+
       ctx.logger?.info('Plugin setup started', { 
         namespace, 
         packageName, 
@@ -573,28 +577,48 @@ export function createPluginSetupCommand(
       const autoConfirm = toBooleanFlag(rawFlags.yes);
       const kbOnly = toBooleanFlag(getFlagValue(rawFlags, 'kb-only'));
 
+      console.error('[plugin-setup-command] Entering try block');
+
       try {
         const requestId = createId();
         const traceId = createId();
+
+        console.error('[plugin-setup-command] Created IDs', { requestId, traceId });
 
         const effectivePermissions = buildEffectivePermissions(
           manifest.setup.permissions || { fs: { mode: 'readWrite', allow: [] } },
           { kbOnly }
         );
 
+        console.error('[plugin-setup-command] Built permissions');
+
+        console.error('[plugin-setup-command] Getting dangerous patterns', { fsAllow: effectivePermissions.fs?.allow });
         const dangerousPatterns = getDangerousPatterns(effectivePermissions.fs?.allow);
+        console.error('[plugin-setup-command] Got dangerous patterns', { dangerousPatterns, applyDryRun, autoConfirm });
+
         if (!applyDryRun && dangerousPatterns.length > 0 && !autoConfirm) {
           ctx.output?.warn?.(`Setup will modify files outside .kb/: ${dangerousPatterns.join(', ')}`);
           ctx.logger?.warn('Dangerous patterns detected', { patterns: dangerousPatterns });
-          const confirmed = await confirmDangerousWrite(dangerousPatterns);
-          if (!confirmed) {
-            ctx.output?.warn?.('Setup aborted by user.');
-            ctx.logger?.info('Setup aborted by user');
+          console.error('[plugin-setup-command] Asking for confirmation');
+          try {
+            const confirmed = await confirmDangerousWrite(dangerousPatterns);
+            console.error('[plugin-setup-command] Got confirmation', { confirmed });
+            if (!confirmed) {
+              ctx.output?.warn?.('Setup aborted by user.');
+              ctx.logger?.info('Setup aborted by user');
+              return 1;
+            }
+          } catch (error) {
+            console.error('[plugin-setup-command] Confirmation error', error);
+            ctx.output?.error?.(error instanceof Error ? error : new Error(String(error)));
             return 1;
           }
         }
 
+        console.error('[plugin-setup-command] Creating operation tracker');
         const operationTracker = new OperationTracker();
+
+        console.error('[plugin-setup-command] Creating plugin context');
         const pluginContext = createPluginContext('cli', {
           requestId,
           pluginId: manifest.id,
@@ -608,7 +632,9 @@ export function createPluginSetupCommand(
           },
           getTrackedOperations: () => operationTracker.toArray(),
         });
+        console.error('[plugin-setup-command] Created plugin context');
 
+        console.error('[plugin-setup-command] Building execution context');
         const executionContext: any = {
           requestId,
           pluginId: manifest.id,
@@ -625,7 +651,9 @@ export function createPluginSetupCommand(
           tmpFiles: [],
           operationTracker,
         } satisfies Record<string, unknown>;
+        console.error('[plugin-setup-command] Created executionContext object');
 
+        console.error('[plugin-setup-command] Creating adapterMeta');
         const adapterMeta: AdapterMetadata = {
           type: ADAPTER_TYPES.CLI,
           signature: 'setup',
@@ -635,8 +663,11 @@ export function createPluginSetupCommand(
             packageName,
           },
         };
+        console.error('[plugin-setup-command] Validating adapterMeta');
         validateAdapterMetadata(adapterMeta);
+        console.error('[plugin-setup-command] Validated adapterMeta');
         executionContext.adapterMeta = adapterMeta;
+        console.error('[plugin-setup-command] Creating adapterContext');
         executionContext.adapterContext = {
           type: 'cli-setup',
           presenter: ctx.presenter,
@@ -653,29 +684,59 @@ export function createPluginSetupCommand(
           parentSpanId: executionContext.parentSpanId,
           debug: executionContext.debug,
         };
+        console.error('[plugin-setup-command] Created adapterContext');
 
+        console.error('[plugin-setup-command] Parsing handler ref');
         const handlerRef = parseHandlerRef(manifest.setup.handler);
+        console.error('[plugin-setup-command] Parsed handler ref', { handlerRef });
 
-        const executeResult = await execute(
-          {
-            handler: handlerRef,
-            input: { flags: rawFlags },
-            manifest,
-            perms: effectivePermissions,
-          },
-          executionContext
-        );
+        console.error('[plugin-setup-command] About to call ctx.logger?.debug');
+        ctx.logger?.debug('[DEBUG] About to execute setup handler', { handlerRef, namespace });
+        console.error('[plugin-setup-command] Called ctx.logger?.debug');
+
+        console.error('[plugin-setup-command] Calling executePlugin');
+        // pluginRoot должен указывать на dist directory где скомпилированные файлы
+        const distRoot = path.join(pkgRoot, 'dist');
+        const executeResult = await executePlugin({
+          context: pluginContext,
+          handlerRef,
+          argv: argv || [],
+          flags: rawFlags,
+          manifest,
+          permissions: effectivePermissions,
+          pluginRoot: distRoot,
+          grantedCapabilities: manifest.capabilities || [],
+        });
+
+        ctx.logger?.debug('[DEBUG] Setup handler executed', {
+          ok: executeResult.ok,
+          hasData: !!executeResult.data,
+          hasError: !!executeResult.error,
+        });
 
         if (!executeResult.ok) {
           ctx.logger?.error('Setup execution failed', { error: executeResult.error });
           ctx.output?.error?.(executeResult.error instanceof Error ? executeResult.error : new Error(String(executeResult.error)));
+          ctx.logger?.error('[DEBUG] Returning exit code 1 from executeResult.ok check');
           return 1;
         }
 
         const payload = executeResult.data as SetupHandlerResult;
 
+        ctx.logger?.debug('[DEBUG] Payload received', {
+          hasConfigDefaults: !!payload.configDefaults,
+          hasOperations: !!payload.operations,
+          operationsCount: payload.operations?.length || 0,
+          hasMessage: !!payload.message,
+        });
+
         const trackedOperations = getTrackedOperations(executionContext);
         const operations = mergeOperations(payload.operations, trackedOperations);
+
+        ctx.logger?.debug('[DEBUG] Operations merged', {
+          totalOperations: operations.length,
+          trackedOperations: trackedOperations.length,
+        });
 
         const operationRegistry = createOperationRegistry();
 
@@ -689,6 +750,10 @@ export function createPluginSetupCommand(
           workspaceRoot: cwd,
         });
         const plan = planner.plan(operations, analysis);
+
+        ctx.logger?.debug('[DEBUG] Plan created', {
+          planLength: plan.length,
+        });
 
         const diffLines = renderSetupDiff(plan);
         for (const line of diffLines) {
@@ -711,6 +776,11 @@ export function createPluginSetupCommand(
           ),
         });
 
+        ctx.logger?.debug('[DEBUG] About to execute plan', {
+          planLength: plan.length,
+          dryRun: applyDryRun,
+        });
+
         const executionResult = await executor.execute(plan, {
           dryRun: applyDryRun,
           autoConfirm,
@@ -720,19 +790,25 @@ export function createPluginSetupCommand(
             ctx.output?.info?.(
               `[${event.stageId}] ${event.status.toUpperCase()} ${event.operation.metadata.description}`
             );
-            ctx.logger?.debug('Setup progress', { 
-              stageId: event.stageId, 
+            ctx.logger?.debug('Setup progress', {
+              stageId: event.stageId,
               status: event.status,
               operation: event.operation.metadata.id,
             });
           },
         });
 
+        ctx.logger?.debug('[DEBUG] Execution result', {
+          success: executionResult.success,
+          hasFailures: !!(executionResult as any).failures,
+        });
+
         if (!executionResult.success) {
-          ctx.logger?.error('Setup operations failed', { 
+          ctx.logger?.error('Setup operations failed', {
             journalPath: journal.getLogPath(),
           });
           ctx.output?.error?.(new Error('Setup operations failed to apply. See logs for details.'));
+          ctx.logger?.error('[DEBUG] Returning exit code 1 from executionResult.success check');
           return 1;
         }
         
@@ -767,17 +843,21 @@ export function createPluginSetupCommand(
         if (journal.getLogPath()) {
           ctx.output?.info?.(`Change log: ${journal.getLogPath()}`);
         }
-        
+
         ctx.logger?.info('Plugin setup completed', { namespace, packageName });
+        ctx.logger?.debug('[DEBUG] Returning exit code 0 - SUCCESS');
 
         return 0;
       } catch (error) {
-        ctx.logger?.error('Plugin setup failed', { 
-          namespace, 
-          packageName, 
+        console.error('[plugin-setup-command] CAUGHT ERROR', error);
+        ctx.logger?.error('Plugin setup failed', {
+          namespace,
+          packageName,
           error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
         });
         ctx.output?.error?.(error instanceof Error ? error : new Error(String(error)));
+        ctx.logger?.error('[DEBUG] Returning exit code 1 from catch block');
         return 1;
       }
     },

@@ -6,5 +6,5 @@ export default defineConfig({
   entry: { index: "src/index.ts" },
   tsconfig: "tsconfig.build.json", // Use build-specific tsconfig without paths
   clean: false,
-  dts: true, // Type generation enabled - all commands properly use CommandResult & pattern
+  dts: false, // Temporarily disabled - core-cli-adapters missing types
 });

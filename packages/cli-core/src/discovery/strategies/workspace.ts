@@ -10,6 +10,7 @@ import { glob } from 'glob';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
 import { detectManifestVersion } from '@kb-labs/plugin-manifest';
 import { getLogger } from '@kb-labs/core-sys/logging';
+import { safeImport, isImportTimeout } from '../utils/safe-import.js';
 import type { DiscoveryStrategy, DiscoveryResult } from '../types';
 import type { PluginBrief } from '../../registry/plugin-registry';
 
@@ -104,8 +105,10 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
                 if (fs.existsSync(manifestPath)) {
                   logger.debug('Manifest file exists', { manifestPath });
                   try {
-                    // Load and parse manifest
-                    const manifestModule = await import(manifestPath);
+                    // Load and parse manifest with timeout protection
+                    logger.debug('Attempting dynamic import', { manifestPath });
+                    const manifestModule = await safeImport(manifestPath);
+                    logger.debug('Dynamic import successful', { manifestPath });
                     const manifestData: unknown = manifestModule.default || manifestModule.manifest || manifestModule;
                     const version = detectManifestVersion(manifestData);
                     
@@ -136,11 +139,22 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
                       logger.debug('Manifest is not V2, skipping', { manifestPath });
                     }
                   } catch (error) {
-                    logger.error('Error loading manifest', { 
-                      manifestPath,
-                      error: error instanceof Error ? error.message : String(error),
-                      stack: error instanceof Error ? error.stack : undefined
-                    });
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+
+                    if (isImportTimeout(error)) {
+                      logger.warn('Manifest import timed out (skipping)', {
+                        manifestPath,
+                        timeout: '5s',
+                        suggestion: 'This manifest may have circular dependencies or top-level await issues'
+                      });
+                    } else {
+                      logger.error('Error loading manifest', {
+                        manifestPath,
+                        error: errorMessage,
+                        stack: error instanceof Error ? error.stack : undefined
+                      });
+                    }
+
                     errors.push({
                       path: manifestPath,
                       error: error instanceof Error ? error.message : String(error),

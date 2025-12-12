@@ -36,6 +36,7 @@
     "@kb-labs/core-sys": "link:../../../kb-labs-core/packages/core-sys",
     "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/plugin-manifest",
     "@kb-labs/plugin-adapter-rest": "link:../../../kb-labs-plugin/packages/plugin-adapters/rest",
+    "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/plugin-runtime",
     "colorette": "^2.0.20",
     "semver": "^7.6.3",
     "chokidar": "^4.0.3",

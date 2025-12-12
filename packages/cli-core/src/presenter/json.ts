@@ -1,8 +1,8 @@
 import type { Presenter } from "./types";
-import type { CliContext } from "../context";
+import type { PluginContextV2 } from "../context";
 
-export function createJsonPresenter(): Presenter & { setContext(context: CliContext): void } {
-  let context: CliContext | null = null;
+export function createJsonPresenter(): Presenter & { setContext(context: PluginContextV2): void } {
+  let context: PluginContextV2 | null = null;
 
   return {
     isTTY: false,
@@ -15,11 +15,9 @@ export function createJsonPresenter(): Presenter & { setContext(context: CliCont
       console.log(JSON.stringify({ ok: false, error: { message: line } })),
     json: (payload) => {
       console.log(JSON.stringify(payload));
-      if (context) {
-        context.sentJSON = true;
-      }
+      // V2: sentJSON tracking removed (not needed in PluginContextV2)
     },
-    setContext(ctx: CliContext) {
+    setContext(ctx: PluginContextV2) {
       context = ctx;
     },
   };

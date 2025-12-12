@@ -11,6 +11,7 @@ import { detectManifestVersion } from '@kb-labs/plugin-manifest';
 import { getLogger } from '@kb-labs/core-sys/logging';
 import type { DiscoveryStrategy, DiscoveryResult } from '../types';
 import type { PluginBrief } from '../../registry/plugin-registry';
+import { safeImport, isImportTimeout } from '../utils/safe-import.js';
 
 const logger = getLogger('DirStrategy');
 
@@ -47,8 +48,9 @@ export class DirStrategy implements DiscoveryStrategy {
         for (const manifestPath of manifestFiles) {
           try {
             logger.debug('Loading manifest', { manifestPath });
-            // Load and parse manifest
-            const manifestModule = await import(manifestPath);
+            // Load and parse manifest with timeout protection
+            const manifestModule = await safeImport(manifestPath);
+            logger.debug('Manifest imported successfully', { manifestPath });
             const manifestData: unknown = manifestModule.default || manifestModule.manifest || manifestModule;
             const version = detectManifestVersion(manifestData);
             
