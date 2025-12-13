@@ -14,7 +14,7 @@ export default defineConfig({
   // not direct code sharing. If this works, it eliminates the need for workspace symlinks.
   external: [
     ...binPreset.external ?? [],
-    // Only externalize core-sandbox (still needed for isolation)
-    '@kb-labs/core-sandbox',
+    // TEMPORARILY COMMENTED: Debug why setupLogPipes not called
+    // '@kb-labs/core-sandbox',
   ],
 });
