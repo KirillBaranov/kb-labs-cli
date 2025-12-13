@@ -299,18 +299,18 @@ function deepEqual(a: unknown, b: unknown): boolean {
 }
 
 async function confirmDangerousWrite(patterns: string[]): Promise<boolean> {
-  if (!process.stdin.isTTY) {
+  if (!input.isTTY) {
     return false;
   }
 
-  const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true });
+  const rl = createInterface({ input, output, terminal: true });
   try {
     const answer = await rl.question(
       `Continue with modifications outside .kb/ (${patterns.join(', ')})? [y/N] `,
     );
     return /^y(es)?$/i.test(answer.trim());
   } finally {
-    await rl.close();
+    rl.close();
   }
 }
 

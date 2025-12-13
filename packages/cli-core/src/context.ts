@@ -11,6 +11,7 @@ import {
   createId,
   type PluginContextV2,
   type UIFacade,
+  CliUIFacade,
 } from "@kb-labs/plugin-runtime";
 import path from "node:path";
 import { existsSync } from "node:fs";
@@ -43,50 +44,11 @@ interface UISymbols {
 }
 
 /**
- * Convert Presenter to UIFacade by adding minimal UI properties.
- * For CLI presenters, we use pass-through colors and simple symbols.
+ * Create UIFacade for CLI context.
+ * Uses CliUIFacade which provides full UI API with formatting.
  */
-function presenterToUIFacade(presenter: Presenter): UIFacade {
-  // Identity function for colors (no styling in presenter)
-  const identity: ColorFn = (text: string) => text;
-
-  const colors: UIColors = {
-    success: identity,
-    error: identity,
-    warning: identity,
-    info: identity,
-    primary: identity,
-    accent: identity,
-    highlight: identity,
-    secondary: identity,
-    emphasis: identity,
-    muted: identity,
-    foreground: identity,
-    dim: identity,
-    bold: identity,
-    underline: identity,
-    inverse: identity,
-  };
-
-  const symbols: UISymbols = {
-    success: '✓',
-    error: '✗',
-    warning: '⚠',
-    info: 'ℹ',
-    bullet: '•',
-    pointer: '›',
-    separator: '─',
-    border: '│',
-  };
-
-  return {
-    ...presenter,
-    message: (text: string) => presenter.write(text),
-    progress: () => {}, // Presenter doesn't have progress
-    error: (error: unknown) => presenter.error(String(error)),
-    colors,
-    symbols,
-  } as UIFacade;
+function createCliUIFacade(verbosity: 'quiet' | 'normal' | 'verbose', jsonMode: boolean): UIFacade {
+  return new CliUIFacade({ verbosity, jsonMode });
 }
 
 export interface CreateContextOptions {
@@ -98,6 +60,8 @@ export interface CreateContextOptions {
   repoRoot?: string;
   config?: Record<string, any>;
   profileId?: string;
+  verbosity?: 'quiet' | 'normal' | 'verbose';
+  jsonMode?: boolean;
 }
 
 /**
@@ -115,13 +79,15 @@ export async function createContext({
   repoRoot,
   config = {},
   profileId,
+  verbosity = 'normal',
+  jsonMode = false,
 }: CreateContextOptions): Promise<PluginContextV2> {
   const resolvedEnv = env ?? process.env;
   const resolvedCwd = cwd ?? process.cwd();
   const resolvedRepoRoot = repoRoot ?? detectRepoRoot(resolvedCwd);
 
-  // Convert Presenter to UIFacade
-  const uiFacade = presenterToUIFacade(presenter);
+  // Create UI Facade with proper verbosity and json mode
+  const uiFacade = createCliUIFacade(verbosity, jsonMode);
 
   // Create PURE PluginContextV2 - no legacy fields at top level
   return createPluginContextWithPlatform({
@@ -133,14 +99,14 @@ export async function createContext({
     cwd: resolvedCwd,        // V2: top-level
     outdir: undefined,        // V2: top-level (not set for system commands)
     ui: uiFacade,             // V2: primary output API (adapted from presenter)
+    output,                   // V2: output adapter for backward compat (promoted from metadata)
     config,                   // V2: typed config
     metadata: {
       // CLI-specific metadata (legacy fields moved here)
       repoRoot: resolvedRepoRoot,
       profileId,
       env: resolvedEnv,
-      // Additional output/logger if provided (for backward compat)
-      output,
+      // Logger if provided
       logger,
     },
   });

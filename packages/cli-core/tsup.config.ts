@@ -8,5 +8,5 @@ export default defineConfig({
     public: "src/public/index.ts",
   },
   tsconfig: "tsconfig.build.json", // Use build-specific tsconfig without paths
-  dts: true, // Temporarily disabled - waiting for plugin-manifest DTS (circular dependency chain)
+  dts: false, // Temporarily disabled for debugging
 });

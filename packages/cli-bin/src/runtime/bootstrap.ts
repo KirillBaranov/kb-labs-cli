@@ -72,11 +72,6 @@ export async function executeCli(
   // Initialize platform adapters from kb.config.json (before any plugin execution)
   const { platformConfig, rawConfig } = await initializePlatform(cwd);
 
-  console.log('[bootstrap] rawConfig:', rawConfig ? 'EXISTS' : 'UNDEFINED');
-  if (rawConfig) {
-    console.log('[bootstrap] rawConfig keys:', Object.keys(rawConfig));
-  }
-
   // Store platformConfig globally so CLI adapter can pass it to ExecutionContext
   (globalThis as any).__KB_PLATFORM_CONFIG__ = platformConfig;
 
@@ -87,8 +82,6 @@ export async function executeCli(
   if (rawConfig) {
     process.env.KB_RAW_CONFIG_JSON = JSON.stringify(rawConfig);
   }
-
-  console.log('[bootstrap] Stored in globalThis.__KB_RAW_CONFIG__:', (globalThis as any).__KB_RAW_CONFIG__ ? 'EXISTS' : 'UNDEFINED');
 
   const env = options.env ?? process.env;
   const version = resolveVersion(options.version, env);
@@ -211,7 +204,14 @@ export async function executeCli(
       version,
     },
   });
-  
+
+  // Debug logging AFTER logger is properly initialized
+  logger.debug('[bootstrap] rawConfig:', rawConfig ? 'EXISTS' : 'UNDEFINED');
+  if (rawConfig) {
+    logger.debug('[bootstrap] rawConfig keys:', Object.keys(rawConfig));
+  }
+  logger.debug('[bootstrap] Stored in globalThis.__KB_RAW_CONFIG__:', (globalThis as any).__KB_RAW_CONFIG__ ? 'EXISTS' : 'UNDEFINED');
+
   const runtimeMiddlewares =
     options.runtimeMiddlewares ?? getDefaultMiddlewares();
 
@@ -223,6 +223,8 @@ export async function executeCli(
     env,
     cwd,
     profileId: global.profile, // Pass global --profile flag or KB_PROFILE env var
+    verbosity: global.quiet ? 'quiet' : (global.verbose ? 'verbose' : 'normal'),
+    jsonMode: global.json || false,
   });
   
   const runtimeInitOptions: RuntimeInitOptions = {
