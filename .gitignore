@@ -75,4 +75,4 @@ DEVKIT_SYNC.json
 # DevKit provenance
 # ───────────────
 .kb/devkit/tmp/
-.yalc/
+.yalc/.npmrc
