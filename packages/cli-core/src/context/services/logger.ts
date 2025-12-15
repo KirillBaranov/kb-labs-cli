@@ -77,16 +77,6 @@ class CoreLoggerAdapter implements Logger {
 }
 
 /**
- * Console logger with structured logging support (backward compatible)
- * @deprecated Use createLogger() instead, which now uses the new logging system
- */
-export class ConsoleLogger extends CoreLoggerAdapter {
-  constructor(level: LogLevel = 'info') {
-    super('console', level);
-  }
-}
-
-/**
  * Silent logger (no output)
  */
 export class SilentLogger implements Logger {
