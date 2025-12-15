@@ -39,17 +39,15 @@ import type {
 } from './types';
 import { WorkflowService } from './workflows';
 import type { RedisClientType, RedisClientOptions } from 'redis';
-import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { promises as fsPromises } from 'node:fs';
 import { dirname, join, normalize, resolve } from 'node:path';
 
-const require = createRequire(import.meta.url);
-const pkgJson = require('../package.json') as { version?: string };
-
-const CLI_VERSION = pkgJson?.version ?? '0.0.0';
+// Version is injected at build time by tsup define
+declare const __CLI_API_VERSION__: string;
+const CLI_VERSION = typeof __CLI_API_VERSION__ !== 'undefined' ? __CLI_API_VERSION__ : '0.0.0';
 const DEFAULT_SNAPSHOT_TTL_MS = 60_000;
 const SNAPSHOT_FILE_NAME = 'registry.json';
 const SNAPSHOT_TMP_FILE_NAME = 'registry.tmp.json';
