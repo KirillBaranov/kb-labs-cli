@@ -72,7 +72,7 @@ const SAFE_PROJECT_PATTERNS = new Set([
 
 const SYSTEM_DENY_PATTERNS = [
   '.kb/plugins.json',
-  '.kb/kb-labs.config.json',
+  '.kb/kb.config.json',
   '.kb/cache/**',
   '.kb/*/.*',
   'node_modules/**',
@@ -82,7 +82,7 @@ const SYSTEM_DENY_PATTERNS = [
   '.git/config',
 ] as const;
 
-const DEFAULT_CONFIG_PATH = path.join('.kb', 'kb-labs.config.json');
+const DEFAULT_CONFIG_PATH = path.join('.kb', 'kb.config.json');
 
 const COMMAND_FLAGS = [
   {
@@ -419,44 +419,66 @@ async function updateConfigFile(options: {
     );
   }
 
-  if (!existingData.schemaVersion) {
-    existingData.schemaVersion = '1.0';
-  }
-
-  if (!isPlainObject(existingData.plugins)) {
-    existingData.plugins = {};
-  }
-
-  const plugins = existingData.plugins as Record<string, unknown>;
   const configKey = derivePluginConfigKey(manifest, namespace);
-  const currentPluginConfig = plugins[configKey] as
-    | Record<string, unknown>
-    | undefined;
 
-  const nextPluginConfig = force
-    ? cloneJson(configDefaults)
-    : mergeDefaults(currentPluginConfig, configDefaults);
+  // Get profiles array (Profiles v2 structure)
+  let profiles = existingData.profiles as Array<Record<string, unknown>> | undefined;
 
-  if (currentPluginConfig && deepEqual(currentPluginConfig, nextPluginConfig)) {
+  // If no profiles exist, create default profile
+  if (!Array.isArray(profiles) || profiles.length === 0) {
+    profiles = [{
+      id: 'default',
+      label: 'Default Profile',
+      products: {},
+    }];
+    existingData.profiles = profiles;
+  }
+
+  // Track which profiles were updated
+  const updatedProfiles: string[] = [];
+  let anyChange = false;
+
+  // Update ALL profiles with the plugin config
+  for (const profile of profiles) {
+    if (!isPlainObject(profile)) {
+      continue;
+    }
+
+    const profileId = (profile.id as string) || 'unknown';
+
+    // Ensure products object exists
+    if (!isPlainObject(profile.products)) {
+      profile.products = {};
+    }
+
+    const products = profile.products as Record<string, unknown>;
+    const currentPluginConfig = products[configKey] as
+      | Record<string, unknown>
+      | undefined;
+
+    const nextPluginConfig = force
+      ? cloneJson(configDefaults)
+      : mergeDefaults(currentPluginConfig, configDefaults);
+
+    if (!currentPluginConfig || !deepEqual(currentPluginConfig, nextPluginConfig)) {
+      products[configKey] = nextPluginConfig;
+      updatedProfiles.push(profileId);
+      anyChange = true;
+    }
+  }
+
+  if (!anyChange) {
     (output || presenter)?.info?.(
-      `Config already up to date for plugins.${configKey}, nothing to change.`,
+      `Config already up to date for products.${configKey} in all profiles, nothing to change.`,
     );
-    logger?.debug('Config already up to date', { configKey });
+    logger?.debug('Config already up to date in all profiles', { configKey });
     return;
   }
 
-  const updatedConfig = {
-    ...existingData,
-    plugins: {
-      ...plugins,
-      [configKey]: nextPluginConfig,
-    },
-  };
-
-  const serialized = JSON.stringify(updatedConfig, null, 2) + '\n';
+  const serialized = JSON.stringify(existingData, null, 2) + '\n';
   if (dryRun) {
     (output || presenter)?.info?.(
-      `[dry-run] Would update ${path.relative(cwd, configPath)} (plugins.${configKey})`,
+      `[dry-run] Would update ${path.relative(cwd, configPath)} (products.${configKey} in profiles: ${updatedProfiles.join(', ')})`,
     );
     return;
   }
@@ -464,9 +486,9 @@ async function updateConfigFile(options: {
   await fs.mkdir(path.dirname(configPath), { recursive: true });
   await writeFileAtomic(configPath, serialized);
   (output || presenter)?.info?.(
-    `✓ Updated config: ${path.relative(cwd, configPath)} (plugins.${configKey})`,
+    `✓ Updated config: ${path.relative(cwd, configPath)} (products.${configKey} in ${updatedProfiles.length} profile(s): ${updatedProfiles.join(', ')})`,
   );
-  logger?.info('Config updated', { configPath, configKey });
+  logger?.info('Config updated', { configPath, configKey, profiles: updatedProfiles });
 }
 
 function printSuggestions(

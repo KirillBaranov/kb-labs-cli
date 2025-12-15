@@ -62,10 +62,10 @@ export const pluginsLink = defineSystemCommand<PluginsLinkFlags, PluginsLinkResu
 
     ctx.logger?.info('Plugin linked', { packageName: pkgJson.name, absPath });
 
-    // Also update kb-labs.config.json if it exists
+    // Also update kb.config.json if it exists
     let configUpdated = false;
     try {
-      const configPath = path.join(cwd, 'kb-labs.config.json');
+      const configPath = path.join(cwd, '.kb', 'kb.config.json');
       const config = JSON.parse(await fs.readFile(configPath, 'utf8'));
 
       if (!config.plugins) {
@@ -102,7 +102,7 @@ export const pluginsLink = defineSystemCommand<PluginsLinkFlags, PluginsLinkResu
     }
     ctx.output?.info(result.message ?? 'Plugin linked');
     if (result.configUpdated) {
-      ctx.output?.info(`Added ${result.packageName ?? 'unknown'} to kb-labs.config.json plugins.linked`);
+      ctx.output?.info(`Added ${result.packageName ?? 'unknown'} to kb.config.json plugins.linked`);
     }
     ctx.output?.info(`The plugin will be discovered on next CLI run`);
   },

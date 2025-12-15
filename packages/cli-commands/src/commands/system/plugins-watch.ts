@@ -137,7 +137,7 @@ export const pluginsWatch = defineSystemCommand<PluginsWatchFlags, PluginsWatchR
       }
 
       // Watch config files
-      const configPaths = [path.join(cwd, 'kb-labs.config.json'), path.join(cwd, '.kb', 'plugins.json')];
+      const configPaths = [path.join(cwd, '.kb', 'kb.config.json'), path.join(cwd, '.kb', 'plugins.json')];
 
       for (const configPath of configPaths) {
         try {

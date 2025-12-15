@@ -222,10 +222,10 @@ async function computeLockfileHash(cwd: string): Promise<string> {
 }
 
 /**
- * Compute hash of kb-labs.config.json for cache invalidation
+ * Compute hash of kb.config.json for cache invalidation
  */
 async function computeConfigHash(cwd: string): Promise<string> {
-  const configPath = path.join(cwd, 'kb-labs.config.json');
+  const configPath = path.join(cwd, '.kb', 'kb.config.json');
   try {
     const content = await fs.readFile(configPath, 'utf8');
     return createHash('sha256').update(content).digest('hex');
@@ -537,10 +537,10 @@ async function readPackageJson(pkgPath: string): Promise<any> {
 }
 
 /**
- * Load kb-labs.config.json with plugins allowlist/blocklist
+ * Load kb.config.json with plugins allowlist/blocklist
  */
 async function loadConfig(cwd: string): Promise<{ allow?: string[]; block?: string[]; linked?: string[] }> {
-  const configPath = path.join(cwd, 'kb-labs.config.json');
+  const configPath = path.join(cwd, '.kb', 'kb.config.json');
   try {
     const content = await fs.readFile(configPath, 'utf8');
     const config = JSON.parse(content);
