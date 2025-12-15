@@ -1,8 +1,9 @@
 # ADR 0010: CLI API Refactoring
 
-**Status**: Implemented  
-**Date**: 2025-11-04  
+**Status**: Implemented
+**Date**: 2025-11-04
 **Authors**: KB Labs Team
+**Tags:** `cli`, `refactoring`, `api`, `architecture`, `discovery`, `plugin-registry`
 
 ## Context
 

@@ -1,10 +1,11 @@
 # ADR-0011: Redis Support for Multi-Instance Deployments
 
-**Status:** Proposed  
-**Date:** 2025-11-04  
-**Authors:** KB Labs Team  
-**Supersedes:** None  
+**Status:** Proposed
+**Date:** 2025-11-04
+**Authors:** KB Labs Team
+**Supersedes:** None
 **Related:** ADR-0010 (CLI API Refactoring)
+**Tags:** `redis`, `cache`, `scalability`, `multi-instance`, `kubernetes`, `infrastructure`
 
 ## Context
 
