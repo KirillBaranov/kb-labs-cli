@@ -77,6 +77,12 @@ export interface ExecuteCommandV3Options {
    * Development mode (runs in-process for easier debugging)
    */
   devMode?: boolean;
+
+  /**
+   * Unix socket path for IPC communication.
+   * If not provided, will attempt to get from platform.getSocketPath()
+   */
+  socketPath?: string;
 }
 
 /**
@@ -116,6 +122,7 @@ export async function executeCommandV3(
     platform,
     signal,
     devMode = false,
+    socketPath,
   } = options;
 
   // Create plugin context descriptor
@@ -148,7 +155,7 @@ export async function executeCommandV3(
         })
       : await runInSubprocess({
           descriptor,
-          socketPath: '', // TODO: Connect to UnitSocketServer in Phase 6
+          socketPath: socketPath || '', // Passed from parent or empty string
           handlerPath,
           input,
           signal,

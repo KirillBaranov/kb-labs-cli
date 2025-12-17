@@ -118,7 +118,10 @@ export async function tryExecuteV3(
     const ui = createUIFacade(context);
 
     // Create V3 platform services from CLI context
-    const platform = createPlatformServices(context);
+    const platformServices = createPlatformServices(context);
+
+    // Get socket path from platform singleton for IPC
+    const socketPath = platform.getSocketPath();
 
     // Execute via V3
     const exitCode = await executeCommandV3({
@@ -128,7 +131,8 @@ export async function tryExecuteV3(
       argv,
       flags,
       ui,
-      platform,
+      platform: platformServices,
+      socketPath,
       cwd: context.cwd || process.cwd(),
       devMode: process.env.NODE_ENV === 'development', // Use subprocess in production
     });
