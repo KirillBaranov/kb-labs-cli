@@ -101,7 +101,10 @@ function manifestToCommand(registered: RegisteredCommand): Command {
           c.id === commandId,
       );
 
-      if (!cliCommand || !cliCommand.handler) {
+      // V3 commands use handlerPath instead of handler function
+      const isV3Command = !!(cliCommand as any)?.handlerPath;
+
+      if (!cliCommand || (!cliCommand.handler && !isV3Command)) {
         ctx.presenter.error(
           `Command ${registered.manifest.id} has no handler in manifest. Add 'handler: "./cli/command#run"' to CLI command declaration.`,
         );

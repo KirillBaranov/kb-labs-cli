@@ -86,3 +86,6 @@ export * as framework from "./public/framework";
 export * as presenters from "./public/presenters";
 export * as errors from "./public/errors";
 export * as publicTypes from "./public/types";
+
+// V3 Plugin System
+export * from "./v3/index";

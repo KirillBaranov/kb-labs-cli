@@ -14,6 +14,10 @@
     "./public": {
       "import": "./dist/public.js",
       "types": "./dist/public.d.ts"
+    },
+    "./v3": {
+      "import": "./dist/v3/index.js",
+      "types": "./dist/v3/index.d.ts"
     }
   },
   "files": [
@@ -37,6 +41,8 @@
     "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/plugin-manifest",
     "@kb-labs/plugin-adapter-rest": "link:../../../kb-labs-plugin/packages/plugin-adapters/rest",
     "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/plugin-runtime",
+    "@kb-labs/plugin-contracts-v3": "workspace:*",
+    "@kb-labs/plugin-runtime-v3": "workspace:*",
     "colorette": "^2.0.20",
     "semver": "^7.6.3",
     "chokidar": "^4.0.3",

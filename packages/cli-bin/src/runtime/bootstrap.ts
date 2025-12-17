@@ -28,8 +28,14 @@ import {
 } from "@kb-labs/cli-runtime";
 import { handleLimitFlag } from "./limits";
 import { getDefaultMiddlewares } from "./middlewares";
+import { tryExecuteV3, isV3Enabled } from "./v3-adapter";
 import { loadEnvFile } from "./env-loader";
 import { initializePlatform } from "./platform-init";
+import { resolveVersion } from "./helpers/version";
+import { normalizeCmdPath } from "./helpers/cmd-path";
+import { resolveLogLevel } from "./helpers/log-level";
+import { shouldShowLimits, isTruthyBoolean } from "./helpers/flags";
+import { isCommandGroup, hasSetContext } from "./helpers/command-types";
 
 type RuntimeInitOptions = RuntimeSetupOptions;
 type CliRuntimeInstance = Awaited<ReturnType<typeof createCliRuntime>>;
@@ -424,6 +430,28 @@ export async function executeCli(
     }
 
     const exitCode = await runtime.middleware.execute(context, async () => {
+      // Try V3 execution if enabled (opt-in with KB_PLUGIN_VERSION=3)
+      if (isV3Enabled()) {
+        const manifestCmd = registryStore.getManifestCommand(normalizedCmdPath.join(":"));
+        const v3ExitCode = await tryExecuteV3({
+          context,
+          commandId: normalizedCmdPath.join(":"),
+          argv: actualRest,
+          flags: { ...global, ...flagsObj },
+          manifestCmd,
+        });
+
+        // If V3 execution succeeded, return its exit code
+        if (v3ExitCode !== undefined) {
+          logger.debug('[bootstrap] V3 execution succeeded', { exitCode: v3ExitCode });
+          return v3ExitCode;
+        }
+
+        // Otherwise, fall back to V2
+        logger.warn('[bootstrap] V3 execution unavailable, falling back to V2');
+      }
+
+      // V2 execution path (default)
       // Pass actualRest to command run so it can be forwarded to executeCommand
       const result = await (cmd.run as any)(context, actualRest, { ...global, ...flagsObj }, actualRest);
 
@@ -446,69 +474,6 @@ export async function executeCli(
   } catch (error: unknown) {
     return handleExecutionError(error, presenter, ctx);
   }
-}
-
-function resolveVersion(
-  explicit: string | undefined,
-  env: NodeJS.ProcessEnv,
-): string {
-  if (explicit) {
-    return explicit;
-  }
-  return env.CLI_VERSION ?? DEFAULT_VERSION;
-}
-
-function normalizeCmdPath(argvCmd: string[]): string[] {
-  if (argvCmd.length === 1 && argvCmd[0]?.includes(":")) {
-    const cmdName = argvCmd[0];
-    const parts = cmdName.split(":");
-    if (parts.length === 2 && parts[0] && parts[1]) {
-      return argvCmd;
-    }
-    if (parts.length >= 3) {
-      return parts;
-    }
-  }
-  return argvCmd;
-}
-
-function resolveLogLevel(level: unknown): LogLevel {
-  if (!level) {
-    return "silent";  // Default: completely silent
-  }
-  const normalized = String(level).toLowerCase();
-  if (
-    normalized === "trace" ||
-    normalized === "debug" ||
-    normalized === "info" ||
-    normalized === "warn" ||
-    normalized === "error" ||
-    normalized === "silent"
-  ) {
-    return normalized as LogLevel;
-  }
-  return "silent";  // Default for invalid values
-}
-
-function isCommandGroup(
-  input: unknown,
-): input is CommandGroup {
-  return (
-    typeof input === "object" &&
-    input !== null &&
-    "commands" in input
-  );
-}
-
-function hasSetContext(
-  presenter: unknown,
-): presenter is { setContext(ctx: CliExecutionContext): void } {
-  return (
-    typeof presenter === "object" &&
-    presenter !== null &&
-    "setContext" in presenter &&
-    typeof (presenter as any).setContext === "function"
-  );
 }
 
 function handleExecutionError(
@@ -555,25 +520,5 @@ function handleExecutionError(
     presenter.error(message);
   }
   return 1;
-}
-
-function shouldShowLimits(flags: Record<string, unknown>): boolean {
-  return isTruthyBoolean(flags.limit) || isTruthyBoolean(flags.limits);
-}
-
-function isTruthyBoolean(value: unknown): boolean {
-  if (value === true) {
-    return true;
-  }
-  if (typeof value === "string") {
-    const normalized = value.trim().toLowerCase();
-    return (
-      normalized === "true" ||
-      normalized === "yes" ||
-      normalized === "y" ||
-      normalized === ""
-    );
-  }
-  return false;
 }
 

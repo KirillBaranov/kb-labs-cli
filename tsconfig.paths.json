@@ -135,6 +135,12 @@
       "@kb-labs/plugin-adapter-studio/*": [
         "../kb-labs-plugin/packages/plugin-adapters/studio/src/*"
       ],
+      "@kb-labs/plugin-contracts-v3": [
+        "../kb-labs-plugin/packages/plugin-contracts-v3/src/index.ts"
+      ],
+      "@kb-labs/plugin-contracts-v3/*": [
+        "../kb-labs-plugin/packages/plugin-contracts-v3/src/*"
+      ],
       "@kb-labs/plugin-manifest": [
         "../kb-labs-plugin/packages/plugin-manifest/src/index.ts"
       ],
@@ -143,6 +149,12 @@
       ],
       "@kb-labs/plugin-runtime": [
         "../kb-labs-plugin/packages/plugin-runtime/src/index.ts"
+      ],
+      "@kb-labs/plugin-runtime-v3": [
+        "../kb-labs-plugin/packages/plugin-runtime-v3/src/index.ts"
+      ],
+      "@kb-labs/plugin-runtime-v3/*": [
+        "../kb-labs-plugin/packages/plugin-runtime-v3/src/*"
       ],
       "@kb-labs/plugin-runtime/*": [
         "../kb-labs-plugin/packages/plugin-runtime/src/*"
