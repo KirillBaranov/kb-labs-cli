@@ -1,3 +1,16 @@
+/**
+ * TODO: Fix smoke tests - currently disabled due to timeouts
+ *
+ * ISSUES:
+ * - All tests timeout at 5000ms
+ * - Complex vi.hoisted() mocks cause async deadlocks
+ * - Mocking entire @kb-labs/cli-commands breaks real flow
+ *
+ * SOLUTION:
+ * - Replace with real e2e tests using child_process.spawn()
+ * - Run actual CLI binary instead of mocking internals
+ * - See: docs/tasks/cli-smoke-tests-fix.md
+ */
 import { describe, it, expect, vi, afterEach, beforeEach, beforeAll } from "vitest";
 
 const cliCommandMocks = vi.hoisted(() => {

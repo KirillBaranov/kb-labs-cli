@@ -1,3 +1,4 @@
+// TODO: Fix - see docs/tasks/cli-smoke-tests-fix.md
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { run } from '../index';
 
