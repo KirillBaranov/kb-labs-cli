@@ -4,8 +4,6 @@
  */
 
 import type {
-  CliCommand,
-  CliContext,
   RegistryDiff,
   RegistrySnapshot as CoreRegistrySnapshot,
   PluginBrief,
@@ -15,17 +13,15 @@ import type {
   ExplainResult,
   SourceKind,
 } from '@kb-labs/cli-core';
-import type { CliCommandDecl, ManifestV2 } from '@kb-labs/plugin-manifest';
-import type {
-  WorkflowRun,
-  WorkflowSpec,
-} from '@kb-labs/workflow-contracts';
-import type {
-  CreateRedisClientOptions,
-  WorkflowWorker,
-} from '@kb-labs/workflow-engine';
+import type { CliCommandDecl, ManifestV3 } from '@kb-labs/plugin-contracts';
 
-type ManifestHeadersConfig = ManifestV2 & { headers?: unknown } extends { headers?: infer H } ? H : unknown;
+// TODO: Remove when workflow-engine is ported to V3
+type WorkflowRun = any;
+type WorkflowSpec = any;
+type WorkflowWorker = any;
+type CreateRedisClientOptions = any;
+
+type ManifestHeadersConfig = ManifestV3 & { headers?: unknown } extends { headers?: infer H } ? H : unknown;
 
 /**
  * CLI initialization options
@@ -102,7 +98,7 @@ export interface RunCommandResult {
  */
 export interface RegistrySnapshotManifestEntry {
   pluginId: string;
-  manifest: ManifestV2;
+  manifest: ManifestV3;
   pluginRoot: string;
   source: {
     kind: SourceKind;
@@ -209,7 +205,7 @@ export interface CliAPI {
   /** List brief plugin metadata */
   listPlugins(): Promise<PluginBrief[]>;
   /** Get manifest for plugin */
-  getManifestV2(pluginId: string): Promise<ManifestV2 | null>;
+  getManifestV2(pluginId: string): Promise<ManifestV3 | null>;
   /** Build OpenAPI spec for plugin */
   getOpenAPISpec(pluginId: string): Promise<OpenAPISpec | null>;
   /** Build studio registry aggregate */
@@ -230,114 +226,116 @@ export interface CliAPI {
   getSystemHealth(options?: SystemHealthOptions): Promise<SystemHealthSnapshot>;
   /** Get Redis connectivity status (if configured) */
   getRedisStatus?(): RedisStatus;
-  /** Run a workflow specification */
-  runWorkflow(input: WorkflowRunParams): Promise<WorkflowRun>;
-  /** List workflow runs */
-  listWorkflowRuns(options?: WorkflowRunsListOptions): Promise<WorkflowRunsListResult>;
-  /** Retrieve a workflow run */
-  getWorkflowRun(runId: string): Promise<WorkflowRun | null>;
-  /** Cancel a workflow run */
-  cancelWorkflowRun(runId: string): Promise<WorkflowRun | null>;
-  /** Stream workflow log events */
-  streamWorkflowLogs(options: WorkflowLogStreamOptions): Promise<void>;
-  /** List workflow presenter events */
-  listWorkflowEvents(options: WorkflowEventsListOptions): Promise<WorkflowEventsListResult>;
-  /** Stream workflow presenter events */
-  streamWorkflowEvents(options: WorkflowEventStreamOptions): Promise<void>;
-  /** Create a workflow worker (caller is responsible for start/stop lifecycle) */
-  createWorkflowWorker(options?: WorkflowWorkerOptions): Promise<WorkflowWorker>;
+  // TODO: Re-enable when workflow-engine is ported to V3
+  // /** Run a workflow specification */
+  // runWorkflow(input: WorkflowRunParams): Promise<WorkflowRun>;
+  // /** List workflow runs */
+  // listWorkflowRuns(options?: WorkflowRunsListOptions): Promise<WorkflowRunsListResult>;
+  // /** Retrieve a workflow run */
+  // getWorkflowRun(runId: string): Promise<WorkflowRun | null>;
+  // /** Cancel a workflow run */
+  // cancelWorkflowRun(runId: string): Promise<WorkflowRun | null>;
+  // /** Stream workflow log events */
+  // streamWorkflowLogs(options: WorkflowLogStreamOptions): Promise<void>;
+  // /** List workflow presenter events */
+  // listWorkflowEvents(options: WorkflowEventsListOptions): Promise<WorkflowEventsListResult>;
+  // /** Stream workflow presenter events */
+  // streamWorkflowEvents(options: WorkflowEventStreamOptions): Promise<void>;
+  // /** Create a workflow worker (caller is responsible for start/stop lifecycle) */
+  // createWorkflowWorker(options?: WorkflowWorkerOptions): Promise<WorkflowWorker>;
 }
 
 // Re-export selected types for convenience
-export type { PluginBrief, ManifestV2, OpenAPISpec, StudioRegistry, ExplainResult, RegistryDiff };
+export type { PluginBrief, ManifestV3, OpenAPISpec, StudioRegistry, ExplainResult, RegistryDiff };
 export type { CoreRegistrySnapshot };
 export type { RegistrySnapshot as CliRegistrySnapshot };
 export type { SystemHealthSnapshot as CliSystemHealthSnapshot };
 
-/**
- * Workflow API types
- */
-export interface WorkflowRunParams {
-  spec: WorkflowSpec;
-  idempotencyKey?: string;
-  concurrencyGroup?: string;
-  metadata?: Record<string, unknown>;
-  trigger?: {
-    type: 'manual' | 'webhook' | 'push' | 'schedule';
-    actor?: string;
-    payload?: Record<string, unknown>;
-  };
-  source?: string;
-}
-
-export interface WorkflowRunsListOptions {
-  status?: string;
-  limit?: number;
-}
-
-export interface WorkflowRunsListResult {
-  runs: WorkflowRun[];
-  total: number;
-}
-
-export interface WorkflowLogEvent {
-  type: string;
-  runId: string;
-  jobId?: string;
-  stepId?: string;
-  payload?: Record<string, unknown>;
-  timestamp?: string;
-}
-
-export interface WorkflowLogStreamOptions {
-  runId: string;
-  follow?: boolean;
-  idleTimeoutMs?: number;
-  signal?: AbortSignal;
-  onEvent: (event: WorkflowLogEvent) => void;
-}
-
-export interface WorkflowEventEnvelope {
-  id: string;
-  type: string;
-  version: string;
-  timestamp: string;
-  payload?: unknown;
-  meta?: Record<string, unknown>;
-}
-
-export interface WorkflowEventsListOptions {
-  runId: string;
-  cursor?: string | null;
-  limit?: number;
-}
-
-export interface WorkflowEventsListResult {
-  events: WorkflowEventEnvelope[];
-  cursor: string | null;
-}
-
-export interface WorkflowEventStreamOptions {
-  runId: string;
-  cursor?: string | null;
-  follow?: boolean;
-  pollIntervalMs?: number;
-  signal?: AbortSignal;
-  onEvent: (event: WorkflowEventEnvelope) => void;
-}
-
-export interface WorkflowWorkerOptions {
-  pollIntervalMs?: number;
-  heartbeatIntervalMs?: number;
-  leaseTtlMs?: number;
-  maxConcurrentJobs?: number;
-  artifactsRoot?: string;
-  defaultWorkspace?: string;
-  redis?: CreateRedisClientOptions;
-  discovery?: {
-    strategies?: Array<'workspace' | 'pkg' | 'dir' | 'file'>;
-    roots?: string[];
-  };
-}
+// TODO: Re-enable when workflow-engine is ported to V3
+// /**
+//  * Workflow API types
+//  */
+// export interface WorkflowRunParams {
+//   spec: WorkflowSpec;
+//   idempotencyKey?: string;
+//   concurrencyGroup?: string;
+//   metadata?: Record<string, unknown>;
+//   trigger?: {
+//     type: 'manual' | 'webhook' | 'push' | 'schedule';
+//     actor?: string;
+//     payload?: Record<string, unknown>;
+//   };
+//   source?: string;
+// }
+//
+// export interface WorkflowRunsListOptions {
+//   status?: string;
+//   limit?: number;
+// }
+//
+// export interface WorkflowRunsListResult {
+//   runs: WorkflowRun[];
+//   total: number;
+// }
+//
+// export interface WorkflowLogEvent {
+//   type: string;
+//   runId: string;
+//   jobId?: string;
+//   stepId?: string;
+//   payload?: Record<string, unknown>;
+//   timestamp?: string;
+// }
+//
+// export interface WorkflowLogStreamOptions {
+//   runId: string;
+//   follow?: boolean;
+//   idleTimeoutMs?: number;
+//   signal?: AbortSignal;
+//   onEvent: (event: WorkflowLogEvent) => void;
+// }
+//
+// export interface WorkflowEventEnvelope {
+//   id: string;
+//   type: string;
+//   version: string;
+//   timestamp: string;
+//   payload?: unknown;
+//   meta?: Record<string, unknown>;
+// }
+//
+// export interface WorkflowEventsListOptions {
+//   runId: string;
+//   cursor?: string | null;
+//   limit?: number;
+// }
+//
+// export interface WorkflowEventsListResult {
+//   events: WorkflowEventEnvelope[];
+//   cursor: string | null;
+// }
+//
+// export interface WorkflowEventStreamOptions {
+//   runId: string;
+//   cursor?: string | null;
+//   follow?: boolean;
+//   pollIntervalMs?: number;
+//   signal?: AbortSignal;
+//   onEvent: (event: WorkflowEventEnvelope) => void;
+// }
+//
+// export interface WorkflowWorkerOptions {
+//   pollIntervalMs?: number;
+//   heartbeatIntervalMs?: number;
+//   leaseTtlMs?: number;
+//   maxConcurrentJobs?: number;
+//   artifactsRoot?: string;
+//   defaultWorkspace?: string;
+//   redis?: CreateRedisClientOptions;
+//   discovery?: {
+//     strategies?: Array<'workspace' | 'pkg' | 'dir' | 'file'>;
+//     roots?: string[];
+//   };
+// }
 
 

@@ -3,7 +3,7 @@
  * CLI API implementation
  */
 
-import type { ManifestV2, CliCommandDecl } from '@kb-labs/plugin-manifest';
+import type { ManifestV3 as ManifestV2, CliCommandDecl } from '@kb-labs/plugin-contracts';
 import {
   PluginRegistry,
   InMemoryCacheAdapter,
@@ -16,7 +16,7 @@ import {
   type RegistrySnapshot as CoreRegistrySnapshot,
   type RegistryDiff,
   createContext,
-  type CliContext,
+  type SystemContext,
 } from '@kb-labs/cli-core';
 import type {
   CliAPI,
@@ -28,16 +28,18 @@ import type {
   SystemHealthOptions,
   SystemHealthSnapshot,
   RedisStatus,
-  WorkflowRunParams,
-  WorkflowRunsListOptions,
-  WorkflowRunsListResult,
-  WorkflowLogStreamOptions,
-  WorkflowWorkerOptions,
-  WorkflowEventsListOptions,
-  WorkflowEventsListResult,
-  WorkflowEventStreamOptions,
+  // TODO: Re-enable when workflow-engine is ported to V3
+  // WorkflowRunParams,
+  // WorkflowRunsListOptions,
+  // WorkflowRunsListResult,
+  // WorkflowLogStreamOptions,
+  // WorkflowWorkerOptions,
+  // WorkflowEventsListOptions,
+  // WorkflowEventsListResult,
+  // WorkflowEventStreamOptions,
 } from './types';
-import { WorkflowService } from './workflows';
+// TODO: Re-enable when workflow-engine is ported to V3
+// import { WorkflowService } from './workflows';
 import type { RedisClientType, RedisClientOptions } from 'redis';
 import { execSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
@@ -218,7 +220,8 @@ export class CliAPIImpl implements CliAPI {
   private readonly redisSnapshotKey: string | null;
   private readonly traceId: string;
   private readonly logger: StructuredLogger;
-  private readonly workflowService: WorkflowService;
+  // TODO: Re-enable when workflow-engine is ported to V3
+  // private readonly workflowService: WorkflowService;
 
   constructor(private opts?: CliInitOptions) {
     const discoveryOpts = {
@@ -239,7 +242,8 @@ export class CliAPIImpl implements CliAPI {
       component: 'cli-api',
       pid: process.pid,
     });
-    this.workflowService = new WorkflowService(this.logger);
+    // TODO: Re-enable when workflow-engine is ported to V3
+    // this.workflowService = new WorkflowService(this.logger);
 
     const cacheOpts = opts?.cache?.inMemory
       ? {
@@ -665,41 +669,42 @@ export class CliAPIImpl implements CliAPI {
     };
   }
 
-  async runWorkflow(input: WorkflowRunParams) {
-    return this.workflowService.runWorkflow(input);
-  }
+  // TODO: Re-enable when workflow-engine is ported to V3
+  // async runWorkflow(input: WorkflowRunParams) {
+  //   return this.workflowService.runWorkflow(input);
+  // }
 
-  async listWorkflowRuns(
-    options: WorkflowRunsListOptions = {},
-  ): Promise<WorkflowRunsListResult> {
-    return this.workflowService.listWorkflowRuns(options);
-  }
+  // async listWorkflowRuns(
+  //   options: WorkflowRunsListOptions = {},
+  // ): Promise<WorkflowRunsListResult> {
+  //   return this.workflowService.listWorkflowRuns(options);
+  // }
 
-  async getWorkflowRun(runId: string) {
-    return this.workflowService.getWorkflowRun(runId);
-  }
+  // async getWorkflowRun(runId: string) {
+  //   return this.workflowService.getWorkflowRun(runId);
+  // }
 
-  async cancelWorkflowRun(runId: string) {
-    return this.workflowService.cancelWorkflowRun(runId);
-  }
+  // async cancelWorkflowRun(runId: string) {
+  //   return this.workflowService.cancelWorkflowRun(runId);
+  // }
 
-  async streamWorkflowLogs(options: WorkflowLogStreamOptions) {
-    await this.workflowService.streamWorkflowLogs(options);
-  }
+  // async streamWorkflowLogs(options: WorkflowLogStreamOptions) {
+  //   await this.workflowService.streamWorkflowLogs(options);
+  // }
 
-  async listWorkflowEvents(
-    options: WorkflowEventsListOptions,
-  ): Promise<WorkflowEventsListResult> {
-    return this.workflowService.listWorkflowEvents(options);
-  }
+  // async listWorkflowEvents(
+  //   options: WorkflowEventsListOptions,
+  // ): Promise<WorkflowEventsListResult> {
+  //   return this.workflowService.listWorkflowEvents(options);
+  // }
 
-  async streamWorkflowEvents(options: WorkflowEventStreamOptions) {
-    await this.workflowService.streamWorkflowEvents(options);
-  }
+  // async streamWorkflowEvents(options: WorkflowEventStreamOptions) {
+  //   await this.workflowService.streamWorkflowEvents(options);
+  // }
 
-  async createWorkflowWorker(options: WorkflowWorkerOptions = {}) {
-    return this.workflowService.createWorker(options);
-  }
+  // async createWorkflowWorker(options: WorkflowWorkerOptions = {}) {
+  //   return this.workflowService.createWorker(options);
+  // }
 
   private emitSnapshotChange(): void {
     if (this.changeListeners.length === 0) {

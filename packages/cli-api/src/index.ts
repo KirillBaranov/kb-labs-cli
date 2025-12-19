@@ -16,21 +16,23 @@ export type {
   RegistrySnapshotManifestEntry,
   RedisStatus,
 
-  WorkflowRunParams,
-  WorkflowRunsListOptions,
-  WorkflowRunsListResult,
-  WorkflowLogEvent,
-  WorkflowLogStreamOptions,
-  WorkflowEventEnvelope,
-  WorkflowEventsListOptions,
-  WorkflowEventsListResult,
-  WorkflowEventStreamOptions,
-  WorkflowWorkerOptions,
+  // TODO: Re-enable when workflow-engine is ported to V3
+  // WorkflowRunParams,
+  // WorkflowRunsListOptions,
+  // WorkflowRunsListResult,
+  // WorkflowLogEvent,
+  // WorkflowLogStreamOptions,
+  // WorkflowEventEnvelope,
+  // WorkflowEventsListOptions,
+  // WorkflowEventsListResult,
+  // WorkflowEventStreamOptions,
+  // WorkflowWorkerOptions,
 } from './types';
 
 // Factory
 export { createCliAPI } from './factory';
-export { WorkflowService } from './workflows';
+// TODO: Re-enable when workflow-engine is ported to V3
+// export { WorkflowService } from './workflows';
 
 // Re-export useful types from core CLI package
 export type {
@@ -41,7 +43,8 @@ export type {
   ExplainResult,
   SourceKind,
   RegistryDiff,
-  CliContext,
-  CliCommand,
+  // V1 types removed - use V3 plugin system
+  // CliContext,
+  // CliCommand,
 } from '@kb-labs/cli-core';
 
