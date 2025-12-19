@@ -9,6 +9,7 @@ import {
 } from "@kb-labs/cli-core";
 import {
   findCommand,
+  findCommandWithType,
   registerBuiltinCommands,
   renderGlobalHelpNew,
   renderGroupHelp,
@@ -16,6 +17,7 @@ import {
   renderProductHelp,
   registry,
   type CommandGroup,
+  type CommandLookupResult,
 } from "@kb-labs/cli-commands";
 import { initLogging, getLogger } from "@kb-labs/core-sys/logging";
 import { createOutput } from "@kb-labs/core-sys/output";
@@ -28,7 +30,7 @@ import {
 } from "@kb-labs/cli-runtime";
 import { handleLimitFlag } from "./limits";
 import { getDefaultMiddlewares } from "./middlewares";
-import { tryExecuteV3, isV3Enabled } from "./v3-adapter";
+import { tryExecuteV3 } from "./v3-adapter";
 import { loadEnvFile } from "./env-loader";
 import { initializePlatform } from "./platform-init";
 import { resolveVersion } from "./helpers/version";
@@ -430,8 +432,27 @@ export async function executeCli(
     }
 
     const exitCode = await runtime.middleware.execute(context, async () => {
-      // Try V3 execution if enabled (opt-in with KB_PLUGIN_VERSION=3)
-      if (isV3Enabled()) {
+      // Get command with type information for secure routing
+      const result = findCommandWithType(normalizedCmdPath);
+
+      if (!result) {
+        throw new Error(`Command ${normalizedCmdPath.join(":")} not found in registry`);
+      }
+
+      // Route based on command type
+      if (result.type === 'system') {
+        // System command - execute in-process via cmd.run()
+        if ('run' in result.cmd) {
+          const exitCode = await result.cmd.run(context, actualRest, { ...global, ...flagsObj });
+          return typeof exitCode === 'number' ? exitCode : 0;
+        }
+
+        // Shouldn't happen - system commands must have run()
+        throw new Error(`System command ${normalizedCmdPath.join(":")} missing run() method`);
+      }
+
+      if (result.type === 'plugin') {
+        // Plugin command - execute in subprocess via V3 adapter
         const manifestCmd = registryStore.getManifestCommand(normalizedCmdPath.join(":"));
         const v3ExitCode = await tryExecuteV3({
           context,
@@ -443,32 +464,15 @@ export async function executeCli(
 
         // If V3 execution succeeded, return its exit code
         if (v3ExitCode !== undefined) {
-          logger.debug('[bootstrap] V3 execution succeeded', { exitCode: v3ExitCode });
           return v3ExitCode;
         }
 
-        // Otherwise, fall back to V2
-        logger.warn('[bootstrap] V3 execution unavailable, falling back to V2');
+        // V3 execution unavailable - this is an error
+        throw new Error(`Plugin command ${normalizedCmdPath.join(":")} is not available for execution. Ensure the command has a handlerPath in its manifest.`);
       }
 
-      // V2 execution path (default)
-      // Pass actualRest to command run so it can be forwarded to executeCommand
-      const result = await (cmd.run as any)(context, actualRest, { ...global, ...flagsObj }, actualRest);
-
-      if (global.json && !context.sentJSON) {
-        presenter.json({
-          ok: true,
-          data: result ?? null,
-          ...(context.diagnostics?.length > 0 && {
-            warnings: context.diagnostics,
-          }),
-        });
-      }
-
-      if (typeof result === "number") {
-        return result;
-      }
-      return 0;
+      // Unknown type - shouldn't happen
+      throw new Error(`Unknown command type: ${result.type}`);
     });
     return exitCode;
   } catch (error: unknown) {
