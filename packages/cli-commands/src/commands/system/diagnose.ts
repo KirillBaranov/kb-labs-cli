@@ -1,6 +1,6 @@
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
+import { generateExamples } from '../../utils/generate-examples';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
-import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type DiagnoseFlags = {
   json: { type: 'boolean'; description?: string };
