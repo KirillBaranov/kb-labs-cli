@@ -3,6 +3,7 @@
  */
 
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { generateExamples } from '../../utils/generate-examples';
 import { watch } from 'node:fs';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
@@ -11,7 +12,6 @@ import { registerManifests } from '../../registry/register';
 import { registry } from '../../registry/service';
 import { registerShutdownHook } from '../../utils/shutdown';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
-import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsWatchResult = CommandResult;
 

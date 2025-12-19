@@ -12,6 +12,7 @@
  */
 
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { generateExamples } from '../../utils/generate-examples';
 import {
   getLogger,
   setLogContext,
@@ -22,7 +23,6 @@ import {
   createPluginLogger,
 } from '@kb-labs/core-sys/logging';
 import { randomUUID } from 'node:crypto';
-import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type LogTestResult = CommandResult & {
   tests?: Array<{ name: string; passed: boolean }>;

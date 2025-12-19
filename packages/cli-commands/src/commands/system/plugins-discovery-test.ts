@@ -3,9 +3,9 @@
  */
 
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { generateExamples } from '../../utils/generate-examples';
 import { PluginRegistry } from '@kb-labs/cli-core';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
-import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsDiscoveryTestResult = CommandResult & {
   plugins?: Array<{

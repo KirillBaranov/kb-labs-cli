@@ -3,11 +3,11 @@
  */
 
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { generateExamples } from '../../utils/generate-examples';
 import { linkPlugin } from '../../registry/plugins-state';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
-import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsLinkResult = CommandResult & {
   packageName?: string;

@@ -3,8 +3,8 @@
  */
 
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { generateExamples } from '../../utils/generate-examples';
 import { telemetry } from '../../registry/telemetry';
-import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsTelemetryResult = CommandResult & {
   message?: string;

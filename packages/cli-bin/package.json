@@ -28,7 +28,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "build": "pnpm clean && tsup --config tsup.bin.config.ts && tsup --config tsup.lib.config.ts && pnpm run copy-bootstrap",
-    "copy-bootstrap": "mkdir -p dist && cp ../../../kb-labs-plugin/packages/plugin-runtime-v3/dist/sandbox/bootstrap.js dist/bootstrap.js",
+    "copy-bootstrap": "mkdir -p dist && cp ../../../kb-labs-plugin/packages/plugin-runtime/dist/sandbox/bootstrap.js dist/bootstrap.js",
     "dev": "tsup --config tsup.config.ts --watch",
     "smoke": "node ./dist/bin.cjs hello",
     "lint": "eslint src",
@@ -46,6 +46,7 @@
     "@kb-labs/core-sandbox": "link:../../../kb-labs-core/packages/core-sandbox",
     "@kb-labs/core-sys": "link:../../../kb-labs-core/packages/core-sys",
     "@kb-labs/core-types": "link:../../../kb-labs-core/packages/core-types",
+    "@kb-labs/plugin-contracts": "link:../../../kb-labs-plugin/packages/plugin-contracts",
     "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/plugin-manifest",
     "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/plugin-runtime",
     "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/shared-cli-ui"

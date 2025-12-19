@@ -64,7 +64,7 @@ export const CommandManifestSchema = z.object({
   engine: EngineSchema,
   permissions: z.array(z.string()).optional(), // e.g., ["fs.read", "git.read", "net.fetch"]
   telemetry: z.enum(['opt-in', 'off']).optional(),
-  manifestV2: z.any().optional(), // Full ManifestV2 for sandbox execution
+  manifestV2: z.any().optional(), // Full ManifestV3 for sandbox execution
 
   // Internal flags for auto-generated commands
   isSetup: z.boolean().optional(), // Auto-generated setup command

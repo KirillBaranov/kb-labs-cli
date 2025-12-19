@@ -3,10 +3,10 @@
  */
 
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { generateExamples } from '../../utils/generate-examples';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { getLogger } from '@kb-labs/core-sys/logging';
-import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type LoggingCheckResult = CommandResult & {
   configFile?: string;

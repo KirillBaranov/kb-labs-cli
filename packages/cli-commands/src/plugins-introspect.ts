@@ -4,10 +4,71 @@
  */
 
 import type { CliCommand } from '@kb-labs/cli-core';
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
-import { generateOpenAPI } from '@kb-labs/plugin-adapter-rest';
-import { toRegistry } from '@kb-labs/plugin-adapter-studio';
+import type { ManifestV3 } from '@kb-labs/plugin-contracts';
+import { generateOpenAPISpec } from '@kb-labs/cli-core';
 import { CliError, CLI_ERROR_CODES, PluginRegistry } from '@kb-labs/cli-core';
+
+/**
+ * Convert manifest to Studio registry format
+ */
+function toRegistry(manifest: ManifestV3) {
+  const pluginMeta = {
+    id: manifest.id,
+    version: manifest.version,
+    displayName: manifest.display?.name,
+  };
+
+  const widgets = manifest.studio?.widgets?.map((widget, idx) => ({
+    id: widget.id,
+    kind: widget.kind,
+    title: widget.title,
+    description: widget.description,
+    data: widget.data,
+    options: widget.options,
+    pollingMs: widget.pollingMs,
+    order: widget.order ?? idx,
+    layoutHint: widget.layoutHint,
+    actions: widget.actions,
+    events: widget.events,
+    plugin: pluginMeta,
+  })) || [];
+
+  const menus = manifest.studio?.menus?.map((menu, idx) => ({
+    id: menu.id,
+    label: menu.label,
+    target: menu.target,
+    order: menu.order ?? idx,
+    plugin: pluginMeta,
+  })) || [];
+
+  const layouts = manifest.studio?.layouts?.map((layout) => ({
+    id: layout.id,
+    name: layout.name,
+    template: layout.template,
+    kind: layout.kind,
+    title: layout.title,
+    description: layout.description,
+    config: layout.config,
+    widgets: layout.widgets,
+    actions: layout.actions,
+    plugin: pluginMeta,
+  })) || [];
+
+  return {
+    schema: 'kb.studio-registry/1' as const,
+    plugins: [{
+      id: manifest.id,
+      version: manifest.version,
+      displayName: manifest.display?.name,
+      widgets,
+      menus,
+      layouts,
+    }],
+    widgets,
+    menus,
+    layouts,
+  };
+}
 
 /**
  * Create introspection command
@@ -51,7 +112,7 @@ export function createPluginsIntrospectCommand(): CliCommand {
         try {
           await registry.refresh();
 
-          const manifest = registry.getManifestV2(pluginId);
+          const manifest = registry.getManifestV3(pluginId);
           if (!manifest) {
             throw new CliError(
               CLI_ERROR_CODES.E_DISCOVERY_CONFIG,
@@ -70,7 +131,7 @@ export function createPluginsIntrospectCommand(): CliCommand {
           }
 
           if (format === 'openapi' || format === 'all') {
-            const openapi = generateOpenAPI(manifest);
+            const openapi = generateOpenAPISpec(manifest);
             if (output && format === 'openapi') {
               await ctx.presenter.write(JSON.stringify(openapi, null, 2));
             } else {

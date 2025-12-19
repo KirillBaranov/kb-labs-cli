@@ -3,7 +3,7 @@
  * Type definitions for the plugin system
  */
 
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import type { ManifestV3 } from '@kb-labs/plugin-contracts';
 
 export interface CommandManifest {
   manifestVersion: '1.0';    // Required for validation
@@ -27,7 +27,7 @@ export interface CommandManifest {
   };
   permissions?: string[];   // e.g., ["fs.read", "git.read", "net.fetch"]
   telemetry?: 'opt-in' | 'off'; // Telemetry preference
-  manifestV2?: ManifestV2;  // Full ManifestV2 for sandbox execution
+  manifestV2?: ManifestV3;  // Full ManifestV3 for sandbox execution
 }
 
 export interface FlagDefinition {

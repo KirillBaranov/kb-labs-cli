@@ -6,8 +6,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { glob } from 'glob';
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
-import { detectManifestVersion } from '@kb-labs/plugin-manifest';
+import type { ManifestV3 } from '@kb-labs/plugin-contracts';
+import { isManifestV3 } from '@kb-labs/plugin-contracts';
 import { getLogger } from '@kb-labs/core-sys/logging';
 import type { DiscoveryStrategy, DiscoveryResult } from '../types';
 import type { PluginBrief } from '../../registry/plugin-registry';
@@ -52,13 +52,12 @@ export class DirStrategy implements DiscoveryStrategy {
             const manifestModule = await safeImport(manifestPath);
             logger.debug('Manifest imported successfully', { manifestPath });
             const manifestData: unknown = manifestModule.default || manifestModule.manifest || manifestModule;
-            const version = detectManifestVersion(manifestData);
-            
-            if (version === 'v2') {
-              const manifest = manifestData as ManifestV2;
+
+            if (isManifestV3(manifestData)) {
+              const manifest = manifestData;
               const pluginId = manifest.id || path.basename(path.dirname(manifestPath));
               logger.debug('Successfully loaded manifest', { pluginId, manifestPath });
-              
+
               // Try to find package.json for additional info
               const pkgPath = path.join(path.dirname(manifestPath), 'package.json');
               let display: any = {};
@@ -81,7 +80,7 @@ export class DirStrategy implements DiscoveryStrategy {
               plugins.push({
                 id: pluginId,
                 version: manifest.version || '0.0.0',
-                kind: 'v2',
+                kind: 'v3',
                 source: {
                   kind: 'dir',
                   path: pluginDir,

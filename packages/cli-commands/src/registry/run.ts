@@ -6,7 +6,7 @@
 import type { RegisteredCommand } from './types';
 import { loadPluginsState } from './plugins-state';
 import { telemetry } from './telemetry';
-import { executeCommand } from '@kb-labs/plugin-adapter-cli';
+import { executeCommand } from '@kb-labs/plugin-contracts';
 import { getContextCwd } from '../utils/context';
 
 // Global flags that are always passed to commands
@@ -112,14 +112,14 @@ export async function runCommand(
     return 2;
   }
   
-  // For ManifestV2 commands, skip loader (handler is executed via plugin-adapter-cli)
-  // Check if this is a ManifestV2 command
-  const isManifestV2 = !!(cmd.manifest as any).manifestV2;
+  // For ManifestV3 commands, skip loader (handler is executed via plugin-adapter-cli)
+  // Check if this is a ManifestV3 command
+  const isManifestV3 = !!(cmd.manifest as any).manifestV2;
   
   const manifestV2 = (cmd.manifest as any).manifestV2;
   if (!manifestV2) {
-    ctx.logger?.error('Command must be defined via ManifestV2', { command: cmd.manifest.id });
-    ctx.output?.error(new Error(`Command ${cmd.manifest.id} must be defined via ManifestV2`));
+    ctx.logger?.error('Command must be defined via ManifestV3', { command: cmd.manifest.id });
+    ctx.output?.error(new Error(`Command ${cmd.manifest.id} must be defined via ManifestV3`));
     return 1;
   }
   

@@ -11,7 +11,7 @@ import { WorkspaceStrategy } from './strategies/workspace';
 import { PkgStrategy } from './strategies/pkg';
 import { DirStrategy } from './strategies/dir';
 import { FileStrategy } from './strategies/file';
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import type { ManifestV3 } from '@kb-labs/plugin-contracts';
 
 import { getLogger } from '@kb-labs/core-sys/logging';
 
@@ -76,7 +76,7 @@ export class DiscoveryManager {
 
     // After deduplication, ensure manifests match plugin IDs
     // Create a new map with manifests keyed by deduplicated plugin IDs
-    const deduplicatedManifests = new Map<string, ManifestV2>();
+    const deduplicatedManifests = new Map<string, ManifestV3>();
     for (const plugin of deduplicated) {
       // Try to find manifest by plugin.id first
       let manifest = allManifests.get(plugin.id);

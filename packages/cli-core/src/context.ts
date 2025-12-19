@@ -1,18 +1,11 @@
-// V2: Export PluginContextV2 as primary type
-export type { PluginContextV2 } from "@kb-labs/plugin-runtime";
-// Re-export for backward compatibility
-export type { Profile, Logger } from "@kb-labs/cli-contracts";
+// System command context - NOT a plugin context
+// System commands don't need V3 plugin overhead (permissions, sandbox, etc.)
 
 import type { Presenter } from "@kb-labs/cli-contracts";
 import type { Output } from "@kb-labs/core-sys/output";
 import type { Logger as CoreLogger } from "@kb-labs/core-sys/logging";
-import {
-  createPluginContextWithPlatform,
-  createId,
-  type PluginContextV2,
-  type UIFacade,
-  CliUIFacade,
-} from "@kb-labs/plugin-runtime";
+import type { UIFacade } from "@kb-labs/plugin-contracts";
+import { createId } from "@kb-labs/plugin-runtime";
 import path from "node:path";
 import { existsSync } from "node:fs";
 
@@ -30,25 +23,34 @@ function detectRepoRoot(start: string): string {
   }
 }
 
-// Local type definitions for UI facade helpers
-type ColorFn = (text: string) => string;
-interface UIColors {
-  success: ColorFn; error: ColorFn; warning: ColorFn; info: ColorFn;
-  primary: ColorFn; accent: ColorFn; highlight: ColorFn; secondary: ColorFn;
-  emphasis: ColorFn; muted: ColorFn; foreground: ColorFn;
-  dim: ColorFn; bold: ColorFn; underline: ColorFn; inverse: ColorFn;
-}
-interface UISymbols {
-  success: string; error: string; warning: string; info: string;
-  bullet: string; pointer: string; separator: string; border: string;
-}
-
 /**
- * Create UIFacade for CLI context.
- * Uses CliUIFacade which provides full UI API with formatting.
+ * System command context
+ * Simple context for built-in CLI commands (kb plugins list, kb workflow run, etc.)
+ * NOT a plugin context - no permissions, no sandbox, no platform services overhead.
  */
-function createCliUIFacade(verbosity: 'quiet' | 'normal' | 'verbose', jsonMode: boolean): UIFacade {
-  return new CliUIFacade({ verbosity, jsonMode });
+export interface SystemContext {
+  /** Request ID for tracing */
+  requestId: string;
+  /** Current working directory */
+  cwd: string;
+  /** Repository root */
+  repoRoot: string;
+  /** Environment variables */
+  env: NodeJS.ProcessEnv;
+  /** Output presenter */
+  presenter: Presenter;
+  /** Logger (optional) */
+  logger?: CoreLogger;
+  /** Output adapter (optional) */
+  output?: Output;
+  /** Configuration (optional) */
+  config?: Record<string, any>;
+  /** Profile ID (optional) */
+  profileId?: string;
+  /** Verbosity level */
+  verbosity: 'quiet' | 'normal' | 'verbose';
+  /** JSON output mode */
+  jsonMode: boolean;
 }
 
 export interface CreateContextOptions {
@@ -65,10 +67,11 @@ export interface CreateContextOptions {
 }
 
 /**
- * Create PluginContextV2 for system commands
+ * Create SystemContext for built-in CLI commands
  *
- * This creates a PURE V2 context with all required fields.
- * Legacy fields (repoRoot, profileId, env) are moved to metadata.
+ * System commands (kb plugins list, kb workflow run, etc.) don't need
+ * the full V3 plugin context with permissions/sandbox/platform services.
+ * This creates a simple, lightweight context.
  */
 export async function createContext({
   presenter,
@@ -81,33 +84,22 @@ export async function createContext({
   profileId,
   verbosity = 'normal',
   jsonMode = false,
-}: CreateContextOptions): Promise<PluginContextV2> {
+}: CreateContextOptions): Promise<SystemContext> {
   const resolvedEnv = env ?? process.env;
   const resolvedCwd = cwd ?? process.cwd();
   const resolvedRepoRoot = repoRoot ?? detectRepoRoot(resolvedCwd);
 
-  // Create UI Facade with proper verbosity and json mode
-  const uiFacade = createCliUIFacade(verbosity, jsonMode);
-
-  // Create PURE PluginContextV2 - no legacy fields at top level
-  return createPluginContextWithPlatform({
-    host: 'cli',
+  return {
     requestId: createId(),
-    pluginId: '@kb-labs/cli-core',
-    pluginVersion: process.env.CLI_VERSION || '0.1.0',
-    tenantId: process.env.KB_TENANT_ID ?? 'default',
-    cwd: resolvedCwd,        // V2: top-level
-    outdir: undefined,        // V2: top-level (not set for system commands)
-    ui: uiFacade,             // V2: primary output API (adapted from presenter)
-    output,                   // V2: output adapter for backward compat (promoted from metadata)
-    config,                   // V2: typed config
-    metadata: {
-      // CLI-specific metadata (legacy fields moved here)
-      repoRoot: resolvedRepoRoot,
-      profileId,
-      env: resolvedEnv,
-      // Logger if provided
-      logger,
-    },
-  });
+    cwd: resolvedCwd,
+    repoRoot: resolvedRepoRoot,
+    env: resolvedEnv,
+    presenter,
+    logger,
+    output,
+    config,
+    profileId,
+    verbosity,
+    jsonMode,
+  };
 }

@@ -12,7 +12,7 @@ import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { glob } from 'glob';
 import type { CommandManifest, DiscoveryResult, CacheFile, PackageCacheEntry, CommandModule } from './types';
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import type { ManifestV3 } from '@kb-labs/plugin-contracts';
 import { toPosixPath } from '../utils/path';
 import { telemetry } from './telemetry';
 import { validateManifests, normalizeManifest } from './schema';
@@ -60,40 +60,41 @@ const SETUP_COMMAND_FLAGS = [
 ] satisfies Exclude<CommandManifest['flags'], undefined>;
 
 /**
- * Create loader stub for ManifestV2 commands.
+ * Create loader stub for ManifestV3 commands.
  * Loader should never be executed directly – CLI adapters must handle execution.
  */
-function createManifestV2Loader(commandId: string): () => Promise<{ run: any }> {
+function createManifestV3Loader(commandId: string): () => Promise<{ run: any }> {
   return async () => {
     throw new Error(
-      `Loader should not be called for ManifestV2 command ${commandId}. Use plugin-adapter-cli executeCommand instead.`
+      `Loader should not be called for ManifestV3 command ${commandId}. Use plugin-adapter-cli executeCommand instead.`
     );
   };
 }
 
-async function loadSetupCommandModule({
-  manifestV2,
-  namespace,
-  pkgName,
-  pkgRoot,
-}: SetupCommandFactoryInput): Promise<CommandModule> {
-  const module = await import('../commands/system/plugin-setup-command.js');
-  if (typeof module.createPluginSetupCommand !== 'function') {
-    throw new Error('Failed to load plugin setup command factory');
-  }
-  const command = module.createPluginSetupCommand({
-    manifest: manifestV2,
-    namespace,
-    packageName: pkgName,
-    pkgRoot,
-  });
-  return {
-    run: async (ctx, argv, flags) => {
-      const result = await command.run(ctx, argv, flags);
-      return typeof result === 'number' ? result : undefined;
-    },
-  };
-}
+// TODO V3: V2 setup orchestrator removed - V3 uses SetupSpec in manifest
+// async function loadSetupCommandModule({
+//   manifestV2,
+//   namespace,
+//   pkgName,
+//   pkgRoot,
+// }: SetupCommandFactoryInput): Promise<CommandModule> {
+//   const module = await import('../commands/system/plugin-setup-command.js');
+//   if (typeof module.createPluginSetupCommand !== 'function') {
+//     throw new Error('Failed to load plugin setup command factory');
+//   }
+//   const command = module.createPluginSetupCommand({
+//     manifest: manifestV2,
+//     namespace,
+//     packageName: pkgName,
+//     pkgRoot,
+//   });
+//   return {
+//     run: async (ctx, argv, flags) => {
+//       const result = await command.run(ctx, argv, flags);
+//       return typeof result === 'number' ? result : undefined;
+//     },
+//   };
+// }
 
 async function loadSetupRollbackCommandModule({
   manifestV2,
@@ -125,17 +126,18 @@ async function loadSetupRollbackCommandModule({
 function ensureManifestLoader(manifest: CommandManifest): void {
   if (typeof manifest.loader !== 'function') {
     const commandId = manifest.id || manifest.group || 'unknown';
-    if ((manifest as any).isSetup) {
-      log('debug', `[plugins][cache] Rehydrated setup loader for ${commandId}`);
-      manifest.loader = () =>
-        loadSetupCommandModule({
-          manifestV2: (manifest as any).manifestV2,
-          namespace: manifest.namespace || manifest.group || deriveNamespace(manifest.package || commandId),
-          pkgName: manifest.package || commandId,
-          pkgRoot: (manifest as any).pkgRoot,
-        });
-      return;
-    }
+    // TODO V3: V2 setup commands removed - V3 uses SetupSpec in manifest
+    // if ((manifest as any).isSetup) {
+    //   log('debug', `[plugins][cache] Rehydrated setup loader for ${commandId}`);
+    //   manifest.loader = () =>
+    //     loadSetupCommandModule({
+    //       manifestV2: (manifest as any).manifestV2,
+    //       namespace: manifest.namespace || manifest.group || deriveNamespace(manifest.package || commandId),
+    //       pkgName: manifest.package || commandId,
+    //       pkgRoot: (manifest as any).pkgRoot,
+    //     });
+    //   return;
+    // }
     if ((manifest as any).isSetupRollback) {
       log('debug', `[plugins][cache] Rehydrated setup rollback loader for ${commandId}`);
       manifest.loader = () =>
@@ -148,13 +150,13 @@ function ensureManifestLoader(manifest: CommandManifest): void {
       return;
     }
     log('debug', `[plugins][cache] Rehydrated loader for ${commandId}`);
-    manifest.loader = createManifestV2Loader(commandId);
+    manifest.loader = createManifestV3Loader(commandId);
   }
 }
 
 export const __test = {
   ensureManifestLoader,
-  createManifestV2Loader,
+  createManifestV3Loader,
 };
 
 /** Create a synthetic manifest marking package as unavailable with actionable hint */
@@ -322,10 +324,10 @@ async function loadManifestWithTimeout(manifestPath: string, pkgName: string, pk
 }
 
 /**
- * Prefer namespace from ManifestV2.id (e.g., '@kb-labs/release' -> 'release').
+ * Prefer namespace from ManifestV3.id (e.g., '@kb-labs/release' -> 'release').
  * Fallback to package name heuristic if id is missing.
  */
-function getNamespaceFromManifest(manifestV2: ManifestV2 | undefined, packageName: string): string {
+function getNamespaceFromManifest(manifestV2: ManifestV3 | undefined, packageName: string): string {
   const manifestId = manifestV2?.id;
   if (typeof manifestId === 'string' && manifestId.length > 0) {
     // take last segment after slash, drop leading '@'
@@ -348,102 +350,103 @@ function deriveNamespace(packageName: string): string {
 }
 
 interface SetupCommandFactoryInput {
-  manifestV2: ManifestV2;
+  manifestV2: ManifestV3;
   namespace: string;
   pkgName: string;
   pkgRoot: string;
 }
 
-function createSetupCommandManifest({
-  manifestV2,
-  namespace,
-  pkgName,
-  pkgRoot,
-}: SetupCommandFactoryInput): CommandManifest {
-  const setupId = `${namespace}:setup`;
-  const describe =
-    manifestV2.setup?.describe ||
-    `Initialize ${manifestV2.display?.name || manifestV2.id || namespace}`;
+// TODO V3: V2 setup command manifest generators removed - V3 uses SetupSpec in manifest
+// function createSetupCommandManifest({
+//   manifestV2,
+//   namespace,
+//   pkgName,
+//   pkgRoot,
+// }: SetupCommandFactoryInput): CommandManifest {
+//   const setupId = `${namespace}:setup`;
+//   const describe =
+//     manifestV2.setup?.describe ||
+//     `Initialize ${manifestV2.display?.name || manifestV2.id || namespace}`;
 
-  const setupManifest: CommandManifest = {
-    manifestVersion: '1.0',
-    id: setupId,
-    group: namespace,
-    describe,
-    flags: SETUP_COMMAND_FLAGS,
-    examples: [
-      `kb ${namespace} setup`,
-      `kb ${namespace} setup --dry-run`,
-    ],
-    loader: () =>
-      loadSetupCommandModule({
-        manifestV2,
-        namespace,
-        pkgName,
-        pkgRoot,
-      }),
-    package: pkgName,
-    namespace,
-  };
+//   const setupManifest: CommandManifest = {
+//     manifestVersion: '1.0',
+//     id: setupId,
+//     group: namespace,
+//     describe,
+//     flags: SETUP_COMMAND_FLAGS,
+//     examples: [
+//       `kb ${namespace} setup`,
+//       `kb ${namespace} setup --dry-run`,
+//     ],
+//     loader: () =>
+//       loadSetupCommandModule({
+//         manifestV2,
+//         namespace,
+//         pkgName,
+//         pkgRoot,
+//       }),
+//     package: pkgName,
+//     namespace,
+//   };
 
-  (setupManifest as any).manifestV2 = manifestV2;
-  (setupManifest as any).pkgRoot = pkgRoot;
-  (setupManifest as any).isSetup = true;
-  return setupManifest;
-}
+//   (setupManifest as any).manifestV2 = manifestV2;
+//   (setupManifest as any).pkgRoot = pkgRoot;
+//   (setupManifest as any).isSetup = true;
+//   return setupManifest;
+// }
 
-function createSetupRollbackCommandManifest({
-  manifestV2,
-  namespace,
-  pkgName,
-  pkgRoot,
-}: SetupCommandFactoryInput): CommandManifest {
-  const rollbackId = `${namespace}:setup:rollback`;
-  const describe = `Rollback setup changes for ${manifestV2.display?.name || manifestV2.id || namespace}`;
+// function createSetupRollbackCommandManifest({
+//   manifestV2,
+//   namespace,
+//   pkgName,
+//   pkgRoot,
+// }: SetupCommandFactoryInput): CommandManifest {
+//   const rollbackId = `${namespace}:setup:rollback`;
+//   const describe = `Rollback setup changes for ${manifestV2.display?.name || manifestV2.id || namespace}`;
 
-  const rollbackManifest: CommandManifest = {
-    manifestVersion: '1.0',
-    id: rollbackId,
-    group: namespace,
-    describe,
-    flags: [
-      {
-        name: 'log',
-        type: 'string' as const,
-        description: 'Path to a setup change log JSON file.',
-      },
-      {
-        name: 'list',
-        type: 'boolean' as const,
-        description: 'List available setup change logs.',
-      },
-      {
-        name: 'yes',
-        type: 'boolean' as const,
-        alias: 'y',
-        description: 'Apply rollback without confirmation prompt.',
-      },
-    ],
-    examples: [
-      `kb ${namespace} setup:rollback --list`,
-      `kb ${namespace} setup:rollback --log .kb/logs/setup/${namespace}-<id>.json --yes`,
-    ],
-    loader: () =>
-      loadSetupRollbackCommandModule({
-        manifestV2,
-        namespace,
-        pkgName,
-        pkgRoot,
-      }),
-    package: pkgName,
-    namespace,
-  };
+//   const rollbackManifest: CommandManifest = {
+//     manifestVersion: '1.0',
+//     id: rollbackId,
+//     group: namespace,
+//     describe,
+//     flags: [
+//       {
+//         name: 'log',
+//         type: 'string' as const,
+//         description: 'Path to a setup change log JSON file.',
+//       },
+//       {
+//         name: 'list',
+//         type: 'boolean' as const,
+//         description: 'List available setup change logs.',
+//       },
+//       {
+//         name: 'yes',
+//         type: 'boolean' as const,
+//         alias: 'y',
+//         description: 'Apply rollback without confirmation prompt.',
+//       },
+//     ],
+//     examples: [
+//       `kb ${namespace} setup:rollback --list`,
+//       `kb ${namespace} setup:rollback --log .kb/logs/setup/${namespace}-<id>.json --yes`,
+//     ],
+//     loader: () =>
+//       loadSetupRollbackCommandModule({
+//         manifestV2,
+//         namespace,
+//         pkgName,
+//         pkgRoot,
+//       }),
+//     package: pkgName,
+//     namespace,
+//   };
 
-  (rollbackManifest as any).manifestV2 = manifestV2;
-  (rollbackManifest as any).pkgRoot = pkgRoot;
-  (rollbackManifest as any).isSetupRollback = true;
-  return rollbackManifest;
-}
+//   (rollbackManifest as any).manifestV2 = manifestV2;
+//   (rollbackManifest as any).pkgRoot = pkgRoot;
+//   (rollbackManifest as any).isSetupRollback = true;
+//   return rollbackManifest;
+// }
 
 /**
  * Load manifest - tries ESM first, falls back to CJS
@@ -452,24 +455,23 @@ function createSetupRollbackCommandManifest({
 async function loadManifest(manifestPath: string, pkgName: string, pkgRoot?: string): Promise<CommandManifest[]> {
   const fileUrl = pathToFileURL(manifestPath).href;
   const mod = await import(fileUrl);
-  
-  const manifestV2 = (mod as any).manifest || (mod as any).default;
-  if (!manifestV2 || typeof manifestV2 !== 'object' || manifestV2.schema !== 'kb.plugin/2') {
-    throw new Error(`Unsupported manifest format in ${pkgName}. Only ManifestV2 is supported.`);
+
+  const manifest = (mod as any).manifest || (mod as any).default;
+  if (!manifest || typeof manifest !== 'object' || manifest.schema !== 'kb.plugin/3') {
+    throw new Error(`Unsupported manifest format in ${pkgName}. Only kb.plugin/3 schema is supported.`);
   }
-  
-  const namespace = getNamespaceFromManifest(manifestV2, pkgName);
+
+  const namespace = getNamespaceFromManifest(manifest, pkgName);
   const manifestDir = path.dirname(manifestPath);
   const baseRoot = pkgRoot || manifestDir;
-  const cliCommands = Array.isArray(manifestV2.cli?.commands)
-    ? manifestV2.cli.commands
+  const cliCommands = Array.isArray(manifest.cli?.commands)
+    ? manifest.cli.commands
     : [];
-  if (cliCommands.length === 0 && !manifestV2.setup) {
-    log('warn', `ManifestV2 ${manifestV2.id || pkgName} has no CLI commands or setup entry`);
+  if (cliCommands.length === 0 && !manifest.setup) {
+    log('warn', `ManifestV3 ${manifest.id || pkgName} has no CLI commands or setup entry`);
   }
-  
+
   const commandManifests: CommandManifest[] = cliCommands.map((cmd: any) => {
-    // Use ID as-is without adding group prefix (breaking change)
     const commandId = cmd.id;
     const commandManifest: CommandManifest = {
       manifestVersion: '1.0' as const,
@@ -480,41 +482,42 @@ async function loadManifest(manifestPath: string, pkgName: string, pkgRoot?: str
       aliases: cmd.aliases,
       flags: cmd.flags,
       examples: cmd.examples,
-      loader: createManifestV2Loader(commandId),
+      loader: createManifestV3Loader(commandId),
       package: pkgName,
       namespace: cmd.group || namespace,
     };
-    (commandManifest as any).manifestV2 = manifestV2;
+    (commandManifest as any).manifestV2 = manifest; // Keep for backward compat with service.ts
     (commandManifest as any).pkgRoot = baseRoot;
     return commandManifest;
   });
 
-  if (manifestV2.setup) {
-    // Ensure setup/rollback registered under a stable namespace taken from manifest id
-    const setupNamespace = getNamespaceFromManifest(manifestV2, pkgName);
-    const setupCommand = createSetupCommandManifest({
-      manifestV2,
-      namespace: setupNamespace,
-      pkgName,
-      pkgRoot: baseRoot,
-    });
-    commandManifests.push(setupCommand);
+  // TODO V3: V2 setup orchestrator removed - V3 uses SetupSpec in manifest
+  // if (manifestV2.setup) {
+  //   // Ensure setup/rollback registered under a stable namespace taken from manifest id
+  //   const setupNamespace = getNamespaceFromManifest(manifestV2, pkgName);
+  //   const setupCommand = createSetupCommandManifest({
+  //     manifestV2,
+  //     namespace: setupNamespace,
+  //     pkgName,
+  //     pkgRoot: baseRoot,
+  //   });
+  //   commandManifests.push(setupCommand);
 
-    const rollbackCommand = createSetupRollbackCommandManifest({
-      manifestV2,
-      namespace: setupNamespace,
-      pkgName,
-      pkgRoot: baseRoot,
-    });
-    commandManifests.push(rollbackCommand);
-  }
+  //   const rollbackCommand = createSetupRollbackCommandManifest({
+  //     manifestV2,
+  //     namespace: setupNamespace,
+  //     pkgName,
+  //     pkgRoot: baseRoot,
+  //   });
+  //   commandManifests.push(rollbackCommand);
+  // }
   
   const validation = validateManifests(commandManifests);
   if (!validation.success) {
     const errorMessages = validation.errors.map(err => 
       err.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(', ')
     ).join('; ');
-    log('warn', `ManifestV2 validation warnings for ${pkgName}: ${errorMessages}`);
+    log('warn', `ManifestV3 validation warnings for ${pkgName}: ${errorMessages}`);
   }
   
   const normalized = (validation.success ? validation.data : commandManifests).map(m => 

@@ -6,8 +6,9 @@ import {
   loggingGroup,
   registryGroup,
   debugGroup,
-  workerGroup,
-  jobsGroup,
+  // TODO: Re-enable when workflow-engine is ported to V3
+  // workerGroup,
+  // jobsGroup,
   docsGroup,
 } from "../commands/system/groups";
 import { pluginsList } from "../commands/system/plugins-list";
@@ -24,7 +25,8 @@ import { trace } from "../commands/debug/trace";
 import { fixture } from "../commands/debug/fixture";
 import { createPluginsIntrospectCommand } from "../plugins-introspect";
 import { registerManifests, disposeAllPlugins, preflightManifests } from "../registry/register";
-import { workflowCommandGroup } from "../commands/workflows";
+// TODO: Re-enable when workflow-engine is ported to V3
+// import { workflowCommandGroup } from "../commands/workflows";
 import { PluginRegistry } from "@kb-labs/cli-core";
 import { registerShutdownHook } from "./shutdown";
 import { getContextCwd } from "@kb-labs/shared-cli-ui";
@@ -57,9 +59,10 @@ export async function registerBuiltinCommands(
   registry.registerGroup(loggingGroup);
   registry.registerGroup(registryGroup);
   registry.registerGroup(debugGroup);
-  registry.registerGroup(workflowCommandGroup);
-  registry.registerGroup(workerGroup);
-  registry.registerGroup(jobsGroup);
+  // TODO: Re-enable when workflow-engine is ported to V3
+  // registry.registerGroup(workflowCommandGroup);
+  // registry.registerGroup(workerGroup);
+  // registry.registerGroup(jobsGroup);
   registry.registerGroup(docsGroup);
 
   // Convert CliCommand to Command for introspect

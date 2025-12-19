@@ -3,7 +3,7 @@ import { mkdtemp, rm, readFile, access } from 'node:fs/promises';
 import * as fsp from 'node:fs/promises';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import type { ManifestV2 } from '@kb-labs/plugin-contracts';
 import type { OperationWithMetadata } from '@kb-labs/setup-engine-operations';
 import { createPluginSetupCommand } from '../commands/system/plugin-setup-command';
 import { createPluginSetupRollbackCommand } from '../commands/system/plugin-setup-rollback';

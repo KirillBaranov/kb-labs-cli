@@ -23,20 +23,14 @@ import { pluginsRegistry } from './plugins-registry';
 import { pluginsDoctor } from './plugins-doctor';
 import { pluginsScaffold } from './plugins-scaffold';
 import { pluginValidate } from './plugins-validate';
-import { pluginGenerate } from './plugins-generate';
 import { loggingCheck } from './logging-check';
 import { loggingInit } from './logging-init';
 import { logTest } from './log-test';
 import { registryLint } from './registry-lint';
 import { headersDebug } from './headers-debug';
-import { replay } from '../debug/replay';
-import { fix } from '../debug/fix';
-import { trace } from '../debug/trace';
-import { fixture } from '../debug/fixture';
-import { repl } from '../debug/repl';
-import { dev } from '../debug/dev';
-import { worker } from '../worker';
-import { jobsList, jobsEnable, jobsDisable, jobsStatus, jobsTrigger } from '../jobs/index';
+// TODO: Re-enable when workflow-engine is ported to V3
+// import { worker } from '../worker';
+// import { jobsList, jobsEnable, jobsDisable, jobsStatus, jobsTrigger } from '../jobs/index';
 import { docsGenerateCliReference } from './docs-generate-cli-reference';
 
 /**
@@ -73,7 +67,6 @@ export const pluginsGroup = defineSystemCommandGroup('plugins', 'Plugin manageme
   pluginsDoctor,
   pluginsScaffold,
   pluginValidate,
-  pluginGenerate,
 ]);
 
 /**
@@ -90,12 +83,7 @@ export const registryGroup = defineSystemCommandGroup('registry', 'Registry and 
  * Debug and development tools
  */
 export const debugGroup = defineSystemCommandGroup('debug', 'Debug and development commands', [
-  replay,
-  fix,
-  trace,
-  fixture,
-  repl,
-  dev,
+  // Debug commands temporarily removed during V3 migration
 ]);
 
 /**
@@ -108,25 +96,26 @@ export const loggingGroup = defineSystemCommandGroup('logging', 'Logging configu
   loggingInit,
 ]);
 
-/**
- * Worker Commands Group
- * Background job worker daemon
- */
-export const workerGroup = defineSystemCommandGroup('worker', 'Background job worker daemon commands', [
-  worker,
-]);
+// TODO: Re-enable when workflow-engine is ported to V3
+// /**
+//  * Worker Commands Group
+//  * Background job worker daemon
+//  */
+// export const workerGroup = defineSystemCommandGroup('worker', 'Background job worker daemon commands', [
+//   worker,
+// ]);
 
-/**
- * Jobs Commands Group
- * Job scheduling and management
- */
-export const jobsGroup = defineSystemCommandGroup('jobs', 'Job scheduling and management commands', [
-  jobsList,
-  jobsEnable,
-  jobsDisable,
-  jobsStatus,
-  jobsTrigger,
-]);
+// /**
+//  * Jobs Commands Group
+//  * Job scheduling and management
+//  */
+// export const jobsGroup = defineSystemCommandGroup('jobs', 'Job scheduling and management commands', [
+//   jobsList,
+//   jobsEnable,
+//   jobsDisable,
+//   jobsStatus,
+//   jobsTrigger,
+// ]);
 
 /**
  * Docs Commands Group

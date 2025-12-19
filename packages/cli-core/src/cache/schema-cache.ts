@@ -6,7 +6,7 @@
 import { z } from 'zod';
 import * as crypto from 'node:crypto';
 import { getLogger } from '@kb-labs/core-sys/logging';
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import type { ManifestV3 } from '@kb-labs/plugin-contracts';
 
 const logger = getLogger('cli:schema-cache');
 
@@ -76,7 +76,7 @@ export class SchemaCache {
    * @param manifest - Plugin manifest
    * @param schemaRefs - Array of schema references to preload
    */
-  async preload(manifest: ManifestV2, schemaRefs: string[]): Promise<void> {
+  async preload(manifest: ManifestV3, schemaRefs: string[]): Promise<void> {
     const checksum = calculateManifestChecksum(manifest);
     const promises = schemaRefs.map((ref) => this.getSchema(ref, checksum));
     await Promise.allSettled(promises);
@@ -129,7 +129,7 @@ export class SchemaCache {
  * @param manifest - Plugin manifest
  * @returns Hex checksum (16 chars)
  */
-export function calculateManifestChecksum(manifest: ManifestV2): string {
+export function calculateManifestChecksum(manifest: ManifestV3): string {
   // Serialize manifest to stable JSON
   const stable = JSON.stringify(manifest, Object.keys(manifest).sort());
   

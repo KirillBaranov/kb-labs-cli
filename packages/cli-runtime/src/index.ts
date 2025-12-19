@@ -28,9 +28,3 @@ export {
   type RuntimeSetupOptions,
 } from "./runtime";
 
-// Event bridge
-export {
-  StdoutEventBridge,
-  type StdoutEventBridgeOptions,
-} from './events/stdout-event-bridge';
-

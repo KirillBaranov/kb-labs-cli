@@ -140,7 +140,7 @@ export const worker = defineSystemCommand<WorkerCommandFlags, WorkerCommandResul
         const pluginInfos = plugins.map(plugin => ({
           id: plugin.id,
           kind: plugin.kind,
-          manifest: plugin.kind === 'v2' ? pluginRegistry.getManifestV2(plugin.id) : undefined,
+          manifest: plugin.kind === 'v2' ? pluginRegistry.getManifestV3(plugin.id) : undefined,
         }));
 
         // Load and register jobs

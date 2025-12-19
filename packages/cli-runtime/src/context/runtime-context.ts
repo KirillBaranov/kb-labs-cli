@@ -1,6 +1,6 @@
-import type { CliContext, Presenter } from "@kb-labs/cli-contracts";
+import type { Presenter } from "@kb-labs/cli-contracts";
 import type { Logger } from "@kb-labs/core-sys/logging";
-import { createContext } from "@kb-labs/cli-core";
+import { createContext, type SystemContext } from "@kb-labs/cli-core";
 
 export interface RuntimeContextOptions {
   presenter: Presenter;
@@ -13,7 +13,7 @@ export interface RuntimeContextOptions {
 
 export async function createRuntimeContext(
   options: RuntimeContextOptions,
-): Promise<CliContext> {
+): Promise<SystemContext> {
   return createContext({
     presenter: options.presenter,
     logger: options.logger,

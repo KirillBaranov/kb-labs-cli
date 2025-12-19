@@ -3,8 +3,6 @@
  * System command context - for KB Labs official commands with full privileges
  */
 
-import type { ProfileV1, LoggerV1 } from './context/v1';
-
 // For now, Output is just a simple interface
 // In the future we might import from @kb-labs/core-sys
 export interface Output {
@@ -70,11 +68,6 @@ export interface SystemContext {
   readonly config?: Record<string, any>;
 
   /**
-   * Active user profile
-   */
-  readonly profile?: ProfileV1;
-
-  /**
    * Profile ID from --profile flag or KB_PROFILE env var
    *
    * Priority: --profile flag > KB_PROFILE env var > default
@@ -91,9 +84,4 @@ export interface SystemContext {
    * Output interface for terminal messages
    */
   readonly output: Output;
-
-  /**
-   * System logger (optional)
-   */
-  readonly logger?: LoggerV1;
 }

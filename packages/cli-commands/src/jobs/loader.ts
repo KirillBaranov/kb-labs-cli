@@ -3,14 +3,14 @@
  * Job loader - loads and registers jobs from plugin manifests
  */
 
-import type { ManifestV2, JobDecl } from '@kb-labs/plugin-manifest';
+import type { ManifestV3, JobDecl } from '@kb-labs/plugin-contracts';
 import type { CronScheduler } from '@kb-labs/workflow-engine';
 import { parseSchedule } from '@kb-labs/workflow-engine';
 
 export interface PluginInfo {
   id: string;
   kind: string;
-  manifest?: ManifestV2 | unknown;
+  manifest?: ManifestV3 | unknown;
 }
 
 export interface JobLoaderOptions {
@@ -49,7 +49,7 @@ export async function loadPluginJobs(options: JobLoaderOptions): Promise<void> {
       continue;
     }
 
-    const manifest = plugin.manifest as ManifestV2;
+    const manifest = plugin.manifest as ManifestV3;
 
     if (!manifest || !manifest.jobs || manifest.jobs.length === 0) {
       logger?.debug('No jobs declared in plugin', { pluginId: plugin.id });

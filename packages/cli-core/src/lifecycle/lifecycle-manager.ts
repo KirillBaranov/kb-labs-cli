@@ -53,7 +53,7 @@ export class LifecycleManager {
    * Invoke onLoad hook
    */
   async invokeLoad(pluginId: string): Promise<void> {
-    const manifest = this.registry.getManifestV2(pluginId);
+    const manifest = this.registry.getManifestV3(pluginId);
     if (!manifest?.lifecycle?.onLoad) {
       return;
     }

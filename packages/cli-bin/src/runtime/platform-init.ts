@@ -64,7 +64,9 @@ export async function initializePlatform(cwd: string): Promise<PlatformInitResul
       adapters: Object.keys(platformConfig.adapters ?? {}),
       hasAdapterOptions: !!platformConfig.adapterOptions,
     });
-    await initPlatform(platformConfig);
+
+    await initPlatform(platformConfig, cwd);
+
     logger.info('Platform adapters initialized', {
       configPath,
       adapters: Object.keys(platformConfig.adapters ?? {}),

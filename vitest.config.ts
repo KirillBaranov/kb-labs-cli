@@ -6,23 +6,25 @@ export default defineConfig({
   ...nodePreset,
   resolve: {
     alias: {
-      "@kb-labs/cli-core": resolve(__dirname, "./packages/core/src"),
-      "@kb-labs/cli-commands": resolve(__dirname, "./packages/commands/src"),
+      "@kb-labs/cli-core": resolve(__dirname, "./packages/cli-core/src"),
+      "@kb-labs/cli-commands": resolve(__dirname, "./packages/cli-commands/src"),
       "@kb-labs/cli-runtime": resolve(__dirname, "./packages/cli-runtime/src"),
       "@kb-labs/cli-api": resolve(__dirname, "./packages/cli-api/src"),
+      "@kb-labs/cli-contracts": resolve(__dirname, "./packages/cli-contracts/src"),
+      "@kb-labs/cli-bin": resolve(__dirname, "./packages/cli-bin/src"),
       "@kb-labs/shared-cli-ui": resolve(
         __dirname,
-        "../kb-labs-shared/packages/cli-ui/src",
+        "../kb-labs-shared/packages/shared-cli-ui/src",
       ),
       "@kb-labs/plugin-adapter-cli": resolve(__dirname, "../kb-labs-plugin/packages/adapters/cli/src"),
       "@kb-labs/plugin-adapter-rest": resolve(__dirname, "../kb-labs-plugin/packages/adapters/rest/src"),
       "@kb-labs/core-cli": resolve(
         __dirname,
-        "../kb-labs-core/packages/cli-core/src",
+        "../kb-labs-core/packages/core-cli/src",
       ),
       "@kb-labs/core-cli-adapters": resolve(
         __dirname,
-        "../kb-labs-core/packages/cli-adapters/src",
+        "../kb-labs-core/packages/core-cli-adapters/src",
       ),
     },
   },

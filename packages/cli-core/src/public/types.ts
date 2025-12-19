@@ -1,10 +1,7 @@
 // Re-export types from cli-contracts (breaking circular dependency)
 export type {
-  CliCommand,
-  CliContext,
-  Profile,
+  SystemContext,
   Presenter,
-  FlagBuilder,
 } from "@kb-labs/cli-contracts";
-// Note: Logger is exported from contracts.ts (core-sys Logger, not cli-contracts Logger)
+// Note: V1 types (CliCommand, CliContext, Profile, FlagBuilder) removed - use V3 plugin system instead
 

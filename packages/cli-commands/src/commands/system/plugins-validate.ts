@@ -3,7 +3,7 @@
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
-import { validateManifestV2 } from '@kb-labs/plugin-manifest';
+import { validateManifest } from '@kb-labs/plugin-contracts';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
@@ -124,7 +124,7 @@ export const pluginValidate = defineSystemCommand<PluginValidateFlags, PluginVal
     }
 
     // Validate manifest structure
-    const validationResult = validateManifestV2(manifest);
+    const validationResult = validateManifest(manifest);
 
     if (!validationResult.valid) {
       ctx.output?.error('❌ Manifest validation failed:\n');

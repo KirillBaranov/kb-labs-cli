@@ -1,167 +1,24 @@
 import type { Command, CommandGroup, CommandRegistry } from "../types";
 import type { RegisteredCommand } from "./types";
-import type { ManifestV2, CliCommandDecl } from "@kb-labs/plugin-manifest";
-import { getContextCwd } from "@kb-labs/shared-cli-ui";
-import { ensurePluginSetup } from "./middleware/lazy-setup";
 
+/**
+ * Convert RegisteredCommand to Command adapter
+ *
+ * This is a minimal adapter - actual execution happens in bootstrap.ts via tryExecuteV3.
+ * The run() function here is never called for V3 commands.
+ */
 function manifestToCommand(registered: RegisteredCommand): Command {
-  // ID is now simple without group prefix
-  const name = registered.manifest.id;
-
-  async function executeLoaderCommand(
-    ctx: any,
-    argv: string[],
-    flags: Record<string, unknown>,
-  ): Promise<number> {
-    const loader = registered.manifest.loader;
-    if (typeof loader !== "function") {
-      ctx.presenter.error(
-        `Command ${registered.manifest.id} is missing runtime loader.`,
-      );
-      return 1;
-    }
-
-    let module: { run?: Command["run"] };
-    try {
-      module = await loader();
-    } catch (error: any) {
-      ctx.presenter.error(
-        `Failed to load ${registered.manifest.id}: ${error?.message || error}`,
-      );
-      return 1;
-    }
-
-    if (!module || typeof module.run !== "function") {
-      ctx.presenter.error(
-        `Command ${registered.manifest.id} loader did not return a runnable command.`,
-      );
-      return 1;
-    }
-
-    const result = await module.run(ctx, argv, flags);
-    return typeof result === "number" ? result : 0;
-  }
-
   return {
-    name,
+    name: registered.manifest.id,
     category: registered.manifest.group,
     describe: registered.manifest.describe,
     longDescription: registered.manifest.longDescription,
     aliases: registered.manifest.aliases || [],
     flags: registered.manifest.flags,
     examples: registered.manifest.examples,
-    async run(ctx, argv, flags, actualRest?: string[]) {
-      const isSetupCommand =
-        (registered.manifest as any).isSetup === true ||
-        (registered.manifest as any).isSetupRollback === true;
-
-      if (isSetupCommand) {
-        return executeLoaderCommand(ctx, argv, flags);
-      }
-
-      if (!registered.available) {
-        if (flags.json) {
-          ctx.presenter.json({
-            ok: false,
-            available: false,
-            command: registered.manifest.id,
-            reason: registered.unavailableReason,
-            hint: registered.hint,
-          });
-          return 2;
-        }
-        ctx.presenter.warn(
-          `${registered.manifest.id} unavailable: ${registered.unavailableReason}`,
-        );
-        if (registered.hint) {
-          ctx.presenter.info(registered.hint);
-        }
-        return 2;
-      }
-
-      const manifestV2 = registered.manifest.manifestV2;
-      if (!manifestV2) {
-        ctx.presenter.error(
-          `Command ${registered.manifest.id} must have ManifestV2 manifest. This command cannot be executed without proper manifest declaration.`,
-        );
-        return 1;
-      }
-
-      if (!manifestV2.permissions) {
-        ctx.presenter.error(
-          `Command ${registered.manifest.id} must declare permissions in manifest. Add 'permissions: { fs: {...}, net: {...}, env: {...} }' to manifest.`,
-        );
-        return 1;
-      }
-
-      // ID is now simple (no namespace prefix)
-      const commandId = registered.manifest.id;
-      const cliCommand = manifestV2.cli?.commands?.find(
-        (c: CliCommandDecl) =>
-          c.id === commandId,
-      );
-
-      // V3 commands use handlerPath instead of handler function
-      const isV3Command = !!(cliCommand as any)?.handlerPath;
-
-      if (!cliCommand || (!cliCommand.handler && !isV3Command)) {
-        ctx.presenter.error(
-          `Command ${registered.manifest.id} has no handler in manifest. Add 'handler: "./cli/command#run"' to CLI command declaration.`,
-        );
-        return 1;
-      }
-
-      // ADR-0009: Lazy setup on first command invocation
-      const setupResult = await ensurePluginSetup(manifestV2, ctx, flags, findCommand);
-      if (!setupResult.ok) {
-        ctx.presenter.error(setupResult.error!);
-        return 1;
-      }
-
-      try {
-        const currentCwd = getContextCwd(ctx);
-        const { executeCommand } = await import("@kb-labs/plugin-adapter-cli");
-
-        let exitCode: number;
-        try {
-          // Pass argv (actualRest) to executeCommand via context
-          // actualRest contains subcommand and remaining args
-          const commandArgv = actualRest ?? argv;
-          // Store argv in context so executeCommand can access it
-          (ctx as any).argv = commandArgv;
-          exitCode = await executeCommand(
-            cliCommand,
-            manifestV2 as ManifestV2,
-            ctx,
-            flags,
-            manifestV2.capabilities || [],
-            registered.pkgRoot,
-            currentCwd,
-            undefined,
-            undefined,
-          );
-        } catch (syncError: any) {
-          if (flags.debug) {
-            ctx.presenter.error(
-              `[debug] Synchronous error in executeCommand: ${syncError.message}`,
-            );
-            ctx.presenter.error(`[debug] Stack: ${syncError.stack}`);
-          }
-          throw syncError;
-        }
-        return exitCode;
-      } catch (error: any) {
-        if (flags.debug) {
-          ctx.presenter.error(
-            `[debug] Error in executeCommand: ${error.message}`,
-          );
-          ctx.presenter.error(`[debug] Stack: ${error.stack}`);
-        }
-        ctx.presenter.error(
-          `Failed to execute ${registered.manifest.id}: ${error.message}`,
-        );
-        return 1;
-      }
+    async run() {
+      // This should never be called - V3 commands are executed via tryExecuteV3() in bootstrap.ts
+      throw new Error(`Command ${registered.manifest.id} should be executed via V3 adapter, not via legacy run() path.`);
     },
   };
 }
@@ -172,15 +29,32 @@ export interface ProductGroup {
   commands: RegisteredCommand[];
 }
 
+export type CommandType = 'system' | 'plugin';
+
+export interface CommandLookupResult {
+  cmd: Command | CommandGroup;
+  type: CommandType;
+}
+
 class InMemoryRegistry implements CommandRegistry {
+  // Separate collections for security isolation
+  private systemCommands = new Map<string, Command>();  // System commands (in-process)
+  private pluginCommands = new Map<string, RegisteredCommand>();  // Plugin commands (subprocess)
+
+  // Legacy unified collection for backward compatibility
   private byName = new Map<string, Command | CommandGroup>();
   private groups = new Map<string, CommandGroup>();
   private manifests = new Map<string, RegisteredCommand>();
   private partial = false;
 
   register(cmd: Command): void {
+    // Store in systemCommands for type checking
+    this.systemCommands.set(cmd.name, cmd);
+
+    // Also keep in byName for backward compatibility
     this.byName.set(cmd.name, cmd);
     for (const a of cmd.aliases || []) {
+      this.systemCommands.set(a, cmd);
       this.byName.set(a, cmd);
     }
   }
@@ -190,32 +64,65 @@ class InMemoryRegistry implements CommandRegistry {
     this.byName.set(group.name, group);
 
     for (const cmd of group.commands) {
+      // Store each command from group in systemCommands
+      this.systemCommands.set(cmd.name, cmd);
+
       const fullName = `${group.name} ${cmd.name}`;
+      this.systemCommands.set(fullName, cmd);
       this.byName.set(fullName, cmd);
 
       for (const alias of cmd.aliases || []) {
+        this.systemCommands.set(alias, cmd);
         this.byName.set(alias, cmd);
       }
     }
   }
 
   registerManifest(cmd: RegisteredCommand): void {
-    this.manifests.set(cmd.manifest.id, cmd);
+    // Check for collision with system commands
+    const cmdId = cmd.manifest.id;
+    const hasCollision = this.systemCommands.has(cmdId);
 
-    const commandAdapter = manifestToCommand(cmd);
-
-    this.byName.set(cmd.manifest.id, commandAdapter);
-    this.byName.set(commandAdapter.name, commandAdapter);
-
-    // Register with full group + command format for invocation
-    if (cmd.manifest.group) {
-      const fullName = `${cmd.manifest.group} ${cmd.manifest.id}`;
-      this.byName.set(fullName, commandAdapter);
+    if (hasCollision) {
+      console.warn(`[registry] Plugin command "${cmdId}" collides with system command. System command takes priority.`);
+      // Mark plugin command as shadowed - it will NOT be executable
+      cmd.shadowed = true;
     }
 
-    if (cmd.manifest.aliases) {
-      for (const alias of cmd.manifest.aliases) {
-        this.byName.set(alias, commandAdapter);
+    // Check aliases for collisions
+    const collisionAliases = new Set<string>();
+    for (const alias of cmd.manifest.aliases || []) {
+      if (this.systemCommands.has(alias)) {
+        console.warn(`[registry] Plugin alias "${alias}" collides with system command. System command takes priority.`);
+        collisionAliases.add(alias);
+      }
+    }
+
+    // Store in pluginCommands (even if shadowed, for manifest listing)
+    this.pluginCommands.set(cmdId, cmd);
+    this.manifests.set(cmdId, cmd);
+
+    // Only add to byName if NO collision with system commands
+    // This ensures system commands always win in routing
+    if (!hasCollision) {
+      const commandAdapter = manifestToCommand(cmd);
+
+      this.byName.set(cmdId, commandAdapter);
+      this.byName.set(commandAdapter.name, commandAdapter);
+
+      // Register with full group + command format for invocation
+      if (cmd.manifest.group) {
+        const fullName = `${cmd.manifest.group} ${cmd.manifest.id}`;
+        this.byName.set(fullName, commandAdapter);
+      }
+
+      if (cmd.manifest.aliases) {
+        for (const alias of cmd.manifest.aliases) {
+          // Skip aliases that collide with system commands
+          if (!collisionAliases.has(alias)) {
+            this.byName.set(alias, commandAdapter);
+          }
+        }
       }
     }
   }
@@ -242,6 +149,52 @@ class InMemoryRegistry implements CommandRegistry {
 
   has(name: string): boolean {
     return this.byName.has(name);
+  }
+
+  /**
+   * Get command with type information for secure routing
+   *
+   * Returns type='system' for commands from registerGroup() - execute in-process
+   * Returns type='plugin' for commands from registerManifest() - execute in subprocess
+   *
+   * This separation prevents malicious plugins from escaping the sandbox.
+   */
+  getWithType(nameOrPath: string | string[]): CommandLookupResult | undefined {
+    const cmd = this.get(nameOrPath);
+    if (!cmd) {
+      return undefined;
+    }
+
+    // Groups are always system-level
+    if ('commands' in cmd) {
+      return { cmd, type: 'system' };
+    }
+
+    // Check if command is in systemCommands (registered via register() or registerGroup())
+    const normalizedName = typeof nameOrPath === 'string' ? nameOrPath : nameOrPath.join(' ');
+
+    // Try direct lookup
+    if (this.systemCommands.has(normalizedName)) {
+      return { cmd, type: 'system' };
+    }
+
+    // Try with colon-to-space conversion for system commands
+    if (normalizedName.includes(':')) {
+      const spaceVersion = normalizedName.replace(':', ' ');
+      if (this.systemCommands.has(spaceVersion)) {
+        return { cmd, type: 'system' };
+      }
+    }
+
+    // Check if it's a plugin command (has manifest)
+    const manifestCmd = this.getManifestCommand(normalizedName);
+    if (manifestCmd) {
+      return { cmd, type: 'plugin' };
+    }
+
+    // Default to system if found in byName but not categorized
+    // This handles edge cases and ensures backward compatibility
+    return { cmd, type: 'system' };
   }
 
   get(nameOrPath: string | string[]): Command | CommandGroup | undefined {
@@ -394,5 +347,16 @@ export const registry = new InMemoryRegistry();
 
 export function findCommand(nameOrPath: string | string[]) {
   return registry.get(nameOrPath);
+}
+
+/**
+ * Find command with type information for secure routing
+ *
+ * Use this in bootstrap.ts to determine execution path:
+ * - type='system' → execute via cmd.run() in-process
+ * - type='plugin' → execute via tryExecuteV3() in subprocess
+ */
+export function findCommandWithType(nameOrPath: string | string[]): CommandLookupResult | undefined {
+  return registry.getWithType(nameOrPath);
 }
 

@@ -55,7 +55,7 @@
     "// ——— cleanup": "────────────────────────────────────────",
     "clean:all": "rimraf node_modules packages/*/node_modules apps/*/node_modules dist",
     "// ——— cli": "────────────────────────────────────────",
-    "kb": "node packages/cli-bin/dist/bin.js"
+    "kb": "node packages/cli-bin/dist/bin.cjs"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md,yml,yaml}": [

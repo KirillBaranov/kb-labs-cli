@@ -3,9 +3,9 @@
  */
 
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { generateExamples } from '../../utils/generate-examples';
 import { disablePlugin } from '../../registry/plugins-state';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
-import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsDisableResult = CommandResult & {
   packageName?: string;

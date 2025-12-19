@@ -7,8 +7,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { glob } from 'glob';
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
-import { detectManifestVersion } from '@kb-labs/plugin-manifest';
+import type { ManifestV3 } from '@kb-labs/plugin-contracts';
+import { isManifestV3 } from '@kb-labs/plugin-contracts';
 import { getLogger } from '@kb-labs/core-sys/logging';
 import { safeImport, isImportTimeout } from '../utils/safe-import.js';
 import type { DiscoveryStrategy, DiscoveryResult } from '../types';
@@ -110,18 +110,17 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
                     const manifestModule = await safeImport(manifestPath);
                     logger.debug('Dynamic import successful', { manifestPath });
                     const manifestData: unknown = manifestModule.default || manifestModule.manifest || manifestModule;
-                    const version = detectManifestVersion(manifestData);
-                    
-                    if (version === 'v2') {
-                      const manifest = manifestData as ManifestV2;
+
+                    if (isManifestV3(manifestData)) {
+                      const manifest = manifestData;
                       const pluginId = manifest.id || pkg.name || path.basename(path.dirname(pkgFile));
-                      
+
                       const pluginDir = path.dirname(manifestPath)
 
                       plugins.push({
                         id: pluginId,
                         version: manifest.version || pkg.version || '0.0.0',
-                        kind: 'v2',
+                        kind: 'v3',
                         source: {
                           kind: 'workspace',
                           path: pluginDir,
@@ -131,12 +130,12 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
                           description: manifest.display?.description || pkg.kbLabs?.description || pkg.description,
                         },
                       });
-                      
+
                       // Store manifest
                       manifests.set(pluginId, manifest);
                       logger.debug('Successfully loaded manifest for plugin', { pluginId });
                     } else {
-                      logger.debug('Manifest is not V2, skipping', { manifestPath });
+                      logger.debug('Manifest is not V3, skipping', { manifestPath });
                     }
                   } catch (error) {
                     const errorMessage = error instanceof Error ? error.message : String(error);

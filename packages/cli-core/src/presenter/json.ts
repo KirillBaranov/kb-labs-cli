@@ -1,8 +1,8 @@
 import type { Presenter } from "./types";
-import type { PluginContextV2 } from "../context";
+import type { SystemContext } from "../context";
 
-export function createJsonPresenter(): Presenter & { setContext(context: PluginContextV2): void } {
-  let context: PluginContextV2 | null = null;
+export function createJsonPresenter(): Presenter & { setContext(context: SystemContext): void } {
+  let context: SystemContext | null = null;
 
   return {
     isTTY: false,
@@ -15,9 +15,9 @@ export function createJsonPresenter(): Presenter & { setContext(context: PluginC
       console.log(JSON.stringify({ ok: false, error: { message: line } })),
     json: (payload) => {
       console.log(JSON.stringify(payload));
-      // V2: sentJSON tracking removed (not needed in PluginContextV2)
+      // System commands use simple JSON output
     },
-    setContext(ctx: PluginContextV2) {
+    setContext(ctx: SystemContext) {
       context = ctx;
     },
   };

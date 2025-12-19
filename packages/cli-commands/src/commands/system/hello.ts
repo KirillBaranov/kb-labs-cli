@@ -1,5 +1,5 @@
 import { defineSystemCommand, type CommandOutput } from '@kb-labs/shared-command-kit';
-import { generateExamples } from '@kb-labs/plugin-manifest';
+import { generateExamples } from '../../utils/generate-examples.js';
 
 type HelloFlags = {
   json: { type: 'boolean'; description?: string };

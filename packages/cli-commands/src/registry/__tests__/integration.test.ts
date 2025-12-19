@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { registerManifests } from "../register";
 import { runCommand } from "../run";
 import { renderHelp } from "../../utils/help-generator";
-import type { ManifestV2 } from "@kb-labs/plugin-manifest";
+import type { ManifestV3 } from "@kb-labs/plugin-contracts";
 import type { CommandManifest } from "../types";
 
 const executeCommandMock = vi.hoisted(() =>
@@ -18,7 +18,7 @@ vi.mock("@kb-labs/plugin-adapter-cli", () => ({
   executeCommand: executeCommandMock,
 }));
 
-const baseManifestV2: ManifestV2 = {
+const baseManifestV3: ManifestV3 = {
   schema: "kb.plugin/2",
   id: "@kb-labs/test-plugin",
   version: "0.0.1",
@@ -58,7 +58,7 @@ describe("Registry Integration", () => {
       group: "test",
       describe: "Test command",
       flags: [{ name: "verbose", type: "boolean", alias: "v" }],
-      manifestV2: structuredClone(baseManifestV2),
+      manifestV2: structuredClone(baseManifestV3),
       loader: async () => ({
         run: async (ctx: any, _argv: string[], flags: any) => {
           ctx.presenter.info(flags.verbose ? "Verbose mode enabled" : "Run executed");
@@ -122,7 +122,7 @@ describe("Registry Integration", () => {
       group: "test",
       describe: "Test command",
       requires: ["@kb-labs/missing-package"],
-      manifestV2: structuredClone(baseManifestV2),
+      manifestV2: structuredClone(baseManifestV3),
       loader: async () => ({ run: async () => 0 }),
     };
 
@@ -168,7 +168,7 @@ describe("Registry Integration", () => {
       id: "test:command",
       group: "test",
       describe: "Node command",
-      manifestV2: structuredClone(baseManifestV2),
+      manifestV2: structuredClone(baseManifestV3),
       loader: async () => ({ run: async () => 0 }),
     };
 
@@ -177,7 +177,7 @@ describe("Registry Integration", () => {
       id: "test:command",
       group: "test",
       describe: "Workspace command",
-      manifestV2: structuredClone(baseManifestV2),
+      manifestV2: structuredClone(baseManifestV3),
       loader: async () => ({ run: async () => 0 }),
     };
 

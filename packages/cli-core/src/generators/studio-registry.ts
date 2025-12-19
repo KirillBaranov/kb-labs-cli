@@ -3,7 +3,7 @@
  * Studio registry generation for UI consumption
  */
 
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import type { ManifestV3 } from '@kb-labs/plugin-contracts';
 import type { PluginBrief } from '../registry/plugin-registry';
 
 /**
@@ -44,7 +44,7 @@ export interface StudioRegistry {
  */
 export function generateStudioRegistry(
   plugins: PluginBrief[],
-  manifests: Map<string, ManifestV2>
+  manifests: Map<string, ManifestV3>
 ): StudioRegistry {
   const entries: StudioRegistryEntry[] = [];
 

@@ -13,7 +13,7 @@
  * - Graceful degradation (continues if State Broker unavailable)
  */
 
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import type { ManifestV3 } from '@kb-labs/plugin-contracts';
 
 /**
  * Ensure plugin setup has been run before executing commands.
@@ -25,7 +25,7 @@ import type { ManifestV2 } from '@kb-labs/plugin-manifest';
  * @returns Promise resolving to success/failure with optional error message
  */
 export async function ensurePluginSetup(
-  manifestV2: ManifestV2,
+  manifestV2: ManifestV3,
   ctx: any,
   flags: Record<string, unknown>,
   findCommand: (path: string[]) => any

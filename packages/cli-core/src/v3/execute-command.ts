@@ -4,8 +4,8 @@
  * Entry point for executing plugin commands via V3 plugin system.
  */
 
-import type { PluginContextDescriptor, UIFacade, PlatformServices } from '@kb-labs/plugin-contracts-v3';
-import { runInProcess, runInSubprocess } from '@kb-labs/plugin-runtime-v3/sandbox';
+import type { PluginContextDescriptor, UIFacade, PlatformServices } from '@kb-labs/plugin-contracts';
+import { runInProcess, runInSubprocess } from '@kb-labs/plugin-runtime/sandbox';
 
 export interface ExecuteCommandV3Options {
   /**
@@ -83,6 +83,15 @@ export interface ExecuteCommandV3Options {
    * If not provided, will attempt to get from platform.getSocketPath()
    */
   socketPath?: string;
+
+  /**
+   * Resource quotas from manifest
+   */
+  quotas?: {
+    timeoutMs?: number;
+    memoryMb?: number;
+    cpuMs?: number;
+  };
 }
 
 /**
@@ -123,6 +132,7 @@ export async function executeCommandV3(
     signal,
     devMode = false,
     socketPath,
+    quotas,
   } = options;
 
   // Create plugin context descriptor
@@ -137,6 +147,7 @@ export async function executeCommandV3(
     permissions,
     hostContext: { host: 'cli', argv, flags },
     parentRequestId: undefined,
+    requestId: `cli-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
   };
 
   // Prepare input
@@ -158,6 +169,7 @@ export async function executeCommandV3(
           socketPath: socketPath || '', // Passed from parent or empty string
           handlerPath,
           input,
+          timeoutMs: quotas?.timeoutMs, // Pass timeout from manifest quotas
           signal,
         });
 

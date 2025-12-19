@@ -4,7 +4,7 @@
  */
 
 import type { CacheAdapter } from '../cache/cache-adapter';
-import type { ManifestV2, RestRouteDecl } from '@kb-labs/plugin-manifest';
+import type { ManifestV3, RestRouteDecl } from '@kb-labs/plugin-contracts';
 import { WatchManager } from './watch-manager';
 import semver from 'semver';
 import * as path from 'node:path';
@@ -23,7 +23,7 @@ export type SourceKind = 'workspace' | 'pkg' | 'dir' | 'file';
 export interface PluginBrief {
   id: string;
   version: string;
-  kind: 'v2';
+  kind: 'v2' | 'v3';
   source: {
     kind: SourceKind;
     path: string;
@@ -109,7 +109,7 @@ export type HandlerRef = {
 type ResolvedRoute = {
   pluginId: string;
   handler: HandlerRef;
-  manifest: ManifestV2;
+  manifest: ManifestV3;
   route: RestRouteDecl;
   pluginRoot: string;
   workdir: string;
@@ -161,7 +161,7 @@ function pathsEqual(a: string, b: string): boolean {
  */
 export class PluginRegistry {
   private plugins: Map<string, PluginBrief> = new Map();
-  private manifests: Map<string, ManifestV2> = new Map();
+  private manifests: Map<string, ManifestV3> = new Map();
   private listeners: Array<(diff: RegistryDiff) => void> = [];
   private snapshotVersion: string = '1';
   private lastUpdate: number = 0;
@@ -299,7 +299,7 @@ export class PluginRegistry {
   /**
    * Get manifest V2 for a plugin
    */
-  getManifestV2(id: string): ManifestV2 | null {
+  getManifestV3(id: string): ManifestV3 | null {
     return this.manifests.get(id) || null;
   }
 
@@ -454,7 +454,7 @@ export class PluginRegistry {
   /**
    * Add plugin to registry
    */
-  protected addPlugin(brief: PluginBrief, manifest?: ManifestV2): void {
+  protected addPlugin(brief: PluginBrief, manifest?: ManifestV3): void {
     this.plugins.set(brief.id, brief);
     if (manifest) {
       this.manifests.set(brief.id, manifest);

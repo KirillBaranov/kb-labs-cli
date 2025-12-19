@@ -3,6 +3,7 @@
  */
 
 import { defineSystemCommand, type CommandOutput } from '@kb-labs/shared-command-kit';
+import { generateExamples } from '../../utils/generate-examples';
 import type { RegisteredCommand } from '../../registry/types';
 import { registry } from '../../registry/service';
 import { PluginRegistry } from '@kb-labs/cli-core';
@@ -11,7 +12,6 @@ import { loadPluginsState, isPluginEnabled } from '../../registry/plugins-state'
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
-import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginInfo = {
   name: string;

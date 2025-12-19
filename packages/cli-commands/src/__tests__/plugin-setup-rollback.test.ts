@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtemp, rm, writeFile, mkdir, access } from 'node:fs/promises';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import type { ManifestV2 } from '@kb-labs/plugin-contracts';
 import type { JournalEntry } from '@kb-labs/setup-engine-core';
 import { createPluginSetupRollbackCommand } from '../commands/system/plugin-setup-rollback';
 

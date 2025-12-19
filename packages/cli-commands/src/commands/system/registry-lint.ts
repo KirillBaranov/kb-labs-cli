@@ -4,9 +4,9 @@
 
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
 import { createCliAPI } from '@kb-labs/cli-api';
-import { resolveHeaderPolicy } from '@kb-labs/plugin-adapter-rest';
-import type { ManifestV2, RestRouteDecl } from '@kb-labs/plugin-manifest';
-import { generateExamples } from '@kb-labs/plugin-manifest';
+import { resolveHeaderPolicy } from '@kb-labs/plugin-contracts';
+import type { ManifestV3, RestRouteDecl } from '@kb-labs/plugin-contracts';
+import { generateExamples } from '../../utils/generate-examples.js';
 
 type LintLevel = 'error' | 'warn';
 
@@ -155,7 +155,7 @@ export const registryLint = defineSystemCommand<RegistryLintFlags, RegistryLintR
   },
 });
 
-function lintManifest(manifest: ManifestV2): LintIssue[] {
+function lintManifest(manifest: ManifestV3): LintIssue[] {
   const issues: LintIssue[] = [];
   const basePath = manifest.rest?.basePath || `/v1/plugins/${manifest.id}`;
 

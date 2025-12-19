@@ -5,7 +5,7 @@
  */
 
 import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
-import { generateExamples } from '@kb-labs/plugin-manifest';
+import { generateExamples } from '../../utils/generate-examples';
 
 type PluginsTrustResult = CommandResult & {
   message?: string;

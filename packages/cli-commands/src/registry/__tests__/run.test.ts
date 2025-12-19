@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { runCommand } from "../run";
 import type { RegisteredCommand } from "../types";
-import type { ManifestV2 } from "@kb-labs/plugin-manifest";
+import type { ManifestV3 } from "@kb-labs/plugin-contracts";
 
 const mockExecuteCommand = vi.hoisted(() =>
   vi.fn(async () => {
@@ -17,7 +17,7 @@ vi.mock("@kb-labs/plugin-adapter-cli", () => ({
   executeCommand: mockExecuteCommand,
 }));
 
-const baseManifestV2: ManifestV2 = {
+const baseManifestV3: ManifestV3 = {
   schema: "kb.plugin/2",
   id: "-labs/test-plugin",
   version: "0.0.1",
@@ -45,7 +45,7 @@ function createRegisteredCommand(
       id: "test:command",
       group: "test",
       describe: "Test command",
-      manifestV2: structuredClone(baseManifestV2),
+      manifestV2: structuredClone(baseManifestV3),
       ...overrides,
     },
     available: true,
@@ -156,7 +156,7 @@ describe('runCommand', () => {
   it("should return exit code 1 when manifest lacks CLI declaration", async () => {
     const incompleteManifest = createRegisteredCommand({
       manifestV2: {
-        ...baseManifestV2,
+        ...baseManifestV3,
         cli: { commands: [] },
       },
     });

@@ -3,14 +3,14 @@
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import { generateExamples } from '../../utils/generate-examples';
+import type { ManifestV2 } from '@kb-labs/plugin-contracts';
 import { detectRepoRoot } from '@kb-labs/core-cli-adapters';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { glob } from 'glob';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
-import { generateExamples } from '@kb-labs/plugin-manifest';
 
 interface PluginManifestWithPath {
   manifest: ManifestV2;

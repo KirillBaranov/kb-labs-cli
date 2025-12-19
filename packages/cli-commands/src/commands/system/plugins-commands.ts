@@ -3,10 +3,10 @@
  */
 
 import { defineSystemCommand, type CommandOutput } from '@kb-labs/shared-command-kit';
+import { generateExamples } from '../../utils/generate-examples';
 import { registry } from '../../registry/service';
 import type { RegisteredCommand } from '../../registry/types';
 import { safeColors, type SectionContent } from '@kb-labs/shared-cli-ui';
-import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsCommandsFlags = {
   json: { type: 'boolean'; description?: string };

@@ -213,7 +213,7 @@ describe('discoverManifests', () => {
     expect(typeof manifest.loader).not.toBe('function');
     __test.ensureManifestLoader(manifest);
     expect(typeof manifest.loader).toBe('function');
-    await expect(manifest.loader()).rejects.toThrow(/ManifestV2 command/);
+    await expect(manifest.loader()).rejects.toThrow(/ManifestV3 command/);
   });
 
   it('should rehydrate setup loader and delegate to setup command module', async () => {

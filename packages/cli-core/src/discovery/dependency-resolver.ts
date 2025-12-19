@@ -5,7 +5,7 @@
 
 import * as semver from 'semver';
 import type { PluginBrief } from '../registry/plugin-registry';
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import type { ManifestV3 } from '@kb-labs/plugin-contracts';
 
 /**
  * Plugin dependency
@@ -46,12 +46,12 @@ export interface ValidationResult {
  */
 export class DependencyResolver {
   private plugins: Map<string, PluginBrief>;
-  private manifests: Map<string, ManifestV2>;
+  private manifests: Map<string, ManifestV3>;
   private graph: Map<string, Set<string>> = new Map();
 
   constructor(
     plugins: PluginBrief[],
-    manifests: Map<string, ManifestV2>
+    manifests: Map<string, ManifestV3>
   ) {
     this.plugins = new Map(plugins.map(p => [p.id, p]));
     this.manifests = manifests;

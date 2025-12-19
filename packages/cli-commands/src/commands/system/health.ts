@@ -4,8 +4,8 @@
 // - Formatter accesses untyped snapshot properties
 // @ts-nocheck
 import { createCliAPI } from '@kb-labs/cli-api';
+import { generateExamples } from '../../utils/generate-examples';
 import { defineSystemCommand } from '@kb-labs/shared-command-kit';
-import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type HealthFlags = {
   json: { type: 'boolean'; description?: string };

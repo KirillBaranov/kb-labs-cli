@@ -3,7 +3,7 @@
  * Discovery strategy types
  */
 
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import type { ManifestV3 } from '@kb-labs/plugin-contracts';
 import type { PluginBrief } from '../registry/plugin-registry';
 
 /**
@@ -13,7 +13,7 @@ export interface DiscoveryResult {
   /** Discovered plugins */
   plugins: PluginBrief[];
   /** Associated manifests */
-  manifests: Map<string, ManifestV2>;
+  manifests: Map<string, ManifestV3>;
   /** Errors encountered (non-fatal) */
   errors: Array<{
     path: string;

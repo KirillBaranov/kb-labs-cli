@@ -3,9 +3,9 @@
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
+import { generateExamples } from '../../utils/generate-examples';
 import { existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type LoggingInitResult = CommandResult & {
   configPath?: string;

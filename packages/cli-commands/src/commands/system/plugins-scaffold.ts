@@ -3,11 +3,11 @@
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
+import { generateExamples } from '../../utils/generate-examples';
 import type { StringFlagSchema } from '@kb-labs/shared-command-kit/flags';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
-import { generateExamples } from '@kb-labs/plugin-manifest';
 
 type PluginsScaffoldResult = CommandResult & {
   pluginName?: string;
@@ -123,7 +123,7 @@ export const pluginsScaffold = defineSystemCommand<PluginsScaffoldFlags, Plugins
     await fs.writeFile(path.join(dir, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2), 'utf8');
 
     // Manifest file
-    const manifestContent = `import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+    const manifestContent = `import type { ManifestV2 } from '@kb-labs/plugin-contracts';
 
 export const manifest: ManifestV2 = {
   schema: 'kb.plugin/2',

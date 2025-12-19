@@ -9,5 +9,5 @@ export default defineConfig({
     "v3/index": "src/v3/index.ts",
   },
   tsconfig: "tsconfig.build.json", // Use build-specific tsconfig without paths
-  dts: false, // Temporarily disabled for debugging
+  dts: true, // Re-enabled for V3 migration
 });

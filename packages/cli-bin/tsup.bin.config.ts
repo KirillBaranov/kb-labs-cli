@@ -16,5 +16,23 @@ export default defineConfig({
     ...binPreset.external ?? [],
     // TEMPORARILY COMMENTED: Debug why setupLogPipes not called
     // '@kb-labs/core-sandbox',
+    '@kb-labs/plugin-contracts', // V3 plugin contracts - must be external
+    // Workflow packages (not built yet - V3 migration pending)
+    '@kb-labs/workflow-engine',
+    '@kb-labs/workflow-runtime',
+    '@kb-labs/workflow-contracts',
+    '@kb-labs/workflow-artifacts',
+    '@kb-labs/workflow-constants',
+  ],
+  esbuildPlugins: [
+    ...(binPreset.esbuildPlugins ?? []),
+    {
+      name: 'plugin-contracts-external',
+      setup(build) {
+        build.onResolve({ filter: /^@kb-labs\/plugin-contracts$/ }, () => {
+          return { path: '@kb-labs/plugin-contracts', external: true };
+        });
+      },
+    },
   ],
 });

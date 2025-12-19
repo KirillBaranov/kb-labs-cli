@@ -1,6 +1,6 @@
 // Core types and interfaces
 export * from "./types/index";
-export * from "./command";
+// export * from "./command"; // DELETED - V1 legacy
 export * from "./context";
 export * from "./flags";
 
@@ -11,7 +11,7 @@ export { EXIT_CODES, CLI_ERROR_CODES, CliError, mapCliErrorToExitCode } from "./
 export * from "./io/types";
 
 // Plugins system
-export * from "./plugins/types";
+// export * from "./plugins/types"; // DELETED - V1 legacy
 
 // Presenters
 export * from "./presenter/types";
@@ -24,7 +24,7 @@ export * from "./presenter/loader";
 export * from "./telemetry/types";
 
 // Registry
-export * from "./registry";
+// export * from "./registry"; // DELETED - V1 legacy
 export {
   PluginRegistry,
   type PluginBrief,
