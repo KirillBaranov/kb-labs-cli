@@ -1,5 +1,4 @@
-import type { CliContext } from "@kb-labs/cli-contracts";
-import type { ExecutionLimits } from "@kb-labs/cli-core";
+import type { ExecutionLimits, SystemContext } from "@kb-labs/cli-core";
 
 import {
   MiddlewareManager,
@@ -28,11 +27,11 @@ export interface RuntimeSetupOptions extends RuntimeContextOptions {
   executionLimits?: ExecutionLimits;
   middlewares?: MiddlewareConfig[];
   formatters?: OutputFormatter[];
-  context?: CliContext;
+  context?: SystemContext;
 }
 
 export interface CliRuntime {
-  context: CliContext;
+  context: SystemContext;
   middleware: MiddlewareManager;
   formatters: FormattersRegistry;
   registerMiddleware(middleware: MiddlewareConfig): void;
