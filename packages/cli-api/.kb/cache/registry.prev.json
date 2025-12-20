@@ -1,0 +1,896 @@
+{
+  "schema": "kb.registry/1",
+  "rev": 2,
+  "version": "2",
+  "generatedAt": "2025-12-20T23:31:40.802Z",
+  "expiresAt": "2025-12-20T23:32:10.802Z",
+  "ttlMs": 30000,
+  "partial": true,
+  "stale": false,
+  "source": {
+    "cliVersion": "0.0.0",
+    "cwd": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/cli-api"
+  },
+  "plugins": [
+    {
+      "id": "@kb-labs/mind",
+      "version": "0.1.0",
+      "kind": "v3",
+      "source": {
+        "kind": "workspace",
+        "path": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-mind/packages/mind-cli/dist"
+      },
+      "display": {
+        "name": "@kb-labs/mind-cli",
+        "description": "CLI commands for KB Labs Mind"
+      }
+    },
+    {
+      "id": "@kb-labs/release",
+      "version": "0.1.0",
+      "kind": "v3",
+      "source": {
+        "kind": "workspace",
+        "path": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-release-manager/packages/release-manager-cli/dist"
+      },
+      "display": {
+        "name": "Release Manager",
+        "description": "Plan, execute, and audit releases across the KB Labs workspace."
+      }
+    }
+  ],
+  "manifests": [
+    {
+      "pluginId": "@kb-labs/mind",
+      "manifest": {
+        "schema": "kb.plugin/3",
+        "id": "@kb-labs/mind",
+        "version": "0.1.0",
+        "name": "Mind",
+        "description": "AI-powered code search and RAG system for KB Labs",
+        "permissions": {
+          "fs": {
+            "read": [
+              ".kb/mind/**",
+              ".kb/cache/**",
+              "package.json",
+              "**/package.json",
+              "config/**",
+              "**/*.ts",
+              "**/*.tsx",
+              "**/*.js",
+              "**/*.jsx",
+              "**/*.md"
+            ],
+            "write": [
+              ".kb/mind/**",
+              ".kb/cache/**"
+            ]
+          },
+          "network": {
+            "fetch": [
+              "https://api.openai.com/*",
+              "http://localhost:6333/*",
+              "http://127.0.0.1:6333/*",
+              "https://*.qdrant.io/*"
+            ]
+          },
+          "env": {
+            "read": [
+              "NODE_ENV",
+              "KB_LABS_*",
+              "OPENAI_API_KEY",
+              "QDRANT_URL",
+              "QDRANT_API_KEY",
+              "EMBEDDING_PROVIDER",
+              "VECTOR_STORE_TYPE"
+            ]
+          },
+          "platform": {
+            "llm": true,
+            "cache": true,
+            "vectorStore": true,
+            "embeddings": true,
+            "analytics": true,
+            "storage": true,
+            "events": true
+          },
+          "state": {
+            "namespaces": [
+              "mind:*"
+            ],
+            "quotas": {
+              "maxEntries": 10000,
+              "maxSizeBytes": 104857600,
+              "operationsPerMinute": 1000
+            }
+          },
+          "invoke": {
+            "allow": []
+          },
+          "quotas": {
+            "timeoutMs": 1200000,
+            "memoryMb": 4096,
+            "cpuMs": 600000
+          }
+        },
+        "cli": {
+          "commands": [
+            {
+              "id": "mind:init",
+              "group": "mind",
+              "describe": "Initialize mind workspace",
+              "handler": "./cli/commands/init.js#default",
+              "handlerPath": "./cli/commands/init.js"
+            },
+            {
+              "id": "mind:verify",
+              "group": "mind",
+              "describe": "Verify workspace consistency",
+              "handler": "./cli/commands/verify.js#default",
+              "handlerPath": "./cli/commands/verify.js"
+            },
+            {
+              "id": "mind:rag-index",
+              "group": "mind",
+              "describe": "Build Mind knowledge indexes",
+              "handler": "./cli/commands/rag-index.js#default",
+              "handlerPath": "./cli/commands/rag-index.js"
+            },
+            {
+              "id": "mind:rag-query",
+              "group": "mind",
+              "describe": "Run semantic RAG query",
+              "handler": "./cli/commands/rag-query.js#default",
+              "handlerPath": "./cli/commands/rag-query.js"
+            },
+            {
+              "id": "mind:sync-add",
+              "group": "mind",
+              "describe": "Add document to sync",
+              "handler": "./cli/commands/sync-add.js#default",
+              "handlerPath": "./cli/commands/sync-add.js"
+            },
+            {
+              "id": "mind:sync-update",
+              "group": "mind",
+              "describe": "Update synced document",
+              "handler": "./cli/commands/sync-update.js#default",
+              "handlerPath": "./cli/commands/sync-update.js"
+            },
+            {
+              "id": "mind:sync-delete",
+              "group": "mind",
+              "describe": "Delete synced document",
+              "handler": "./cli/commands/sync-delete.js#default",
+              "handlerPath": "./cli/commands/sync-delete.js"
+            },
+            {
+              "id": "mind:sync-list",
+              "group": "mind",
+              "describe": "List synced documents",
+              "handler": "./cli/commands/sync-list.js#default",
+              "handlerPath": "./cli/commands/sync-list.js"
+            },
+            {
+              "id": "mind:sync-status",
+              "group": "mind",
+              "describe": "Show sync status",
+              "handler": "./cli/commands/sync-status.js#default",
+              "handlerPath": "./cli/commands/sync-status.js"
+            }
+          ]
+        },
+        "routes": [
+          {
+            "method": "GET",
+            "path": "/v1/plugins/mind/verify",
+            "handler": "./rest/handlers/verify-handler.js#handleVerify",
+            "input": {
+              "zod": "@kb-labs/mind-contracts/schema#MindVerifyCommandInputSchema"
+            },
+            "output": {
+              "zod": "@kb-labs/mind-contracts/schema#MindVerifyResponseSchema"
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/v1/plugins/mind/sync/add",
+            "handler": "./rest/handlers/sync-handler.js#handleSyncAdd",
+            "input": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncAddRequestSchema"
+            },
+            "output": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncResponseSchema"
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/v1/plugins/mind/sync/update",
+            "handler": "./rest/handlers/sync-handler.js#handleSyncUpdate",
+            "input": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncUpdateRequestSchema"
+            },
+            "output": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncResponseSchema"
+            }
+          },
+          {
+            "method": "DELETE",
+            "path": "/v1/plugins/mind/sync/delete",
+            "handler": "./rest/handlers/sync-handler.js#handleSyncDelete",
+            "input": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncDeleteRequestSchema"
+            },
+            "output": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncResponseSchema"
+            }
+          },
+          {
+            "method": "GET",
+            "path": "/v1/plugins/mind/sync/list",
+            "handler": "./rest/handlers/sync-handler.js#handleSyncList",
+            "input": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncListRequestSchema"
+            },
+            "output": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncListResponseSchema"
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/v1/plugins/mind/sync/batch",
+            "handler": "./rest/handlers/sync-handler.js#handleSyncBatch",
+            "input": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncBatchRequestSchema"
+            },
+            "output": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncBatchResponseSchema"
+            }
+          },
+          {
+            "method": "GET",
+            "path": "/v1/plugins/mind/sync/status",
+            "handler": "./rest/handlers/sync-handler.js#handleSyncStatus",
+            "input": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncStatusRequestSchema"
+            },
+            "output": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncStatusResponseSchema"
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/v1/plugins/mind/sync/restore",
+            "handler": "./rest/handlers/sync-handler.js#handleSyncRestore",
+            "input": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncRestoreRequestSchema"
+            },
+            "output": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncResponseSchema"
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/v1/plugins/mind/sync/cleanup",
+            "handler": "./rest/handlers/sync-handler.js#handleSyncCleanup",
+            "input": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncCleanupRequestSchema"
+            },
+            "output": {
+              "zod": "@kb-labs/mind-contracts/schema#MindSyncCleanupResponseSchema"
+            }
+          }
+        ],
+        "actions": [
+          {
+            "id": "auto-index",
+            "handler": "./handlers/auto-index.js#run",
+            "schedule": "0 * * * *",
+            "description": "Automatically index Mind RAG database",
+            "enabled": false
+          }
+        ]
+      },
+      "pluginRoot": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-mind/packages/mind-cli/dist",
+      "source": {
+        "kind": "workspace",
+        "path": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-mind/packages/mind-cli/dist"
+      }
+    },
+    {
+      "pluginId": "@kb-labs/release",
+      "manifest": {
+        "schema": "kb.plugin/3",
+        "id": "@kb-labs/release",
+        "version": "0.1.0",
+        "display": {
+          "name": "Release Manager",
+          "description": "Plan, execute, and audit releases across the KB Labs workspace.",
+          "tags": [
+            "release",
+            "publish",
+            "versioning"
+          ]
+        },
+        "platform": {
+          "requires": [
+            "storage"
+          ],
+          "optional": [
+            "llm",
+            "cache",
+            "analytics",
+            "logger"
+          ]
+        },
+        "setup": {
+          "handler": "./setup/handler.js#default",
+          "handlerPath": "./setup/handler.js",
+          "describe": "Prepare the .kb/release workspace (plans, reports, backups)."
+        },
+        "cli": {
+          "commands": [
+            {
+              "id": "release:plan",
+              "group": "release",
+              "describe": "Analyze changes and prepare release plan",
+              "longDescription": "Detect modified packages and compute version bumps based on changes",
+              "handler": "./cli/commands/plan.js#default",
+              "handlerPath": "./cli/commands/plan.js",
+              "flags": [
+                {
+                  "name": "scope",
+                  "type": "string",
+                  "description": "Package scope (glob pattern)"
+                },
+                {
+                  "name": "bump",
+                  "type": "string",
+                  "default": "auto",
+                  "description": "Version bump strategy",
+                  "choices": [
+                    "patch",
+                    "minor",
+                    "major",
+                    "auto"
+                  ]
+                },
+                {
+                  "name": "json",
+                  "type": "boolean",
+                  "description": "Print plan as JSON"
+                }
+              ],
+              "examples": [
+                "kb release plan",
+                "kb release plan --scope packages/*",
+                "kb release plan --bump minor",
+                "kb release plan --json"
+              ]
+            },
+            {
+              "id": "release:run",
+              "group": "release",
+              "describe": "Execute release process (plan, check, publish)",
+              "longDescription": "Run full release: plan versions, run checks, publish packages",
+              "handler": "./cli/commands/run.js#default",
+              "handlerPath": "./cli/commands/run.js",
+              "flags": [
+                {
+                  "name": "scope",
+                  "type": "string",
+                  "description": "Package scope (glob pattern)"
+                },
+                {
+                  "name": "strict",
+                  "type": "boolean",
+                  "description": "Fail on any check failure"
+                },
+                {
+                  "name": "dry-run",
+                  "type": "boolean",
+                  "description": "Simulate release without publishing"
+                },
+                {
+                  "name": "skip-checks",
+                  "type": "boolean",
+                  "description": "Skip pre-release checks"
+                },
+                {
+                  "name": "json",
+                  "type": "boolean",
+                  "description": "Print result as JSON"
+                }
+              ],
+              "examples": [
+                "kb release run",
+                "kb release run --dry-run",
+                "kb release run --strict --json",
+                "kb release run --scope packages/core"
+              ]
+            },
+            {
+              "id": "release:publish",
+              "group": "release",
+              "describe": "Publish packages to npm registry with interactive OTP",
+              "longDescription": "Smart npm publish with interactive 2FA support and better UX",
+              "handler": "./cli/commands/publish.js#default",
+              "handlerPath": "./cli/commands/publish.js",
+              "flags": [
+                {
+                  "name": "scope",
+                  "type": "string",
+                  "description": "Package scope (glob pattern)"
+                },
+                {
+                  "name": "otp",
+                  "type": "string",
+                  "description": "One-time password (optional, will prompt if needed)"
+                },
+                {
+                  "name": "dry-run",
+                  "type": "boolean",
+                  "description": "Simulate publish without actually publishing"
+                },
+                {
+                  "name": "tag",
+                  "type": "string",
+                  "description": "NPM dist-tag (default: latest)"
+                },
+                {
+                  "name": "access",
+                  "type": "string",
+                  "description": "Package access level",
+                  "choices": [
+                    "public",
+                    "restricted"
+                  ]
+                },
+                {
+                  "name": "json",
+                  "type": "boolean",
+                  "description": "Output in JSON format"
+                }
+              ],
+              "examples": [
+                "kb release publish",
+                "kb release publish --scope @kb-labs/core",
+                "kb release publish --otp 123456",
+                "kb release publish --dry-run",
+                "kb release publish --tag next --access public"
+              ]
+            },
+            {
+              "id": "release:rollback",
+              "group": "release",
+              "describe": "Rollback last release",
+              "longDescription": "Restore workspace state from backup snapshot",
+              "handler": "./cli/commands/rollback.js#default",
+              "handlerPath": "./cli/commands/rollback.js",
+              "flags": [
+                {
+                  "name": "json",
+                  "type": "boolean",
+                  "description": "Output in JSON format"
+                }
+              ],
+              "examples": [
+                "kb release rollback",
+                "kb release rollback --json"
+              ]
+            },
+            {
+              "id": "release:report",
+              "group": "release",
+              "describe": "Show last release report",
+              "longDescription": "Display the most recent release execution report",
+              "handler": "./cli/commands/report.js#default",
+              "handlerPath": "./cli/commands/report.js",
+              "flags": [
+                {
+                  "name": "json",
+                  "type": "boolean",
+                  "description": "Output in JSON format"
+                }
+              ],
+              "examples": [
+                "kb release report",
+                "kb release report --json"
+              ]
+            },
+            {
+              "id": "release:changelog",
+              "group": "release",
+              "describe": "Generate changelog from conventional commits",
+              "longDescription": "Parse git history and generate changelog with conventional commits support",
+              "handler": "./cli/commands/changelog.js#default",
+              "handlerPath": "./cli/commands/changelog.js",
+              "flags": [
+                {
+                  "name": "scope",
+                  "type": "string",
+                  "description": "Filter to specific package"
+                },
+                {
+                  "name": "from",
+                  "type": "string",
+                  "description": "Start commit/tag"
+                },
+                {
+                  "name": "to",
+                  "type": "string",
+                  "description": "End commit/tag (default: HEAD)"
+                },
+                {
+                  "name": "since-tag",
+                  "type": "string",
+                  "description": "Shorthand for --from <tag>"
+                },
+                {
+                  "name": "format",
+                  "type": "string",
+                  "default": "both",
+                  "description": "Output format",
+                  "choices": [
+                    "json",
+                    "md",
+                    "both"
+                  ]
+                },
+                {
+                  "name": "level",
+                  "type": "string",
+                  "default": "standard",
+                  "description": "Detail level",
+                  "choices": [
+                    "compact",
+                    "standard",
+                    "detailed"
+                  ]
+                },
+                {
+                  "name": "template",
+                  "type": "string",
+                  "description": "Template name (builtin: corporate, corporate-ai, technical, compact) or custom path"
+                },
+                {
+                  "name": "breaking-only",
+                  "type": "boolean",
+                  "description": "Show only breaking changes"
+                },
+                {
+                  "name": "include",
+                  "type": "string",
+                  "description": "Comma-separated types to include"
+                },
+                {
+                  "name": "exclude",
+                  "type": "string",
+                  "description": "Types to exclude"
+                },
+                {
+                  "name": "workspace-only",
+                  "type": "boolean",
+                  "description": "Only workspace changelog"
+                },
+                {
+                  "name": "per-package",
+                  "type": "boolean",
+                  "description": "Only per-package changelogs"
+                },
+                {
+                  "name": "force",
+                  "type": "boolean",
+                  "description": "Skip audit gate"
+                },
+                {
+                  "name": "allow-major",
+                  "type": "boolean",
+                  "description": "Allow major bumps for experimental packages"
+                },
+                {
+                  "name": "preid",
+                  "type": "string",
+                  "description": "Pre-release identifier (rc, beta, alpha)"
+                }
+              ],
+              "examples": [
+                "kb release changelog",
+                "kb release changelog --from v1.0.0",
+                "kb release changelog --format md --level detailed",
+                "kb release changelog --template corporate-ai",
+                "kb release changelog --template ./my-template.ts",
+                "kb release changelog --breaking-only"
+              ]
+            },
+            {
+              "id": "release:preview",
+              "group": "release",
+              "describe": "Preview release plan without making changes",
+              "longDescription": "Show release plan with bump table and changelog preview",
+              "handler": "./cli/commands/preview.js#default",
+              "handlerPath": "./cli/commands/preview.js",
+              "flags": [
+                {
+                  "name": "md",
+                  "type": "boolean",
+                  "description": "Print markdown preview"
+                }
+              ],
+              "examples": [
+                "kb release preview",
+                "kb release preview --md"
+              ]
+            },
+            {
+              "id": "release:verify",
+              "group": "release",
+              "describe": "Validate release readiness",
+              "longDescription": "Check if repo has substantial changes for release",
+              "handler": "./cli/commands/verify.js#default",
+              "handlerPath": "./cli/commands/verify.js",
+              "flags": [
+                {
+                  "name": "fail-if-empty",
+                  "type": "boolean",
+                  "description": "Fail if no version bumps needed"
+                },
+                {
+                  "name": "fail-on-breaking",
+                  "type": "boolean",
+                  "description": "Fail if breaking changes detected"
+                },
+                {
+                  "name": "allow-types",
+                  "type": "string",
+                  "description": "Comma-separated types required (e.g., feat,fix)"
+                }
+              ],
+              "examples": [
+                "kb release verify",
+                "kb release verify --fail-if-empty",
+                "kb release verify --allow-types feat,fix"
+              ]
+            }
+          ]
+        },
+        "rest": {
+          "basePath": "/v1/plugins/release",
+          "routes": [
+            {
+              "method": "GET",
+              "path": "/plan/latest",
+              "handler": "./rest/handlers/plan-handler.js#default",
+              "handlerPath": "./rest/handlers/plan-handler.js",
+              "output": {
+                "zod": "./contracts/release.schema.js#ReleasePlanSchema"
+              },
+              "errors": [
+                {
+                  "code": "RELEASE_PLAN_NOT_FOUND",
+                  "http": 404,
+                  "description": "No release plan found. Run \"kb release plan\" first."
+                },
+                {
+                  "code": "RELEASE_PLAN_PARSE_ERROR",
+                  "http": 422,
+                  "description": "Release plan exists but failed schema validation."
+                }
+              ]
+            },
+            {
+              "method": "GET",
+              "path": "/report/latest",
+              "handler": "./rest/handlers/report-handler.js#default",
+              "handlerPath": "./rest/handlers/report-handler.js",
+              "output": {
+                "zod": "./contracts/release.schema.js#ReleaseReportSchema"
+              },
+              "errors": [
+                {
+                  "code": "RELEASE_REPORT_NOT_FOUND",
+                  "http": 404,
+                  "description": "No release report available. Run \"kb release run\" first."
+                },
+                {
+                  "code": "RELEASE_REPORT_PARSE_ERROR",
+                  "http": 422,
+                  "description": "Release report exists but failed schema validation."
+                }
+              ]
+            }
+          ]
+        },
+        "studio": {
+          "widgets": [
+            {
+              "id": "release.plan",
+              "kind": "infopanel",
+              "title": "Latest Release Plan",
+              "description": "Shows the most recent release plan generated via `kb release plan`.",
+              "data": {
+                "source": {
+                  "type": "rest",
+                  "routeId": "plan/latest",
+                  "method": "GET"
+                }
+              },
+              "layoutHint": {
+                "w": 4,
+                "h": 5,
+                "minW": 3,
+                "minH": 3
+              }
+            },
+            {
+              "id": "release.report",
+              "kind": "cardlist",
+              "title": "Release Report",
+              "description": "Status of the last release execution.",
+              "data": {
+                "source": {
+                  "type": "rest",
+                  "routeId": "report/latest",
+                  "method": "GET"
+                }
+              },
+              "options": {
+                "layout": "list"
+              },
+              "layoutHint": {
+                "w": 4,
+                "h": 4,
+                "minW": 3,
+                "minH": 3
+              }
+            }
+          ],
+          "menus": [
+            {
+              "id": "release-dashboard",
+              "label": "Release Dashboard",
+              "target": "/plugins/release/dashboard",
+              "order": 0
+            }
+          ],
+          "layouts": [
+            {
+              "id": "release.dashboard",
+              "kind": "grid",
+              "title": "Release Dashboard",
+              "description": "Overview of release planning and execution.",
+              "config": {
+                "cols": {
+                  "sm": 2,
+                  "md": 4,
+                  "lg": 6
+                },
+                "rowHeight": 5
+              }
+            }
+          ]
+        },
+        "capabilities": [
+          "fs:read",
+          "fs:write"
+        ],
+        "permissions": {
+          "fs": {
+            "read": [
+              "**/.git/**",
+              "**/.gitignore",
+              "**/.gitattributes",
+              ".kb/**",
+              "**/package.json",
+              "**/package-lock.json",
+              "**/pnpm-lock.yaml",
+              "**/.npmrc",
+              "**/.npmignore",
+              ".kb/release/**",
+              "package.json",
+              "pnpm-workspace.yaml",
+              "**/*.yml",
+              "**/*.yaml",
+              "CHANGELOG.md",
+              "**/CHANGELOG.md"
+            ],
+            "write": [
+              "**/.git/**",
+              "**/.gitignore",
+              "**/.gitattributes",
+              ".kb/**",
+              "**/package.json",
+              "**/package-lock.json",
+              "**/pnpm-lock.yaml",
+              "**/.npmrc",
+              "**/.npmignore",
+              ".kb/release/**",
+              "package.json",
+              "pnpm-workspace.yaml",
+              "**/*.yml",
+              "**/*.yaml",
+              "CHANGELOG.md",
+              "**/CHANGELOG.md"
+            ]
+          },
+          "env": {
+            "read": [
+              "HOME",
+              "USER",
+              "PATH",
+              "SHELL",
+              "TERM",
+              "LANG",
+              "LC_ALL",
+              "TZ",
+              "TMPDIR",
+              "GIT_*",
+              "SSH_AUTH_SOCK",
+              "SSH_AGENT_PID",
+              "NODE_ENV",
+              "KB_*",
+              "NPM_TOKEN",
+              "NPM_AUTH_TOKEN",
+              "NODE_AUTH_TOKEN",
+              "npm_*",
+              "NODE_OPTIONS",
+              "CI",
+              "CI_*",
+              "CONTINUOUS_INTEGRATION",
+              "GITHUB_TOKEN",
+              "GITHUB_*",
+              "GH_TOKEN",
+              "GITLAB_*",
+              "CI_JOB_TOKEN",
+              "JENKINS_*",
+              "BUILD_*",
+              "BRANCH_NAME",
+              "TAG_NAME",
+              "COMMIT_SHA",
+              "KB_RELEASE_*"
+            ]
+          },
+          "network": {
+            "fetch": [
+              "registry.npmjs.org",
+              "npm.pkg.github.com"
+            ]
+          },
+          "quotas": {
+            "timeoutMs": 600000,
+            "memoryMb": 2048,
+            "cpuMs": 300000
+          }
+        },
+        "artifacts": [
+          {
+            "id": "release.plan.json",
+            "pathTemplate": ".kb/release/plan.json",
+            "description": "Serialized release plan generated by `kb release plan`."
+          },
+          {
+            "id": "release.report.json",
+            "pathTemplate": ".kb/release/report.json",
+            "description": "Execution report emitted by `kb release run`."
+          },
+          {
+            "id": "release.changelog.md",
+            "pathTemplate": ".kb/release/changelog.md",
+            "description": "Workspace changelog output produced during release."
+          }
+        ]
+      },
+      "pluginRoot": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-release-manager/packages/release-manager-cli/dist",
+      "source": {
+        "kind": "workspace",
+        "path": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-release-manager/packages/release-manager-cli/dist"
+      }
+    }
+  ],
+  "ts": 1766273500802,
+  "corrupted": false,
+  "checksum": "75f67e2a79f1c8ca09289d5cb39abb99d683c4497ca1203234652b6ff3b82178",
+  "checksumAlgorithm": "sha256",
+  "previousChecksum": "875ac4abd9cb52bfaa7cb907fd1d9dba46887130f0f4026e3c3a40398df86539"
+}

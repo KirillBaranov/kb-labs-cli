@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/cli-api",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Programmatic API for KB Labs CLI - stable interface for REST API, webhooks, and agents",
   "type": "module",
   "main": "./dist/index.js",
@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@kb-labs/cli-core": "workspace:*",
+    "@kb-labs/core-platform": "link:../../../kb-labs-core/packages/core-platform",
     "@kb-labs/plugin-contracts": "link:../../../kb-labs-plugin/packages/plugin-contracts"
   },
   "devDependencies": {

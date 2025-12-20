@@ -34,6 +34,28 @@ export { createCliAPI } from './factory';
 // TODO: Re-enable when workflow-engine is ported to V3
 // export { WorkflowService } from './workflows';
 
+// Modular components (for future horizontal scaling)
+export {
+  // Snapshot management
+  SnapshotManager,
+  type SnapshotManagerOptions,
+
+  // Health aggregation
+  HealthAggregator,
+  type HealthAggregatorOptions,
+  type HealthAggregatorDeps,
+  type RegistryError,
+  type GitInfo,
+  getGitInfo,
+  resetGitInfoCache,
+
+  // Logger abstraction
+  type CliApiLogger,
+  type LogLevel,
+  createCliApiLogger,
+  createPlatformLogger,
+} from './modules/index.js';
+
 // Re-export useful types from core CLI package
 export type {
   PluginBrief,

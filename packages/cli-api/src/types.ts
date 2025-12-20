@@ -13,7 +13,7 @@ import type {
   ExplainResult,
   SourceKind,
 } from '@kb-labs/cli-core';
-import type { CliCommandDecl, ManifestV3 } from '@kb-labs/plugin-contracts';
+import type { CliCommandDecl, ManifestV3, PlatformServices } from '@kb-labs/plugin-contracts';
 
 // TODO: Remove when workflow-engine is ported to V3
 type WorkflowRun = any;
@@ -70,6 +70,22 @@ export interface CliInitOptions {
       jitter?: number;
     };
   };
+
+  /**
+   * Optional platform services injection.
+   * When provided, CLI API will use centralized platform adapters
+   * (logger, cache, eventBus) instead of its own implementations.
+   *
+   * @example
+   * ```typescript
+   * import { getPlatformServices } from '@kb-labs/rest-api';
+   *
+   * const api = await createCliAPI({
+   *   platform: getPlatformServices(),
+   * });
+   * ```
+   */
+  platform?: Partial<PlatformServices>;
 }
 
 /**

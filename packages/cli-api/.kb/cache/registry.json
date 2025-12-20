@@ -1,0 +1,21 @@
+{
+  "schema": "kb.registry/1",
+  "rev": 2,
+  "version": "2",
+  "generatedAt": "2025-12-20T23:31:40.810Z",
+  "expiresAt": "2025-12-20T23:32:40.810Z",
+  "ttlMs": 60000,
+  "partial": false,
+  "stale": false,
+  "source": {
+    "cliVersion": "0.0.0",
+    "cwd": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-cli/packages/cli-api"
+  },
+  "plugins": [],
+  "manifests": [],
+  "ts": 1766273500810,
+  "corrupted": false,
+  "checksum": "349487c11364553d6c08ca15b7ae37e387a0fc71d21fa40388306c6bf63717e3",
+  "checksumAlgorithm": "sha256",
+  "previousChecksum": "75f67e2a79f1c8ca09289d5cb39abb99d683c4497ca1203234652b6ff3b82178"
+}
