@@ -2,10 +2,11 @@
  * V3 CLI Command Execution
  *
  * Entry point for executing plugin commands via V3 plugin system.
+ * CLI host wraps RunResult into CommandResultWithMeta.
  */
 
-import type { PluginContextDescriptor, UIFacade, PlatformServices } from '@kb-labs/plugin-contracts';
-import { runInProcess, runInSubprocess } from '@kb-labs/plugin-runtime/sandbox';
+import type { PluginContextDescriptor, UIFacade, PlatformServices, CommandResult } from '@kb-labs/plugin-contracts';
+import { runInProcess, runInSubprocess, wrapCliResult } from '@kb-labs/plugin-runtime';
 
 export interface ExecuteCommandV3Options {
   /**
@@ -155,8 +156,9 @@ export async function executeCommandV3(
 
   try {
     // Run in appropriate mode
-    const result = devMode
-      ? await runInProcess({
+    // Runner returns RunResult<T> with raw data
+    const runResult = devMode
+      ? await runInProcess<CommandResult<unknown> | unknown>({
           descriptor,
           platform,
           ui,
@@ -164,7 +166,7 @@ export async function executeCommandV3(
           input,
           signal,
         })
-      : await runInSubprocess({
+      : await runInSubprocess<CommandResult<unknown> | unknown>({
           descriptor,
           socketPath: socketPath || '', // Passed from parent or empty string
           handlerPath,
@@ -173,8 +175,11 @@ export async function executeCommandV3(
           signal,
         });
 
-    // Return exit code from result
-    return result.exitCode;
+    // CLI host wraps RunResult into CommandResultWithMeta
+    const cliResult = wrapCliResult(runResult, descriptor);
+
+    // Return exit code from wrapped result
+    return cliResult.exitCode;
   } catch (error) {
     // Handle execution errors
     ui.error(error instanceof Error ? error : String(error));
