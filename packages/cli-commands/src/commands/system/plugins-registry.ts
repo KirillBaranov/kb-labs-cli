@@ -5,9 +5,24 @@
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '../../utils/generate-examples';
 import type { ManifestV2 } from '@kb-labs/plugin-contracts';
-import { detectRepoRoot } from '@kb-labs/core-cli-adapters';
 import { promises as fs } from 'node:fs';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
+
+/** Very small repo root detector: looks for .git upwards. */
+function detectRepoRoot(start = process.cwd()): string {
+  let cur = path.resolve(start);
+  while (true) {
+    if (existsSync(path.join(cur, '.git'))) {
+      return cur;
+    }
+    const parent = path.dirname(cur);
+    if (parent === cur) {
+      return start;
+    } // fallback
+    cur = parent;
+  }
+}
 import { parse as parseYaml } from 'yaml';
 import { glob } from 'glob';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';

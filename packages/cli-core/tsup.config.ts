@@ -1,8 +1,8 @@
 import { defineConfig } from 'tsup';
-import nodePreset from '@kb-labs/devkit/tsup/node.js';
+import dualPreset from '@kb-labs/devkit/tsup/dual.js';
 
 export default defineConfig({
-  ...nodePreset,
+  ...dualPreset,
   entry: {
     index: "src/index.ts",
     public: "src/public/index.ts",

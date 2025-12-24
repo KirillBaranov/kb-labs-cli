@@ -33,8 +33,7 @@
   },
   "dependencies": {
     "@kb-labs/cli-core": "workspace:*",
-    "@kb-labs/core-platform": "link:../../../kb-labs-core/packages/core-platform",
-    "@kb-labs/plugin-contracts": "link:../../../kb-labs-plugin/packages/plugin-contracts"
+    "@kb-labs/core-platform": "link:../../../kb-labs-core/packages/core-platform"
   },
   "devDependencies": {
     "@kb-labs/devkit": "link:../../../kb-labs-devkit",

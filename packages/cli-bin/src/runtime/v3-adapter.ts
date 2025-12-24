@@ -7,7 +7,7 @@
 import type { SystemContext } from '@kb-labs/cli-core';
 import { executeCommandV3 } from '@kb-labs/cli-core/v3';
 import type { UIFacade, PlatformServices, MessageOptions, Spinner } from '@kb-labs/plugin-contracts';
-import { platform } from '@kb-labs/core-runtime';
+import type { PlatformContainer } from '@kb-labs/core-runtime';
 import { sideBorderBox, safeColors } from '@kb-labs/shared-cli-ui';
 import path from 'node:path';
 import type { RegisteredCommand } from '@kb-labs/cli-commands/registry';
@@ -18,6 +18,7 @@ interface V3ExecutionOptions {
   argv: string[];
   flags: Record<string, unknown>;
   manifestCmd?: RegisteredCommand;
+  platform: PlatformContainer; // Pass the correct platform instance
 }
 
 /**
@@ -28,7 +29,7 @@ interface V3ExecutionOptions {
 export async function tryExecuteV3(
   options: V3ExecutionOptions
 ): Promise<number | undefined> {
-  const { context, commandId, argv, flags, manifestCmd } = options;
+  const { context, commandId, argv, flags, manifestCmd, platform } = options;
 
   // No manifest command info - can't use V3
   if (!manifestCmd) {
@@ -52,7 +53,10 @@ export async function tryExecuteV3(
   }
 
   // Handler path should point to dist/ (compiled output)
-  const handlerPath = path.resolve(pluginRoot, 'dist', handlerRelativePath);
+  // If handlerRelativePath already includes 'dist/', don't add it again
+  const handlerPath = handlerRelativePath.startsWith('dist/')
+    ? path.resolve(pluginRoot, handlerRelativePath)
+    : path.resolve(pluginRoot, 'dist', handlerRelativePath);
 
   try {
     const pluginId = manifest?.id || manifestCmd.manifest.id;
@@ -61,8 +65,8 @@ export async function tryExecuteV3(
     // Create V3 UI facade from CLI context
     const ui = createUIFacade(context);
 
-    // Create V3 platform services from CLI context
-    const platformServices = createPlatformServices(context);
+    // Create V3 platform services from platform container
+    const platformServices = createPlatformServices(platform);
 
     // Get socket path from platform singleton for IPC
     const socketPath = platform.getSocketPath();
@@ -71,7 +75,7 @@ export async function tryExecuteV3(
     const permissions = manifest?.permissions;
     const quotas = permissions?.quotas;
 
-    // Execute via V3
+    // Execute via V3 (now uses platform.executionBackend)
     const exitCode = await executeCommandV3({
       pluginId,
       pluginVersion,
@@ -80,11 +84,19 @@ export async function tryExecuteV3(
       flags,
       ui,
       platform: platformServices,
+      platformContainer: platform, // Pass the container for executionBackend access
       socketPath,
       cwd: context.cwd || process.cwd(),
       devMode: process.env.NODE_ENV === 'development', // Use subprocess in production
       permissions, // Pass all permissions from manifest
       quotas, // Pass all quotas from manifest
+    });
+
+    // Optional: Log execution mode (useful for debugging)
+    context.logger?.debug('[v3-adapter] Command executed via platform.executionBackend', {
+      pluginId,
+      exitCode,
+      hasBackend: !!platform.executionBackend,
     });
 
     return exitCode;
@@ -216,19 +228,19 @@ function createUIFacade(context: SystemContext): UIFacade {
 }
 
 /**
- * Create PlatformServices from platform singleton
+ * Create PlatformServices from platform container
  *
  * Platform owns all services, we just pass them through.
  * No wrappers, no adapters - direct passthrough.
  */
-function createPlatformServices(_context: SystemContext): PlatformServices {
+function createPlatformServices(platformContainer: PlatformContainer): PlatformServices {
   return {
-    logger: platform.logger,
-    llm: platform.llm,
-    embeddings: platform.embeddings,
-    vectorStore: platform.vectorStore,
-    cache: platform.cache,
-    storage: platform.storage,
-    analytics: platform.analytics,
+    logger: platformContainer.logger,
+    llm: platformContainer.llm,
+    embeddings: platformContainer.embeddings,
+    vectorStore: platformContainer.vectorStore,
+    cache: platformContainer.cache,
+    storage: platformContainer.storage,
+    analytics: platformContainer.analytics,
   };
 }

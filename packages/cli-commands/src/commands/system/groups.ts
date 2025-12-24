@@ -28,9 +28,6 @@ import { loggingInit } from './logging-init';
 import { logTest } from './log-test';
 import { registryLint } from './registry-lint';
 import { headersDebug } from './headers-debug';
-// TODO: Re-enable when workflow-engine is ported to V3
-// import { worker } from '../worker';
-// import { jobsList, jobsEnable, jobsDisable, jobsStatus, jobsTrigger } from '../jobs/index';
 import { docsGenerateCliReference } from './docs-generate-cli-reference';
 
 /**
@@ -95,27 +92,6 @@ export const loggingGroup = defineSystemCommandGroup('logging', 'Logging configu
   loggingCheck,
   loggingInit,
 ]);
-
-// TODO: Re-enable when workflow-engine is ported to V3
-// /**
-//  * Worker Commands Group
-//  * Background job worker daemon
-//  */
-// export const workerGroup = defineSystemCommandGroup('worker', 'Background job worker daemon commands', [
-//   worker,
-// ]);
-
-// /**
-//  * Jobs Commands Group
-//  * Job scheduling and management
-//  */
-// export const jobsGroup = defineSystemCommandGroup('jobs', 'Job scheduling and management commands', [
-//   jobsList,
-//   jobsEnable,
-//   jobsDisable,
-//   jobsStatus,
-//   jobsTrigger,
-// ]);
 
 /**
  * Docs Commands Group

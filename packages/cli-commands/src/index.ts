@@ -26,7 +26,4 @@ export { diagnose } from "./commands/system/diagnose";
 export { loggingCheck } from "./commands/system/logging-check";
 export { loggingInit } from "./commands/system/logging-init";
 export { createPluginsIntrospectCommand } from "./plugins-introspect";
-// TODO: Re-enable when workflow-engine is ported to V3
-// export * from "./commands/workflows";
-// export { worker } from "./commands/worker";
-// export * from "./commands/jobs";
+export * from "./commands/workflows";

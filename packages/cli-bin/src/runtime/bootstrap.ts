@@ -78,7 +78,7 @@ export async function executeCli(
   loadEnvFile(cwd);
 
   // Initialize platform adapters from kb.config.json (before any plugin execution)
-  const { platformConfig, rawConfig } = await initializePlatform(cwd);
+  const { platform, platformConfig, rawConfig } = await initializePlatform(cwd);
 
   // Store platformConfig globally so CLI adapter can pass it to ExecutionContext
   (globalThis as any).__KB_PLATFORM_CONFIG__ = platformConfig;
@@ -460,6 +460,7 @@ export async function executeCli(
           argv: actualRest,
           flags: { ...global, ...flagsObj },
           manifestCmd,
+          platform,
         });
 
         // If V3 execution succeeded, return its exit code

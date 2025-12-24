@@ -39,12 +39,6 @@
       "@kb-labs/core-cli": [
         "../kb-labs-core/packages/core-cli/src/index.ts"
       ],
-      "@kb-labs/core-cli-adapters": [
-        "../kb-labs-core/packages/core-cli-adapters/src/index.ts"
-      ],
-      "@kb-labs/core-cli-adapters/*": [
-        "../kb-labs-core/packages/core-cli-adapters/src/*"
-      ],
       "@kb-labs/core-cli/*": [
         "../kb-labs-core/packages/core-cli/src/*"
       ],
@@ -60,6 +54,12 @@
       "@kb-labs/core-platform/*": [
         "../kb-labs-core/packages/core-platform/src/*"
       ],
+      "@kb-labs/core-resource-broker": [
+        "../kb-labs-core/packages/core-resource-broker/src/index.ts"
+      ],
+      "@kb-labs/core-resource-broker/*": [
+        "../kb-labs-core/packages/core-resource-broker/src/*"
+      ],
       "@kb-labs/core-runtime": [
         "../kb-labs-core/packages/core-runtime/src/index.ts"
       ],
@@ -72,17 +72,17 @@
       "@kb-labs/core-sandbox/*": [
         "../kb-labs-core/packages/core-sandbox/src/*"
       ],
+      "@kb-labs/core-state-broker": [
+        "../kb-labs-core/packages/core-state-broker/src/index.ts"
+      ],
+      "@kb-labs/core-state-broker/*": [
+        "../kb-labs-core/packages/core-state-broker/src/*"
+      ],
       "@kb-labs/core-sys": [
         "../kb-labs-core/packages/core-sys/src/index.ts"
       ],
       "@kb-labs/core-sys/*": [
         "../kb-labs-core/packages/core-sys/src/*"
-      ],
-      "@kb-labs/core-types": [
-        "../kb-labs-core/packages/core-types/src/index.ts"
-      ],
-      "@kb-labs/core-types/*": [
-        "../kb-labs-core/packages/core-types/src/*"
       ],
       "@kb-labs/core/*": [
         "../kb-labs-core/src/*"
@@ -122,6 +122,12 @@
       ],
       "@kb-labs/plugin-contracts/*": [
         "../kb-labs-plugin/packages/plugin-contracts/src/*"
+      ],
+      "@kb-labs/plugin-execution": [
+        "../kb-labs-plugin/packages/plugin-execution/src/index.ts"
+      ],
+      "@kb-labs/plugin-execution/*": [
+        "../kb-labs-plugin/packages/plugin-execution/src/*"
       ],
       "@kb-labs/plugin-runtime": [
         "../kb-labs-plugin/packages/plugin-runtime/src/index.ts"
@@ -164,6 +170,36 @@
       ],
       "@kb-labs/shared-command-kit/*": [
         "../kb-labs-shared/packages/shared-command-kit/src/*"
+      ],
+      "@kb-labs/workflow-artifacts": [
+        "../kb-labs-workflow/packages/workflow-artifacts/src/index.ts"
+      ],
+      "@kb-labs/workflow-artifacts/*": [
+        "../kb-labs-workflow/packages/workflow-artifacts/src/*"
+      ],
+      "@kb-labs/workflow-constants": [
+        "../kb-labs-workflow/packages/workflow-constants/src/index.ts"
+      ],
+      "@kb-labs/workflow-constants/*": [
+        "../kb-labs-workflow/packages/workflow-constants/src/*"
+      ],
+      "@kb-labs/workflow-contracts": [
+        "../kb-labs-workflow/packages/workflow-contracts/src/index.ts"
+      ],
+      "@kb-labs/workflow-contracts/*": [
+        "../kb-labs-workflow/packages/workflow-contracts/src/*"
+      ],
+      "@kb-labs/workflow-engine": [
+        "../kb-labs-workflow/packages/workflow-engine/src/index.ts"
+      ],
+      "@kb-labs/workflow-engine/*": [
+        "../kb-labs-workflow/packages/workflow-engine/src/*"
+      ],
+      "@kb-labs/workflow-runtime": [
+        "../kb-labs-workflow/packages/workflow-runtime/src/index.ts"
+      ],
+      "@kb-labs/workflow-runtime/*": [
+        "../kb-labs-workflow/packages/workflow-runtime/src/*"
       ]
     }
   }

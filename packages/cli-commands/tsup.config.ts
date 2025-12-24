@@ -4,7 +4,5 @@ import nodePreset from '@kb-labs/devkit/tsup/node.js';
 export default defineConfig({
   ...nodePreset,
   entry: { index: "src/index.ts" },
-  tsconfig: "tsconfig.build.json", // Use build-specific tsconfig without paths
-  clean: false,
-  dts: false, // Temporarily disabled - core-cli-adapters missing types
+  dts: false, // Temporarily disabled - type errors in hello.ts
 });

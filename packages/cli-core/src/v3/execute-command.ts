@@ -2,11 +2,14 @@
  * V3 CLI Command Execution
  *
  * Entry point for executing plugin commands via V3 plugin system.
- * CLI host wraps RunResult into CommandResultWithMeta.
+ * Uses unified platform.executionBackend for all execution.
  */
 
 import type { PluginContextDescriptor, UIFacade, PlatformServices, CommandResult } from '@kb-labs/plugin-contracts';
-import { runInProcess, runInSubprocess, wrapCliResult } from '@kb-labs/plugin-runtime';
+import { wrapCliResult } from '@kb-labs/plugin-runtime';
+import type { PlatformContainer } from '@kb-labs/core-runtime';
+import type { ExecutionRequest, ExecutionResult } from '@kb-labs/core-platform';
+import * as path from 'node:path';
 
 export interface ExecuteCommandV3Options {
   /**
@@ -68,6 +71,11 @@ export interface ExecuteCommandV3Options {
    * Platform services
    */
   platform: PlatformServices;
+
+  /**
+   * Platform container (for executionBackend access - internal use only)
+   */
+  platformContainer: PlatformContainer;
 
   /**
    * Abort signal
@@ -155,27 +163,40 @@ export async function executeCommandV3(
   const input = { argv, flags };
 
   try {
-    // Run in appropriate mode
-    // Runner returns RunResult<T> with raw data
-    const runResult = devMode
-      ? await runInProcess<CommandResult<unknown> | unknown>({
-          descriptor,
-          platform,
-          ui,
-          handlerPath,
-          input,
-          signal,
-        })
-      : await runInSubprocess<CommandResult<unknown> | unknown>({
-          descriptor,
-          socketPath: socketPath || '', // Passed from parent or empty string
-          handlerPath,
-          input,
-          timeoutMs: quotas?.timeoutMs, // Pass timeout from manifest quotas
-          signal,
-        });
+    // Resolve plugin root (required by ExecutionBackend)
+    const pluginRoot = resolvePluginRoot(pluginId, pluginVersion);
 
-    // CLI host wraps RunResult into CommandResultWithMeta
+    // Build ExecutionRequest for platform.executionBackend
+    const request: ExecutionRequest = {
+      executionId: descriptor.requestId,
+      descriptor,
+      pluginRoot,
+      handlerRef: handlerPath,
+      input,
+      timeoutMs: quotas?.timeoutMs,
+    };
+
+    // Execute via unified platform.executionBackend
+    // Backend respects platform.execution config (in-process, worker-pool, etc.)
+    //
+    // Use the platformContainer passed from v3-adapter (which got it from bootstrap)
+    // This ensures we use the SAME instance that was initialized with ExecutionBackend
+    const result: ExecutionResult = await options.platformContainer.executionBackend.execute(request, {
+      signal,
+    });
+
+    // Handle execution result
+    if (!result.ok) {
+      ui.error(result.error?.message || 'Execution failed');
+      return 1;
+    }
+
+    // Wrap result for CLI (preserves backward compatibility)
+    const runResult = {
+      ok: true,
+      data: result.data,
+      executionMeta: result.metadata?.executionMeta,
+    };
     const cliResult = wrapCliResult(runResult, descriptor);
 
     // Return exit code from wrapped result
@@ -184,5 +205,25 @@ export async function executeCommandV3(
     // Handle execution errors
     ui.error(error instanceof Error ? error : String(error));
     return 1;
+  }
+}
+
+/**
+ * Resolve plugin root directory from pluginId and version.
+ * In CLI context, plugins are installed in workspace node_modules.
+ */
+function resolvePluginRoot(pluginId: string, _pluginVersion: string): string {
+  // For workspace plugins, resolve from node_modules
+  const nodeModulesPath = path.resolve(process.cwd(), 'node_modules', pluginId);
+
+  // Fallback: try to resolve via require.resolve (works for both CJS and ESM)
+  try {
+    const packageJson = require.resolve(`${pluginId}/package.json`, {
+      paths: [process.cwd()],
+    });
+    return path.dirname(packageJson);
+  } catch {
+    // If not found, return node_modules path (let backend handle the error)
+    return nodeModulesPath;
   }
 }

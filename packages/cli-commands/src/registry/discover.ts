@@ -4,11 +4,26 @@
  */
 
 import { PluginRegistry } from '@kb-labs/cli-core';
-import { detectRepoRoot } from '@kb-labs/core-cli-adapters';
 import { pathToFileURL } from 'node:url';
 import { promises as fs } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+
+/** Very small repo root detector: looks for .git upwards. */
+function detectRepoRoot(start = process.cwd()): string {
+  let cur = path.resolve(start);
+  while (true) {
+    if (existsSync(path.join(cur, '.git'))) {
+      return cur;
+    }
+    const parent = path.dirname(cur);
+    if (parent === cur) {
+      return start;
+    } // fallback
+    cur = parent;
+  }
+}
 import { parse as parseYaml } from 'yaml';
 import { glob } from 'glob';
 import type { CommandManifest, DiscoveryResult, CacheFile, PackageCacheEntry, CommandModule } from './types';
