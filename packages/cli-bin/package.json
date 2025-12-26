@@ -5,7 +5,7 @@
   "private": true,
   "description": "KB Labs CLI tool for project management and automation",
   "bin": {
-    "kb": "dist/bin.cjs"
+    "kb": "dist/bin.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

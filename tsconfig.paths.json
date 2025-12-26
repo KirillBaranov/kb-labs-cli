@@ -48,6 +48,12 @@
       "@kb-labs/core-config/*": [
         "../kb-labs-core/packages/core-config/src/*"
       ],
+      "@kb-labs/core-ipc": [
+        "../kb-labs-core/packages/core-ipc/src/index.ts"
+      ],
+      "@kb-labs/core-ipc/*": [
+        "../kb-labs-core/packages/core-ipc/src/*"
+      ],
       "@kb-labs/core-platform": [
         "../kb-labs-core/packages/core-platform/src/index.ts"
       ],

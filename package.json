@@ -36,7 +36,7 @@
     "postinstall": "pnpm -s devkit:sync || true",
     "// ——— core": "────────────────────────────────────────",
     "clean": "rimraf dist",
-    "build": "pnpm run build:commands && rm -rf packages/cli-commands/dist && pnpm run build:bin",
+    "build": "pnpm run build:commands && pnpm run build:bin",
     "build:commands": "pnpm -C packages/cli-commands run build",
     "build:bin": "pnpm -C packages/cli-bin run build",
     "build:clean": "pnpm -C packages/cli-commands run clean && pnpm -C packages/cli-commands run build && pnpm -C packages/cli-bin run clean && pnpm -C packages/cli-bin run build",
@@ -55,7 +55,7 @@
     "// ——— cleanup": "────────────────────────────────────────",
     "clean:all": "rimraf node_modules packages/*/node_modules apps/*/node_modules dist",
     "// ——— cli": "────────────────────────────────────────",
-    "kb": "node packages/cli-bin/dist/bin.cjs"
+    "kb": "node packages/cli-bin/dist/bin.js"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md,yml,yaml}": [

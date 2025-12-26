@@ -287,6 +287,34 @@ importers:
         specifier: ^5.6.3
         version: 5.9.3
 
+  ../kb-labs-core/packages/core-ipc:
+    dependencies:
+      '@kb-labs/core-platform':
+        specifier: workspace:*
+        version: link:../core-platform
+    devDependencies:
+      '@kb-labs/devkit':
+        specifier: link:../../../kb-labs-devkit
+        version: link:../../../kb-labs-devkit
+      '@types/node':
+        specifier: ^24.3.3
+        version: 24.9.1
+      eslint:
+        specifier: ^9
+        version: 9.38.0
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
+
   ../kb-labs-core/packages/core-platform:
     devDependencies:
       rimraf:
@@ -354,6 +382,9 @@ importers:
 
   ../kb-labs-core/packages/core-runtime:
     dependencies:
+      '@kb-labs/core-ipc':
+        specifier: workspace:*
+        version: link:../core-ipc
       '@kb-labs/core-platform':
         specifier: workspace:*
         version: link:../core-platform
@@ -481,7 +512,7 @@ importers:
   ../kb-labs-core/packages/core-sys:
     dependencies:
       '@kb-labs/shared-cli-ui':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-shared/packages/shared-cli-ui
         version: link:../../../kb-labs-shared/packages/shared-cli-ui
     devDependencies:
       '@types/node':
@@ -727,6 +758,12 @@ importers:
       minimatch:
         specifier: ^9.0.4
         version: 9.0.5
+      p-queue:
+        specifier: ^8.0.1
+        version: 8.1.1
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
     devDependencies:
       '@kb-labs/devkit':
         specifier: link:../../../kb-labs-devkit
@@ -893,6 +930,9 @@ importers:
       '@kb-labs/mind-indexer':
         specifier: link:../mind-indexer
         version: link:../mind-indexer
+      '@kb-labs/mind-types':
+        specifier: link:../mind-types
+        version: link:../mind-types
       '@kb-labs/sdk':
         specifier: link:../../../kb-labs-sdk/packages/sdk
         version: link:../../../kb-labs-sdk/packages/sdk
@@ -1638,9 +1678,15 @@ importers:
       '@kb-labs/cli-core':
         specifier: workspace:*
         version: link:../cli-core
+      '@kb-labs/core-ipc':
+        specifier: link:../../../kb-labs-core/packages/core-ipc
+        version: link:../../../kb-labs-core/packages/core-ipc
       '@kb-labs/core-resource-broker':
         specifier: link:../../../kb-labs-core/packages/core-resource-broker
         version: link:../../../kb-labs-core/packages/core-resource-broker
+      '@kb-labs/core-state-broker':
+        specifier: link:../../../kb-labs-core/packages/core-state-broker
+        version: link:../../../kb-labs-core/packages/core-state-broker
       '@kb-labs/core-sys':
         specifier: link:../../../kb-labs-core/packages/core-sys
         version: link:../../../kb-labs-core/packages/core-sys
@@ -1662,9 +1708,6 @@ importers:
       '@kb-labs/shared-command-kit':
         specifier: link:../../../kb-labs-shared/packages/shared-command-kit
         version: link:../../../kb-labs-shared/packages/shared-command-kit
-      '@kb-labs/state-broker':
-        specifier: link:../../../kb-labs-core/packages/core-state-broker
-        version: link:../../../kb-labs-core/packages/core-state-broker
       '@kb-labs/workflow-artifacts':
         specifier: link:../../../kb-labs-workflow/packages/workflow-artifacts
         version: link:../../../kb-labs-workflow/packages/workflow-artifacts
@@ -1701,6 +1744,9 @@ importers:
       minimatch:
         specifier: ^9.0.4
         version: 9.0.5
+      pathe:
+        specifier: ^1.1.2
+        version: 1.1.2
       pino:
         specifier: ^9.5.0
         version: 9.14.0
@@ -1714,6 +1760,12 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
+      '@kb-labs/devkit':
+        specifier: link:../../../kb-labs-devkit
+        version: link:../../../kb-labs-devkit
+      '@kb-labs/plugin-contracts':
+        specifier: link:../../../kb-labs-plugin/packages/plugin-contracts
+        version: link:../../../kb-labs-plugin/packages/plugin-contracts
       '@types/node':
         specifier: ^24.3.3
         version: 24.9.1

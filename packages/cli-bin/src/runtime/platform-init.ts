@@ -6,8 +6,111 @@
 import { initPlatform, type PlatformConfig, type PlatformContainer } from '@kb-labs/core-runtime';
 import { findNearestConfig, readJsonWithDiagnostics } from '@kb-labs/core-config';
 import { getLogger } from '@kb-labs/core-sys/logging';
+import { sideBorderBox, safeColors } from '@kb-labs/shared-cli-ui';
+import type { UIFacade, HostType, MessageOptions, Spinner } from '@kb-labs/plugin-contracts';
+import { noopUI } from '@kb-labs/plugin-contracts';
 
 const logger = getLogger('platform');
+
+/**
+ * Create CLI-specific UI provider.
+ * Returns beautiful UI for CLI host, noopUI for other hosts (REST, workflow, etc.)
+ */
+function createCLIUIProvider(): (hostType: HostType) => UIFacade {
+  return (hostType: HostType): UIFacade => {
+    // Only provide rich UI for CLI host
+    if (hostType !== 'cli') {
+      return noopUI;
+    }
+
+    // Create rich CLI UI with sideBorderBox
+    return {
+      colors: safeColors,
+      write: (text: string) => {
+        process.stdout.write(text);
+      },
+      info: (msg: string, options?: MessageOptions) => {
+        const boxOutput = sideBorderBox({
+          title: options?.title || 'Info',
+          sections: options?.sections || [{ items: [msg] }],
+          status: 'info',
+          timing: options?.timing,
+        });
+        console.log(boxOutput);
+      },
+      success: (msg: string, options?: MessageOptions) => {
+        const boxOutput = sideBorderBox({
+          title: options?.title || 'Success',
+          sections: options?.sections || [{ items: [msg] }],
+          status: 'success',
+          timing: options?.timing,
+        });
+        console.log(boxOutput);
+      },
+      warn: (msg: string, options?: MessageOptions) => {
+        const boxOutput = sideBorderBox({
+          title: options?.title || 'Warning',
+          sections: options?.sections || [{ items: [msg] }],
+          status: 'warning',
+          timing: options?.timing,
+        });
+        console.log(boxOutput);
+      },
+      error: (err: Error | string, options?: MessageOptions) => {
+        const message = err instanceof Error ? err.message : err;
+        const boxOutput = sideBorderBox({
+          title: options?.title || 'Error',
+          sections: options?.sections || [{ items: [message] }],
+          status: 'error',
+          timing: options?.timing,
+        });
+        console.error(boxOutput);
+      },
+      debug: (msg: string) => {
+        console.debug(msg);
+      },
+      spinner: (text: string): Spinner => {
+        // No spinner for now, return no-op
+        return {
+          update: () => {},
+          succeed: () => {},
+          fail: () => {},
+          stop: () => {},
+        };
+      },
+      table: (data: Record<string, unknown>[], columns?) => {
+        console.table(data);
+      },
+      json: (data: unknown) => {
+        console.log(JSON.stringify(data, null, 2));
+      },
+      newline: () => {
+        console.log();
+      },
+      divider: () => {
+        console.log('─'.repeat(process.stdout.columns || 80));
+      },
+      box: (content: string, title?: string) => {
+        const boxOutput = sideBorderBox({
+          title: title || '',
+          sections: [{ items: content.split('\n') }],
+          status: 'info',
+        });
+        console.log(boxOutput);
+      },
+      sideBox: (options) => {
+        const boxOutput = sideBorderBox(options);
+        console.log(boxOutput);
+      },
+      confirm: async (message: string) => {
+        return true;
+      },
+      prompt: async (message: string, options?) => {
+        return '';
+      },
+    };
+  };
+}
 
 export interface PlatformInitResult {
   platform: PlatformContainer; // The initialized platform instance
@@ -21,6 +124,9 @@ export interface PlatformInitResult {
  * @returns The platform config and raw config that was loaded
  */
 export async function initializePlatform(cwd: string): Promise<PlatformInitResult> {
+  // Create CLI-specific UI provider
+  const uiProvider = createCLIUIProvider();
+
   try {
     // Try to find kb.config.json
     const { path: configPath } = await findNearestConfig({
@@ -35,7 +141,7 @@ export async function initializePlatform(cwd: string): Promise<PlatformInitResul
       logger.debug('No kb.config.json found, using NoOp adapters');
       // Initialize with empty config (all NoOp adapters)
       const fallbackConfig = { adapters: {} };
-      const platform = await initPlatform(fallbackConfig);
+      const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
       return { platform, platformConfig: fallbackConfig };
     }
 
@@ -46,7 +152,7 @@ export async function initializePlatform(cwd: string): Promise<PlatformInitResul
         errors: result.diagnostics.map(d => d.message),
       });
       const fallbackConfig = { adapters: {} };
-      const platform = await initPlatform(fallbackConfig);
+      const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
       return { platform, platformConfig: fallbackConfig };
     }
 
@@ -55,7 +161,7 @@ export async function initializePlatform(cwd: string): Promise<PlatformInitResul
     if (!platformConfig) {
       logger.debug('No platform config in kb.config.json, using NoOp adapters');
       const fallbackConfig = { adapters: {} };
-      const platform = await initPlatform(fallbackConfig);
+      const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
       return { platform, platformConfig: fallbackConfig, rawConfig: result.data };
     }
 
@@ -66,7 +172,7 @@ export async function initializePlatform(cwd: string): Promise<PlatformInitResul
       hasAdapterOptions: !!platformConfig.adapterOptions,
     });
 
-    const platform = await initPlatform(platformConfig, cwd);
+    const platform = await initPlatform(platformConfig, cwd, uiProvider);
 
     logger.info('Platform adapters initialized', {
       configPath,
@@ -80,7 +186,7 @@ export async function initializePlatform(cwd: string): Promise<PlatformInitResul
     });
     // Fallback to NoOp adapters on error
     const fallbackConfig = { adapters: {} };
-    const platform = await initPlatform(fallbackConfig);
+    const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
     return { platform, platformConfig: fallbackConfig };
   }
 }

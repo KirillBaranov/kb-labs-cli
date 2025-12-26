@@ -126,57 +126,43 @@ function createUIFacade(context: SystemContext): UIFacade {
     },
 
     info: (msg: string, options?: MessageOptions) => {
-      if (options?.sections && options.sections.length > 0) {
-        const boxOutput = sideBorderBox({
-          title: options.title || 'Info',
-          sections: options.sections,
-          status: 'info',
-          timing: options.timing,
-        });
-        console.log(boxOutput);
-      } else {
-        presenter?.info?.(msg) || console.log(msg);
-      }
+      const boxOutput = sideBorderBox({
+        title: options?.title || 'Info',
+        sections: options?.sections || [{ items: [msg] }],
+        status: 'info',
+        timing: options?.timing,
+      });
+      console.log(boxOutput);
     },
     success: (msg: string, options?: MessageOptions) => {
-      if (options?.sections && options.sections.length > 0) {
-        const boxOutput = sideBorderBox({
-          title: options.title || 'Success',
-          sections: options.sections,
-          status: 'success',
-          timing: options.timing,
-        });
-        console.log(boxOutput);
-      } else {
-        presenter?.success?.(msg) || console.log(`✓ ${msg}`);
-      }
+      console.log('[v3-adapter] success called with:', { msg, options });
+      const boxOutput = sideBorderBox({
+        title: options?.title || 'Success',
+        sections: options?.sections || [{ items: [msg] }],
+        status: 'success',
+        timing: options?.timing,
+      });
+      console.log('[v3-adapter] boxOutput:', boxOutput);
+      console.log(boxOutput);
     },
     warn: (msg: string, options?: MessageOptions) => {
-      if (options?.sections && options.sections.length > 0) {
-        const boxOutput = sideBorderBox({
-          title: options.title || 'Warning',
-          sections: options.sections,
-          status: 'warning',
-          timing: options.timing,
-        });
-        console.log(boxOutput);
-      } else {
-        presenter?.warn?.(msg) || console.warn(`⚠ ${msg}`);
-      }
+      const boxOutput = sideBorderBox({
+        title: options?.title || 'Warning',
+        sections: options?.sections || [{ items: [msg] }],
+        status: 'warning',
+        timing: options?.timing,
+      });
+      console.log(boxOutput);
     },
     error: (err: Error | string, options?: MessageOptions) => {
       const message = err instanceof Error ? err.message : err;
-      if (options?.sections && options.sections.length > 0) {
-        const boxOutput = sideBorderBox({
-          title: options.title || 'Error',
-          sections: options.sections,
-          status: 'error',
-          timing: options.timing,
-        });
-        console.error(boxOutput);
-      } else {
-        presenter?.error?.(message) || console.error(message);
-      }
+      const boxOutput = sideBorderBox({
+        title: options?.title || 'Error',
+        sections: options?.sections || [{ items: [message] }],
+        status: 'error',
+        timing: options?.timing,
+      });
+      console.error(boxOutput);
     },
     debug: (msg: string) => {
       presenter?.debug?.(msg) || console.debug(msg);
