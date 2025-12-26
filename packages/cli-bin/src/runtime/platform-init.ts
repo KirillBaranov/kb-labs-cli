@@ -6,8 +6,8 @@
 import { initPlatform, type PlatformConfig, type PlatformContainer } from '@kb-labs/core-runtime';
 import { findNearestConfig, readJsonWithDiagnostics } from '@kb-labs/core-config';
 import { getLogger } from '@kb-labs/core-sys/logging';
-import { sideBorderBox, safeColors } from '@kb-labs/shared-cli-ui';
-import type { UIFacade, HostType, MessageOptions, Spinner } from '@kb-labs/plugin-contracts';
+import { sideBorderBox, safeColors, safeSymbols } from '@kb-labs/shared-cli-ui';
+import type { UIFacade, HostType, MessageOptions, Spinner, OutputSection } from '@kb-labs/plugin-contracts';
 import { noopUI } from '@kb-labs/plugin-contracts';
 
 const logger = getLogger('platform');
@@ -26,31 +26,52 @@ function createCLIUIProvider(): (hostType: HostType) => UIFacade {
     // Create rich CLI UI with sideBorderBox
     return {
       colors: safeColors,
+      symbols: safeSymbols,
       write: (text: string) => {
-        process.stdout.write(text);
+        // Add newline if text doesn't end with one
+        const output = text.endsWith('\n') ? text : text + '\n';
+        process.stdout.write(output);
       },
       info: (msg: string, options?: MessageOptions) => {
+        // Convert OutputSection[] to SectionContent[] for sideBorderBox
+        const sections = options?.sections?.map(s => ({
+          header: s.header,
+          items: s.items
+        })) || [{ items: [msg] }];
+
         const boxOutput = sideBorderBox({
           title: options?.title || 'Info',
-          sections: options?.sections || [{ items: [msg] }],
+          sections,
           status: 'info',
           timing: options?.timing,
         });
         console.log(boxOutput);
       },
       success: (msg: string, options?: MessageOptions) => {
+        // Convert OutputSection[] to SectionContent[] for sideBorderBox
+        const sections = options?.sections?.map(s => ({
+          header: s.header,
+          items: s.items
+        })) || [{ items: [msg] }];
+
         const boxOutput = sideBorderBox({
           title: options?.title || 'Success',
-          sections: options?.sections || [{ items: [msg] }],
+          sections,
           status: 'success',
           timing: options?.timing,
         });
         console.log(boxOutput);
       },
       warn: (msg: string, options?: MessageOptions) => {
+        // Convert OutputSection[] to SectionContent[] for sideBorderBox
+        const sections = options?.sections?.map(s => ({
+          header: s.header,
+          items: s.items
+        })) || [{ items: [msg] }];
+
         const boxOutput = sideBorderBox({
           title: options?.title || 'Warning',
-          sections: options?.sections || [{ items: [msg] }],
+          sections,
           status: 'warning',
           timing: options?.timing,
         });
@@ -58,9 +79,16 @@ function createCLIUIProvider(): (hostType: HostType) => UIFacade {
       },
       error: (err: Error | string, options?: MessageOptions) => {
         const message = err instanceof Error ? err.message : err;
+
+        // Convert OutputSection[] to SectionContent[] for sideBorderBox
+        const sections = options?.sections?.map(s => ({
+          header: s.header,
+          items: s.items
+        })) || [{ items: [message] }];
+
         const boxOutput = sideBorderBox({
           title: options?.title || 'Error',
-          sections: options?.sections || [{ items: [message] }],
+          sections,
           status: 'error',
           timing: options?.timing,
         });
