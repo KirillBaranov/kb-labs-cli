@@ -277,7 +277,6 @@ export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, Plugins
     const cwd = getContextCwd(ctx);
     const repoRoot = ctx.repoRoot || detectRepoRoot(cwd);
 
-    ctx.tracker.checkpoint('discover');
 
     // Discover REST API plugins from workspace
     const restApiPlugins = await discoverRestApiPlugins(repoRoot);
@@ -289,7 +288,6 @@ export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, Plugins
       pluginRoot: p.pluginRoot,
     }));
 
-    ctx.tracker.checkpoint('complete');
 
     ctx.logger?.info('Plugins registry scan completed', { count: manifests.length });
 
@@ -344,7 +342,6 @@ export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, Plugins
       title: 'Plugins Registry',
       sections,
       status: 'info',
-      timing: ctx.tracker.total(),
     });
     ctx.output?.write(outputText);
 

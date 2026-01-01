@@ -202,7 +202,6 @@ export const pluginsCommands = defineSystemCommand<PluginsCommandsFlags, Command
       title: 'Plugin Commands Registry',
       sections,
       status: 'success',
-      timing: ctx.tracker.total(),
     });
 
     return {

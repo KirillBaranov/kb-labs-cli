@@ -1,11 +1,17 @@
-import { defineSystemCommand, type CommandOutput } from '@kb-labs/shared-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '../../utils/generate-examples';
 
 type VersionFlags = {
   json: { type: 'boolean'; description?: string };
 };
 
-export const version = defineSystemCommand<VersionFlags>({
+type VersionResult = CommandResult & {
+  version: string;
+  nodeVersion: string;
+  platform: string;
+};
+
+export const version = defineSystemCommand<VersionFlags, VersionResult>({
   name: 'version',
   description: 'Show CLI version',
   longDescription: 'Displays the current version of the KB Labs CLI',
@@ -27,35 +33,30 @@ export const version = defineSystemCommand<VersionFlags>({
     const nodeVersion = process.version;
     const platform = `${process.platform} ${process.arch}`;
 
-    ctx.logger?.info('Version command executed', {
+    ctx.platform?.logger?.info('Version command executed', {
       version: cliVersion,
       nodeVersion,
       platform
     });
 
-    // Use new ctx.success() helper for modern UI
-    return ctx.success('KB Labs CLI', {
-      summary: {
-        'CLI Version': cliVersion,
-        'Node': nodeVersion,
-        'Platform': platform,
-      },
-      timing: ctx.tracker.total(),
-      json: {
+    // Output via ctx.ui (pure PluginContextV3)
+    if (!flags.json) {
+      ctx.ui?.write(`KB Labs CLI v${cliVersion}\n`);
+      ctx.ui?.write(`Node: ${nodeVersion}\n`);
+      ctx.ui?.write(`Platform: ${platform}\n`);
+    } else {
+      ctx.ui?.json({
         version: cliVersion,
         nodeVersion,
         platform,
-      },
-    });
-  },
-  formatter(result, ctx, flags) {
-    // Auto-handle JSON mode
-    // Cast to CommandOutput since ctx.success() returns CommandOutput
-    const output = result as unknown as CommandOutput;
-    if (flags.json) {
-      console.log(JSON.stringify(output.json, null, 2));
-    } else {
-      console.log(output.human);
+      });
     }
+
+    return {
+      ok: true,
+      version: cliVersion,
+      nodeVersion,
+      platform,
+    };
   },
 });

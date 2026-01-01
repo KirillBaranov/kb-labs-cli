@@ -97,7 +97,6 @@ export const health = defineSystemCommand<HealthFlags>({
             },
           ],
           status: 'error',
-          timing: ctx.tracker.total(),
         });
         console.log(output);
       } else if (result.snapshot) {
@@ -139,7 +138,6 @@ export const health = defineSystemCommand<HealthFlags>({
             },
           ],
           status,
-          timing: ctx.tracker.total(),
         });
         console.log(output);
       }

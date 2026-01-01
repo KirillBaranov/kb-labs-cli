@@ -35,7 +35,6 @@ export const docsGenerateCliReference = defineSystemCommand<GenerateCliReference
     const cwd = getContextCwd(ctx);
     const outputPath = flags.output || path.join(cwd, 'CLI-REFERENCE.md');
 
-    ctx.tracker.checkpoint('collect');
 
     // Get all commands from registry
     const commands = registry.list();
@@ -57,7 +56,6 @@ export const docsGenerateCliReference = defineSystemCommand<GenerateCliReference
       groups.get(group)!.push(cmd);
     }
 
-    ctx.tracker.checkpoint('generate');
 
     // Generate markdown
     const lines: string[] = [];
@@ -118,7 +116,6 @@ export const docsGenerateCliReference = defineSystemCommand<GenerateCliReference
       }
     }
 
-    ctx.tracker.checkpoint('write');
 
     // Write to file
     const content = lines.join('\n');
@@ -152,7 +149,6 @@ export const docsGenerateCliReference = defineSystemCommand<GenerateCliReference
         },
       ],
       status: 'success',
-      timing: ctx.tracker.total(),
     });
 
     return {

@@ -66,7 +66,6 @@ export const diagnose = defineSystemCommand<DiagnoseFlags, DiagnoseResult>({
           },
         ],
         status: 'success',
-        timing: ctx.tracker.total(),
       });
       console.log(output);
     }

@@ -192,7 +192,6 @@ export const run = defineCommand<${pluginName.charAt(0).toUpperCase() + pluginNa
     // Full type safety: flags.json and flags.quiet are properly typed!
     ctx.logger?.info('${pluginName} hello started');
 
-    ctx.tracker.checkpoint('start');
 
     // Your command logic here
     const result = { 
@@ -200,7 +199,6 @@ export const run = defineCommand<${pluginName.charAt(0).toUpperCase() + pluginNa
       message: 'Hello from ${pluginName} plugin!' 
     };
 
-    ctx.tracker.checkpoint('complete');
     const duration = ctx.tracker.total();
 
     ctx.logger?.info('${pluginName} hello completed', {
@@ -325,7 +323,6 @@ dist
       title: 'Plugin Scaffold',
       sections: [{ items: sections }],
       status: 'success',
-      timing: ctx.tracker.total(),
     });
     ctx.output.write(output);
   },

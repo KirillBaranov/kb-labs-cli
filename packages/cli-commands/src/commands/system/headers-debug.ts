@@ -344,7 +344,6 @@ export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugR
         title: 'Header Policy Debug',
         sections: [{ items: lines }],
         status: 'warning',
-        timing: ctx.tracker.total(),
       });
       ctx.output.write(outputText);
       return;
@@ -384,7 +383,6 @@ export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugR
       title: 'Header Policy Debug',
       sections: [{ items: lines }],
       status: 'info',
-      timing: ctx.tracker.total(),
     });
     ctx.output.write(outputText);
   },

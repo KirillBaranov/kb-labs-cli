@@ -54,7 +54,6 @@ export const pluginsList = defineSystemCommand<PluginsListFlags, CommandOutput>(
   async handler(ctx, argv, flags) {
     const cwd = getContextCwd(ctx);
 
-    ctx.tracker.checkpoint('discover');
       
       // Use new DiscoveryManager via PluginRegistry
       const pluginRegistry = new PluginRegistry({
@@ -276,7 +275,6 @@ export const pluginsList = defineSystemCommand<PluginsListFlags, CommandOutput>(
       title: 'KB Labs CLI Plugins',
       sections,
       status: 'info',
-      timing: ctx.tracker.total(),
     });
 
     return {

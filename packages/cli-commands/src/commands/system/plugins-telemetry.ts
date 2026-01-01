@@ -144,7 +144,6 @@ export const pluginsTelemetry = defineSystemCommand<PluginsTelemetryFlags, Plugi
       title: 'Telemetry Metrics',
       sections: [{ items: sections }],
       status: 'info',
-      timing: ctx.tracker.total(),
     });
     ctx.output.write(output);
   },

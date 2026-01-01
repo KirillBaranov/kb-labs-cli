@@ -269,7 +269,6 @@ export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResul
         },
       ],
       status: errorCount > 0 ? 'error' : warningCount > 0 ? 'warning' : 'success',
-      timing: ctx.tracker.total(),
     });
     ctx.output.write(output);
   },

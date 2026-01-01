@@ -72,7 +72,6 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
       details: { nodeVersion, cliVersion, platform, arch },
     });
 
-    ctx.tracker.checkpoint('environment');
     
     // 2. Plugin discovery check
     try {
@@ -103,7 +102,6 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
         details: { error: err.message },
       });
     }
-    ctx.tracker.checkpoint('discovery');
 
     // 3. Cache check
     try {
@@ -141,7 +139,6 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
         details: { error: err.message },
       });
     }
-    ctx.tracker.checkpoint('cache');
 
     // 4. Plugins state check
     try {
@@ -169,7 +166,6 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
         details: { error: err.message },
       });
     }
-    ctx.tracker.checkpoint('state');
 
     // 5. Version compatibility check
     const versionIssues: Array<{ plugin: string; required: string; current: string }> = [];
@@ -219,7 +215,6 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
         details: { error: err.message },
       });
     }
-    ctx.tracker.checkpoint('versions');
 
     const summary = {
       total: diagnostics.length,
@@ -308,7 +303,6 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
           },
         ],
         status: hasErrors ? 'error' : hasWarnings ? 'warning' : 'success',
-        timing: ctx.tracker.total(),
       });
 
       console.log(output);
