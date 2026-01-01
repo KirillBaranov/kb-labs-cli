@@ -59,7 +59,7 @@ export async function registerBuiltinCommands(
     describe: introspectCliCommand.description,
     category: 'system',
     aliases: [],
-    async run(ctx, argv, flags) {
+    async run(ctx: any, argv: any, flags: any) {
       return introspectCliCommand.run(ctx, argv, flags);
     },
   });
