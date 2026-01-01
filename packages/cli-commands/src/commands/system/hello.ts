@@ -1,11 +1,16 @@
-import { defineSystemCommand, type CommandOutput } from '@kb-labs/shared-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '../../utils/generate-examples.js';
 
 type HelloFlags = {
   json: { type: 'boolean'; description?: string };
 };
 
-export const hello = defineSystemCommand<HelloFlags, CommandOutput>({
+type HelloResult = CommandResult & {
+  message: string;
+  who: string;
+};
+
+export const hello = defineSystemCommand<HelloFlags, HelloResult>({
   name: 'hello',
   description: 'Print a friendly greeting',
   longDescription: 'Prints a simple greeting message for testing CLI functionality',
@@ -25,28 +30,23 @@ export const hello = defineSystemCommand<HelloFlags, CommandOutput>({
     const who = (ctx as any)?.user ?? 'KB Labs';
     const message = `Hello, ${who}!`;
 
-    ctx.logger?.info('Hello command executed', { who });
+    ctx.platform?.logger?.info('Hello command executed', { who });
 
-    // Use new ctx.success() helper for modern UI
-    return ctx.success('Greeting', {
-      summary: {
-        'Message': message,
-        'User': who,
-      },
-      timing: ctx.tracker.total(),
-      json: {
+    // Output via ctx.ui (pure PluginContextV3)
+    if (!flags.json) {
+      ctx.ui?.write(`${message}\n`);
+    } else {
+      ctx.ui?.json({
         message,
         who,
         status: 'ready',
-      },
-    });
-  },
-  formatter(result, ctx, flags) {
-    // Auto-handle JSON mode
-    if (flags.json) {
-      console.log(JSON.stringify(result.json, null, 2));
-    } else {
-      console.log(result.human);
+      });
     }
+
+    return {
+      ok: true,
+      message,
+      who,
+    };
   },
 });
