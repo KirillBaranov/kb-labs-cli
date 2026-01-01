@@ -1,0 +1,13 @@
+{
+  "enabled": [],
+  "disabled": [
+    "test"
+  ],
+  "linked": [],
+  "permissions": {},
+  "integrity": {},
+  "crashes": {
+    "test": 3
+  },
+  "lastUpdated": 1767228698636
+}
