@@ -5,7 +5,7 @@ import { wfRunsList } from './runs-list'
 import { wfRunsGet } from './runs-get'
 import { wfLogs } from './logs'
 import { wfCancel } from './cancel'
-// import { wfList } from './list' // LEGACY - missing exports
+import { wfList } from './list'
 import { wfInit } from './init'
 // import { wfApprove } from './approve' // LEGACY - missing exports
 import { wfReplay } from './replay'
@@ -22,7 +22,7 @@ export const workflowCommandGroup: CommandGroup = {
   aliases: ['wf'],
   describe: 'Workflow engine commands',
   commands: [
-    // wfList, // LEGACY - missing exports
+    wfList,
     wfInit,
     // wfRun, // LEGACY - missing exports
     wfValidate,
@@ -42,7 +42,7 @@ export const workflowCommandGroup: CommandGroup = {
 }
 
 export {
-  // wfList, // LEGACY
+  wfList,
   wfInit,
   // wfRun, // LEGACY
   wfValidate,

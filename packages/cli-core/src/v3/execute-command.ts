@@ -146,16 +146,12 @@ export async function executeCommandV3(
 
   // Create plugin context descriptor
   const descriptor: PluginContextDescriptor = {
-    host: 'cli',
+    hostType: 'cli',
     pluginId,
     pluginVersion,
     tenantId,
-    cwd,
-    outdir,
-    config,
     permissions,
     hostContext: { host: 'cli', argv, flags },
-    parentRequestId: undefined,
     requestId: `cli-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
   };
 
@@ -195,7 +191,7 @@ export async function executeCommandV3(
     const runResult = {
       ok: true,
       data: result.data,
-      executionMeta: result.metadata?.executionMeta,
+      meta: result.metadata?.executionMeta,
     };
     const cliResult = wrapCliResult(runResult, descriptor);
 

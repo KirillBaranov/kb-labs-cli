@@ -33,6 +33,7 @@
     "@kb-labs/cli-core": "workspace:*",
     "@kb-labs/core-ipc": "link:../../../kb-labs-core/packages/core-ipc",
     "@kb-labs/core-resource-broker": "link:../../../kb-labs-core/packages/core-resource-broker",
+    "@kb-labs/core-runtime": "link:../../../kb-labs-core/packages/core-runtime",
     "@kb-labs/core-state-broker": "link:../../../kb-labs-core/packages/core-state-broker",
     "@kb-labs/core-sys": "link:../../../kb-labs-core/packages/core-sys",
     "@kb-labs/plugin-execution": "link:../../../kb-labs-plugin/packages/plugin-execution",
