@@ -30,7 +30,7 @@ import {
 } from "@kb-labs/cli-runtime";
 import { handleLimitFlag } from "./limits";
 import { getDefaultMiddlewares } from "./middlewares";
-import { tryExecuteV3 } from "./v3-adapter";
+import { tryExecuteV3, createPluginContextV3ForSystemCommand } from "./v3-adapter";
 import { loadEnvFile } from "./env-loader";
 import { initializePlatform } from "./platform-init";
 import { resolveVersion } from "./helpers/version";
@@ -443,7 +443,9 @@ export async function executeCli(
       if (result.type === 'system') {
         // System command - execute in-process via cmd.run()
         if ('run' in result.cmd) {
-          const exitCode = await result.cmd.run(context, actualRest, { ...global, ...flagsObj });
+          // Convert SystemContext → PluginContextV3 for system commands
+          const v3Context = createPluginContextV3ForSystemCommand(context, platform);
+          const exitCode = await result.cmd.run(v3Context, actualRest, { ...global, ...flagsObj });
           return typeof exitCode === 'number' ? exitCode : 0;
         }
 

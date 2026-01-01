@@ -230,3 +230,37 @@ function createPlatformServices(platformContainer: PlatformContainer): PlatformS
     analytics: platformContainer.analytics,
   };
 }
+
+/**
+ * Create PluginContextV3 for system commands
+ *
+ * Converts legacy SystemContext → PluginContextV3
+ * Used by system commands (hello, version, etc.) to receive pure V3 context
+ */
+export function createPluginContextV3ForSystemCommand(
+  context: SystemContext,
+  platform: PlatformContainer
+): import('@kb-labs/plugin-contracts').PluginContextV3 {
+  const ui = createUIFacade(context);
+  const platformServices = createPlatformServices(platform);
+
+  return {
+    host: 'cli',
+    requestId: `cli-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    pluginId: '@kb-labs/system',
+    cwd: context.cwd || process.cwd(),
+    ui,
+    platform: platformServices,
+    runtime: {
+      fs: {} as any, // System commands don't use sandboxed fs
+      fetch: fetch as any,
+      env: (key: string) => process.env[key],
+      state: platform.stateBroker as any,
+    },
+    api: {} as any, // System commands don't use remote API
+    trace: {
+      traceId: `trace-${Date.now()}`,
+      spanId: `span-${Date.now()}`,
+    },
+  };
+}
