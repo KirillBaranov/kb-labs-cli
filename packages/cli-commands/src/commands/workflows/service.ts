@@ -198,3 +198,75 @@ function createDefaultTrigger(): WorkflowRun['trigger'] {
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+// ============================================================================
+// Workflow Management (V3)
+// Using WorkflowService for unified workflow access
+// ============================================================================
+
+import { WorkflowService, WorkflowRepository, ManifestScanner } from '@kb-labs/workflow-engine';
+import { createCliAPI } from '@kb-labs/cli-api';
+import type { WorkflowRuntime } from '@kb-labs/workflow-engine';
+
+let _workflowService: WorkflowService | null = null;
+
+/**
+ * Get or create WorkflowService instance
+ */
+async function getWorkflowService(): Promise<WorkflowService> {
+  if (_workflowService) {
+    return _workflowService;
+  }
+
+  // Create CliAPI for manifest scanning
+  const cliApi = await createCliAPI({ cache: { inMemory: true, ttlMs: 10_000 } });
+
+  const repository = new WorkflowRepository(platform, '.kb/workflows');
+  const scanner = new ManifestScanner(cliApi, platform);
+
+  _workflowService = new WorkflowService(scanner, repository, platform);
+  return _workflowService;
+}
+
+export interface ListWorkflowsOptions {
+  source?: 'manifest' | 'standalone';
+  status?: 'active' | 'paused' | 'disabled';
+  tags?: string[];
+  search?: string;
+}
+
+/**
+ * List all workflows (manifest + standalone)
+ */
+export async function listWorkflows(options: ListWorkflowsOptions = {}): Promise<WorkflowRuntime[]> {
+  const service = await getWorkflowService();
+
+  let workflows = await service.listAll({
+    source: options.source,
+    status: options.status,
+  });
+
+  // Apply additional filters
+  if (options.tags && options.tags.length > 0) {
+    workflows = workflows.filter((w) => w.tags?.some((tag) => options.tags!.includes(tag)));
+  }
+
+  if (options.search) {
+    const search = options.search.toLowerCase();
+    workflows = workflows.filter(
+      (w) =>
+        w.name.toLowerCase().includes(search) ||
+        w.description?.toLowerCase().includes(search)
+    );
+  }
+
+  return workflows;
+}
+
+/**
+ * Get workflow by ID
+ */
+export async function getWorkflow(id: string): Promise<WorkflowRuntime | null> {
+  const service = await getWorkflowService();
+  return service.get(id);
+}
