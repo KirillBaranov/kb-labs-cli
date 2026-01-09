@@ -44,6 +44,7 @@ export interface FlagDefinition {
 
 export interface RegisteredCommand {
   manifest: CommandManifest;
+  v3Manifest?: ManifestV3;   // Full V3 manifest (clean naming, replaces manifestV2 field)
   available: boolean;
   unavailableReason?: string;
   hint?: string;

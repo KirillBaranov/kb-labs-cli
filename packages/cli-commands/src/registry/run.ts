@@ -113,19 +113,19 @@ export async function runCommand(
   }
   
   // For ManifestV3 commands, skip loader (handler is executed via plugin-adapter-cli)
-  // Check if this is a ManifestV3 command
-  const isManifestV3 = !!(cmd.manifest as any).manifestV2;
-  
-  const manifestV2 = (cmd.manifest as any).manifestV2;
-  if (!manifestV2) {
+  // Get V3 manifest from clean field (with fallback to legacy manifestV2)
+  const v3Manifest = cmd.v3Manifest ?? (cmd.manifest as any).manifestV2;
+  const isManifestV3 = !!v3Manifest;
+
+  if (!v3Manifest) {
     ctx.logger?.error('Command must be defined via ManifestV3', { command: cmd.manifest.id });
     ctx.output?.error(new Error(`Command ${cmd.manifest.id} must be defined via ManifestV3`));
     return 1;
   }
-  
+
   // ID is now simple (no namespace prefix)
   const commandId = cmd.manifest.id;
-  const cliCommand = manifestV2.cli?.commands?.find((c: any) =>
+  const cliCommand = v3Manifest.cli?.commands?.find((c: any) =>
     c.id === commandId
   );
   if (!cliCommand) {

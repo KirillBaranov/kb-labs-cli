@@ -341,6 +341,7 @@ export async function registerManifests(
 
         const cmd: RegisteredCommand = {
           manifest,
+          v3Manifest: (manifest as any).manifestV2, // Extract V3 manifest from legacy field
           available: availability.available,
           unavailableReason: availability.available ? undefined : availability.reason,
           hint: availability.available ? undefined : availability.hint,
