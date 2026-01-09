@@ -191,7 +191,7 @@ export async function executeCommandV3(
     const runResult = {
       ok: true,
       data: result.data,
-      meta: result.metadata?.executionMeta,
+      executionMeta: result.metadata?.executionMeta,
     };
     const cliResult = wrapCliResult(runResult, descriptor);
 

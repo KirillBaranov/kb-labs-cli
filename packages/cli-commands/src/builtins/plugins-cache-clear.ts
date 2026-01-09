@@ -1,7 +1,6 @@
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { clearCache } from '../registry/plugins-state';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
-import { box, keyValue, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
 
 type PluginsCacheClearFlags = {
   deep: { type: 'boolean'; description?: string };
@@ -30,15 +29,66 @@ export const pluginsCacheClear = defineSystemCommand<PluginsCacheClearFlags, Plu
     startEvent: 'PLUGINS_CACHE_CLEAR_STARTED',
     finishEvent: 'PLUGINS_CACHE_CLEAR_FINISHED',
   },
-  async handler(ctx, argv, flags) {
-    const deep = flags.deep; // Type-safe: boolean
+  async handler(ctx, _argv, flags) {
+    const deep = flags.deep;
     const cwd = getContextCwd(ctx);
     const result = await clearCache(cwd, { deep });
 
-    ctx.logger?.info('Cache cleared', {
+    ctx.platform?.logger?.info('Cache cleared', {
       filesCount: result.files.length,
       modulesCount: result.modules?.length || 0,
       deep,
+    });
+
+    // Output handling
+    if (flags.json) {
+      const jsonResult = {
+        ok: true,
+        action: 'cache:clear',
+        files: result.files,
+        modules: result.modules,
+        count: result.files.length,
+        modulesCount: result.modules?.length || 0,
+      };
+      console.log(JSON.stringify(jsonResult, null, 2));
+      return jsonResult;
+    }
+
+    // Build structured output
+    const files = result.files ?? [];
+    const modules = result.modules ?? [];
+
+    const sections: Array<{ header?: string; items: string[] }> = [];
+
+    // Cache files section
+    if (files.length > 0) {
+      sections.push({
+        header: 'Cache Files',
+        items: files.map((f) => `✓ ${f}`),
+      });
+    } else {
+      sections.push({
+        items: ['No cache files found'],
+      });
+    }
+
+    // Modules section (if deep mode)
+    if (deep && modules.length > 0) {
+      sections.push({
+        header: 'Node Modules',
+        items: [`Cleared ${modules.length} module(s) from cache`],
+      });
+    }
+
+    // Summary section
+    sections.push({
+      header: 'Summary',
+      items: [`Removed ${files.length} file(s)${deep ? ` and ${modules.length} module(s)` : ''}`],
+    });
+
+    ctx.ui.success('', {
+      title: '🗑️  Cache Management',
+      sections,
     });
 
     return {
@@ -49,40 +99,5 @@ export const pluginsCacheClear = defineSystemCommand<PluginsCacheClearFlags, Plu
       count: result.files.length,
       modulesCount: result.modules?.length || 0,
     };
-  },
-  formatter(result, ctx, flags) {
-    if (flags.json) { // Type-safe: boolean
-      ctx.output?.json(result);
-    } else {
-      if (!ctx.output) {
-        throw new Error('Output not available');
-      }
-
-      const files = result.files ?? [];
-      const modules = result.modules ?? [];
-      const summary = keyValue({
-        Action: 'Cache Cleared',
-        'Files Removed': files.length > 0 ? files.join(', ') : 'none',
-        ...(flags.deep && modules.length > 0
-          ? { 'Modules Cleared': modules.length.toString() }
-          : {}),
-        Status:
-          files.length > 0
-            ? safeSymbols.success + ' Success'
-            : safeSymbols.info + ' No cache found',
-      });
-
-      const output = box('Cache Management', [
-        ...summary,
-        '',
-        files.length > 0
-          ? safeColors.dim(`Removed ${files.length} cache file(s)`)
-          : safeColors.dim('No cache files to remove'),
-        ...(flags.deep && modules.length > 0
-          ? [safeColors.dim(`Cleared ${modules.length} module(s) from cache`)]
-          : []),
-      ]);
-      ctx.output.write(output);
-    }
   },
 });

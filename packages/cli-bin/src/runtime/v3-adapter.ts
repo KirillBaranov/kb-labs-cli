@@ -36,12 +36,17 @@ export async function tryExecuteV3(
     return undefined;
   }
 
-  // Find the CLI command in manifest to get handlerPath
-  const manifest = manifestCmd.manifest.manifestV2;
-  const cliCommand = manifest?.cli?.commands?.find((c: any) => c.id === commandId);
+  // Get V3 manifest from clean field (with fallback to legacy manifestV2)
+  const v3Manifest = manifestCmd.v3Manifest ?? (manifestCmd.manifest as any).manifestV2;
+  if (!v3Manifest) {
+    return undefined; // Not a V3 plugin or system command without full manifest
+  }
+
+  // Find CLI command definition
+  const cliCommand = v3Manifest.cli?.commands?.find((c: any) => c.id === commandId);
 
   // Resolve handler path - V3 commands use handlerPath
-  const handlerRelativePath = (cliCommand as any)?.handlerPath;
+  const handlerRelativePath = cliCommand?.handlerPath;
   if (!handlerRelativePath) {
     return undefined;
   }
@@ -59,8 +64,8 @@ export async function tryExecuteV3(
     : path.resolve(pluginRoot, 'dist', handlerRelativePath);
 
   try {
-    const pluginId = manifest?.id || manifestCmd.manifest.id;
-    const pluginVersion = manifest?.version || '0.0.0';
+    const pluginId = v3Manifest.id || manifestCmd.manifest.id;
+    const pluginVersion = v3Manifest.version || '0.0.0';
 
     // Create V3 UI facade from CLI context
     const ui = createUIFacade(context);
@@ -71,8 +76,8 @@ export async function tryExecuteV3(
     // Get socket path from platform singleton for IPC
     const socketPath = platform.getSocketPath();
 
-    // Extract permissions and quotas from manifest
-    const permissions = manifest?.permissions;
+    // Extract permissions and quotas from manifest (V3 structure)
+    const permissions = v3Manifest.permissions;
     const quotas = permissions?.quotas;
 
     // Execute via V3 (now uses platform.executionBackend)
@@ -135,14 +140,12 @@ function createUIFacade(context: SystemContext): UIFacade {
       console.log(boxOutput);
     },
     success: (msg: string, options?: MessageOptions) => {
-      console.log('[v3-adapter] success called with:', { msg, options });
       const boxOutput = sideBorderBox({
         title: options?.title || 'Success',
         sections: options?.sections || [{ items: [msg] }],
         status: 'success',
         timing: options?.timing,
       });
-      console.log('[v3-adapter] boxOutput:', boxOutput);
       console.log(boxOutput);
     },
     warn: (msg: string, options?: MessageOptions) => {
