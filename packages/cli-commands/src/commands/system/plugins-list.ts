@@ -176,7 +176,7 @@ export const pluginsList = defineSystemCommand<PluginsListFlags, CommandOutput>(
     const disabledCount = output.filter((p) => !p.enabled).length;
     const linkedCount = packageList.filter((p) => p.state === 'linked').length;
 
-    ctx.logger?.info('Plugins list completed', {
+    ctx.platform?.logger?.info('Plugins list completed', {
       total: totalPlugins,
       enabled: enabledCount,
       disabled: disabledCount,
@@ -270,18 +270,11 @@ export const pluginsList = defineSystemCommand<PluginsListFlags, CommandOutput>(
       ],
     });
 
-    // Create custom output using ctx.output.ui.sideBox()
-    const humanOutput = ctx.output.ui.sideBox({
-      title: 'KB Labs CLI Plugins',
-      sections,
-      status: 'info',
-    });
-
     return {
       ok: true,
       status: 'success',
       message: `Found ${totalPlugins} plugins (${enabledCount} enabled, ${disabledCount} disabled)`,
-      human: humanOutput,
+      sections,
       json: {
         plugins: output,
         total: totalPlugins,
@@ -296,7 +289,7 @@ export const pluginsList = defineSystemCommand<PluginsListFlags, CommandOutput>(
     if (flags.json) {
       console.log(JSON.stringify(result.json, null, 2));
     } else {
-      console.log(result.human);
+      ctx.ui.info('KB Labs CLI Plugins', { sections: result.sections });
     }
   },
 });

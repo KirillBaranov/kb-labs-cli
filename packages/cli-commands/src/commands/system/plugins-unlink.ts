@@ -42,7 +42,7 @@ export const pluginsUnlink = defineSystemCommand<PluginsUnlinkFlags, PluginsUnli
     const cwd = getContextCwd(ctx);
     const state = await loadPluginsState(cwd);
 
-    ctx.logger?.info('Unlinking plugin', { identifier });
+    ctx.platform?.logger?.info('Unlinking plugin', { identifier });
 
     // Try as path first
     let absPath: string | undefined;
@@ -55,19 +55,19 @@ export const pluginsUnlink = defineSystemCommand<PluginsUnlinkFlags, PluginsUnli
       if (matched) {
         absPath = matched;
       } else {
-        ctx.logger?.warn('Plugin not found', { identifier, linkedPlugins: state.linked });
+        ctx.platform?.logger?.warn('Plugin not found', { identifier, linkedPlugins: state.linked });
         throw new Error(`Plugin not found: ${identifier}`);
       }
     }
 
     if (!absPath) {
-      ctx.logger?.warn('Plugin not found', { identifier });
+      ctx.platform?.logger?.warn('Plugin not found', { identifier });
       throw new Error(`Plugin not found: ${identifier}`);
     }
 
     await unlinkPlugin(cwd, absPath);
 
-    ctx.logger?.info('Plugin unlinked', { identifier, absPath });
+    ctx.platform?.logger?.info('Plugin unlinked', { identifier, absPath });
 
     return {
       ok: true,
@@ -77,8 +77,8 @@ export const pluginsUnlink = defineSystemCommand<PluginsUnlinkFlags, PluginsUnli
     };
   },
   formatter(result, ctx, flags) {
-    ctx.output?.info(result.message ?? 'Plugin unlinked');
-    ctx.output?.info(`Run 'kb plugins ls' to see updated status`);
+    ctx.ui.info(result.message ?? 'Plugin unlinked');
+    ctx.ui.info(`Run 'kb plugins ls' to see updated status`);
   },
 });
 

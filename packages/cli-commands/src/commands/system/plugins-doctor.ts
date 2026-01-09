@@ -94,7 +94,7 @@ export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResul
         // Check CLI version compatibility
         if (cmd.manifest.engine?.kbCli) {
           const required = cmd.manifest.engine.kbCli;
-          const current = ctx.env?.CLI_VERSION || process.env.CLI_VERSION || '0.1.0';
+          const current = process.env.CLI_VERSION || process.env.CLI_VERSION || '0.1.0';
           // Simple semver check
           if (required.startsWith('^') && current !== '0.1.0') {
             const requiredParts = required.replace('^', '').split('.');
@@ -187,7 +187,7 @@ export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResul
       info: issues.filter((i) => i.severity === 'info').length,
     };
 
-    ctx.logger?.info('Plugins doctor completed', summary);
+    ctx.platform?.logger?.info('Plugins doctor completed', summary);
 
     return {
       ok: summary.errors === 0,
@@ -199,18 +199,14 @@ export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResul
     const resultData = result as DoctorResult;
 
     if (flags.json) {
-      ctx.output?.json(resultData);
+      ctx.ui.json(resultData);
       return;
-    }
-
-    if (!ctx.output) {
-      throw new Error('Output not available');
     }
 
     const { issues, summary } = resultData;
 
     if (issues.length === 0) {
-      ctx.output.info(`${ctx.output.ui.symbols.success} All plugins are healthy!`);
+      ctx.ui.info(`${ctx.ui.symbols.success} All plugins are healthy!`);
       return;
     }
 
@@ -219,8 +215,8 @@ export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResul
 
     const summaryItems = [
       `Total Issues: ${issues.length}`,
-      `Errors: ${errorCount > 0 ? ctx.output.ui.colors.error(errorCount.toString()) : 'none'}`,
-      `Warnings: ${warningCount > 0 ? ctx.output.ui.colors.warn(warningCount.toString()) : 'none'}`,
+      `Errors: ${errorCount > 0 ? ctx.ui.colors.error(errorCount.toString()) : 'none'}`,
+      `Warnings: ${warningCount > 0 ? ctx.ui.colors.warn(warningCount.toString()) : 'none'}`,
     ];
 
     const issueItems: string[] = [];
@@ -234,43 +230,46 @@ export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResul
     }
 
     for (const [pkg, pkgIssues] of Array.from(byPackage.entries()).sort()) {
-      issueItems.push(ctx.output.ui.colors.bold(`${pkg}:`));
+      issueItems.push(ctx.ui.colors.bold(`${pkg}:`));
 
       for (const issue of pkgIssues) {
-        const icon = issue.severity === 'error' ? ctx.output.ui.symbols.error : ctx.output.ui.symbols.warning;
-        const color = issue.severity === 'error' ? ctx.output.ui.colors.error : ctx.output.ui.colors.warn;
+        const icon = issue.severity === 'error' ? ctx.ui.symbols.error : ctx.ui.symbols.warning;
+        const color = issue.severity === 'error' ? ctx.ui.colors.error : ctx.ui.colors.warn;
 
         issueItems.push(`  ${icon} ${color(issue.code)}: ${issue.message}`);
         if (issue.fix) {
-          issueItems.push(`     ${ctx.output.ui.colors.info(`Fix: ${issue.fix}`)}`);
+          issueItems.push(`     ${ctx.ui.colors.info(`Fix: ${issue.fix}`)}`);
         }
       }
     }
 
     const nextStepsItems = [
-      `kb plugins enable <name>  ${ctx.output.ui.colors.muted('Enable a disabled plugin')}`,
-      `kb plugins clear-cache  ${ctx.output.ui.colors.muted('Clear cache and rediscover')}`,
+      `kb plugins enable <name>  ${ctx.ui.colors.muted('Enable a disabled plugin')}`,
+      `kb plugins clear-cache  ${ctx.ui.colors.muted('Clear cache and rediscover')}`,
     ];
 
-    const output = ctx.output.ui.sideBox({
-      title: 'Plugin Diagnostics',
-      sections: [
-        {
-          header: 'Summary',
-          items: summaryItems,
-        },
-        {
-          header: 'Issues',
-          items: issueItems,
-        },
-        {
-          header: 'Next Steps',
-          items: nextStepsItems,
-        },
-      ],
-      status: errorCount > 0 ? 'error' : warningCount > 0 ? 'warning' : 'success',
-    });
-    ctx.output.write(output);
+    const sections = [
+      {
+        header: 'Summary',
+        items: summaryItems,
+      },
+      {
+        header: 'Issues',
+        items: issueItems,
+      },
+      {
+        header: 'Next Steps',
+        items: nextStepsItems,
+      },
+    ];
+
+    if (errorCount > 0) {
+      ctx.ui.error('Plugin Diagnostics', { sections });
+    } else if (warningCount > 0) {
+      ctx.ui.warn('Plugin Diagnostics', { sections });
+    } else {
+      ctx.ui.success('Plugin Diagnostics', { sections });
+    }
   },
 });
 

@@ -35,7 +35,7 @@ export const diagnose = defineSystemCommand<DiagnoseFlags, DiagnoseResult>({
     const nodeVersion = process.version;
     const platform = `${process.platform} ${process.arch}`;
 
-    ctx.logger?.info('Diagnose command executed', { nodeVersion, platform, repoRoot, cwd });
+    ctx.platform?.logger?.info('Diagnose command executed', { nodeVersion, platform, repoRoot, cwd });
 
     // Return typed data
     return {
@@ -51,9 +51,8 @@ export const diagnose = defineSystemCommand<DiagnoseFlags, DiagnoseResult>({
     if (flags.json) {
       console.log(JSON.stringify(result, null, 2));
     } else {
-      // Use new ctx.output.ui.sideBox() for modern UI
-      const output = ctx.output.ui.sideBox({
-        title: 'Environment Diagnosis',
+      // Use ctx.ui.success for output
+      ctx.ui.success('Environment Diagnosis', {
         sections: [
           {
             header: 'Environment',
@@ -65,9 +64,7 @@ export const diagnose = defineSystemCommand<DiagnoseFlags, DiagnoseResult>({
             ],
           },
         ],
-        status: 'success',
       });
-      console.log(output);
     }
   },
 });

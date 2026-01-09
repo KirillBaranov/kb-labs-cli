@@ -44,7 +44,7 @@ export const pluginsLink = defineSystemCommand<PluginsLinkFlags, PluginsLinkResu
     const cwd = getContextCwd(ctx);
     const absPath = path.resolve(cwd, pluginPath);
 
-    ctx.logger?.info('Linking plugin', { pluginPath, absPath });
+    ctx.platform?.logger?.info('Linking plugin', { pluginPath, absPath });
 
     // Check if path exists and has package.json
     const pkgJsonPath = path.join(absPath, 'package.json');
@@ -55,12 +55,12 @@ export const pluginsLink = defineSystemCommand<PluginsLinkFlags, PluginsLinkResu
     // Check if it's a plugin
     const hasManifest = pkgJson.kb?.commandsManifest || pkgJson.exports?.['./kb/commands'];
     if (!hasManifest) {
-      ctx.logger?.warn('Plugin may not be valid', { packageName: pkgJson.name, pluginPath });
+      ctx.platform?.logger?.warn('Plugin may not be valid', { packageName: pkgJson.name, pluginPath });
     }
 
     await linkPlugin(cwd, absPath);
 
-    ctx.logger?.info('Plugin linked', { packageName: pkgJson.name, absPath });
+    ctx.platform?.logger?.info('Plugin linked', { packageName: pkgJson.name, absPath });
 
     // Also update kb.config.json if it exists
     let configUpdated = false;
@@ -95,16 +95,16 @@ export const pluginsLink = defineSystemCommand<PluginsLinkFlags, PluginsLinkResu
   },
   formatter(result, ctx, flags) {
     if (!result.hasManifest) {
-      ctx.output?.warn(
+      ctx.ui.warn(
         `Package ${result.packageName ?? 'unknown'} doesn't appear to be a KB CLI plugin`,
       );
-      ctx.output?.info('Add "kb.commandsManifest" or "exports["./kb/commands"]" to package.json');
+      ctx.ui.info('Add "kb.commandsManifest" or "exports["./kb/commands"]" to package.json');
     }
-    ctx.output?.info(result.message ?? 'Plugin linked');
+    ctx.ui.info(result.message ?? 'Plugin linked');
     if (result.configUpdated) {
-      ctx.output?.info(`Added ${result.packageName ?? 'unknown'} to kb.config.json plugins.linked`);
+      ctx.ui.info(`Added ${result.packageName ?? 'unknown'} to kb.config.json plugins.linked`);
     }
-    ctx.output?.info(`The plugin will be discovered on next CLI run`);
+    ctx.ui.info(`The plugin will be discovered on next CLI run`);
   },
 });
 

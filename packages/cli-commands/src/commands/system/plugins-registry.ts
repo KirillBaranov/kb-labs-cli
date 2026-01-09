@@ -289,10 +289,10 @@ export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, Plugins
     }));
 
 
-    ctx.logger?.info('Plugins registry scan completed', { count: manifests.length });
+    ctx.platform?.logger?.info('Plugins registry scan completed', { count: manifests.length });
 
     if (flags.json) {
-      ctx.output?.json({
+      ctx.ui.json({
         ok: true,
         manifests: manifests.map((p) => p.manifest),
         manifestsWithPaths,
@@ -323,7 +323,7 @@ export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, Plugins
         const displayName = plugin.manifest.display?.name || plugin.manifest.id;
         const routesCount = plugin.manifest.rest?.routes?.length || 0;
         pluginItems.push(
-          `${ctx.output!.ui.symbols.success} ${plugin.manifest.id}@${plugin.manifest.version} - ${displayName}`
+          `${ctx.ui.symbols.success} ${plugin.manifest.id}@${plugin.manifest.version} - ${displayName}`
         );
         pluginItems.push(`  Path: ${plugin.manifestPath}`);
         pluginItems.push(`  Routes: ${routesCount}`);
@@ -338,12 +338,7 @@ export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, Plugins
       });
     }
 
-    const outputText = ctx.output!.ui.sideBox({
-      title: 'Plugins Registry',
-      sections,
-      status: 'info',
-    });
-    ctx.output?.write(outputText);
+    ctx.ui.info('Plugins Registry', { sections });
 
     return {
       ok: true,

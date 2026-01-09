@@ -45,7 +45,7 @@ export const pluginsDiscoveryTest = defineSystemCommand<PluginsDiscoveryTestFlag
   async handler(ctx, argv, flags) {
     const cwd = getContextCwd(ctx);
 
-    ctx.logger?.info('Plugins discovery test started', { cwd });
+    ctx.platform?.logger?.info('Plugins discovery test started', { cwd });
 
     // Create PluginRegistry with new DiscoveryManager
     const pluginRegistry = new PluginRegistry({
@@ -67,7 +67,7 @@ export const pluginsDiscoveryTest = defineSystemCommand<PluginsDiscoveryTestFlag
       }
     }
 
-    ctx.logger?.info('Plugins discovery test completed', {
+    ctx.platform?.logger?.info('Plugins discovery test completed', {
       pluginsCount: plugins.length,
       manifestsCount: manifestEntries.length,
     });
@@ -90,19 +90,19 @@ export const pluginsDiscoveryTest = defineSystemCommand<PluginsDiscoveryTestFlag
   },
   formatter(result, ctx, flags) {
     if (flags.json) { // Type-safe: boolean
-      ctx.output?.json(result);
+      ctx.ui.json(result);
     } else {
       const plugins = result.plugins ?? [];
       const manifests = result.manifests ?? [];
 
-      ctx.output?.write(`Found ${plugins.length} plugins via new DiscoveryManager:\n`);
+      ctx.ui.write(`Found ${plugins.length} plugins via new DiscoveryManager:\n`);
       for (const plugin of plugins) {
-        ctx.output?.write(`  • ${plugin.id} v${plugin.version} (${plugin.source?.kind ?? 'unknown'}: ${plugin.source?.path ?? 'unknown'})\n`);
+        ctx.ui.write(`  • ${plugin.id} v${plugin.version} (${plugin.source?.kind ?? 'unknown'}: ${plugin.source?.path ?? 'unknown'})\n`);
       }
 
-      ctx.output?.write(`\nFound ${manifests.length} manifests:\n`);
+      ctx.ui.write(`\nFound ${manifests.length} manifests:\n`);
       for (const manifest of manifests) {
-        ctx.output?.write(`  • ${manifest.id} → manifest.id=${manifest.manifestId}\n`);
+        ctx.ui.write(`  • ${manifest.id} → manifest.id=${manifest.manifestId}\n`);
       }
     }
   },

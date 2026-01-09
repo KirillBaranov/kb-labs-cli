@@ -47,7 +47,7 @@ export const health = defineSystemCommand<HealthFlags>({
     });
 
     try {
-      ctx.logger?.info('Health check started');
+      ctx.platform?.logger?.info('Health check started');
 
       const snapshot = await cliApi.getSystemHealth({
         uptimeSec: process.uptime(),
@@ -55,7 +55,7 @@ export const health = defineSystemCommand<HealthFlags>({
         meta: { source: 'cli' },
       });
 
-      ctx.logger?.info('Health check completed', { status: snapshot.status });
+      ctx.platform?.logger?.info('Health check completed', { status: snapshot.status });
 
       return {
         ok: snapshot.status === 'healthy',
@@ -64,7 +64,7 @@ export const health = defineSystemCommand<HealthFlags>({
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      ctx.logger?.error('Health check failed', { error: message });
+      ctx.platform?.logger?.error('Health check failed', { error: message });
 
       return {
         ok: false,
@@ -88,17 +88,14 @@ export const health = defineSystemCommand<HealthFlags>({
       // Build UI from result data
       if (result.error) {
         // Error case
-        const output = ctx.output.ui.sideBox({
-          title: 'System Health',
+        ctx.ui.error('System Health', {
           sections: [
             {
               header: 'Status',
               items: [`Status: ${result.status}`, `Error: ${result.error}`],
             },
           ],
-          status: 'error',
         });
-        console.log(output);
       } else if (result.snapshot) {
         // Success case
         const snapshot = result.snapshot;
@@ -106,40 +103,39 @@ export const health = defineSystemCommand<HealthFlags>({
           ? `${snapshot.version.git.sha}${snapshot.version.git.dirty ? ' (dirty)' : ''}`
           : 'n/a';
 
-        const status = result.status === 'healthy' ? 'success' : 'warning';
+        const sections = [
+          {
+            header: 'Status',
+            items: [
+              `Status: ${snapshot.status}`,
+              `KB Labs: ${snapshot.version.kbLabs}`,
+              `CLI: ${snapshot.version.cli}`,
+              `REST: ${snapshot.version.rest}`,
+              `Git: ${gitInfo}`,
+            ],
+          },
+          {
+            header: 'Registry',
+            items: [
+              `Plugins: ${snapshot.registry.total} total (rest ${snapshot.registry.withRest}, studio ${snapshot.registry.withStudio})`,
+              `Errors: ${snapshot.registry.errors}`,
+              `Generated: ${snapshot.registry.generatedAt}`,
+              `Expires: ${snapshot.registry.expiresAt ?? 'n/a'}`,
+              `Partial: ${snapshot.registry.partial ? 'yes' : 'no'}`,
+              `Stale: ${snapshot.registry.stale ? 'yes' : 'no'}`,
+            ],
+          },
+          {
+            header: 'System',
+            items: [`Uptime: ${snapshot.uptimeSec}s`],
+          },
+        ];
 
-        const output = ctx.output.ui.sideBox({
-          title: 'System Health',
-          sections: [
-            {
-              header: 'Status',
-              items: [
-                `Status: ${snapshot.status}`,
-                `KB Labs: ${snapshot.version.kbLabs}`,
-                `CLI: ${snapshot.version.cli}`,
-                `REST: ${snapshot.version.rest}`,
-                `Git: ${gitInfo}`,
-              ],
-            },
-            {
-              header: 'Registry',
-              items: [
-                `Plugins: ${snapshot.registry.total} total (rest ${snapshot.registry.withRest}, studio ${snapshot.registry.withStudio})`,
-                `Errors: ${snapshot.registry.errors}`,
-                `Generated: ${snapshot.registry.generatedAt}`,
-                `Expires: ${snapshot.registry.expiresAt ?? 'n/a'}`,
-                `Partial: ${snapshot.registry.partial ? 'yes' : 'no'}`,
-                `Stale: ${snapshot.registry.stale ? 'yes' : 'no'}`,
-              ],
-            },
-            {
-              header: 'System',
-              items: [`Uptime: ${snapshot.uptimeSec}s`],
-            },
-          ],
-          status,
-        });
-        console.log(output);
+        if (result.status === 'healthy') {
+          ctx.ui.success('System Health', { sections });
+        } else {
+          ctx.ui.warn('System Health', { sections });
+        }
       }
     }
   },

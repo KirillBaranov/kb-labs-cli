@@ -40,7 +40,7 @@ export const docsGenerateCliReference = defineSystemCommand<GenerateCliReference
     const commands = registry.list();
     const productGroups = registry.listProductGroups();
 
-    ctx.logger?.info('Generating CLI reference', {
+    ctx.platform?.logger?.info('Generating CLI reference', {
       commands: commands.length,
       products: productGroups.length,
       output: outputPath,
@@ -121,41 +121,37 @@ export const docsGenerateCliReference = defineSystemCommand<GenerateCliReference
     const content = lines.join('\n');
     await fs.writeFile(outputPath, content, 'utf-8');
 
-    ctx.logger?.info('CLI reference generated', {
+    ctx.platform?.logger?.info('CLI reference generated', {
       path: outputPath,
       size: content.length,
     });
 
     const message = `CLI reference generated: ${outputPath}`;
-    const humanOutput = ctx.output.ui.sideBox({
-      title: 'CLI Reference Generator',
-      sections: [
-        {
-          header: 'Summary',
-          items: [
-            `Commands: ${commands.length}`,
-            `Groups: ${groups.size}`,
-            `Output: ${outputPath}`,
-            `Size: ${(content.length / 1024).toFixed(2)} KB`,
-          ],
-        },
-        {
-          header: 'Next Steps',
-          items: [
-            `cat ${outputPath}`,
-            'git add CLI-REFERENCE.md',
-            'git commit -m "docs: update CLI reference"',
-          ],
-        },
-      ],
-      status: 'success',
-    });
+    const sections = [
+      {
+        header: 'Summary',
+        items: [
+          `Commands: ${commands.length}`,
+          `Groups: ${groups.size}`,
+          `Output: ${outputPath}`,
+          `Size: ${(content.length / 1024).toFixed(2)} KB`,
+        ],
+      },
+      {
+        header: 'Next Steps',
+        items: [
+          `cat ${outputPath}`,
+          'git add CLI-REFERENCE.md',
+          'git commit -m "docs: update CLI reference"',
+        ],
+      },
+    ];
 
     return {
       ok: true,
       status: 'success',
       message,
-      human: humanOutput,
+      sections,
       json: {
         output: outputPath,
         commands: commands.length,
@@ -168,7 +164,7 @@ export const docsGenerateCliReference = defineSystemCommand<GenerateCliReference
     if (flags.json) {
       console.log(JSON.stringify(result.json, null, 2));
     } else {
-      console.log(result.human);
+      ctx.ui.success('CLI Reference Generator', { sections: result.sections });
     }
   },
 });

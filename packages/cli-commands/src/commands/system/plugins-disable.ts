@@ -38,9 +38,9 @@ export const pluginsDisable = defineSystemCommand<PluginsDisableFlags, PluginsDi
     }
 
     const cwd = getContextCwd(ctx);
-    ctx.logger?.info('Disabling plugin', { packageName });
+    ctx.platform?.logger?.info('Disabling plugin', { packageName });
     await disablePlugin(cwd, packageName);
-    ctx.logger?.info('Plugin disabled', { packageName });
+    ctx.platform?.logger?.info('Plugin disabled', { packageName });
 
     return {
       ok: true,
@@ -49,8 +49,8 @@ export const pluginsDisable = defineSystemCommand<PluginsDisableFlags, PluginsDi
     };
   },
   formatter(result, ctx, flags) {
-    ctx.output?.info(result.message ?? 'Plugin disabled');
-    ctx.output?.info(`Run 'kb plugins ls' to see updated status`);
+    ctx.ui.info(result.message ?? 'Plugin disabled');
+    ctx.ui.info(`Run 'kb plugins ls' to see updated status`);
   },
 });
 

@@ -41,14 +41,14 @@ export const pluginsTelemetry = defineSystemCommand<PluginsTelemetryFlags, Plugi
 
     if (clear) {
       telemetry.clear();
-      ctx.logger?.info('Telemetry cleared');
+      ctx.platform?.logger?.info('Telemetry cleared');
       return { ok: true, message: 'Telemetry cleared' };
     }
 
     const metrics = telemetry.getMetrics();
     const events = telemetry.getEvents();
 
-    ctx.logger?.info('Telemetry metrics retrieved', { totalEvents: events.length });
+    ctx.platform?.logger?.info('Telemetry metrics retrieved', { totalEvents: events.length });
 
     return {
       ok: true,
@@ -59,23 +59,19 @@ export const pluginsTelemetry = defineSystemCommand<PluginsTelemetryFlags, Plugi
   },
   formatter(result, ctx, flags) {
     if (flags.json) { // Type-safe: boolean
-      ctx.output?.json(result);
+      ctx.ui.json(result);
       return;
-    }
-
-    if (!ctx.output) {
-      throw new Error('Output not available');
     }
 
     // Check if telemetry is enabled
     if (process.env.KB_CLI_TELEMETRY_DISABLE === '1') {
-      ctx.output.warn('Telemetry is disabled via KB_CLI_TELEMETRY_DISABLE');
+      ctx.ui.warn('Telemetry is disabled via KB_CLI_TELEMETRY_DISABLE');
       return;
     }
 
     if (!result.events || result.events.length === 0) {
-      ctx.output.info('No telemetry data collected yet.');
-      ctx.output.info(
+      ctx.ui.info('No telemetry data collected yet.');
+      ctx.ui.info(
         'Enable telemetry by setting KB_CLI_TELEMETRY_ENABLE=1 or setting telemetry: "opt-in" in plugin manifest',
       );
       return;
@@ -85,33 +81,33 @@ export const pluginsTelemetry = defineSystemCommand<PluginsTelemetryFlags, Plugi
     const events = result.events ?? [];
 
     const sections: string[] = [
-      ctx.output.ui.colors.bold('Telemetry Metrics:'),
+      ctx.ui.colors.bold('Telemetry Metrics:'),
       '',
-      ...ctx.output.ui.keyValue({
+      ...ctx.ui.keyValue({
         'Total Events': `${events.length}`,
         'Discovery Events': `${metrics.discovery.total}`,
         'Registration Events': `${metrics.registration.total}`,
         'Execution Events': `${metrics.execution.total}`,
       }),
       '',
-      ctx.output.ui.colors.bold('Discovery:'),
+      ctx.ui.colors.bold('Discovery:'),
       '',
-      ...ctx.output.ui.keyValue({
+      ...ctx.ui.keyValue({
         'Avg Duration': `${Math.round(metrics.discovery.avgDuration)}ms`,
         'Cache Hit Rate': `${(metrics.discovery.cacheHitRate * 100).toFixed(1)}%`,
       }),
       '',
-      ctx.output.ui.colors.bold('Registration:'),
+      ctx.ui.colors.bold('Registration:'),
       '',
-      ...ctx.output.ui.keyValue({
+      ...ctx.ui.keyValue({
         'Commands Registered': `${metrics.registration.total}`,
         Collisions: `${metrics.registration.collisions}`,
         Errors: `${metrics.registration.errors}`,
       }),
       '',
-      ctx.output.ui.colors.bold('Execution:'),
+      ctx.ui.colors.bold('Execution:'),
       '',
-      ...ctx.output.ui.keyValue({
+      ...ctx.ui.keyValue({
         'Total Executions': `${metrics.execution.total}`,
         'Success Rate': `${(metrics.execution.successRate * 100).toFixed(1)}%`,
         'Avg Duration': `${Math.round(metrics.execution.avgDuration)}ms`,
@@ -120,32 +116,27 @@ export const pluginsTelemetry = defineSystemCommand<PluginsTelemetryFlags, Plugi
 
     if (metrics.topErrors.length > 0) {
       sections.push('');
-      sections.push(ctx.output.ui.colors.bold('Top Schema Errors:'));
+      sections.push(ctx.ui.colors.bold('Top Schema Errors:'));
       sections.push('');
       for (const err of metrics.topErrors.slice(0, 5)) {
-        sections.push(`  ${ctx.output.ui.colors.warn(`× ${err.error}`)} (${err.count}x)`);
+        sections.push(`  ${ctx.ui.colors.warn(`× ${err.error}`)} (${err.count}x)`);
       }
     }
 
     sections.push('');
-    sections.push(ctx.output.ui.colors.bold('Next Steps:'));
+    sections.push(ctx.ui.colors.bold('Next Steps:'));
     sections.push('');
     sections.push(
-      `  ${ctx.output.ui.colors.info('KB_CLI_TELEMETRY_ENABLE=1')}  ${ctx.output.ui.colors.muted('Enable global telemetry')}`,
+      `  ${ctx.ui.colors.info('KB_CLI_TELEMETRY_ENABLE=1')}  ${ctx.ui.colors.muted('Enable global telemetry')}`,
     );
     sections.push(
-      `  ${ctx.output.ui.colors.info('telemetry: "opt-in"')}  ${ctx.output.ui.colors.muted('Enable in plugin manifest')}`,
+      `  ${ctx.ui.colors.info('telemetry: "opt-in"')}  ${ctx.ui.colors.muted('Enable in plugin manifest')}`,
     );
     sections.push(
-      `  ${ctx.output.ui.colors.info('kb plugins telemetry --clear')}  ${ctx.output.ui.colors.muted('Clear collected metrics')}`,
+      `  ${ctx.ui.colors.info('kb plugins telemetry --clear')}  ${ctx.ui.colors.muted('Clear collected metrics')}`,
     );
 
-    const output = ctx.output.ui.sideBox({
-      title: 'Telemetry Metrics',
-      sections: [{ items: sections }],
-      status: 'info',
-    });
-    ctx.output.write(output);
+    ctx.ui.info('Telemetry Metrics', { sections: [{ items: sections }] });
   },
 });
 

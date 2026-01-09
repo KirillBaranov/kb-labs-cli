@@ -33,8 +33,8 @@ export const pluginsTrust = defineSystemCommand<PluginsTrustFlags, PluginsTrustR
   },
   async handler(ctx, argv, flags) {
     // TODO: Implement when marketplace is ready (~6 months)
-    ctx.output?.warn('Trust management is not yet implemented');
-    ctx.output?.info('Coming soon: KB Labs Marketplace with automatic audit');
+    ctx.ui.warn('Trust management is not yet implemented');
+    ctx.ui.info('Coming soon: KB Labs Marketplace with automatic audit');
     return { ok: false, message: 'Not implemented' };
   },
 });
@@ -60,7 +60,7 @@ export const pluginsUntrust = defineSystemCommand<PluginsUntrustFlags, PluginsUn
   },
   async handler(ctx, argv, flags) {
     // TODO: Implement when marketplace is ready
-    ctx.output?.warn('Trust management is not yet implemented');
+    ctx.ui.warn('Trust management is not yet implemented');
     return { ok: false, message: 'Not implemented' };
   },
 });
@@ -90,7 +90,7 @@ export const pluginsTrustStatus = defineSystemCommand<PluginsTrustStatusFlags, P
   },
   async handler(ctx, argv, flags) {
     // TODO: Implement when marketplace is ready
-    ctx.output?.warn('Trust management is not yet implemented');
+    ctx.ui.warn('Trust management is not yet implemented');
     return { ok: false, message: 'Not implemented' };
   },
 });

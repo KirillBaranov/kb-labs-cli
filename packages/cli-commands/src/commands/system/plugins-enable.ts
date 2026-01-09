@@ -48,13 +48,13 @@ export const pluginsEnable = defineSystemCommand<PluginsEnableFlags, PluginsEnab
     const permissions = Array.isArray(flags.perm) ? flags.perm.map(String) : []; // Type-safe: string[]
     const cwd = getContextCwd(ctx);
 
-    ctx.logger?.info('Enabling plugin', { packageName, permissions });
+    ctx.platform?.logger?.info('Enabling plugin', { packageName, permissions });
     await enablePlugin(cwd, packageName);
 
     if (permissions.length > 0) {
       const { grantPermissions } = await import('../../registry/plugins-state');
       await grantPermissions(cwd, packageName, permissions);
-      ctx.logger?.info('Plugin enabled with permissions', { packageName, permissions });
+      ctx.platform?.logger?.info('Plugin enabled with permissions', { packageName, permissions });
       return {
         ok: true,
         packageName,
@@ -62,7 +62,7 @@ export const pluginsEnable = defineSystemCommand<PluginsEnableFlags, PluginsEnab
         message: `Enabled ${packageName} with permissions: ${permissions.join(', ')}`,
       };
     } else {
-      ctx.logger?.info('Plugin enabled', { packageName });
+      ctx.platform?.logger?.info('Plugin enabled', { packageName });
       return {
         ok: true,
         packageName,
@@ -71,8 +71,8 @@ export const pluginsEnable = defineSystemCommand<PluginsEnableFlags, PluginsEnab
     }
   },
   formatter(result, ctx, flags) {
-    ctx.output?.info(result.message ?? 'Plugin enabled');
-    ctx.output?.info(`Run 'kb plugins ls' to see updated status`);
+    ctx.ui.info(result.message ?? 'Plugin enabled');
+    ctx.ui.info(`Run 'kb plugins ls' to see updated status`);
   },
 });
 

@@ -95,14 +95,14 @@ export const pluginValidate = defineSystemCommand<PluginValidateFlags, PluginVal
     const cwd = getContextCwd();
     const manifestPath = path.resolve(cwd, flags.manifest || 'manifest.v2.ts');
 
-    ctx.output?.write(`Validating manifest: ${manifestPath}\n`);
+    ctx.ui.write(`Validating manifest: ${manifestPath}\n`);
 
     // Read and parse manifest
     let manifestContent: string;
     try {
       manifestContent = await fs.readFile(manifestPath, 'utf-8');
     } catch (error) {
-      ctx.output?.error(`Failed to read manifest: ${error instanceof Error ? error.message : String(error)}\n`);
+      ctx.ui.error(`Failed to read manifest: ${error instanceof Error ? error.message : String(error)}\n`);
       return { ok: false };
     }
 
@@ -118,7 +118,7 @@ export const pluginValidate = defineSystemCommand<PluginValidateFlags, PluginVal
       try {
         manifest = JSON.parse(manifestContent);
       } catch (jsonError) {
-        ctx.output?.error(`Failed to parse manifest: ${error instanceof Error ? error.message : String(error)}\n`);
+        ctx.ui.error(`Failed to parse manifest: ${error instanceof Error ? error.message : String(error)}\n`);
         return { ok: false };
       }
     }
@@ -127,12 +127,12 @@ export const pluginValidate = defineSystemCommand<PluginValidateFlags, PluginVal
     const validationResult = validateManifest(manifest);
 
     if (!validationResult.valid) {
-      ctx.output?.error('❌ Manifest validation failed:\n');
+      ctx.ui.error('❌ Manifest validation failed:\n');
       for (const zodError of validationResult.errors) {
         // ZodError имеет структуру { issues: Array<{ path, message, code }> }
         for (const issue of zodError.issues) {
           const path = issue.path.length > 0 ? issue.path.join('.') : 'root';
-          ctx.output?.write(`  - ${path}: ${issue.message}\n`);
+          ctx.ui.write(`  - ${path}: ${issue.message}\n`);
         }
       }
       return { ok: false, valid: false, errors: validationResult.errors.flatMap((zodError) =>
@@ -143,19 +143,19 @@ export const pluginValidate = defineSystemCommand<PluginValidateFlags, PluginVal
       ) };
     }
 
-    ctx.output?.success('✅ Manifest structure is valid!\n');
+    ctx.ui.success('✅ Manifest structure is valid!\n');
 
     // Cross-validation with contracts
     if (flags.contracts) {
       const contractsPath = path.resolve(cwd, flags.contracts);
-      ctx.output?.write(`\nValidating against contracts: ${contractsPath}\n`);
+      ctx.ui.write(`\nValidating against contracts: ${contractsPath}\n`);
 
       const crossValidation = await validateManifestAgainstContracts(manifest, contractsPath);
 
       if (!crossValidation.ok) {
-        ctx.output?.error('❌ Manifest does not match contracts:\n');
+        ctx.ui.error('❌ Manifest does not match contracts:\n');
         for (const issue of crossValidation.issues) {
-          ctx.output?.write(`  - ${issue}\n`);
+          ctx.ui.write(`  - ${issue}\n`);
         }
         return { ok: false, valid: false, errors: crossValidation.issues.map((issue) => ({
           path: '',
@@ -163,10 +163,10 @@ export const pluginValidate = defineSystemCommand<PluginValidateFlags, PluginVal
         })) };
       }
 
-      ctx.output?.success('✅ Manifest matches contracts!\n');
+      ctx.ui.success('✅ Manifest matches contracts!\n');
     }
 
-    ctx.output?.success('\n✅ All validations passed!\n');
+    ctx.ui.success('\n✅ All validations passed!\n');
     return { ok: true, valid: true };
   },
 });

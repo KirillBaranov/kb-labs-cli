@@ -61,7 +61,7 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
 
     // 1. Environment check
     const nodeVersion = process.version;
-    const cliVersion = ctx.env?.CLI_VERSION || process.env.CLI_VERSION || '0.1.0';
+    const cliVersion = process.env.CLI_VERSION || process.env.CLI_VERSION || '0.1.0';
     const platform = process.platform;
     const arch = process.arch;
 
@@ -223,7 +223,7 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
       errors: diagnostics.filter((d) => d.status === 'error').length,
     };
 
-    ctx.logger?.info('Diag command completed', summary);
+    ctx.platform?.logger?.info('Diag command completed', summary);
 
     // Return typed data
     return {
@@ -285,27 +285,29 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
       }
       nextSteps.push(`kb diagnose  ${safeColors.muted('Quick environment check')}`);
 
-      // Build output using ctx.output.ui.sideBox()
-      const output = ctx.output.ui.sideBox({
-        title: 'System Diagnostics',
-        sections: [
-          {
-            header: 'Summary',
-            items: summaryItems,
-          },
-          {
-            header: 'Details',
-            items: diagItems,
-          },
-          {
-            header: 'Next Steps',
-            items: nextSteps,
-          },
-        ],
-        status: hasErrors ? 'error' : hasWarnings ? 'warning' : 'success',
-      });
+      // Output using ctx.ui based on status
+      const sections = [
+        {
+          header: 'Summary',
+          items: summaryItems,
+        },
+        {
+          header: 'Details',
+          items: diagItems,
+        },
+        {
+          header: 'Next Steps',
+          items: nextSteps,
+        },
+      ];
 
-      console.log(output);
+      if (hasErrors) {
+        ctx.ui.error('System Diagnostics', { sections });
+      } else if (hasWarnings) {
+        ctx.ui.warn('System Diagnostics', { sections });
+      } else {
+        ctx.ui.success('System Diagnostics', { sections });
+      }
     }
   },
 });

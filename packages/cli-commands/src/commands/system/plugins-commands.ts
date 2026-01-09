@@ -197,18 +197,11 @@ export const pluginsCommands = defineSystemCommand<PluginsCommandsFlags, Command
       ],
     });
 
-    // Create formatted output using sideBox
-    const humanOutput = ctx.output.ui.sideBox({
-      title: 'Plugin Commands Registry',
-      sections,
-      status: 'success',
-    });
-
     return {
       ok: true,
       status: 'success',
       message: `Found ${totalCommands} commands in ${totalGroups} groups`,
-      human: humanOutput,
+      sections,
       json: {
         groups: filteredGroups,
         totalGroups,
@@ -221,7 +214,7 @@ export const pluginsCommands = defineSystemCommand<PluginsCommandsFlags, Command
     if (flags.json) {
       console.log(JSON.stringify(result.json, null, 2));
     } else {
-      console.log(result.human);
+      ctx.ui.success('Plugin Commands Registry', { sections: result.sections });
     }
   },
 });

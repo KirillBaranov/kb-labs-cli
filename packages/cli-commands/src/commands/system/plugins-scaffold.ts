@@ -50,7 +50,7 @@ export const pluginsScaffold = defineSystemCommand<PluginsScaffoldFlags, Plugins
       throw new Error('Please specify a plugin name');
     }
 
-    ctx.logger?.info('Scaffolding plugin', { pluginName });
+    ctx.platform?.logger?.info('Scaffolding plugin', { pluginName });
     const format = String(flags.format ?? 'esm'); // Type-safe: string
     const isESM = format === 'esm';
     const extension = isESM ? 'ts' : 'ts';
@@ -63,7 +63,7 @@ export const pluginsScaffold = defineSystemCommand<PluginsScaffoldFlags, Plugins
     // Check if directory exists
     try {
       await fs.access(dir);
-      ctx.logger?.warn('Directory already exists', { dir });
+      ctx.platform?.logger?.warn('Directory already exists', { dir });
       throw new Error(`Directory ${pluginName} already exists`);
     } catch (err: any) {
       if (err.code !== 'ENOENT') {
@@ -190,7 +190,7 @@ export const run = defineCommand<${pluginName.charAt(0).toUpperCase() + pluginNa
   },
   async handler(ctx, argv, flags) {
     // Full type safety: flags.json and flags.quiet are properly typed!
-    ctx.logger?.info('${pluginName} hello started');
+    ctx.platform?.logger?.info('${pluginName} hello started');
 
 
     // Your command logic here
@@ -201,22 +201,19 @@ export const run = defineCommand<${pluginName.charAt(0).toUpperCase() + pluginNa
 
     const duration = ctx.tracker.total();
 
-    ctx.logger?.info('${pluginName} hello completed', {
+    ctx.platform?.logger?.info('${pluginName} hello completed', {
       durationMs: duration,
     });
 
     if (flags.json) {
-      ctx.output?.json({ ok: true, ...result, timing: duration });
+      ctx.ui.json({ ok: true, ...result, timing: duration });
     } else if (!flags.quiet) {
-      if (!ctx.output) {
-        throw new Error('Output not available');
-      }
       const summary = [
-        ctx.output.ui.colors.success('✓ Success'),
+        ctx.ui.colors.success('✓ Success'),
         \`Message: \${result.message}\`,
-        \`Time: \${ctx.output.ui.colors.muted(duration + 'ms')}\`,
+        \`Time: \${ctx.ui.colors.muted(duration + 'ms')}\`,
       ];
-      ctx.output.write(ctx.output.ui.box('${pluginName} Command', summary));
+      ctx.ui.write(ctx.ui.box('${pluginName} Command', summary));
     }
 
     return { ok: true, ...result, timing: duration };
@@ -289,7 +286,7 @@ dist
 
     await fs.writeFile(path.join(dir, '.gitignore'), gitignore, 'utf8');
 
-    ctx.logger?.info('Plugin scaffold created', { pluginName, dir });
+    ctx.platform?.logger?.info('Plugin scaffold created', { pluginName, dir });
 
     return {
       ok: true,
@@ -298,33 +295,28 @@ dist
     };
   },
   formatter(result, ctx, flags) {
-    if (!ctx.output) {
-      throw new Error('Output not available');
-    }
-
     const resultData = result as any;
     const { pluginName, dir } = resultData;
 
     const sections = [
-      ctx.output.ui.colors.bold('Plugin Template Created:'),
-      `${ctx.output.ui.symbols.success} ${ctx.output.ui.colors.info(dir)}`,
-      '',
-      ctx.output.ui.colors.bold('Next Steps:'),
-      `  ${ctx.output.ui.colors.info(`cd ${pluginName}`)}`,
-      `  ${ctx.output.ui.colors.info('pnpm install')}`,
-      `  ${ctx.output.ui.colors.info('pnpm build')}`,
-      `  ${ctx.output.ui.colors.info(`kb plugins link ./${pluginName}`)}`,
-      `  ${ctx.output.ui.colors.info(`kb ${pluginName} hello`)}`,
-      '',
-      ctx.output.ui.colors.muted('See docs/plugin-development.md for more details'),
+      {
+        items: [
+          ctx.ui.colors.bold('Plugin Template Created:'),
+          `${ctx.ui.symbols.success} ${ctx.ui.colors.info(dir)}`,
+          '',
+          ctx.ui.colors.bold('Next Steps:'),
+          `  ${ctx.ui.colors.info(`cd ${pluginName}`)}`,
+          `  ${ctx.ui.colors.info('pnpm install')}`,
+          `  ${ctx.ui.colors.info('pnpm build')}`,
+          `  ${ctx.ui.colors.info(`kb plugins link ./${pluginName}`)}`,
+          `  ${ctx.ui.colors.info(`kb ${pluginName} hello`)}`,
+          '',
+          ctx.ui.colors.muted('See docs/plugin-development.md for more details'),
+        ],
+      },
     ];
 
-    const output = ctx.output.ui.sideBox({
-      title: 'Plugin Scaffold',
-      sections: [{ items: sections }],
-      status: 'success',
-    });
-    ctx.output.write(output);
+    ctx.ui.success('Plugin Scaffold', { sections });
   },
 });
 

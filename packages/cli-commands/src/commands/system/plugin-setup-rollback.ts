@@ -48,7 +48,7 @@ export function createPluginSetupRollbackCommand(
     async run(ctx, argv, rawFlags) {
       const presenter = ctx.presenter ?? {};
       const output = ctx.output;
-      const logger = ctx.logger;
+      const logger = ctx.platform?.logger;
       const cwd = getContextCwd(ctx) ?? process.cwd();
       
       logger?.info('Plugin setup rollback started', { namespace });

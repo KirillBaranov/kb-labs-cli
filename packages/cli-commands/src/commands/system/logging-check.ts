@@ -150,7 +150,7 @@ export const loggingCheck = defineSystemCommand<LoggingCheckFlags, LoggingCheckR
     
     results.testResults = testResults;
     
-    ctx.logger?.info('Logging check completed', {
+    ctx.platform?.logger?.info('Logging check completed', {
       configFound,
       configValid: results.configValid,
       adaptersCount: results.adapters?.length || 0,
@@ -163,57 +163,53 @@ export const loggingCheck = defineSystemCommand<LoggingCheckFlags, LoggingCheckR
   },
   formatter(result, ctx, flags) {
     if (flags.json) { // Type-safe: boolean
-      ctx.output?.json(result);
+      ctx.ui.json(result);
       return;
-    }
-
-    if (!ctx.output) {
-      throw new Error('Output not available');
     }
 
     const lines: string[] = [];
 
-    lines.push(ctx.output.ui.colors.bold('🔍 Logging Configuration Check\n'));
+    lines.push(ctx.ui.colors.bold('🔍 Logging Configuration Check\n'));
 
     // Конфигурационный файл
-    lines.push(ctx.output.ui.colors.bold('Configuration File:'));
+    lines.push(ctx.ui.colors.bold('Configuration File:'));
     if (result.configExists) {
-      lines.push(`  ${ctx.output.ui.symbols.success} Found: ${result.configFile ?? 'unknown'}`);
+      lines.push(`  ${ctx.ui.symbols.success} Found: ${result.configFile ?? 'unknown'}`);
       if (result.configValid) {
-        lines.push(`  ${ctx.output.ui.symbols.success} Valid JSON`);
+        lines.push(`  ${ctx.ui.symbols.success} Valid JSON`);
       } else {
-        lines.push(`  ${ctx.output.ui.symbols.error} Invalid JSON`);
+        lines.push(`  ${ctx.ui.symbols.error} Invalid JSON`);
         if (result.configErrors) {
           result.configErrors.forEach((err) => {
-            lines.push(`    ${ctx.output.ui.colors.error(String(err))}`);
+            lines.push(`    ${ctx.ui.colors.error(String(err))}`);
           });
         }
       }
     } else {
-      lines.push(`  ${ctx.output.ui.symbols.warning} Not found (using defaults)`);
+      lines.push(`  ${ctx.ui.symbols.warning} Not found (using defaults)`);
     }
 
     // Адаптеры
     if (result.adapters && result.adapters.length > 0) {
-      lines.push(`\n${ctx.output.ui.colors.bold('Adapters:')}`);
+      lines.push(`\n${ctx.ui.colors.bold('Adapters:')}`);
       result.adapters.forEach((adapter) => {
-        const status = adapter.enabled ? ctx.output.ui.symbols.success : ctx.output.ui.symbols.error;
+        const status = adapter.enabled ? ctx.ui.symbols.success : ctx.ui.symbols.error;
         const statusText = adapter.enabled
-          ? ctx.output.ui.colors.success('enabled')
-          : ctx.output.ui.colors.error('disabled');
+          ? ctx.ui.colors.success('enabled')
+          : ctx.ui.colors.error('disabled');
         lines.push(`  ${status} ${adapter.type}: ${statusText}`);
       });
     } else if (result.configExists) {
-      lines.push(`\n${ctx.output.ui.colors.bold('Adapters:')}`);
-      lines.push(`  ${ctx.output.ui.colors.muted('No adapters configured (using defaults)')}`);
+      lines.push(`\n${ctx.ui.colors.bold('Adapters:')}`);
+      lines.push(`  ${ctx.ui.colors.muted('No adapters configured (using defaults)')}`);
     }
 
     // Тест логирования
     if (result.testResults) {
-      lines.push(`\n${ctx.output.ui.colors.bold('Logging Test:')}`);
+      lines.push(`\n${ctx.ui.colors.bold('Logging Test:')}`);
       const testStatus = (name: string, passed: boolean) => {
-        const icon = passed ? ctx.output.ui.symbols.success : ctx.output.ui.symbols.error;
-        const color = passed ? ctx.output.ui.colors.success : ctx.output.ui.colors.error;
+        const icon = passed ? ctx.ui.symbols.success : ctx.ui.symbols.error;
+        const color = passed ? ctx.ui.colors.success : ctx.ui.colors.error;
         lines.push(`  ${icon} ${color(name)}: ${passed ? 'OK' : 'FAILED'}`);
       };
 
@@ -224,15 +220,15 @@ export const loggingCheck = defineSystemCommand<LoggingCheckFlags, LoggingCheckR
     }
 
     // Рекомендации
-    lines.push(`\n${ctx.output.ui.colors.bold('Recommendations:')}`);
+    lines.push(`\n${ctx.ui.colors.bold('Recommendations:')}`);
     if (!result.configExists) {
-      lines.push(`  ${ctx.output.ui.colors.info('• Run "kb logging:init" to create a configuration file')}`);
+      lines.push(`  ${ctx.ui.colors.info('• Run "kb logging:init" to create a configuration file')}`);
     }
     if (!result.adapters || result.adapters.length === 0) {
-      lines.push(`  ${ctx.output.ui.colors.info('• Consider adding adapters (Sentry, Loki, etc.) for production')}`);
+      lines.push(`  ${ctx.ui.colors.info('• Consider adding adapters (Sentry, Loki, etc.) for production')}`);
     }
 
-    ctx.output.write(lines.join('\n') + '\n');
+    ctx.ui.write(lines.join('\n') + '\n');
   },
 });
 

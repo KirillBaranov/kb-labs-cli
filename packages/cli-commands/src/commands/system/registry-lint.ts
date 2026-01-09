@@ -93,7 +93,7 @@ export const registryLint = defineSystemCommand<RegistryLintFlags, RegistryLintR
       const errors = issues.filter((issue) => issue.level === 'error');
       const warnings = issues.filter((issue) => issue.level === 'warn');
 
-      ctx.logger?.info('Registry lint completed', {
+      ctx.platform?.logger?.info('Registry lint completed', {
         manifests: snapshot.manifests.length,
         errors: errors.length,
         warnings: warnings.length,
@@ -116,7 +116,7 @@ export const registryLint = defineSystemCommand<RegistryLintFlags, RegistryLintR
   },
   formatter(result, ctx, flags) {
     if (flags.json) { // Type-safe: boolean
-      ctx.output?.json({
+      ctx.ui.json({
         ok: result.ok,
         errors: result.errors,
         warnings: result.warnings,
@@ -125,30 +125,26 @@ export const registryLint = defineSystemCommand<RegistryLintFlags, RegistryLintR
       return;
     }
 
-    if (!ctx.output) {
-      throw new Error('Output not available');
-    }
-
     const issues = result.issues ?? [];
     const errors = result.errors ?? [];
     const warnings = result.warnings ?? [];
 
     if (issues.length === 0) {
-      ctx.output.info('✅ Header policies look good (no issues found).');
+      ctx.ui.info('✅ Header policies look good (no issues found).');
     } else {
       const grouped = groupIssues(issues);
       for (const [pluginId, pluginIssues] of grouped) {
-        ctx.output.info(`\n${pluginId}:`);
+        ctx.ui.info(`\n${pluginId}:`);
         for (const issue of pluginIssues) {
           const prefix = issue.level === 'error' ? '❌' : '⚠️';
           const headerInfo = issue.header ? ` [${issue.header}]` : '';
-          ctx.output.info(`  ${prefix} ${issue.code}${headerInfo} (${issue.routeId}) — ${issue.message}`);
+          ctx.ui.info(`  ${prefix} ${issue.code}${headerInfo} (${issue.routeId}) — ${issue.message}`);
           if (issue.details && Object.keys(issue.details).length > 0) {
-            ctx.output.info(`      details: ${JSON.stringify(issue.details)}`);
+            ctx.ui.info(`      details: ${JSON.stringify(issue.details)}`);
           }
         }
       }
-      ctx.output.info(
+      ctx.ui.info(
         `\nSummary: ${errors.length} error(s), ${warnings.length} warning(s) across ${result.summary?.manifests ?? 0} plugin(s).`,
       );
     }

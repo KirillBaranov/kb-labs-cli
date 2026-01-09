@@ -116,27 +116,25 @@ function filterEntries(
   });
 }
 
-function formatDecision(entry: HeaderDebugEntry, output?: Output): string {
-  if (!output) return entry.allowed === true ? "allow" : entry.allowed === false ? "block" : entry.action ?? entry.reason ?? "unknown";
-  
+function formatDecision(entry: HeaderDebugEntry, ui: any): string {
   if (entry.allowed === true) {
-    return output.ui.colors.success("allow");
+    return ui.colors.success("allow");
   }
   if (entry.allowed === false) {
-    const tag = output.ui.colors.error("block");
-    return entry.dryRun ? `${tag} ${output.ui.colors.warn("(dry-run)")}` : tag;
+    const tag = ui.colors.error("block");
+    return entry.dryRun ? `${tag} ${ui.colors.warn("(dry-run)")}` : tag;
   }
   if (entry.action) {
-    return output.ui.colors.info(entry.action);
+    return ui.colors.info(entry.action);
   }
   return entry.reason ?? "unknown";
 }
 
-function formatWhen(entry: HeaderDebugEntry, nowMs: number, output?: Output): string {
+function formatWhen(entry: HeaderDebugEntry, nowMs: number, ui: any): string {
   const timestamp = Number.isFinite(entry.timestamp) ? entry.timestamp : Date.now();
   const isoTime = new Date(timestamp).toISOString().slice(11, 19);
   const relative = formatRelativeTime(new Date(timestamp));
-  const dimColor = output?.ui?.colors?.muted || ((s: string) => s);
+  const dimColor = ui.colors.muted;
   return `${isoTime} ${dimColor(`(${relative})`)}`;
 }
 
@@ -211,14 +209,14 @@ export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugR
     finishEvent: 'HEADERS_DEBUG_FINISHED',
   },
   async handler(ctx, argv, flags) {
-    ctx.logger?.info('Headers debug started');
+    ctx.platform?.logger?.info('Headers debug started');
 
     let baseUrl: string;
     try {
       baseUrl = resolveBaseUrl(flags['base-url']); // Type-safe: string | undefined
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      ctx.logger?.error('Failed to resolve base URL', { error: message });
+      ctx.platform?.logger?.error('Failed to resolve base URL', { error: message });
       throw new Error(`Failed to resolve base URL: ${message}`);
     }
 
@@ -241,13 +239,13 @@ export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugR
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      ctx.logger?.error('Request failed', { error: message, baseUrl });
+      ctx.platform?.logger?.error('Request failed', { error: message, baseUrl });
       throw new Error(`Request failed: ${message}`);
     }
 
     if (!response.ok) {
       const contentType = response.headers?.get('content-type') || 'unknown';
-      ctx.logger?.error('REST API error response', {
+      ctx.platform?.logger?.error('REST API error response', {
         status: response.status,
         statusText: response.statusText,
         contentType,
@@ -261,7 +259,7 @@ export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugR
     const filtered = filterEntries(entries, filters);
     const summary = summarise(filtered);
 
-    ctx.logger?.info('Headers debug completed', {
+    ctx.platform?.logger?.info('Headers debug completed', {
       entriesCount: entries.length,
       filteredCount: filtered.length,
       summary,
@@ -285,12 +283,8 @@ export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugR
   },
   formatter(result, ctx, flags) {
     if (flags.json) { // Type-safe: boolean
-      ctx.output?.json(result);
+      ctx.ui.json(result);
       return;
-    }
-
-    if (!ctx.output) {
-      throw new Error('Output not available');
     }
 
     const entries = result.entries ?? [];
@@ -319,33 +313,31 @@ export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugR
       ].filter(Boolean);
       if (filterParts.length > 0) {
         lines.push('');
-        lines.push(`${ctx.output.ui.symbols.info} Filters: ${filterParts.join(', ')}`);
+        lines.push(`${ctx.ui.symbols.info} Filters: ${filterParts.join(', ')}`);
       }
     }
 
     if (summary.topReasons && summary.topReasons.length > 0) {
       lines.push('');
-      lines.push(ctx.output.ui.colors.bold('Top reasons:'));
+      lines.push(ctx.ui.colors.bold('Top reasons:'));
       for (const [reason, count] of summary.topReasons) {
-        lines.push(`  ${ctx.output.ui.symbols.bullet} ${reason} (${count})`);
+        lines.push(`  ${ctx.ui.symbols.bullet} ${reason} (${count})`);
       }
     }
 
+    const filtered = filterEntries(entries, filters);
     if (filtered.length === 0) {
       lines.push('');
-      if (resultData.fetched === 0) {
+      if ((result as any).fetched === 0) {
         lines.push(
-          `${ctx.output.ui.symbols.warning} No header decisions captured yet. Enable KB_HEADERS_DEBUG=1 (or KB_HEADERS_DEBUG=dry-run) on the REST API node and rerun this command.`,
+          `${ctx.ui.symbols.warning} No header decisions captured yet. Enable KB_HEADERS_DEBUG=1 (or KB_HEADERS_DEBUG=dry-run) on the REST API node and rerun this command.`,
         );
       } else {
-        lines.push(`${ctx.output.ui.symbols.warning} No entries matched the current filters.`);
+        lines.push(`${ctx.ui.symbols.warning} No entries matched the current filters.`);
       }
-      const outputText = ctx.output.ui.sideBox({
-        title: 'Header Policy Debug',
+      ctx.ui.warn('Header Policy Debug', {
         sections: [{ items: lines }],
-        status: 'warning',
       });
-      ctx.output.write(outputText);
       return;
     }
 
@@ -361,12 +353,12 @@ export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugR
     ] as const;
 
     const rows = filtered.map((entry: HeaderDebugEntry) => [
-      formatWhen(entry, now, ctx.output),
+      formatWhen(entry, now, ctx.ui),
       entry.pluginId ?? '—',
       entry.routeId ?? '—',
       entry.direction,
       entry.header,
-      formatDecision(entry, ctx.output),
+      formatDecision(entry, ctx.ui),
       entry.reason ?? entry.action ?? '—',
     ]);
 
@@ -374,17 +366,14 @@ export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugR
     lines.push(...formatTable(columns as unknown as { header: string }[], rows));
     lines.push('');
     lines.push(
-      ctx.output.ui.colors.muted(
+      ctx.ui.colors.muted(
         'Tip: switch the REST API to shadow mode with KB_HEADERS_DEBUG=dry-run to observe would-be drops without mutating traffic.',
       ),
     );
 
-    const outputText = ctx.output.ui.sideBox({
-      title: 'Header Policy Debug',
+    ctx.ui.info('Header Policy Debug', {
       sections: [{ items: lines }],
-      status: 'info',
     });
-    ctx.output.write(outputText);
   },
 });
 
