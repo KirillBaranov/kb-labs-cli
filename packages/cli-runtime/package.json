@@ -40,5 +40,6 @@
   },
   "engines": {
     "node": ">=18.18.0"
-  }
+  },
+  "private": true
 }
