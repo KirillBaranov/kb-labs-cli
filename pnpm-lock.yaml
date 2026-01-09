@@ -119,104 +119,6 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
-  ../kb-labs-core/packages/core-cli:
-    dependencies:
-      '@kb-labs/cli-core':
-        specifier: link:../../../kb-labs-cli/packages/cli-core
-        version: link:../../../kb-labs-cli/packages/cli-core
-      '@kb-labs/core-bundle':
-        specifier: workspace:*
-        version: link:../core-bundle
-      '@kb-labs/core-config':
-        specifier: workspace:*
-        version: link:../core-config
-      '@kb-labs/core-contracts':
-        specifier: workspace:*
-        version: link:../core-contracts
-      '@kb-labs/core-policy':
-        specifier: workspace:*
-        version: link:../core-policy
-      '@kb-labs/shared-cli-ui':
-        specifier: link:../../../kb-labs-shared/packages/shared-cli-ui
-        version: link:../../../kb-labs-shared/packages/shared-cli-ui
-      '@kb-labs/shared-command-kit':
-        specifier: link:../../../kb-labs-shared/packages/shared-command-kit
-        version: link:../../../kb-labs-shared/packages/shared-command-kit
-      yaml:
-        specifier: ^2.8.0
-        version: 2.8.1
-    devDependencies:
-      '@types/node':
-        specifier: ^24.3.3
-        version: 24.9.1
-      rimraf:
-        specifier: ^6.0.1
-        version: 6.0.1
-      tsup:
-        specifier: ^8.5.0
-        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
-      typescript:
-        specifier: ^5.6.3
-        version: 5.9.3
-      vitest:
-        specifier: ^3.2.4
-        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
-
-  ../kb-labs-core/packages/core-cli-adapters:
-    dependencies:
-      '@kb-labs/core-sys':
-        specifier: workspace:*
-        version: link:../core-sys
-      '@kb-labs/plugin-adapter-rest':
-        specifier: link:../../../kb-labs-plugin/packages/adapters/rest
-        version: link:../../../kb-labs-plugin/packages/adapters/rest
-      '@kb-labs/plugin-manifest':
-        specifier: link:../../../kb-labs-plugin/packages/plugin-manifest
-        version: link:../../../kb-labs-plugin/packages/plugin-manifest
-      chokidar:
-        specifier: ^4.0.3
-        version: 4.0.3
-      colorette:
-        specifier: ^2.0.20
-        version: 2.0.20
-      glob:
-        specifier: ^11.0.0
-        version: 11.0.3
-      semver:
-        specifier: ^7.6.3
-        version: 7.7.3
-      yaml:
-        specifier: ^2.8.0
-        version: 2.8.1
-      zod:
-        specifier: ^3.23.8
-        version: 3.25.76
-    devDependencies:
-      '@kb-labs/devkit':
-        specifier: link:../../../kb-labs-devkit
-        version: link:../../../kb-labs-devkit
-      '@types/node':
-        specifier: ^24.3.3
-        version: 24.9.1
-      '@types/picomatch':
-        specifier: ^4
-        version: 4.0.2
-      '@types/semver':
-        specifier: ^7.5.8
-        version: 7.7.1
-      rimraf:
-        specifier: ^6.0.1
-        version: 6.0.1
-      tsup:
-        specifier: ^8.5.0
-        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
-      typescript:
-        specifier: ^5.6.3
-        version: 5.9.3
-      vitest:
-        specifier: ^3.2.4
-        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
-
   ../kb-labs-core/packages/core-config:
     dependencies:
       ajv:
@@ -267,6 +169,10 @@ importers:
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
   ../kb-labs-core/packages/core-contracts:
+    dependencies:
+      '@kb-labs/plugin-contracts':
+        specifier: link:../../../kb-labs-plugin/packages/plugin-contracts
+        version: link:../../../kb-labs-plugin/packages/plugin-contracts
     devDependencies:
       '@kb-labs/devkit':
         specifier: link:../../../kb-labs-devkit
@@ -326,6 +232,9 @@ importers:
       typescript:
         specifier: ^5.3.0
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
   ../kb-labs-core/packages/core-policy:
     dependencies:
@@ -382,6 +291,9 @@ importers:
 
   ../kb-labs-core/packages/core-runtime:
     dependencies:
+      '@kb-labs/core-contracts':
+        specifier: workspace:*
+        version: link:../core-contracts
       '@kb-labs/core-ipc':
         specifier: workspace:*
         version: link:../core-ipc
@@ -391,9 +303,9 @@ importers:
       '@kb-labs/core-resource-broker':
         specifier: workspace:*
         version: link:../core-resource-broker
-      '@kb-labs/plugin-execution':
-        specifier: link:../../../kb-labs-plugin/packages/plugin-execution
-        version: link:../../../kb-labs-plugin/packages/plugin-execution
+      '@kb-labs/plugin-execution-factory':
+        specifier: link:../../../kb-labs-plugin/packages/plugin-execution-factory
+        version: link:../../../kb-labs-plugin/packages/plugin-execution-factory
       glob:
         specifier: ^10.0.0
         version: 10.4.5
@@ -660,124 +572,6 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
-  ../kb-labs-devlink/packages/devlink-adapters:
-    dependencies:
-      '@kb-labs/core-sys':
-        specifier: link:../../../kb-labs-core/packages/core-sys
-        version: link:../../../kb-labs-core/packages/core-sys
-      '@kb-labs/devlink-contracts':
-        specifier: workspace:*
-        version: link:../devlink-contracts
-      glob:
-        specifier: ^11.0.0
-        version: 11.0.3
-      p-queue:
-        specifier: ^8.0.0
-        version: 8.1.1
-    devDependencies:
-      tsup:
-        specifier: ^8.0.0
-        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
-      typescript:
-        specifier: ^5.3.0
-        version: 5.9.3
-
-  ../kb-labs-devlink/packages/devlink-cli:
-    dependencies:
-      '@kb-labs/devlink-adapters':
-        specifier: workspace:*
-        version: link:../devlink-adapters
-      '@kb-labs/devlink-contracts':
-        specifier: workspace:*
-        version: link:../devlink-contracts
-      '@kb-labs/devlink-core':
-        specifier: workspace:*
-        version: link:../devlink-core
-      '@kb-labs/shared-cli-ui':
-        specifier: link:../../../kb-labs-shared/packages/shared-cli-ui
-        version: link:../../../kb-labs-shared/packages/shared-cli-ui
-      '@kb-labs/shared-command-kit':
-        specifier: link:../../../kb-labs-shared/packages/shared-command-kit
-        version: link:../../../kb-labs-shared/packages/shared-command-kit
-    devDependencies:
-      tsup:
-        specifier: ^8.0.0
-        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
-      typescript:
-        specifier: ^5.3.0
-        version: 5.9.3
-
-  ../kb-labs-devlink/packages/devlink-contracts:
-    dependencies:
-      zod:
-        specifier: ^3.23.8
-        version: 3.25.76
-    devDependencies:
-      '@kb-labs/devkit':
-        specifier: link:../../../kb-labs-devkit
-        version: link:../../../kb-labs-devkit
-      '@types/node':
-        specifier: ^24.3.3
-        version: 24.9.1
-      eslint:
-        specifier: ^9
-        version: 9.38.0
-      rimraf:
-        specifier: ^6.0.1
-        version: 6.0.1
-      tsup:
-        specifier: ^8.5.0
-        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
-      typescript:
-        specifier: ^5.6.3
-        version: 5.9.3
-      vitest:
-        specifier: ^3.2.4
-        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
-
-  ../kb-labs-devlink/packages/devlink-core:
-    dependencies:
-      '@kb-labs/core-sys':
-        specifier: link:../../../kb-labs-core/packages/core-sys
-        version: link:../../../kb-labs-core/packages/core-sys
-      '@kb-labs/devlink-adapters':
-        specifier: workspace:*
-        version: link:../devlink-adapters
-      '@kb-labs/devlink-contracts':
-        specifier: workspace:*
-        version: link:../devlink-contracts
-      '@kb-labs/shared-cli-ui':
-        specifier: link:../../../kb-labs-shared/packages/shared-cli-ui
-        version: link:../../../kb-labs-shared/packages/shared-cli-ui
-      '@kb-labs/shared-command-kit':
-        specifier: link:../../../kb-labs-shared/packages/shared-command-kit
-        version: link:../../../kb-labs-shared/packages/shared-command-kit
-      chokidar:
-        specifier: ^4.0.3
-        version: 4.0.3
-      minimatch:
-        specifier: ^9.0.4
-        version: 9.0.5
-      p-queue:
-        specifier: ^8.0.1
-        version: 8.1.1
-      zod:
-        specifier: ^3.23.8
-        version: 3.25.76
-    devDependencies:
-      '@kb-labs/devkit':
-        specifier: link:../../../kb-labs-devkit
-        version: link:../../../kb-labs-devkit
-      '@types/node':
-        specifier: ^24.3.3
-        version: 24.9.1
-      tsup:
-        specifier: ^8.5.0
-        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
-      vitest:
-        specifier: ^3.2.4
-        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
-
   ../kb-labs-mind:
     devDependencies:
       '@kb-labs/devkit':
@@ -927,9 +721,6 @@ importers:
 
   ../kb-labs-mind/packages/mind-core:
     dependencies:
-      '@kb-labs/mind-indexer':
-        specifier: link:../mind-indexer
-        version: link:../mind-indexer
       '@kb-labs/mind-types':
         specifier: link:../mind-types
         version: link:../mind-types
@@ -1220,9 +1011,6 @@ importers:
 
   ../kb-labs-plugin-template/packages/plugin-template-core:
     dependencies:
-      '@kb-labs/plugin-contracts':
-        specifier: link:../../../kb-labs-plugin/packages/plugin-contracts
-        version: link:../../../kb-labs-plugin/packages/plugin-contracts
       '@kb-labs/plugin-template-contracts':
         specifier: link:../plugin-template-contracts
         version: link:../plugin-template-contracts
@@ -1352,6 +1140,12 @@ importers:
       '@kb-labs/sdk':
         specifier: link:../../../kb-labs-sdk/packages/sdk
         version: link:../../../kb-labs-sdk/packages/sdk
+      glob:
+        specifier: ^13.0.0
+        version: 13.0.0
+      globby:
+        specifier: ^11.0.0
+        version: 11.1.0
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -1362,9 +1156,6 @@ importers:
       '@types/node':
         specifier: ^24.3.3
         version: 24.9.1
-      globby:
-        specifier: ^11.0.0
-        version: 11.1.0
       rimraf:
         specifier: ^6.0.1
         version: 6.0.1
@@ -1379,6 +1170,10 @@ importers:
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
   ../kb-labs-release-manager/packages/release-manager-contracts:
+    dependencies:
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
     devDependencies:
       '@kb-labs/devkit':
         specifier: link:../../../kb-labs-devkit
@@ -1601,6 +1396,9 @@ importers:
       '@kb-labs/core-platform':
         specifier: link:../../../kb-labs-core/packages/core-platform
         version: link:../../../kb-labs-core/packages/core-platform
+      '@kb-labs/plugin-contracts':
+        specifier: link:../../../kb-labs-plugin/packages/plugin-contracts
+        version: link:../../../kb-labs-plugin/packages/plugin-contracts
     devDependencies:
       '@kb-labs/devkit':
         specifier: link:../../../kb-labs-devkit
@@ -1684,6 +1482,9 @@ importers:
       '@kb-labs/core-resource-broker':
         specifier: link:../../../kb-labs-core/packages/core-resource-broker
         version: link:../../../kb-labs-core/packages/core-resource-broker
+      '@kb-labs/core-runtime':
+        specifier: link:../../../kb-labs-core/packages/core-runtime
+        version: link:../../../kb-labs-core/packages/core-runtime
       '@kb-labs/core-state-broker':
         specifier: link:../../../kb-labs-core/packages/core-state-broker
         version: link:../../../kb-labs-core/packages/core-state-broker
@@ -3592,9 +3393,6 @@ packages:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
 
-  eventemitter3@5.0.1:
-    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
-
   execa@8.0.1:
     resolution: {integrity: sha512-VyhnebXciFV2DESc+p6B+y0LjSm0krU4OgJN44qFAhBY0TJ+1V61tYD2+wHusZ6F9n5K+vl8k0sTy7PEfV4qpg==}
     engines: {node: '>=16.17'}
@@ -3741,6 +3539,10 @@ packages:
     resolution: {integrity: sha512-2Nim7dha1KVkaiF4q6Dj+ngPPMdfvLJEOpZk/jKiUAkqKebpGAWQXAq9z1xu9HKu5lWfqw/FASuccEjyznjPaA==}
     engines: {node: 20 || >=22}
     hasBin: true
+
+  glob@13.0.0:
+    resolution: {integrity: sha512-tvZgpqk6fz4BaNZ66ZsRaZnbHvP/jG3uKJvAZOwEVUL4RTA5nJeeLYfyN9/VA8NX/V3IBG+hkeuGpKjvELkVhA==}
+    engines: {node: 20 || >=22}
 
   globals@14.0.0:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
@@ -4171,6 +3973,10 @@ packages:
     resolution: {integrity: sha512-IPZ167aShDZZUMdRk66cyQAW3qr0WzbHkPdMYa8bzZhlHhO3jALbKdxcaak7W9FfT2rZNpQuUu4Od7ILEpXSaw==}
     engines: {node: 20 || >=22}
 
+  minimatch@10.1.1:
+    resolution: {integrity: sha512-enIvLvRAFZYXJzkCYG5RKmPfrFArdLv+R+lbQ53BmIMLIry74bjKzX6iHAm8WYamJkhSSEabrWN5D97XnKObjQ==}
+    engines: {node: 20 || >=22}
+
   minimatch@3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
 
@@ -4308,14 +4114,6 @@ packages:
   p-locate@5.0.0:
     resolution: {integrity: sha512-LaNjtRWUBY++zB5nE/NwcaoMylSPk+S+ZHNB1TzdbMJMny6dynpAGt7X/tl/QYq3TIeE6nxHppbo2LGymrG5Pw==}
     engines: {node: '>=10'}
-
-  p-queue@8.1.1:
-    resolution: {integrity: sha512-aNZ+VfjobsWryoiPnEApGGmf5WmNsCo9xu8dfaYamG5qaLP7ClhLN6NgsFe6SwJ2UbLEBK5dv9x8Mn5+RVhMWQ==}
-    engines: {node: '>=18'}
-
-  p-timeout@6.1.4:
-    resolution: {integrity: sha512-MyIV3ZA/PmyBN/ud8vV9XzwTrNtR4jFrObymZYnZqMmW0zA8Z17vnT0rBgFE/TlohB+YCHqXMgZzb3Csp49vqg==}
-    engines: {node: '>=14.16'}
 
   p-try@2.2.0:
     resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
@@ -6920,8 +6718,6 @@ snapshots:
 
   esutils@2.0.3: {}
 
-  eventemitter3@5.0.1: {}
-
   execa@8.0.1:
     dependencies:
       cross-spawn: 7.0.6
@@ -7089,6 +6885,12 @@ snapshots:
       minimatch: 10.0.3
       minipass: 7.1.2
       package-json-from-dist: 1.0.1
+      path-scurry: 2.0.0
+
+  glob@13.0.0:
+    dependencies:
+      minimatch: 10.1.1
+      minipass: 7.1.2
       path-scurry: 2.0.0
 
   globals@14.0.0: {}
@@ -7513,6 +7315,10 @@ snapshots:
     dependencies:
       '@isaacs/brace-expansion': 5.0.0
 
+  minimatch@10.1.1:
+    dependencies:
+      '@isaacs/brace-expansion': 5.0.0
+
   minimatch@3.1.2:
     dependencies:
       brace-expansion: 1.1.12
@@ -7663,13 +7469,6 @@ snapshots:
   p-locate@5.0.0:
     dependencies:
       p-limit: 3.1.0
-
-  p-queue@8.1.1:
-    dependencies:
-      eventemitter3: 5.0.1
-      p-timeout: 6.1.4
-
-  p-timeout@6.1.4: {}
 
   p-try@2.2.0: {}
 
