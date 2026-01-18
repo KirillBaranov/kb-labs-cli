@@ -155,6 +155,13 @@ export async function executeCommandV3(
     requestId: `cli-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
   };
 
+  // DEBUG: Log descriptor permissions
+  console.log('[executeCommandV3 DEBUG] Descriptor permissions:', {
+    pluginId,
+    hasInvoke: !!descriptor.permissions.invoke,
+    invokeAllow: descriptor.permissions.invoke?.allow,
+  });
+
   // Prepare input
   const input = { argv, flags };
 
