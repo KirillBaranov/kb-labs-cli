@@ -21,6 +21,7 @@ import type {
   CliInitOptions,
   RegistrySnapshot,
   RegistrySnapshotManifestEntry,
+  DiscoveryError,
   RunCommandParams,
   RunCommandResult,
   SystemHealthOptions,
@@ -563,7 +564,15 @@ export class CliAPIImpl implements CliAPI {
       }
     }
 
-    const partial = !this.isRegistryInitialized() || this.getRegistryErrors().length > 0;
+    // Convert registry errors to discovery errors format
+    const registryErrors = this.getRegistryErrors();
+    const discoveryErrors = registryErrors.map((err) => ({
+      pluginPath: err.path,
+      error: err.error,
+      code: this.inferErrorCode(err.error),
+    }));
+
+    const partial = !this.isRegistryInitialized() || registryErrors.length > 0;
     const stale = Date.now() > Date.parse(expiresAt);
 
     return this.snapshotManager.normalizeSnapshot(
@@ -583,10 +592,30 @@ export class CliAPIImpl implements CliAPI {
         corrupted: false,
         plugins,
         manifests,
+        errors: discoveryErrors.length > 0 ? discoveryErrors : undefined,
         ts: coreSnapshot.ts,
       },
       { previousChecksum: this.lastSnapshot?.checksum ?? null }
     );
+  }
+
+  /**
+   * Infer error code from error message
+   */
+  private inferErrorCode(errorMessage: string): string | undefined {
+    if (errorMessage.includes('Cannot find') || errorMessage.includes('ENOENT')) {
+      return 'MANIFEST_NOT_FOUND';
+    }
+    if (errorMessage.includes('parse') || errorMessage.includes('JSON') || errorMessage.includes('Unexpected')) {
+      return 'PARSE_ERROR';
+    }
+    if (errorMessage.includes('validation') || errorMessage.includes('Invalid') || errorMessage.includes('Unsupported')) {
+      return 'VALIDATION_ERROR';
+    }
+    if (errorMessage.includes('Timeout')) {
+      return 'TIMEOUT';
+    }
+    return undefined;
   }
 
   private getRegistryErrors(): Array<{ path: string; error: string }> {

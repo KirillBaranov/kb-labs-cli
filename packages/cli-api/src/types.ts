@@ -141,6 +141,20 @@ export interface RedisStatus {
 }
 
 /**
+ * Discovery error for failed plugin loads
+ */
+export interface DiscoveryError {
+  /** Plugin path or identifier where error occurred */
+  pluginPath: string;
+  /** Plugin ID if it could be extracted */
+  pluginId?: string;
+  /** Error message */
+  error: string;
+  /** Error code (e.g., 'MANIFEST_NOT_FOUND', 'PARSE_ERROR', 'VALIDATION_ERROR') */
+  code?: string;
+}
+
+/**
  * Registry snapshot schema exposed by CLI API
  */
 export interface RegistrySnapshot extends CoreRegistrySnapshot {
@@ -160,6 +174,8 @@ export interface RegistrySnapshot extends CoreRegistrySnapshot {
   checksumAlgorithm?: 'sha256';
   previousChecksum?: string | null;
   manifests: RegistrySnapshotManifestEntry[];
+  /** Discovery errors for plugins that failed to load */
+  errors?: DiscoveryError[];
 }
 
 /**

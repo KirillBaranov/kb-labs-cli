@@ -26,6 +26,20 @@ export interface RegistrySnapshotManifestEntry {
 }
 
 /**
+ * Discovery error for failed plugin loads
+ */
+export interface DiscoveryError {
+  /** Plugin path or identifier where error occurred */
+  pluginPath: string;
+  /** Plugin ID if it could be extracted */
+  pluginId?: string;
+  /** Error message */
+  error: string;
+  /** Error code (e.g., 'MANIFEST_NOT_FOUND', 'PARSE_ERROR', 'VALIDATION_ERROR') */
+  code?: string;
+}
+
+/**
  * Registry snapshot schema exposed by CLI API.
  */
 export interface RegistrySnapshot {
@@ -51,6 +65,8 @@ export interface RegistrySnapshot {
     source: { kind: SourceKind; path: string };
   }>;
   manifests: RegistrySnapshotManifestEntry[];
+  /** Discovery errors for plugins that failed to load */
+  errors?: DiscoveryError[];
   ts: number;
 }
 
