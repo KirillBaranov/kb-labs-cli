@@ -7,6 +7,7 @@
 import type { SystemContext } from '@kb-labs/cli-core';
 import { executeCommandV3 } from '@kb-labs/cli-core/v3';
 import type { UIFacade, PlatformServices, MessageOptions, Spinner } from '@kb-labs/plugin-contracts';
+import { getHandlerPermissions } from '@kb-labs/plugin-contracts';
 import type { PlatformContainer } from '@kb-labs/core-runtime';
 import { sideBorderBox, safeColors } from '@kb-labs/shared-cli-ui';
 import path from 'node:path';
@@ -76,9 +77,17 @@ export async function tryExecuteV3(
     // Get socket path from platform singleton for IPC
     const socketPath = platform.getSocketPath();
 
-    // Extract permissions and quotas from manifest (V3 structure)
-    const permissions = v3Manifest.permissions;
+    // Get command-specific permissions merged with manifest permissions
+    const permissions = getHandlerPermissions(v3Manifest, 'cli', commandId);
     const quotas = permissions?.quotas;
+
+    // DEBUG: Log permissions being passed
+    console.log('[v3-adapter DEBUG] Permissions extracted:', {
+      commandId,
+      hasInvoke: !!permissions?.invoke,
+      invokeAllow: permissions?.invoke?.allow,
+      fullPermissions: JSON.stringify(permissions, null, 2),
+    });
 
     // Execute via V3 (now uses platform.executionBackend)
     const exitCode = await executeCommandV3({
