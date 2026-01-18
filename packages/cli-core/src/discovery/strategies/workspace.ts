@@ -156,24 +156,25 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
 
                     errors.push({
                       path: manifestPath,
-                      error: error instanceof Error ? error.message : String(error),
+                      error: `Failed to load manifest for package ${pkgName}: ${error instanceof Error ? error.message : String(error)}`,
                     });
                   }
                 } else {
                   // Manifest path specified but file doesn't exist
-                  logger.warn('Manifest file not found', { manifestPath });
+                  logger.warn('Manifest file not found', { manifestPath, pkgName });
                   errors.push({
                     path: manifestPath,
-                    error: 'Manifest file not found',
+                    error: `Manifest file not found for package ${pkgName} (expected at ${manifestPathRel})`,
                   });
                 }
               } else {
                 logger.debug('No manifest path in package.json', { pkgName });
               }
             } catch (error) {
+              const pkgName = path.basename(path.dirname(pkgFile));
               errors.push({
                 path: pkgFile,
-                error: error instanceof Error ? error.message : String(error),
+                error: `Failed to process package.json for ${pkgName}: ${error instanceof Error ? error.message : String(error)}`,
               });
             }
           }
