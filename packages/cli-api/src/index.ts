@@ -14,6 +14,7 @@ export type {
   SystemHealthOptions,
   RegistrySnapshot,
   RegistrySnapshotManifestEntry,
+  DiscoveryError,
   RedisStatus,
 
   // TODO: Re-enable when workflow-engine is ported to V3
