@@ -81,14 +81,6 @@ export async function tryExecuteV3(
     const permissions = getHandlerPermissions(v3Manifest, 'cli', commandId);
     const quotas = permissions?.quotas;
 
-    // DEBUG: Log permissions being passed
-    console.log('[v3-adapter DEBUG] Permissions extracted:', {
-      commandId,
-      hasInvoke: !!permissions?.invoke,
-      invokeAllow: permissions?.invoke?.allow,
-      fullPermissions: JSON.stringify(permissions, null, 2),
-    });
-
     // Execute via V3 (now uses platform.executionBackend)
     const exitCode = await executeCommandV3({
       pluginId,
@@ -104,6 +96,7 @@ export async function tryExecuteV3(
       devMode: process.env.NODE_ENV === 'development', // Use subprocess in production
       permissions, // Pass all permissions from manifest
       quotas, // Pass all quotas from manifest
+      configSection: v3Manifest.configSection, // Pass configSection for useConfig() auto-detection
     });
 
     // Optional: Log execution mode (useful for debugging)

@@ -101,6 +101,11 @@ export interface ExecuteCommandV3Options {
     memoryMb?: number;
     cpuMs?: number;
   };
+
+  /**
+   * Config section identifier from manifest (for useConfig auto-detection)
+   */
+  configSection?: string;
 }
 
 /**
@@ -142,6 +147,7 @@ export async function executeCommandV3(
     devMode = false,
     socketPath,
     quotas,
+    configSection,
   } = options;
 
   // Create plugin context descriptor
@@ -153,6 +159,7 @@ export async function executeCommandV3(
     permissions,
     hostContext: { host: 'cli', argv, flags },
     requestId: `cli-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    configSection,
   };
 
   // DEBUG: Log descriptor permissions

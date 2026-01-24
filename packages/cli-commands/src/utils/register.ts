@@ -14,9 +14,7 @@ import { pluginsScaffold } from "../commands/system/plugins-scaffold";
 import { pluginsRegistry } from "../commands/system/plugins-registry";
 import { registryLint } from "../commands/system/registry-lint";
 import { headersDebug } from "../commands/system/headers-debug";
-import { createPluginsIntrospectCommand } from "../plugins-introspect";
 import { registerManifests, disposeAllPlugins, preflightManifests } from "../registry/register";
-import { workflowCommandGroup } from "../commands/workflows";
 import { PluginRegistry } from "@kb-labs/cli-core";
 import { registerShutdownHook } from "./shutdown";
 import { getContextCwd } from "@kb-labs/shared-cli-ui";
@@ -49,20 +47,7 @@ export async function registerBuiltinCommands(
   registry.registerGroup(loggingGroup);
   registry.registerGroup(registryGroup);
   registry.registerGroup(debugGroup);
-  registry.registerGroup(workflowCommandGroup);
   registry.registerGroup(docsGroup);
-
-  // Convert CliCommand to Command for introspect
-  const introspectCliCommand = createPluginsIntrospectCommand();
-  registry.register({
-    name: introspectCliCommand.name,
-    describe: introspectCliCommand.description,
-    category: 'system',
-    aliases: [],
-    async run(ctx: any, argv: any, flags: any) {
-      return introspectCliCommand.run(ctx, argv, flags);
-    },
-  });
 
   try {
     const cwd = getContextCwd({ cwd: input.cwd });

@@ -1,7 +1,7 @@
 import { colors } from "@kb-labs/cli-core";
 import { box, formatTiming, TimingTracker } from "@kb-labs/shared-cli-ui";
 
-import type { Command, CommandGroup } from "../types";
+import type { Command, CommandGroup } from "../registry/legacy-types";
 import type { RegisteredCommand } from "../registry/types";
 import type { ProductGroup } from "../registry/service";
 

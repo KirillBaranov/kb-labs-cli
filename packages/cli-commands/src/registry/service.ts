@@ -1,4 +1,4 @@
-import type { Command, CommandGroup, CommandRegistry } from "../types";
+import type { Command, CommandGroup, CommandRegistry } from "./legacy-types";
 import type { RegisteredCommand } from "./types";
 
 /**

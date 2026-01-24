@@ -3,7 +3,7 @@
  * Public surface: types, registry, findCommand, registerBuiltinCommands.
  * This package does not handle parsing argv/logging/exit.
  */
-export * from "./types";
+export * from "./registry/types";
 export {
   registry,
   findCommand,
@@ -25,5 +25,3 @@ export { version } from "./commands/system/version";
 export { diagnose } from "./commands/system/diagnose";
 export { loggingCheck } from "./commands/system/logging-check";
 export { loggingInit } from "./commands/system/logging-init";
-export { createPluginsIntrospectCommand } from "./plugins-introspect";
-export * from "./commands/workflows";
