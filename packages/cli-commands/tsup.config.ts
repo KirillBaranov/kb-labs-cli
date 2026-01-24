@@ -1,8 +1,8 @@
 import { defineConfig } from 'tsup';
-import nodePreset from '@kb-labs/devkit/tsup/node.js';
+import nodePreset from '@kb-labs/devkit/tsup/node';
 
 export default defineConfig({
   ...nodePreset,
   entry: { index: "src/index.ts" },
-  dts: false, // Temporarily disabled - type errors in hello.ts and others
+  dts: true, // Temporarily disabled - type errors in hello.ts and others
 });
