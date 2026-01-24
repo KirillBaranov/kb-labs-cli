@@ -22,7 +22,8 @@
     "test:watch": "vitest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "clean": "rimraf dist"
   },
   "dependencies": {
     "@kb-labs/cli-contracts": "workspace:*",
@@ -36,10 +37,12 @@
     "@types/node": "^24.3.3",
     "tsup": "^8.5.0",
     "typescript": "^5.6.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "rimraf": "^6.0.1"
   },
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=18.18.0",
+    "pnpm": ">=9.0.0"
   },
   "private": true
 }
