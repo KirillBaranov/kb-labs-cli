@@ -1,0 +1,79 @@
+{
+  "name": "@kb-labs/cli-commands",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "Command implementations for KB Labs CLI",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "tsup --config tsup.config.ts",
+    "dev": "tsup --config tsup.config.ts --watch",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "type-check": "tsc --noEmit -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@kb-labs/cli-api": "workspace:*",
+    "@kb-labs/cli-contracts": "workspace:*",
+    "@kb-labs/cli-core": "workspace:*",
+    "@kb-labs/core-ipc": "link:../../../kb-labs-core/packages/core-ipc",
+    "@kb-labs/core-resource-broker": "link:../../../kb-labs-core/packages/core-resource-broker",
+    "@kb-labs/core-runtime": "link:../../../kb-labs-core/packages/core-runtime",
+    "@kb-labs/core-state-broker": "link:../../../kb-labs-core/packages/core-state-broker",
+    "@kb-labs/core-sys": "link:../../../kb-labs-core/packages/core-sys",
+    "@kb-labs/plugin-execution": "link:../../../kb-labs-plugin/packages/plugin-execution",
+    "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/plugin-runtime",
+    "@kb-labs/setup-engine-core": "link:../../../kb-labs-setup-engine/packages/setup-engine-core",
+    "@kb-labs/setup-engine-operations": "link:../../../kb-labs-setup-engine/packages/setup-engine-operations",
+    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/shared-cli-ui",
+    "@kb-labs/shared-command-kit": "link:../../../kb-labs-shared/packages/shared-command-kit",
+    "@kb-labs/workflow-artifacts": "link:../../../kb-labs-workflow/packages/workflow-artifacts",
+    "@kb-labs/workflow-constants": "link:../../../kb-labs-workflow/packages/workflow-constants",
+    "@kb-labs/workflow-contracts": "link:../../../kb-labs-workflow/packages/workflow-contracts",
+    "@kb-labs/workflow-engine": "link:../../../kb-labs-workflow/packages/workflow-engine",
+    "@kb-labs/workflow-runtime": "link:../../../kb-labs-workflow/packages/workflow-runtime",
+    "ajv": "^8.17.1",
+    "glob": "^11.0.0",
+    "yaml": "^2.8.0",
+    "zod": "^3.23.8",
+    "minimatch": "^10.0.1",
+    "semver": "^7.6.3",
+    "pino": "^9.0.0",
+    "execa": "^8.0.0",
+    "chokidar": "^4.0.0",
+    "colorette": "^2.0.20",
+    "fast-glob": "^3.3.2",
+    "pathe": "^1.1.2"
+  },
+  "devDependencies": {
+    "@kb-labs/devkit": "link:../../../kb-labs-devkit",
+    "@kb-labs/plugin-contracts": "link:../../../kb-labs-plugin/packages/plugin-contracts",
+    "@types/node": "^24.3.3",
+    "@types/picomatch": "^4",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.5.0",
+    "vitest": "^3.2.4",
+    "typescript": "^5.6.3"
+  },
+  "module": "./dist/index.js",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

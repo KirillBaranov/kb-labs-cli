@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/cli-api" },
+    { "path": "packages/cli-bin" },
+    { "path": "packages/cli-commands" },
+    { "path": "packages/cli-contracts" },
+    { "path": "packages/cli-core" },
+    { "path": "packages/cli-runtime" }
+  ],
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "composite": true, "noEmit": true }
+}
