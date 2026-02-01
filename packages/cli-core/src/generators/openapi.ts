@@ -3,7 +3,7 @@
  * OpenAPI spec generation from manifests
  */
 
-import type { ManifestV3 } from '@kb-labs/plugin-contracts';
+import type { ManifestV3 } from "@kb-labs/plugin-contracts";
 
 /**
  * OpenAPI specification (simplified)
@@ -19,7 +19,7 @@ export interface OpenAPISpec {
   components?: {
     schemas?: Record<string, any>;
   };
-  'x-kb-plugin-id'?: string;
+  "x-kb-plugin-id"?: string;
 }
 
 /**
@@ -29,7 +29,7 @@ export interface OpenAPISpec {
  */
 export function generateOpenAPISpec(manifest: ManifestV3): OpenAPISpec {
   const spec: OpenAPISpec = {
-    openapi: '3.1.0',
+    openapi: "3.1.0",
     info: {
       title: manifest.display?.name || manifest.id,
       version: manifest.version,
@@ -39,7 +39,7 @@ export function generateOpenAPISpec(manifest: ManifestV3): OpenAPISpec {
     components: {
       schemas: {},
     },
-    'x-kb-plugin-id': manifest.id,
+    "x-kb-plugin-id": manifest.id,
   };
 
   // Generate paths from REST routes
@@ -56,8 +56,8 @@ export function generateOpenAPISpec(manifest: ManifestV3): OpenAPISpec {
         summary: route.description || `${route.method} ${route.path}`,
         operationId: `${manifest.id}:${method}:${path}`,
         responses: {
-          '200': {
-            description: 'Success',
+          "200": {
+            description: "Success",
           },
         },
       };
@@ -67,7 +67,7 @@ export function generateOpenAPISpec(manifest: ManifestV3): OpenAPISpec {
         spec.paths[path][method].requestBody = {
           required: true,
           content: {
-            'application/json': {
+            "application/json": {
               schema: route.input,
             },
           },
@@ -76,10 +76,10 @@ export function generateOpenAPISpec(manifest: ManifestV3): OpenAPISpec {
 
       // Add response schema if output is defined
       if (route.output) {
-        spec.paths[path][method].responses['200'] = {
-          description: 'Success',
+        spec.paths[path][method].responses["200"] = {
+          description: "Success",
           content: {
-            'application/json': {
+            "application/json": {
               schema: route.output,
             },
           },
@@ -99,10 +99,10 @@ export function generateOpenAPISpec(manifest: ManifestV3): OpenAPISpec {
 export function mergeOpenAPISpecs(specs: OpenAPISpec[]): OpenAPISpec {
   if (specs.length === 0) {
     return {
-      openapi: '3.1.0',
+      openapi: "3.1.0",
       info: {
-        title: 'KB Labs API',
-        version: '1.0.0',
+        title: "KB Labs API",
+        version: "1.0.0",
       },
       paths: {},
     };
@@ -113,11 +113,11 @@ export function mergeOpenAPISpecs(specs: OpenAPISpec[]): OpenAPISpec {
   }
 
   const merged: OpenAPISpec = {
-    openapi: '3.1.0',
+    openapi: "3.1.0",
     info: {
-      title: 'KB Labs API',
-      version: '1.0.0',
-      description: 'Aggregated API from all plugins',
+      title: "KB Labs API",
+      version: "1.0.0",
+      description: "Aggregated API from all plugins",
     },
     paths: {},
     components: {
@@ -127,8 +127,8 @@ export function mergeOpenAPISpecs(specs: OpenAPISpec[]): OpenAPISpec {
 
   // Sort specs by plugin ID for determinism
   const sortedSpecs = [...specs].sort((a, b) => {
-    const aId = a['x-kb-plugin-id'] || '';
-    const bId = b['x-kb-plugin-id'] || '';
+    const aId = a["x-kb-plugin-id"] || "";
+    const bId = b["x-kb-plugin-id"] || "";
     return aId.localeCompare(bId);
   });
 
@@ -136,16 +136,16 @@ export function mergeOpenAPISpecs(specs: OpenAPISpec[]): OpenAPISpec {
   const allPaths: Array<[string, any, string]> = [];
 
   for (const spec of sortedSpecs) {
-    const pluginId = spec['x-kb-plugin-id'] || 'unknown';
+    const pluginId = spec["x-kb-plugin-id"] || "unknown";
 
     for (const [path, pathItem] of Object.entries(spec.paths)) {
       // Add x-kb-plugin-id to each operation
       const enhancedPathItem = { ...pathItem };
-      for (const method of ['get', 'post', 'put', 'patch', 'delete']) {
+      for (const method of ["get", "post", "put", "patch", "delete"]) {
         if (enhancedPathItem[method]) {
           enhancedPathItem[method] = {
             ...enhancedPathItem[method],
-            'x-kb-plugin-id': pluginId,
+            "x-kb-plugin-id": pluginId,
           };
         }
       }
@@ -163,11 +163,11 @@ export function mergeOpenAPISpecs(specs: OpenAPISpec[]): OpenAPISpec {
 
   // Merge schemas with plugin ID prefix (deterministically sorted)
   for (const spec of sortedSpecs) {
-    const pluginId = spec['x-kb-plugin-id'] || 'unknown';
+    const pluginId = spec["x-kb-plugin-id"] || "unknown";
 
     if (spec.components?.schemas) {
-      const schemaEntries = Object.entries(spec.components.schemas).sort((a, b) =>
-        a[0].localeCompare(b[0])
+      const schemaEntries = Object.entries(spec.components.schemas).sort(
+        (a, b) => a[0].localeCompare(b[0]),
       );
 
       for (const [name, schema] of schemaEntries) {

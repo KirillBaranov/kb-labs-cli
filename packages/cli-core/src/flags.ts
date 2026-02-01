@@ -1,7 +1,7 @@
 import { CliError, CLI_ERROR_CODES } from "./errors";
-import { getLogger } from '@kb-labs/core-sys/logging';
+import { getLogger } from "@kb-labs/core-sys/logging";
 
-const logger = getLogger('cli:flags');
+const logger = getLogger("cli:flags");
 
 export type GlobalFlags = {
   json?: boolean;
@@ -10,7 +10,7 @@ export type GlobalFlags = {
   profilesDir?: string;
   noColor?: boolean;
   verbose?: boolean; // Deprecated: use --debug instead
-  debug?: boolean | 'verbose' | 'inspect' | 'profile';
+  debug?: boolean | "verbose" | "inspect" | "profile";
   help?: boolean;
   version?: boolean;
   quiet?: boolean;
@@ -22,43 +22,39 @@ export type GlobalFlags = {
 
 export function validateCommandFlags(
   flags: Record<string, unknown>,
-  schema: Array<{ name: string; type: string; choices?: string[] }>
+  schema: Array<{ name: string; type: string; choices?: string[] }>,
 ): void {
   for (const def of schema) {
     const value = flags[def.name];
-    if (value === undefined) { continue; }
+    if (value === undefined) {
+      continue;
+    }
 
     // Type validation
     if (def.type === "boolean" && typeof value !== "boolean") {
       const errorMsg = [
         `❌ Invalid type for --${def.name}`,
-        '',
+        "",
         `Expected: boolean`,
         `Got: ${typeof value}`,
-        '',
-        'Hint: Try --help for more information'
-      ].join('\n');
+        "",
+        "Hint: Try --help for more information",
+      ].join("\n");
 
-      throw new CliError(
-        CLI_ERROR_CODES.E_INVALID_FLAGS,
-        errorMsg
-      );
+      throw new CliError(CLI_ERROR_CODES.E_INVALID_FLAGS, errorMsg);
     }
 
     // Choice validation
     if (def.choices && !def.choices.includes(String(value))) {
       const errorMsg = [
         `❌ Invalid value for --${def.name}: ${value}`,
-        '',
-        `Must be one of: ${def.choices.join(', ')}`,
-        '',
-        'Hint: Try --help for more information'
-      ].join('\n');
+        "",
+        `Must be one of: ${def.choices.join(", ")}`,
+        "",
+        "Hint: Try --help for more information",
+      ].join("\n");
 
-      throw new CliError(
-        CLI_ERROR_CODES.E_INVALID_FLAGS,
-        errorMsg
-      );
+      throw new CliError(CLI_ERROR_CODES.E_INVALID_FLAGS, errorMsg);
     }
   }
 }
@@ -95,27 +91,31 @@ export function parseArgs(argv: string[]): {
         case "--no-color":
           global.noColor = true;
           break;
-            case "--quiet":
-              global.quiet = true;
-              break;
-            case "--dry-run":
-              global.dryRun = true;
-              flagsObj['dry-run'] = true; // Also add to command flags
-              break;
-            case "--save-snapshot":
-              global.saveSnapshot = true;
-              break;
-            case "--mock":
-              global.mock = true;
-              break;
-            case "--record-mocks":
-              global.recordMocks = true;
-              break;
+        case "--quiet":
+          global.quiet = true;
+          break;
+        case "--dry-run":
+          global.dryRun = true;
+          flagsObj["dry-run"] = true; // Also add to command flags
+          break;
+        case "--save-snapshot":
+          global.saveSnapshot = true;
+          break;
+        case "--mock":
+          global.mock = true;
+          break;
+        case "--record-mocks":
+          global.recordMocks = true;
+          break;
         case "--debug":
           // Support --debug or --debug=level
           const nextArg = args[0];
-          if (nextArg && !nextArg.startsWith('-') && ['verbose', 'inspect', 'profile'].includes(nextArg)) {
-            global.debug = args.shift() as 'verbose' | 'inspect' | 'profile';
+          if (
+            nextArg &&
+            !nextArg.startsWith("-") &&
+            ["verbose", "inspect", "profile"].includes(nextArg)
+          ) {
+            global.debug = args.shift() as "verbose" | "inspect" | "profile";
             global.logLevel = "debug";
           } else {
             global.debug = true;
@@ -124,7 +124,9 @@ export function parseArgs(argv: string[]): {
           break;
         case "--verbose":
           // Deprecated: show warning and map to --debug
-          logger.warn('[DEPRECATED] --verbose is deprecated. Use --debug instead.');
+          logger.warn(
+            "[DEPRECATED] --verbose is deprecated. Use --debug instead.",
+          );
           global.debug = true;
           global.verbose = true; // Keep for backward compatibility
           global.logLevel = "debug";
@@ -152,10 +154,13 @@ export function parseArgs(argv: string[]): {
             const [key, ...valueParts] = stripped.split("=");
             if (key) {
               const value = valueParts.join("="); // rejoin in case value contains =
-              
+
               // Special handling for --debug=level
-              if (key === 'debug' && ['verbose', 'inspect', 'profile'].includes(value)) {
-                global.debug = value as 'verbose' | 'inspect' | 'profile';
+              if (
+                key === "debug" &&
+                ["verbose", "inspect", "profile"].includes(value)
+              ) {
+                global.debug = value as "verbose" | "inspect" | "profile";
                 global.logLevel = "debug";
               } else {
                 flagsObj[key] = value;
