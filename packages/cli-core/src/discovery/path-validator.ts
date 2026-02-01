@@ -3,11 +3,11 @@
  * Path validation for security (prevent traversal attacks)
  */
 
-import * as path from 'node:path';
-import { promises as fs } from 'node:fs';
-import { getLogger } from '@kb-labs/core-sys/logging';
+import * as path from "node:path";
+import { promises as fs } from "node:fs";
+import { getLogger } from "@kb-labs/core-sys/logging";
 
-const logger = getLogger('PathValidator');
+const logger = getLogger("PathValidator");
 
 /**
  * PathValidator - validates and normalizes file paths for security
@@ -25,8 +25,8 @@ export class PathValidator {
       const resolved = path.resolve(normalized);
 
       // Check for .. traversal in normalized path
-      if (normalized.includes('..')) {
-        logger.warn('Path traversal detected', { targetPath });
+      if (normalized.includes("..")) {
+        logger.warn("Path traversal detected", { targetPath });
         return false;
       }
 
@@ -37,15 +37,15 @@ export class PathValidator {
       });
 
       if (!isWithinRoot) {
-        logger.warn('Path outside allowed roots', { targetPath, allowedRoots });
+        logger.warn("Path outside allowed roots", { targetPath, allowedRoots });
         return false;
       }
 
       return true;
     } catch (error) {
-      logger.warn('Validation error', { 
+      logger.warn("Validation error", {
         targetPath,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       return false;
     }
@@ -72,7 +72,7 @@ export class PathValidator {
    * @returns Normalized path
    */
   static normalize(targetPath: string): string {
-    return path.normalize(targetPath).replace(/\\/g, '/');
+    return path.normalize(targetPath).replace(/\\/g, "/");
   }
 
   /**
@@ -95,7 +95,7 @@ export class PathValidator {
    * @returns File stats or null if error
    */
   static async stat(
-    targetPath: string
+    targetPath: string,
   ): Promise<{ isFile: boolean; isDirectory: boolean; mtime: Date } | null> {
     try {
       const stats = await fs.stat(targetPath);
@@ -117,7 +117,7 @@ export class PathValidator {
    */
   static validateAndNormalize(
     targetPath: string,
-    allowedRoots: string[]
+    allowedRoots: string[],
   ): string | null {
     if (!this.validate(targetPath, allowedRoots)) {
       return null;
@@ -142,7 +142,7 @@ export class PathValidator {
    */
   static isHidden(targetPath: string): boolean {
     const basename = path.basename(targetPath);
-    return basename.startsWith('.');
+    return basename.startsWith(".");
   }
 
   /**
@@ -154,7 +154,7 @@ export class PathValidator {
    */
   static shouldIgnore(
     targetPath: string,
-    customPatterns: RegExp[] = []
+    customPatterns: RegExp[] = [],
   ): boolean {
     const defaultPatterns = [
       /node_modules/,
@@ -171,4 +171,3 @@ export class PathValidator {
     return allPatterns.some((pattern) => pattern.test(targetPath));
   }
 }
-

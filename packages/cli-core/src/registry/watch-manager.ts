@@ -3,11 +3,11 @@
  * File system watcher for plugin manifests and configuration
  */
 
-import * as chokidar from 'chokidar';
-import * as path from 'node:path';
-import { getLogger } from '@kb-labs/core-sys/logging';
+import * as chokidar from "chokidar";
+import * as path from "node:path";
+import { getLogger } from "@kb-labs/core-sys/logging";
 
-const logger = getLogger('WatchManager');
+const logger = getLogger("WatchManager");
 
 export interface WatchOptions {
   /** Root directories to watch */
@@ -33,13 +33,13 @@ export class WatchManager {
    */
   async start(): Promise<void> {
     if (this.watcher) {
-      logger.warn('Already watching');
+      logger.warn("Already watching");
       return;
     }
 
     const patterns = this.buildWatchPatterns();
-    
-    logger.info('Starting file watch', {
+
+    logger.info("Starting file watch", {
       roots: this.opts.roots,
       patternsCount: patterns.length,
     });
@@ -61,19 +61,23 @@ export class WatchManager {
       depth: 10, // Limit recursion depth
     });
 
-    this.watcher.on('add', (filePath) => this.handleChange('add', filePath));
-    this.watcher.on('change', (filePath) => this.handleChange('change', filePath));
-    this.watcher.on('unlink', (filePath) => this.handleChange('unlink', filePath));
+    this.watcher.on("add", (filePath) => this.handleChange("add", filePath));
+    this.watcher.on("change", (filePath) =>
+      this.handleChange("change", filePath),
+    );
+    this.watcher.on("unlink", (filePath) =>
+      this.handleChange("unlink", filePath),
+    );
 
-    this.watcher.on('error', (error) => {
-      logger.error('Watcher error', { 
+    this.watcher.on("error", (error) => {
+      logger.error("Watcher error", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
     });
 
-    this.watcher.on('ready', () => {
-      logger.info('Initial scan complete, watching for changes');
+    this.watcher.on("ready", () => {
+      logger.info("Initial scan complete, watching for changes");
     });
   }
 
@@ -89,7 +93,7 @@ export class WatchManager {
     if (this.watcher) {
       await this.watcher.close();
       this.watcher = undefined;
-      logger.info('Stopped watching');
+      logger.info("Stopped watching");
     }
   }
 
@@ -101,24 +105,24 @@ export class WatchManager {
 
     for (const root of this.opts.roots) {
       // Watch for manifest files
-      patterns.push(path.join(root, '**/manifest.v2.ts'));
-      patterns.push(path.join(root, '**/manifest.v2.js'));
-      patterns.push(path.join(root, '**/manifest.ts'));
-      patterns.push(path.join(root, '**/manifest.js'));
+      patterns.push(path.join(root, "**/manifest.v2.ts"));
+      patterns.push(path.join(root, "**/manifest.v2.js"));
+      patterns.push(path.join(root, "**/manifest.ts"));
+      patterns.push(path.join(root, "**/manifest.js"));
 
       // Watch for package.json changes (kbLabs field)
-      patterns.push(path.join(root, '**/package.json'));
+      patterns.push(path.join(root, "**/package.json"));
 
       // Watch .kb/plugins directory
-      patterns.push(path.join(root, '.kb/plugins/**/*'));
+      patterns.push(path.join(root, ".kb/plugins/**/*"));
 
       // Watch lockfiles (affects workspace resolution)
-      patterns.push(path.join(root, 'pnpm-lock.yaml'));
-      patterns.push(path.join(root, 'yarn.lock'));
-      patterns.push(path.join(root, 'package-lock.json'));
+      patterns.push(path.join(root, "pnpm-lock.yaml"));
+      patterns.push(path.join(root, "yarn.lock"));
+      patterns.push(path.join(root, "package-lock.json"));
 
       // Watch workspace config
-      patterns.push(path.join(root, 'pnpm-workspace.yaml'));
+      patterns.push(path.join(root, "pnpm-workspace.yaml"));
     }
 
     return patterns;
@@ -127,8 +131,11 @@ export class WatchManager {
   /**
    * Handle file change event
    */
-  private handleChange(event: 'add' | 'change' | 'unlink', filePath: string): void {
-    logger.debug('File change detected', { event, filePath });
+  private handleChange(
+    event: "add" | "change" | "unlink",
+    filePath: string,
+  ): void {
+    logger.debug("File change detected", { event, filePath });
 
     // Debounce: wait for multiple changes to settle
     if (this.debounceTimer) {
@@ -147,29 +154,28 @@ export class WatchManager {
    */
   private async triggerRefresh(triggerFile: string): Promise<void> {
     if (this.isRefreshing) {
-      logger.debug('Refresh already in progress, skipping', { triggerFile });
+      logger.debug("Refresh already in progress, skipping", { triggerFile });
       return;
     }
 
     this.isRefreshing = true;
 
     try {
-      logger.debug('Triggering refresh', { triggerFile });
+      logger.debug("Triggering refresh", { triggerFile });
       const start = Date.now();
-      
+
       await this.opts.onChange();
-      
+
       const duration = Date.now() - start;
-      logger.debug('Refresh completed', { duration, triggerFile });
+      logger.debug("Refresh completed", { duration, triggerFile });
     } catch (error) {
-      logger.error('Refresh failed', {
+      logger.error("Refresh failed", {
         triggerFile,
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
     } finally {
       this.isRefreshing = false;
     }
   }
 }
-

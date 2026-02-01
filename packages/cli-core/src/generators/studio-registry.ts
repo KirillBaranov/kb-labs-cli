@@ -3,8 +3,8 @@
  * Studio registry generation for UI consumption
  */
 
-import type { ManifestV3 } from '@kb-labs/plugin-contracts';
-import type { PluginBrief } from '../registry/plugin-registry';
+import type { ManifestV3 } from "@kb-labs/plugin-contracts";
+import type { PluginBrief } from "../registry/plugin-registry";
 
 /**
  * Studio registry entry
@@ -44,13 +44,13 @@ export interface StudioRegistry {
  */
 export function generateStudioRegistry(
   plugins: PluginBrief[],
-  manifests: Map<string, ManifestV3>
+  manifests: Map<string, ManifestV3>,
 ): StudioRegistry {
   const entries: StudioRegistryEntry[] = [];
 
   for (const plugin of plugins) {
     const manifest = manifests.get(plugin.id);
-    
+
     entries.push({
       id: plugin.id,
       version: plugin.version,
@@ -59,18 +59,21 @@ export function generateStudioRegistry(
         description: plugin.display?.description,
       },
       capabilities: {
-        hasCommands: !!(manifest?.cli?.commands && manifest.cli.commands.length > 0),
-        hasRestAPI: !!(manifest?.rest?.routes && manifest.rest.routes.length > 0),
-        hasUI: !!(manifest?.studio),
+        hasCommands: !!(
+          manifest?.cli?.commands && manifest.cli.commands.length > 0
+        ),
+        hasRestAPI: !!(
+          manifest?.rest?.routes && manifest.rest.routes.length > 0
+        ),
+        hasUI: !!manifest?.studio,
         hasJobs: false,
       },
     });
   }
 
   return {
-    version: '1.0.0',
+    version: "1.0.0",
     generated: new Date().toISOString(),
     plugins: entries.sort((a, b) => a.id.localeCompare(b.id)),
   };
 }
-

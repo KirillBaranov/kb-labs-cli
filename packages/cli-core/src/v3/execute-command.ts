@@ -5,11 +5,16 @@
  * Uses unified platform.executionBackend for all execution.
  */
 
-import type { PluginContextDescriptor, UIFacade, PlatformServices, CommandResult } from '@kb-labs/plugin-contracts';
-import { wrapCliResult } from '@kb-labs/plugin-runtime';
-import type { PlatformContainer } from '@kb-labs/core-runtime';
-import type { ExecutionRequest, ExecutionResult } from '@kb-labs/core-platform';
-import * as path from 'node:path';
+import type {
+  PluginContextDescriptor,
+  UIFacade,
+  PlatformServices,
+  CommandResult,
+} from "@kb-labs/plugin-contracts";
+import { wrapCliResult } from "@kb-labs/plugin-runtime";
+import type { PlatformContainer } from "@kb-labs/core-runtime";
+import type { ExecutionRequest, ExecutionResult } from "@kb-labs/core-platform";
+import * as path from "node:path";
 
 export interface ExecuteCommandV3Options {
   /**
@@ -45,7 +50,7 @@ export interface ExecuteCommandV3Options {
   /**
    * Plugin permissions
    */
-  permissions?: PluginContextDescriptor['permissions'];
+  permissions?: PluginContextDescriptor["permissions"];
 
   /**
    * Working directory
@@ -128,7 +133,7 @@ export interface ExecuteCommandV3Options {
  * ```
  */
 export async function executeCommandV3(
-  options: ExecuteCommandV3Options
+  options: ExecuteCommandV3Options,
 ): Promise<number> {
   const {
     pluginId,
@@ -152,18 +157,18 @@ export async function executeCommandV3(
 
   // Create plugin context descriptor
   const descriptor: PluginContextDescriptor = {
-    hostType: 'cli',
+    hostType: "cli",
     pluginId,
     pluginVersion,
     tenantId,
     permissions,
-    hostContext: { host: 'cli', argv, flags },
+    hostContext: { host: "cli", argv, flags },
     requestId: `cli-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
     configSection,
   };
 
   // DEBUG: Log descriptor permissions
-  console.log('[executeCommandV3 DEBUG] Descriptor permissions:', {
+  console.log("[executeCommandV3 DEBUG] Descriptor permissions:", {
     pluginId,
     hasInvoke: !!descriptor.permissions.invoke,
     invokeAllow: descriptor.permissions.invoke?.allow,
@@ -191,13 +196,14 @@ export async function executeCommandV3(
     //
     // Use the platformContainer passed from v3-adapter (which got it from bootstrap)
     // This ensures we use the SAME instance that was initialized with ExecutionBackend
-    const result: ExecutionResult = await options.platformContainer.executionBackend.execute(request, {
-      signal,
-    });
+    const result: ExecutionResult =
+      await options.platformContainer.executionBackend.execute(request, {
+        signal,
+      });
 
     // Handle execution result
     if (!result.ok) {
-      ui.error(result.error?.message || 'Execution failed');
+      ui.error(result.error?.message || "Execution failed");
       return 1;
     }
 
@@ -224,7 +230,7 @@ export async function executeCommandV3(
  */
 function resolvePluginRoot(pluginId: string, _pluginVersion: string): string {
   // For workspace plugins, resolve from node_modules
-  const nodeModulesPath = path.resolve(process.cwd(), 'node_modules', pluginId);
+  const nodeModulesPath = path.resolve(process.cwd(), "node_modules", pluginId);
 
   // Fallback: try to resolve via require.resolve (works for both CJS and ESM)
   try {

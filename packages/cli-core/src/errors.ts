@@ -20,14 +20,14 @@ export type CliErrorCode =
  */
 export const EXIT_CODES = {
   SUCCESS: 0,
-  ERROR: 1,               // Generic errors, runtime failures
+  ERROR: 1, // Generic errors, runtime failures
   PREFLIGHT_CANCELLED: 2, // User declined, git dirty check failed
-  INVALID_FLAGS: 3,       // Flag validation errors
+  INVALID_FLAGS: 3, // Flag validation errors
 
   // Legacy sysexits.h codes (kept for compatibility)
-  IO: 74,                 // EX_IOERR
-  SOFTWARE: 70,           // EX_SOFTWARE
-  CONFIG: 78,             // EX_CONFIG
+  IO: 74, // EX_IOERR
+  SOFTWARE: 70, // EX_SOFTWARE
+  CONFIG: 78, // EX_CONFIG
 } as const;
 
 const ERROR_CODE_SET: Set<CliErrorCode> = new Set(

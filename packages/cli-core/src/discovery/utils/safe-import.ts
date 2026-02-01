@@ -13,16 +13,19 @@
  */
 export async function safeImport<T = any>(
   modulePath: string,
-  timeoutMs: number = 5000
+  timeoutMs: number = 5000,
 ): Promise<T> {
   return Promise.race([
     import(modulePath) as Promise<T>,
-    new Promise<never>((_, reject) =>
+    new Promise<never>((_, reject) => {
       setTimeout(
-        () => reject(new Error(`Import timeout after ${timeoutMs}ms: ${modulePath}`)),
-        timeoutMs
-      )
-    ),
+        () =>
+          reject(
+            new Error(`Import timeout after ${timeoutMs}ms: ${modulePath}`),
+          ),
+        timeoutMs,
+      );
+    }),
   ]);
 }
 
@@ -33,5 +36,5 @@ export function isImportTimeout(error: unknown): boolean {
   if (!(error instanceof Error)) {
     return false;
   }
-  return error.message.includes('Import timeout');
+  return error.message.includes("Import timeout");
 }

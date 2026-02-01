@@ -5,7 +5,12 @@ export * from "./context";
 export * from "./flags";
 
 // Error handling
-export { EXIT_CODES, CLI_ERROR_CODES, CliError, mapCliErrorToExitCode } from "./errors";
+export {
+  EXIT_CODES,
+  CLI_ERROR_CODES,
+  CliError,
+  mapCliErrorToExitCode,
+} from "./errors";
 
 // I/O and adapters
 export * from "./io/types";

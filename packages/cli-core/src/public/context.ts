@@ -4,5 +4,4 @@
  * Re-exported from @kb-labs/cli-contracts to break circular dependencies
  */
 
-export type { SystemContext } from '@kb-labs/cli-contracts';
-
+export type { SystemContext } from "@kb-labs/cli-contracts";

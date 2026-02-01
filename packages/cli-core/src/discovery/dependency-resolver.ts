@@ -3,9 +3,9 @@
  * Dependency resolution and validation
  */
 
-import * as semver from 'semver';
-import type { PluginBrief } from '../registry/plugin-registry';
-import type { ManifestV3 } from '@kb-labs/plugin-contracts';
+import * as semver from "semver";
+import type { PluginBrief } from "../registry/plugin-registry";
+import type { ManifestV3 } from "@kb-labs/plugin-contracts";
 
 /**
  * Plugin dependency
@@ -49,11 +49,8 @@ export class DependencyResolver {
   private manifests: Map<string, ManifestV3>;
   private graph: Map<string, Set<string>> = new Map();
 
-  constructor(
-    plugins: PluginBrief[],
-    manifests: Map<string, ManifestV3>
-  ) {
-    this.plugins = new Map(plugins.map(p => [p.id, p]));
+  constructor(plugins: PluginBrief[], manifests: Map<string, ManifestV3>) {
+    this.plugins = new Map(plugins.map((p) => [p.id, p]));
     this.manifests = manifests;
     this.buildGraph();
   }
@@ -103,16 +100,16 @@ export class DependencyResolver {
    * Validate dependencies
    */
   validate(): ValidationResult {
-    const errors: ValidationResult['errors'] = [];
-    const warnings: ValidationResult['warnings'] = [];
+    const errors: ValidationResult["errors"] = [];
+    const warnings: ValidationResult["warnings"] = [];
 
     // Check for cycles
     const cycles = this.detectCycles();
     for (const cycle of cycles) {
       errors.push({
-        pluginId: cycle[0] || 'unknown',
-        error: `Circular dependency detected: ${cycle.join(' → ')}`,
-        remediation: 'Remove circular dependencies from plugin manifests',
+        pluginId: cycle[0] || "unknown",
+        error: `Circular dependency detected: ${cycle.join(" → ")}`,
+        remediation: "Remove circular dependencies from plugin manifests",
       });
     }
 
@@ -125,7 +122,7 @@ export class DependencyResolver {
 
       for (const dep of manifest.dependencies) {
         const depPlugin = this.plugins.get(dep.id);
-        
+
         if (!depPlugin) {
           if (dep.optional) {
             warnings.push({
@@ -250,4 +247,3 @@ export class DependencyResolver {
     return cycles;
   }
 }
-
