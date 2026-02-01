@@ -30,7 +30,7 @@ export function renderGroupHelp(group: CommandGroup): string {
   for (let i = 0; i < sortedCommands.length; i++) {
     const cmd = sortedCommands[i];
     const displayName = commandDisplayNames[i];
-    if (!cmd || !displayName) continue;
+    if (!cmd || !displayName) {continue;}
 
     const paddedName = displayName.padEnd(maxNameLength);
     const description = cmd.describe || "No description";

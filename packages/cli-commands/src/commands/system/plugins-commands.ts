@@ -53,7 +53,7 @@ export const pluginsCommands = defineSystemCommand<PluginsCommandsFlags, Command
       ? Object.fromEntries(
           Object.entries(grouped).filter(([name, cmds]) => {
             // Match group name
-            if (name === flags.plugin || name.includes(flags.plugin)) return true;
+            if (name === flags.plugin || name.includes(flags.plugin)) {return true;}
             // Match category
             return cmds.some(cmd => cmd.category === flags.plugin || cmd.category?.includes(flags.plugin));
           })

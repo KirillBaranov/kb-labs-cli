@@ -61,7 +61,7 @@ export const logTest = defineSystemCommand<LogTestFlags, LogTestResult>({
     // ============================================
     // 1. Test all log levels
     // ============================================
-    if (!jsonMode) ctx.ui.write("1️⃣  Testing log levels:\n");
+    if (!jsonMode) {ctx.ui.write("1️⃣  Testing log levels:\n");}
     
     logger.debug("Debug message", { 
       test: "levels",
@@ -90,7 +90,7 @@ export const logTest = defineSystemCommand<LogTestFlags, LogTestResult>({
     // ============================================
     // 2. Test context tracking (traceId, spanId, executionId, parentSpanId)
     // ============================================
-    if (!jsonMode) ctx.ui.write("\n2️⃣  Testing context tracking:\n");
+    if (!jsonMode) {ctx.ui.write("\n2️⃣  Testing context tracking:\n");}
     
     const traceId = randomUUID();
     const executionId = randomUUID();
@@ -148,7 +148,7 @@ export const logTest = defineSystemCommand<LogTestFlags, LogTestResult>({
     // ============================================
     // 3. Test redaction (sensitive data masking)
     // ============================================
-    if (!jsonMode) ctx.ui.write("\n3️⃣  Testing redaction (sensitive data):\n");
+    if (!jsonMode) {ctx.ui.write("\n3️⃣  Testing redaction (sensitive data):\n");}
     
     logger.info("Log with API key", {
       test: "redaction",
@@ -182,7 +182,7 @@ export const logTest = defineSystemCommand<LogTestFlags, LogTestResult>({
     // ============================================
     // 4. Test structured metadata
     // ============================================
-    if (!jsonMode) ctx.ui.write("\n4️⃣  Testing structured metadata:\n");
+    if (!jsonMode) {ctx.ui.write("\n4️⃣  Testing structured metadata:\n");}
     
     logger.info("Log with complex metadata", {
       test: "metadata",
@@ -206,7 +206,7 @@ export const logTest = defineSystemCommand<LogTestFlags, LogTestResult>({
     // ============================================
     // 5. Test error handling
     // ============================================
-    if (!jsonMode) ctx.ui.write("\n5️⃣  Testing error handling:\n");
+    if (!jsonMode) {ctx.ui.write("\n5️⃣  Testing error handling:\n");}
     
     // Error with Error object
     try {
@@ -231,7 +231,7 @@ export const logTest = defineSystemCommand<LogTestFlags, LogTestResult>({
     // ============================================
     // 6. Test child loggers
     // ============================================
-    if (!jsonMode) ctx.ui.write("\n6️⃣  Testing child loggers:\n");
+    if (!jsonMode) {ctx.ui.write("\n6️⃣  Testing child loggers:\n");}
     
     const childLogger = logger.child({ 
       category: "log-test:child",
@@ -249,7 +249,7 @@ export const logTest = defineSystemCommand<LogTestFlags, LogTestResult>({
     // ============================================
     // 7. Test helper functions
     // ============================================
-    if (!jsonMode) ctx.ui.write("\n7️⃣  Testing helper functions:\n");
+    if (!jsonMode) {ctx.ui.write("\n7️⃣  Testing helper functions:\n");}
     
     // logAction
     logAction(logger, "User action completed", {
@@ -291,7 +291,7 @@ export const logTest = defineSystemCommand<LogTestFlags, LogTestResult>({
     // ============================================
     // 8. Test workflow simulation
     // ============================================
-    if (!jsonMode) ctx.ui.write("\n8️⃣  Testing workflow simulation:\n");
+    if (!jsonMode) {ctx.ui.write("\n8️⃣  Testing workflow simulation:\n");}
     
     const workflowId = randomUUID();
     setLogContext({

@@ -25,7 +25,7 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "type-check": "tsc --noEmit -p tsconfig.build.json",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -37,6 +37,7 @@
     "@kb-labs/core-runtime": "link:../../../kb-labs-core/packages/core-runtime",
     "@kb-labs/core-state-broker": "link:../../../kb-labs-core/packages/core-state-broker",
     "@kb-labs/core-sys": "link:../../../kb-labs-core/packages/core-sys",
+    "@kb-labs/plugin-contracts": "link:../../../kb-labs-plugin/packages/plugin-contracts",
     "@kb-labs/plugin-execution": "link:../../../kb-labs-plugin/packages/plugin-execution",
     "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/plugin-runtime",
     "@kb-labs/setup-engine-core": "link:../../../kb-labs-setup-engine/packages/setup-engine-core",
@@ -63,7 +64,6 @@
   },
   "devDependencies": {
     "@kb-labs/devkit": "link:../../../kb-labs-devkit",
-    "@kb-labs/plugin-contracts": "link:../../../kb-labs-plugin/packages/plugin-contracts",
     "@types/node": "^24.3.3",
     "@types/picomatch": "^4",
     "rimraf": "^6.0.1",

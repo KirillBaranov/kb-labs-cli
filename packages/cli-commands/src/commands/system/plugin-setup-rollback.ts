@@ -185,7 +185,7 @@ async function applyRollback(entries: JournalEntry[], cwd: string, output: any, 
   
   for (const entry of [...entries].reverse()) {
     const operation = entry.operation?.operation;
-    if (!operation) continue;
+    if (!operation) {continue;}
 
     switch (operation.kind) {
       case 'file':
