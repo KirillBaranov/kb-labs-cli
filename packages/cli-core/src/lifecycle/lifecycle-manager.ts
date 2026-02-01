@@ -3,7 +3,7 @@
  * Plugin lifecycle management
  */
 
-import type { PluginRegistry } from '../registry/plugin-registry';
+import type { PluginRegistry } from "../registry/plugin-registry";
 
 /**
  * Plugin lifecycle interface
@@ -46,7 +46,7 @@ export class LifecycleManager {
   constructor(
     private registry: PluginRegistry,
     private context: CliContext,
-    private limits: ExecutionLimits
+    private limits: ExecutionLimits,
   ) {}
 
   /**
@@ -59,17 +59,22 @@ export class LifecycleManager {
     }
 
     try {
-      const lifecycle = await this.loadLifecycle(pluginId, manifest.lifecycle.onLoad);
+      const lifecycle = await this.loadLifecycle(
+        pluginId,
+        manifest.lifecycle.onLoad,
+      );
       if (lifecycle.onLoad) {
         await this.withTimeout(
           lifecycle.onLoad(this.context),
           this.limits.lifecycleTimeoutMs,
-          `onLoad hook for ${pluginId}`
+          `onLoad hook for ${pluginId}`,
         );
         this.loadedHooks.set(pluginId, lifecycle);
       }
     } catch (error) {
-      this.context.logger?.error(`Failed to invoke onLoad for ${pluginId}`, { error });
+      this.context.logger?.error(`Failed to invoke onLoad for ${pluginId}`, {
+        error,
+      });
     }
   }
 
@@ -86,10 +91,12 @@ export class LifecycleManager {
       await this.withTimeout(
         lifecycle.onUnload(this.context),
         this.limits.lifecycleTimeoutMs,
-        `onUnload hook for ${pluginId}`
+        `onUnload hook for ${pluginId}`,
       );
     } catch (error) {
-      this.context.logger?.error(`Failed to invoke onUnload for ${pluginId}`, { error });
+      this.context.logger?.error(`Failed to invoke onUnload for ${pluginId}`, {
+        error,
+      });
     } finally {
       this.loadedHooks.delete(pluginId);
     }
@@ -108,10 +115,12 @@ export class LifecycleManager {
       await this.withTimeout(
         lifecycle.onEnable(this.context),
         this.limits.lifecycleTimeoutMs,
-        `onEnable hook for ${pluginId}`
+        `onEnable hook for ${pluginId}`,
       );
     } catch (error) {
-      this.context.logger?.error(`Failed to invoke onEnable for ${pluginId}`, { error });
+      this.context.logger?.error(`Failed to invoke onEnable for ${pluginId}`, {
+        error,
+      });
     }
   }
 
@@ -128,10 +137,12 @@ export class LifecycleManager {
       await this.withTimeout(
         lifecycle.onDisable(this.context),
         this.limits.lifecycleTimeoutMs,
-        `onDisable hook for ${pluginId}`
+        `onDisable hook for ${pluginId}`,
       );
     } catch (error) {
-      this.context.logger?.error(`Failed to invoke onDisable for ${pluginId}`, { error });
+      this.context.logger?.error(`Failed to invoke onDisable for ${pluginId}`, {
+        error,
+      });
     }
   }
 
@@ -152,9 +163,12 @@ export class LifecycleManager {
   /**
    * Load lifecycle from path
    */
-  private async loadLifecycle(pluginId: string, lifecyclePath: string): Promise<PluginLifecycle> {
+  private async loadLifecycle(
+    pluginId: string,
+    lifecyclePath: string,
+  ): Promise<PluginLifecycle> {
     // Parse path: './lifecycle.js#onLoad'
-    const [file, exportName] = lifecyclePath.split('#');
+    const [file, exportName] = lifecyclePath.split("#");
     if (!file) {
       throw new Error(`Invalid lifecycle path: ${lifecyclePath}`);
     }
@@ -170,14 +184,16 @@ export class LifecycleManager {
   private async withTimeout<T>(
     promise: Promise<T>,
     timeoutMs: number,
-    label: string
+    label: string,
   ): Promise<T> {
     return Promise.race([
       promise,
-      new Promise<T>((_, reject) =>
-        setTimeout(() => reject(new Error(`Timeout: ${label} exceeded ${timeoutMs}ms`)), timeoutMs)
-      ),
+      new Promise<T>((_, reject) => {
+        setTimeout(
+          () => reject(new Error(`Timeout: ${label} exceeded ${timeoutMs}ms`)),
+          timeoutMs,
+        );
+      }),
     ]);
   }
 }
-

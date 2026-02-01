@@ -3,12 +3,12 @@
  * Schema caching for performance optimization
  */
 
-import { z } from 'zod';
-import * as crypto from 'node:crypto';
-import { getLogger } from '@kb-labs/core-sys/logging';
-import type { ManifestV3 } from '@kb-labs/plugin-contracts';
+import type { z } from "zod";
+import * as crypto from "node:crypto";
+import { getLogger } from "@kb-labs/core-sys/logging";
+import type { ManifestV3 } from "@kb-labs/plugin-contracts";
 
-const logger = getLogger('cli:schema-cache');
+const logger = getLogger("cli:schema-cache");
 
 /**
  * Schema cache for Zod schemas with checksum-based invalidation
@@ -25,7 +25,7 @@ export class SchemaCache {
    */
   async getSchema(
     schemaRef: string,
-    manifestChecksum: string
+    manifestChecksum: string,
   ): Promise<z.ZodTypeAny | null> {
     const cacheKey = `${manifestChecksum}:${schemaRef}`;
 
@@ -36,9 +36,9 @@ export class SchemaCache {
     }
 
     // Parse schemaRef: './schemas/review.ts#ReviewSchema'
-    const [modulePath, exportName] = schemaRef.split('#');
+    const [modulePath, exportName] = schemaRef.split("#");
     if (!exportName || !modulePath) {
-      logger.warn('Invalid schema ref', { schemaRef });
+      logger.warn("Invalid schema ref", { schemaRef });
       return null;
     }
 
@@ -48,12 +48,12 @@ export class SchemaCache {
       const schema = module[exportName];
 
       // Validate it's a Zod schema
-      if (schema && typeof schema.parse === 'function') {
+      if (schema && typeof schema.parse === "function") {
         this.cache.set(cacheKey, schema);
         this.checksums.set(schemaRef, manifestChecksum);
         return schema;
       } else {
-        logger.warn('Export is not a valid Zod schema', {
+        logger.warn("Export is not a valid Zod schema", {
           exportName,
           schemaRef,
           modulePath,
@@ -61,7 +61,7 @@ export class SchemaCache {
         return null;
       }
     } catch (error) {
-      logger.warn('Failed to load schema', {
+      logger.warn("Failed to load schema", {
         schemaRef,
         modulePath,
         exportName,
@@ -132,12 +132,8 @@ export class SchemaCache {
 export function calculateManifestChecksum(manifest: ManifestV3): string {
   // Serialize manifest to stable JSON
   const stable = JSON.stringify(manifest, Object.keys(manifest).sort());
-  
-  return crypto
-    .createHash('sha256')
-    .update(stable)
-    .digest('hex')
-    .slice(0, 16);
+
+  return crypto.createHash("sha256").update(stable).digest("hex").slice(0, 16);
 }
 
 /**
@@ -161,4 +157,3 @@ export function getSchemaCache(): SchemaCache {
 export function resetSchemaCache(): void {
   globalSchemaCache = null;
 }
-
