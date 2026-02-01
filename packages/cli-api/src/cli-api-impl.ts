@@ -275,7 +275,13 @@ export class CliAPIImpl implements CliAPI {
     if (this.mode === 'consumer') {
       return this.lastSnapshot?.plugins ?? [];
     }
-    return this.registry.list();
+    // In producer mode, use snapshot data if registry hasn't completed discovery yet
+    // This handles the race condition where refresh() runs async in background
+    const registryPlugins = this.registry.list();
+    if (registryPlugins.length === 0 && this.lastSnapshot?.plugins?.length) {
+      return this.lastSnapshot.plugins;
+    }
+    return registryPlugins;
   }
 
   /**
@@ -286,7 +292,14 @@ export class CliAPIImpl implements CliAPI {
       const entry = this.snapshotManifestMap.get(pluginId);
       return entry ? cloneValue(entry.manifest) : null;
     }
-    return this.registry.getManifestV3(pluginId);
+    // In producer mode, try registry first, fallback to snapshot if registry not ready
+    const registryManifest = this.registry.getManifestV3(pluginId);
+    if (registryManifest) {
+      return registryManifest;
+    }
+    // Fallback to snapshot if registry hasn't completed discovery
+    const snapshotEntry = this.snapshotManifestMap.get(pluginId);
+    return snapshotEntry ? cloneValue(snapshotEntry.manifest) : null;
   }
 
   /**
