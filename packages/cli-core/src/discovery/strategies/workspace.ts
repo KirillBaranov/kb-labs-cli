@@ -3,18 +3,18 @@
  * Workspace strategy - discover plugins from pnpm/yarn workspaces
  */
 
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { parse as parseYaml } from 'yaml';
-import { glob } from 'glob';
-import type { ManifestV3 } from '@kb-labs/plugin-contracts';
-import { isManifestV3 } from '@kb-labs/plugin-contracts';
-import { getLogger } from '@kb-labs/core-sys/logging';
-import { safeImport, isImportTimeout } from '../utils/safe-import.js';
-import type { DiscoveryStrategy, DiscoveryResult } from '../types';
-import type { PluginBrief } from '../../registry/plugin-registry';
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { parse as parseYaml } from "yaml";
+import { glob } from "glob";
+import type { ManifestV3 } from "@kb-labs/plugin-contracts";
+import { isManifestV3 } from "@kb-labs/plugin-contracts";
+import { getLogger } from "@kb-labs/core-sys/logging";
+import { safeImport, isImportTimeout } from "../utils/safe-import.js";
+import type { DiscoveryStrategy, DiscoveryResult } from "../types";
+import type { PluginBrief } from "../../registry/plugin-registry";
 
-const logger = getLogger('WorkspaceStrategy');
+const logger = getLogger("WorkspaceStrategy");
 
 /**
  * Find workspace root by looking for pnpm-workspace.yaml or similar
@@ -25,17 +25,17 @@ function findWorkspaceRoot(startDir: string): string | null {
 
   while (current !== root) {
     // Check for workspace files
-    const pnpmWorkspace = path.join(current, 'pnpm-workspace.yaml');
-    const yarnWorkspace = path.join(current, 'package.json');
-    
+    const pnpmWorkspace = path.join(current, "pnpm-workspace.yaml");
+    const yarnWorkspace = path.join(current, "package.json");
+
     if (fs.existsSync(pnpmWorkspace)) {
       return current;
     }
-    
+
     // Check if package.json has workspaces field (yarn/npm)
     if (fs.existsSync(yarnWorkspace)) {
       try {
-        const pkg = JSON.parse(fs.readFileSync(yarnWorkspace, 'utf8'));
+        const pkg = JSON.parse(fs.readFileSync(yarnWorkspace, "utf8"));
         if (pkg.workspaces) {
           return current;
         }
@@ -43,10 +43,10 @@ function findWorkspaceRoot(startDir: string): string | null {
         // ignore
       }
     }
-    
+
     current = path.dirname(current);
   }
-  
+
   return null;
 }
 
@@ -54,103 +54,130 @@ function findWorkspaceRoot(startDir: string): string | null {
  * Workspace discovery strategy
  */
 export class WorkspaceStrategy implements DiscoveryStrategy {
-  name = 'workspace' as const;
+  name = "workspace" as const;
   priority = 1;
 
   async discover(roots: string[]): Promise<DiscoveryResult> {
-    logger.debug('Starting discovery', { roots });
+    logger.debug("Starting discovery", { roots });
     const plugins: PluginBrief[] = [];
     const manifests = new Map();
     const errors: Array<{ path: string; error: string }> = [];
 
     for (const root of roots) {
-      logger.debug('Checking root', { root });
+      logger.debug("Checking root", { root });
       const workspaceRoot = findWorkspaceRoot(root);
       if (!workspaceRoot) {
-        logger.debug('No workspace root found', { root });
+        logger.debug("No workspace root found", { root });
         continue;
       }
-      logger.debug('Found workspace root', { workspaceRoot });
+      logger.debug("Found workspace root", { workspaceRoot });
 
       // Read workspace config
-      const pnpmWorkspacePath = path.join(workspaceRoot, 'pnpm-workspace.yaml');
+      const pnpmWorkspacePath = path.join(workspaceRoot, "pnpm-workspace.yaml");
       if (!fs.existsSync(pnpmWorkspacePath)) {
-        logger.debug('pnpm-workspace.yaml not found', { pnpmWorkspacePath });
+        logger.debug("pnpm-workspace.yaml not found", { pnpmWorkspacePath });
         continue;
       }
-      logger.debug('Found pnpm-workspace.yaml', { pnpmWorkspacePath });
+      logger.debug("Found pnpm-workspace.yaml", { pnpmWorkspacePath });
 
       try {
-        const content = fs.readFileSync(pnpmWorkspacePath, 'utf8');
+        const content = fs.readFileSync(pnpmWorkspacePath, "utf8");
         const config = parseYaml(content);
         const patterns = config?.packages || [];
 
         // Find all package.json files matching patterns
         for (const pattern of patterns) {
-          const pkgPattern = path.join(workspaceRoot, pattern, 'package.json');
+          const pkgPattern = path.join(workspaceRoot, pattern, "package.json");
           const pkgFiles = await glob(pkgPattern, { absolute: true });
-          logger.debug('Found package.json files for pattern', { count: pkgFiles.length, pattern });
+          logger.debug("Found package.json files for pattern", {
+            count: pkgFiles.length,
+            pattern,
+          });
 
           for (const pkgFile of pkgFiles) {
             try {
-              const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf8'));
+              const pkg = JSON.parse(fs.readFileSync(pkgFile, "utf8"));
               const pkgName = pkg.name || path.basename(path.dirname(pkgFile));
-              logger.debug('Checking package', { pkgName, pkgFile });
-              
+              logger.debug("Checking package", { pkgName, pkgFile });
+
               // Check for manifest in package.json (support both kb.manifest and kbLabs.manifest)
               const manifestPathRel = pkg.kbLabs?.manifest || pkg.kb?.manifest;
               if (manifestPathRel) {
-                const manifestPath = path.resolve(path.dirname(pkgFile), manifestPathRel);
-                logger.debug('Found manifest path', { manifestPathRel, manifestPath });
+                const manifestPath = path.resolve(
+                  path.dirname(pkgFile),
+                  manifestPathRel,
+                );
+                logger.debug("Found manifest path", {
+                  manifestPathRel,
+                  manifestPath,
+                });
                 if (fs.existsSync(manifestPath)) {
-                  logger.debug('Manifest file exists', { manifestPath });
+                  logger.debug("Manifest file exists", { manifestPath });
                   try {
                     // Load and parse manifest with timeout protection
-                    logger.debug('Attempting dynamic import', { manifestPath });
+                    logger.debug("Attempting dynamic import", { manifestPath });
                     const manifestModule = await safeImport(manifestPath);
-                    logger.debug('Dynamic import successful', { manifestPath });
-                    const manifestData: unknown = manifestModule.default || manifestModule.manifest || manifestModule;
+                    logger.debug("Dynamic import successful", { manifestPath });
+                    const manifestData: unknown =
+                      manifestModule.default ||
+                      manifestModule.manifest ||
+                      manifestModule;
 
                     if (isManifestV3(manifestData)) {
                       const manifest = manifestData;
-                      const pluginId = manifest.id || pkg.name || path.basename(path.dirname(pkgFile));
+                      const pluginId =
+                        manifest.id ||
+                        pkg.name ||
+                        path.basename(path.dirname(pkgFile));
 
-                      const pluginDir = path.dirname(manifestPath)
+                      const pluginDir = path.dirname(manifestPath);
 
                       plugins.push({
                         id: pluginId,
-                        version: manifest.version || pkg.version || '0.0.0',
-                        kind: 'v3',
+                        version: manifest.version || pkg.version || "0.0.0",
+                        kind: "v3",
                         source: {
-                          kind: 'workspace',
+                          kind: "workspace",
                           path: pluginDir,
                         },
                         display: {
-                          name: manifest.display?.name || pkg.kbLabs?.name || pkg.name,
-                          description: manifest.display?.description || pkg.kbLabs?.description || pkg.description,
+                          name:
+                            manifest.display?.name ||
+                            pkg.kbLabs?.name ||
+                            pkg.name,
+                          description:
+                            manifest.display?.description ||
+                            pkg.kbLabs?.description ||
+                            pkg.description,
                         },
                       });
 
                       // Store manifest
                       manifests.set(pluginId, manifest);
-                      logger.debug('Successfully loaded manifest for plugin', { pluginId });
-                    } else {
-                      logger.debug('Manifest is not V3, skipping', { manifestPath });
-                    }
-                  } catch (error) {
-                    const errorMessage = error instanceof Error ? error.message : String(error);
-
-                    if (isImportTimeout(error)) {
-                      logger.warn('Manifest import timed out (skipping)', {
-                        manifestPath,
-                        timeout: '5s',
-                        suggestion: 'This manifest may have circular dependencies or top-level await issues'
+                      logger.debug("Successfully loaded manifest for plugin", {
+                        pluginId,
                       });
                     } else {
-                      logger.error('Error loading manifest', {
+                      logger.debug("Manifest is not V3, skipping", {
+                        manifestPath,
+                      });
+                    }
+                  } catch (error) {
+                    const errorMessage =
+                      error instanceof Error ? error.message : String(error);
+
+                    if (isImportTimeout(error)) {
+                      logger.warn("Manifest import timed out (skipping)", {
+                        manifestPath,
+                        timeout: "5s",
+                        suggestion:
+                          "This manifest may have circular dependencies or top-level await issues",
+                      });
+                    } else {
+                      logger.error("Error loading manifest", {
                         manifestPath,
                         error: errorMessage,
-                        stack: error instanceof Error ? error.stack : undefined
+                        stack: error instanceof Error ? error.stack : undefined,
                       });
                     }
 
@@ -161,14 +188,17 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
                   }
                 } else {
                   // Manifest path specified but file doesn't exist
-                  logger.warn('Manifest file not found', { manifestPath, pkgName });
+                  logger.warn("Manifest file not found", {
+                    manifestPath,
+                    pkgName,
+                  });
                   errors.push({
                     path: manifestPath,
                     error: `Manifest file not found for package ${pkgName} (expected at ${manifestPathRel})`,
                   });
                 }
               } else {
-                logger.debug('No manifest path in package.json', { pkgName });
+                logger.debug("No manifest path in package.json", { pkgName });
               }
             } catch (error) {
               const pkgName = path.basename(path.dirname(pkgFile));
@@ -190,4 +220,3 @@ export class WorkspaceStrategy implements DiscoveryStrategy {
     return { plugins, manifests, errors };
   }
 }
-

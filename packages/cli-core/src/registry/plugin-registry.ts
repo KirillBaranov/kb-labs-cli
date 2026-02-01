@@ -3,19 +3,19 @@
  * Plugin registry implementation
  */
 
-import type { CacheAdapter } from '../cache/cache-adapter';
-import type { ManifestV3, RestRouteDecl } from '@kb-labs/plugin-contracts';
-import { WatchManager } from './watch-manager';
-import semver from 'semver';
-import * as path from 'node:path';
-import { getLogger } from '@kb-labs/core-sys/logging';
+import type { CacheAdapter } from "../cache/cache-adapter";
+import type { ManifestV3, RestRouteDecl } from "@kb-labs/plugin-contracts";
+import { WatchManager } from "./watch-manager";
+import semver from "semver";
+import * as path from "node:path";
+import { getLogger } from "@kb-labs/core-sys/logging";
 
-const logger = getLogger('PluginRegistry');
+const logger = getLogger("PluginRegistry");
 
 /**
  * Source kind for discovered plugins
  */
-export type SourceKind = 'workspace' | 'pkg' | 'dir' | 'file';
+export type SourceKind = "workspace" | "pkg" | "dir" | "file";
 
 /**
  * Plugin brief information
@@ -23,7 +23,7 @@ export type SourceKind = 'workspace' | 'pkg' | 'dir' | 'file';
 export interface PluginBrief {
   id: string;
   version: string;
-  kind: 'v2' | 'v3';
+  kind: "v2" | "v3";
   source: {
     kind: SourceKind;
     path: string;
@@ -78,7 +78,7 @@ export interface ExplainResult {
  * Discovery options
  */
 export interface DiscoveryOptions {
-  strategies: Array<'workspace' | 'pkg' | 'dir' | 'file'>;
+  strategies: Array<"workspace" | "pkg" | "dir" | "file">;
   roots?: string[];
   allowDowngrade?: boolean;
   watch?: boolean;
@@ -96,7 +96,8 @@ export interface CacheOptions {
 /**
  * Route reference
  */
-export type RouteRef = `${string}:${'GET'|'POST'|'PUT'|'PATCH'|'DELETE'} ${string}`;
+export type RouteRef =
+  `${string}:${"GET" | "POST" | "PUT" | "PATCH" | "DELETE"} ${string}`;
 
 /**
  * Handler reference
@@ -117,7 +118,7 @@ type ResolvedRoute = {
 };
 
 function parseHandlerRef(handler: string): HandlerRef {
-  const [file, exportName] = handler.split('#');
+  const [file, exportName] = handler.split("#");
   if (!file || !exportName) {
     throw new Error(`Invalid handler reference: ${handler}`);
   }
@@ -126,26 +127,34 @@ function parseHandlerRef(handler: string): HandlerRef {
 
 function normalizeInvokePath(value: string): string {
   if (!value) {
-    return '/';
+    return "/";
   }
   const trimmed = value.trim();
-  if (trimmed === '') {
-    return '/';
+  if (trimmed === "") {
+    return "/";
   }
-  const prefixed = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-  return prefixed.endsWith('/') && prefixed !== '/' ? prefixed.slice(0, -1) : prefixed;
+  const prefixed = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  return prefixed.endsWith("/") && prefixed !== "/"
+    ? prefixed.slice(0, -1)
+    : prefixed;
 }
 
-function resolveRouteFullPath(route: RestRouteDecl, basePath: string, pluginId: string): string {
-  const normalizedBase = normalizeInvokePath(basePath || `/v1/plugins/${pluginId}`);
-  const rawPath = route.path || '/';
+function resolveRouteFullPath(
+  route: RestRouteDecl,
+  basePath: string,
+  pluginId: string,
+): string {
+  const normalizedBase = normalizeInvokePath(
+    basePath || `/v1/plugins/${pluginId}`,
+  );
+  const rawPath = route.path || "/";
 
-  if (rawPath.startsWith('/v1/plugins/')) {
-    const basePrefix = normalizedBase.split('/v1')[0] || '';
-    return normalizeInvokePath(rawPath.replace(/^\/v1/, basePrefix + '/v1'));
+  if (rawPath.startsWith("/v1/plugins/")) {
+    const basePrefix = normalizedBase.split("/v1")[0] || "";
+    return normalizeInvokePath(rawPath.replace(/^\/v1/, basePrefix + "/v1"));
   }
 
-  if (rawPath.startsWith('/')) {
+  if (rawPath.startsWith("/")) {
     return normalizeInvokePath(`${normalizedBase}${rawPath}`);
   }
 
@@ -163,15 +172,13 @@ export class PluginRegistry {
   private plugins: Map<string, PluginBrief> = new Map();
   private manifests: Map<string, ManifestV3> = new Map();
   private listeners: Array<(diff: RegistryDiff) => void> = [];
-  private snapshotVersion: string = '1';
+  private snapshotVersion: string = "1";
   private lastUpdate: number = 0;
   private lastErrors: Array<{ path: string; error: string }> = [];
   private initialized = false;
   private watchManager?: WatchManager;
 
-  constructor(
-    private opts: DiscoveryOptions & { cache?: CacheOptions }
-  ) {
+  constructor(private opts: DiscoveryOptions & { cache?: CacheOptions }) {
     // Initialize watch mode if requested
     if (this.opts.watch) {
       this.initWatchMode();
@@ -183,7 +190,7 @@ export class PluginRegistry {
    */
   private initWatchMode(): void {
     const roots = this.opts.roots || [process.cwd()];
-    
+
     this.watchManager = new WatchManager({
       roots,
       onChange: async () => {
@@ -194,8 +201,11 @@ export class PluginRegistry {
 
     // Start watching after a short delay (allow initial refresh to complete)
     setTimeout(() => {
-      this.watchManager?.start().catch(error => {
-        logger.error('Failed to start watch mode', error instanceof Error ? error : new Error(String(error)));
+      this.watchManager?.start().catch((error) => {
+        logger.error(
+          "Failed to start watch mode",
+          error instanceof Error ? error : new Error(String(error)),
+        );
       });
     }, 1000);
   }
@@ -205,55 +215,71 @@ export class PluginRegistry {
    */
   async refresh(): Promise<void> {
     const start = Date.now();
-    
+
     try {
-      const { DiscoveryManager } = await import('../discovery/discovery-manager');
+      const { DiscoveryManager } =
+        await import("../discovery/discovery-manager");
       const manager = new DiscoveryManager(this.opts);
-      
+
       const result = await manager.discover();
-      
+
       // Store old plugins for diff
       const oldPlugins = new Map(this.plugins);
-      
+
       // Update registry
       this.plugins.clear();
       this.manifests.clear();
-      
+
       for (const plugin of result.plugins) {
         this.plugins.set(plugin.id, plugin);
       }
-      
+
       for (const [id, manifest] of result.manifests) {
         this.manifests.set(id, manifest);
         logger.debug(`Stored manifest for ${id} (manifest.id=${manifest.id})`);
       }
-      
+
       // Log summary
-      logger.debug(`Stored ${this.manifests.size} manifests for ${this.plugins.size} plugins`);
+      logger.debug(
+        `Stored ${this.manifests.size} manifests for ${this.plugins.size} plugins`,
+      );
       if (this.plugins.size > 0 && this.manifests.size === 0) {
-        logger.warn(`WARNING: Found ${this.plugins.size} plugins but 0 manifests!`);
-        logger.warn(`Plugin IDs: ${Array.from(this.plugins.keys()).join(', ')}`);
+        logger.warn(
+          `WARNING: Found ${this.plugins.size} plugins but 0 manifests!`,
+        );
+        logger.warn(
+          `Plugin IDs: ${Array.from(this.plugins.keys()).join(", ")}`,
+        );
       }
-      
+
       // Calculate diff
       const diff = this.calculateDiff(oldPlugins, this.plugins);
-      
+
       // Update metadata
       this.lastUpdate = Date.now();
       this.snapshotVersion = String(Number(this.snapshotVersion) + 1);
       this.lastErrors = result.errors;
       this.initialized = true;
-      
+
       const duration = Date.now() - start;
-      logger.debug(`[PluginRegistry] Discovery completed in ${duration}ms, found ${this.plugins.size} plugins`);
-      
+      logger.debug(
+        `[PluginRegistry] Discovery completed in ${duration}ms, found ${this.plugins.size} plugins`,
+      );
+
       // Notify listeners
-      if (diff.added.length > 0 || diff.removed.length > 0 || diff.changed.length > 0) {
+      if (
+        diff.added.length > 0 ||
+        diff.removed.length > 0 ||
+        diff.changed.length > 0
+      ) {
         this.notifyListeners(diff);
       }
     } catch (error) {
       const duration = Date.now() - start;
-      logger.error(`Discovery failed after ${duration}ms`, error instanceof Error ? error : new Error(String(error)));
+      logger.error(
+        `Discovery failed after ${duration}ms`,
+        error instanceof Error ? error : new Error(String(error)),
+      );
       throw error;
     }
   }
@@ -263,7 +289,7 @@ export class PluginRegistry {
    */
   private calculateDiff(
     oldPlugins: Map<string, PluginBrief>,
-    newPlugins: Map<string, PluginBrief>
+    newPlugins: Map<string, PluginBrief>,
   ): RegistryDiff {
     const added: PluginBrief[] = [];
     const removed: PluginBrief[] = [];
@@ -274,7 +300,10 @@ export class PluginRegistry {
       const oldPlugin = oldPlugins.get(id);
       if (!oldPlugin) {
         added.push(newPlugin);
-      } else if (oldPlugin.version !== newPlugin.version || oldPlugin.source.path !== newPlugin.source.path) {
+      } else if (
+        oldPlugin.version !== newPlugin.version ||
+        oldPlugin.source.path !== newPlugin.source.path
+      ) {
         changed.push({ from: oldPlugin, to: newPlugin });
       }
     }
@@ -306,7 +335,11 @@ export class PluginRegistry {
   /**
    * Resolve route to handler
    */
-  async resolveRoute(pluginId: string, method: string, rawPath: string): Promise<ResolvedRoute | null> {
+  async resolveRoute(
+    pluginId: string,
+    method: string,
+    rawPath: string,
+  ): Promise<ResolvedRoute | null> {
     const manifest = this.manifests.get(pluginId);
     const plugin = this.plugins.get(pluginId);
 
@@ -337,10 +370,10 @@ export class PluginRegistry {
           route,
           pluginRoot: plugin.source.path,
           workdir: plugin.source.path,
-          outdir: path.join(plugin.source.path, 'out'),
+          outdir: path.join(plugin.source.path, "out"),
         } satisfies ResolvedRoute;
       } catch (error) {
-        logger.warn('Failed to parse handler for route', {
+        logger.warn("Failed to parse handler for route", {
           pluginId,
           handler: route.handler,
           error: error instanceof Error ? error.message : String(error),
@@ -398,7 +431,7 @@ export class PluginRegistry {
     if (!plugin) {
       return {
         pluginId,
-        selected: { version: 'not-found', source: 'none', path: '' },
+        selected: { version: "not-found", source: "none", path: "" },
         candidates: [],
         resolutionRules: [],
       };
@@ -413,9 +446,9 @@ export class PluginRegistry {
       },
       candidates: [],
       resolutionRules: [
-        'Priority: workspace > pkg > dir > file',
-        'Prefer higher semver',
-        'Alphabetical path order',
+        "Priority: workspace > pkg > dir > file",
+        "Prefer higher semver",
+        "Alphabetical path order",
       ],
     };
   }
@@ -443,9 +476,13 @@ export class PluginRegistry {
       try {
         listener(diff);
       } catch (error) {
-        logger.error('Registry listener error', {
+        logger.error("Registry listener error", {
           error: error instanceof Error ? error.message : String(error),
-          diff: { added: diff.added.length, removed: diff.removed.length, changed: diff.changed.length },
+          diff: {
+            added: diff.added.length,
+            removed: diff.removed.length,
+            changed: diff.changed.length,
+          },
         });
       }
     }
@@ -461,4 +498,3 @@ export class PluginRegistry {
     }
   }
 }
-

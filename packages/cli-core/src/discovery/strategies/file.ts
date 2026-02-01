@@ -3,65 +3,73 @@
  * File strategy - discover plugins from explicit file paths
  */
 
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import type { ManifestV3 } from '@kb-labs/plugin-contracts';
-import { isManifestV3 } from '@kb-labs/plugin-contracts';
-import { getLogger } from '@kb-labs/core-sys/logging';
-import type { DiscoveryStrategy, DiscoveryResult } from '../types';
-import type { PluginBrief } from '../../registry/plugin-registry';
-import { safeImport, isImportTimeout } from '../utils/safe-import.js';
+import * as fs from "node:fs";
+import * as path from "node:path";
+import type { ManifestV3 } from "@kb-labs/plugin-contracts";
+import { isManifestV3 } from "@kb-labs/plugin-contracts";
+import { getLogger } from "@kb-labs/core-sys/logging";
+import type { DiscoveryStrategy, DiscoveryResult } from "../types";
+import type { PluginBrief } from "../../registry/plugin-registry";
+import { safeImport, isImportTimeout } from "../utils/safe-import.js";
 
-const logger = getLogger('FileStrategy');
+const logger = getLogger("FileStrategy");
 
 /**
  * File discovery strategy (explicit paths)
  */
 export class FileStrategy implements DiscoveryStrategy {
-  name = 'file' as const;
+  name = "file" as const;
   priority = 4;
 
   async discover(roots: string[]): Promise<DiscoveryResult> {
-    logger.debug('Starting discovery', { roots });
+    logger.debug("Starting discovery", { roots });
     const plugins: PluginBrief[] = [];
     const manifests = new Map();
     const errors: Array<{ path: string; error: string }> = [];
 
     for (const manifestPath of roots) {
-      logger.debug('Checking manifest path', { manifestPath });
+      logger.debug("Checking manifest path", { manifestPath });
       // Only process if it looks like a file path
       if (!fs.existsSync(manifestPath)) {
-        logger.debug('Manifest path does not exist', { manifestPath });
+        logger.debug("Manifest path does not exist", { manifestPath });
         continue;
       }
       if (!fs.statSync(manifestPath).isFile()) {
-        logger.debug('Manifest path is not a file', { manifestPath });
+        logger.debug("Manifest path is not a file", { manifestPath });
         continue;
       }
-      logger.debug('Found manifest file', { manifestPath });
+      logger.debug("Found manifest file", { manifestPath });
 
       try {
         // Load and parse manifest with timeout protection
-        logger.debug('Attempting dynamic import', { manifestPath });
+        logger.debug("Attempting dynamic import", { manifestPath });
         const manifestModule = await safeImport(manifestPath);
-        logger.debug('Manifest imported successfully', { manifestPath });
-        const manifestData: unknown = manifestModule.default || manifestModule.manifest || manifestModule;
+        logger.debug("Manifest imported successfully", { manifestPath });
+        const manifestData: unknown =
+          manifestModule.default || manifestModule.manifest || manifestModule;
 
         if (isManifestV3(manifestData)) {
           const manifest = manifestData;
-          const pluginId = manifest.id || path.basename(path.dirname(manifestPath));
-          logger.debug('Successfully loaded manifest', { pluginId, manifestPath });
+          const pluginId =
+            manifest.id || path.basename(path.dirname(manifestPath));
+          logger.debug("Successfully loaded manifest", {
+            pluginId,
+            manifestPath,
+          });
 
           // Try to find package.json for additional info
           const pluginDir = path.dirname(manifestPath);
-          const pkgPath = path.join(pluginDir, 'package.json');
+          const pkgPath = path.join(pluginDir, "package.json");
           let display: any = {};
 
           if (fs.existsSync(pkgPath)) {
-            const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+            const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
             display = {
               name: manifest.display?.name || pkg.kbLabs?.name || pkg.name,
-              description: manifest.display?.description || pkg.kbLabs?.description || pkg.description,
+              description:
+                manifest.display?.description ||
+                pkg.kbLabs?.description ||
+                pkg.description,
             };
           } else {
             display = {
@@ -72,25 +80,28 @@ export class FileStrategy implements DiscoveryStrategy {
 
           plugins.push({
             id: pluginId,
-            version: manifest.version || '0.0.0',
-            kind: 'v3',
+            version: manifest.version || "0.0.0",
+            kind: "v3",
             source: {
-              kind: 'file',
+              kind: "file",
               path: pluginDir,
             },
             display,
           });
-          
+
           // Store manifest
           manifests.set(pluginId, manifest);
         } else {
-          logger.debug('Manifest is not V2, skipping', { manifestPath, version });
+          logger.debug("Manifest is not V2, skipping", {
+            manifestPath,
+            version,
+          });
         }
       } catch (error) {
-        logger.error('Error loading manifest', {
+        logger.error("Error loading manifest", {
           manifestPath,
           error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined
+          stack: error instanceof Error ? error.stack : undefined,
         });
         errors.push({
           path: manifestPath,
@@ -99,12 +110,11 @@ export class FileStrategy implements DiscoveryStrategy {
       }
     }
 
-    logger.debug('Discovery completed', { 
-      pluginsFound: plugins.length, 
+    logger.debug("Discovery completed", {
+      pluginsFound: plugins.length,
       manifestsFound: manifests.size,
-      errorsCount: errors.length 
+      errorsCount: errors.length,
     });
     return { plugins, manifests, errors };
   }
 }
-
