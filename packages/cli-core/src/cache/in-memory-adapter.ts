@@ -3,7 +3,7 @@
  * In-memory cache adapter implementation
  */
 
-import type { CacheAdapter } from './cache-adapter';
+import type { CacheAdapter } from "./cache-adapter";
 
 interface CacheEntry {
   value: unknown;
@@ -38,9 +38,7 @@ export class InMemoryCacheAdapter implements CacheAdapter {
 
   async invalidate(pattern: string): Promise<void> {
     // Simple wildcard matching
-    const regex = new RegExp(
-      '^' + pattern.replace(/\*/g, '.*') + '$'
-    );
+    const regex = new RegExp("^" + pattern.replace(/\*/g, ".*") + "$");
 
     const keysToDelete: string[] = [];
     for (const key of this.cache.keys()) {
@@ -58,4 +56,3 @@ export class InMemoryCacheAdapter implements CacheAdapter {
     this.cache.clear();
   }
 }
-

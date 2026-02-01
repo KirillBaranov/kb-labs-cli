@@ -48,7 +48,7 @@ export interface SystemContext {
   /** Profile ID (optional) */
   profileId?: string;
   /** Verbosity level */
-  verbosity: 'quiet' | 'normal' | 'verbose';
+  verbosity: "quiet" | "normal" | "verbose";
   /** JSON output mode */
   jsonMode: boolean;
 }
@@ -62,7 +62,7 @@ export interface CreateContextOptions {
   repoRoot?: string;
   config?: Record<string, any>;
   profileId?: string;
-  verbosity?: 'quiet' | 'normal' | 'verbose';
+  verbosity?: "quiet" | "normal" | "verbose";
   jsonMode?: boolean;
 }
 
@@ -82,7 +82,7 @@ export async function createContext({
   repoRoot,
   config = {},
   profileId,
-  verbosity = 'normal',
+  verbosity = "normal",
   jsonMode = false,
 }: CreateContextOptions): Promise<SystemContext> {
   const resolvedEnv = env ?? process.env;

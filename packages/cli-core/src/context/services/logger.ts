@@ -1,16 +1,19 @@
 /**
  * @module @kb-labs/cli-core/context/services/logger
  * Logging service with structured logging support
- * 
+ *
  * Wrapper around @kb-labs/core-sys/logging for CLI context
  */
 
-import { getLogger, type Logger as CoreLogger } from '@kb-labs/core-sys/logging';
+import {
+  getLogger,
+  type Logger as CoreLogger,
+} from "@kb-labs/core-sys/logging";
 
 /**
  * Log level type (backward compatible)
  */
-export type LogLevel = 'silent' | 'error' | 'warn' | 'info' | 'debug';
+export type LogLevel = "silent" | "error" | "warn" | "info" | "debug";
 
 /**
  * Logger interface for CLI operations with structured logging support
@@ -20,7 +23,7 @@ export interface Logger {
   warn(message: string, meta?: Record<string, unknown>): void;
   error(message: string, meta?: Record<string, unknown>): void;
   debug(message: string, meta?: Record<string, unknown>): void;
-  
+
   // Structured logs for observability
   metric(name: string, value: number, tags?: Record<string, string>): void;
   span<T>(name: string, fn: () => Promise<T>): Promise<T>;
@@ -32,11 +35,11 @@ export interface Logger {
 class CoreLoggerAdapter implements Logger {
   private coreLogger: CoreLogger;
 
-  constructor(category: string = 'cli', level: LogLevel = 'info') {
+  constructor(category: string = "cli", level: LogLevel = "info") {
     this.coreLogger = getLogger(`cli:${category}`);
-    
+
     // Map silent to error level (only errors)
-    if (level === 'silent') {
+    if (level === "silent") {
       // Silent logger will be handled separately
     }
   }
@@ -66,11 +69,11 @@ class CoreLoggerAdapter implements Logger {
     try {
       const result = await fn();
       const duration = Date.now() - start;
-      this.metric(`${name}.duration`, duration, { status: 'success' });
+      this.metric(`${name}.duration`, duration, { status: "success" });
       return result;
     } catch (error) {
       const duration = Date.now() - start;
-      this.metric(`${name}.duration`, duration, { status: 'error' });
+      this.metric(`${name}.duration`, duration, { status: "error" });
       throw error;
     }
   }
@@ -95,10 +98,12 @@ export class SilentLogger implements Logger {
  * @param level - Log level
  * @returns Logger instance
  */
-export function createLogger(level: LogLevel = 'info', category?: string): Logger {
-  if (level === 'silent') {
+export function createLogger(
+  level: LogLevel = "info",
+  category?: string,
+): Logger {
+  if (level === "silent") {
     return new SilentLogger();
   }
   return new CoreLoggerAdapter(category, level);
 }
-
