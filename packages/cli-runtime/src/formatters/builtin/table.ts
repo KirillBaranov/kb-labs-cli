@@ -14,7 +14,7 @@ export const tableFormatter: OutputFormatter = {
     }
 
     if (Array.isArray(data)) {
-      if (data.length === 0) return '';
+      if (data.length === 0) {return '';}
 
       const firstItem = data[0];
       if (typeof firstItem !== 'object' || firstItem === null) {
