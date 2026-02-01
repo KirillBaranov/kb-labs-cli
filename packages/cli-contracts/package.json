@@ -40,10 +40,12 @@
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ignore-pattern 'dist/**'",
     "lint:fix": "eslint . --fix --ignore-pattern 'dist/**'",
-    "test": "vitest run -c ../../vitest.config.ts",
+    "test": "vitest run --passWithNoTests -c ../../vitest.config.ts",
     "test:watch": "vitest -c ../../vitest.config.ts"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@kb-labs/shared-command-kit": "workspace:*"
+  },
   "devDependencies": {
     "@kb-labs/devkit": "link:../../../kb-labs-devkit",
     "@types/node": "^24.3.3",
