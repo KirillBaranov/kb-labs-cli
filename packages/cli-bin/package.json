@@ -34,7 +34,7 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "type-check": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -48,7 +48,16 @@
     "@kb-labs/plugin-contracts": "link:../../../kb-labs-plugin/packages/plugin-contracts",
     "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/plugin-manifest",
     "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/plugin-runtime",
-    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/shared-cli-ui"
+    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/shared-cli-ui",
+    "@kb-labs/shared-command-kit": "workspace:*",
+    "ajv": "^8.17.1",
+    "chokidar": "^4.0.3",
+    "cli-table3": "^0.6.5",
+    "colorette": "^2.0.20",
+    "glob": "^11.0.0",
+    "semver": "^7.6.3",
+    "yaml": "^2.8.2",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "esbuild": "^0.27.0",
