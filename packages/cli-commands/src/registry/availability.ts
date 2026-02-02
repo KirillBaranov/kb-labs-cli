@@ -47,8 +47,7 @@ function resolveFromCwd(spec: string, cwd: string): string {
   
   for (const searchPath of pathsToTry) {
     try {
-      const result = req.resolve(spec, { paths: [searchPath] });
-      return result;
+      return req.resolve(spec, { paths: [searchPath] });
     } catch (_e: any) {
       // Try next path
     }

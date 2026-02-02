@@ -1,4 +1,4 @@
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit'
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit'
 import process from 'node:process'
 import { createCliEngineLogger } from './utils'
 import { streamWorkflowLogs, type WorkflowLogEvent } from './service'

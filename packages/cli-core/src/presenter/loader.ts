@@ -62,7 +62,7 @@ export function createLoader(options: LoaderOptions): Loader {
     isRunning = true;
 
     // Hide cursor
-    process.stdout.write('\x1B[?25l');
+    process.stdout.write("\x1B[?25l");
 
     // Start spinner
     intervalId = setInterval(updateDisplay, SPINNER_INTERVAL);
@@ -103,8 +103,8 @@ export function createLoader(options: LoaderOptions): Loader {
     }
 
     // Restore cursor and move to next line
-    process.stdout.write('\x1B[?25h');
-    process.stdout.write('\n');
+    process.stdout.write("\x1B[?25h");
+    process.stdout.write("\n");
   }
 
   return {

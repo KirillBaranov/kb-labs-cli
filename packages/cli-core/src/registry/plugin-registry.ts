@@ -6,7 +6,6 @@
 import type { CacheAdapter } from "../cache/cache-adapter";
 import type { ManifestV3, RestRouteDecl } from "@kb-labs/plugin-contracts";
 import { WatchManager } from "./watch-manager";
-import semver from "semver";
 import * as path from "node:path";
 import { getLogger } from "@kb-labs/core-sys/logging";
 

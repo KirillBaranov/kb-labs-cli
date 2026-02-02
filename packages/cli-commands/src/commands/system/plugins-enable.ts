@@ -2,7 +2,7 @@
  * plugins:enable command - Enable a plugin
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '../../utils/generate-examples';
 import { enablePlugin } from '../../registry/plugins-state';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';

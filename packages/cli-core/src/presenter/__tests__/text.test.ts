@@ -8,9 +8,9 @@ describe("TextPresenter", () => {
   let originalIsTTY: boolean;
 
   beforeEach(() => {
-    consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => { });
-    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => { });
-    consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+    consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     originalIsTTY = process.stdout.isTTY;
   });
 
@@ -73,7 +73,9 @@ describe("TextPresenter", () => {
       const presenter = createTextPresenter();
       const payload = { message: "Hello", count: 42 };
 
-      expect(() => presenter.json(payload)).toThrow("json() called in text mode");
+      expect(() => presenter.json(payload)).toThrow(
+        "json() called in text mode",
+      );
     });
 
     it("should throw error for complex JSON payloads in text mode", () => {
@@ -81,11 +83,13 @@ describe("TextPresenter", () => {
       const payload = {
         ok: true,
         data: {
-          users: [{ id: 1, name: "John" }]
-        }
+          users: [{ id: 1, name: "John" }],
+        },
       };
 
-      expect(() => presenter.json(payload)).toThrow("json() called in text mode");
+      expect(() => presenter.json(payload)).toThrow(
+        "json() called in text mode",
+      );
     });
   });
 });

@@ -7,7 +7,7 @@ import { initPlatform, type PlatformConfig, type PlatformContainer } from '@kb-l
 import { findNearestConfig, readJsonWithDiagnostics } from '@kb-labs/core-config';
 import { getLogger } from '@kb-labs/core-sys/logging';
 import { sideBorderBox, safeColors, safeSymbols } from '@kb-labs/shared-cli-ui';
-import type { UIFacade, HostType, MessageOptions, Spinner, OutputSection } from '@kb-labs/plugin-contracts';
+import type { UIFacade, HostType, MessageOptions, Spinner } from '@kb-labs/plugin-contracts';
 import { noopUI } from '@kb-labs/plugin-contracts';
 
 const logger = getLogger('platform');

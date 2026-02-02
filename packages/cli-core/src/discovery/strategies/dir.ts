@@ -6,12 +6,11 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { glob } from "glob";
-import type { ManifestV3 } from "@kb-labs/plugin-contracts";
 import { isManifestV3 } from "@kb-labs/plugin-contracts";
 import { getLogger } from "@kb-labs/core-sys/logging";
 import type { DiscoveryStrategy, DiscoveryResult } from "../types";
 import type { PluginBrief } from "../../registry/plugin-registry";
-import { safeImport, isImportTimeout } from "../utils/safe-import.js";
+import { safeImport } from "../utils/safe-import.js";
 
 const logger = getLogger("DirStrategy");
 

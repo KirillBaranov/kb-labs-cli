@@ -9,7 +9,7 @@ import { createRequire } from 'module';
 import { EventEmitter } from 'events';
 
 // ../plugin-contracts/dist/index.js
-var PluginError = class _PluginError extends Error {
+const PluginError = class _PluginError extends Error {
   /**
    * Error code for programmatic handling
    */
@@ -46,7 +46,7 @@ var PluginError = class _PluginError extends Error {
     return error;
   }
 };
-var PermissionError = class extends PluginError {
+const PermissionError = class extends PluginError {
   constructor(message, details) {
     super(message, "PERMISSION_DENIED", details);
     this.name = "PermissionError";
@@ -64,16 +64,16 @@ function wrapError(error, defaultCode = "INTERNAL_ERROR") {
   }
   return new PluginError(String(error), defaultCode);
 }
-var CSI = "\x1B[";
-var RESET = "\x1B[0m";
-var createColor = (...codes) => (text) => `${CSI}${codes.join(";")}m${text}${RESET}`;
-var accentBlue = "38;5;39";
-var accentViolet = "38;5;99";
-var accentTeal = "38;5;51";
-var accentIndigo = "38;5;63";
-var neutral = 37;
-var neutralMuted = 90;
-var colors = {
+const CSI = "\x1B[";
+const RESET = "\x1B[0m";
+const createColor = (...codes) => (text) => `${CSI}${codes.join(";")}m${text}${RESET}`;
+const accentBlue = "38;5;39";
+const accentViolet = "38;5;99";
+const accentTeal = "38;5;51";
+const accentIndigo = "38;5;63";
+const neutral = 37;
+const neutralMuted = 90;
+const colors = {
   // Semantic colors
   success: createColor(32),
   error: createColor(31),
@@ -93,7 +93,7 @@ var colors = {
   underline: createColor(4),
   inverse: createColor(7)
 };
-var symbolCharacters = {
+const symbolCharacters = {
   success: "OK",
   error: "ERR",
   warning: "WARN",
@@ -105,7 +105,7 @@ var symbolCharacters = {
   pointer: "\u203A",
   section: "\u2502"
 };
-var symbols = {
+const symbols = {
   success: colors.success(symbolCharacters.success),
   error: colors.error(symbolCharacters.error),
   warning: colors.warning(symbolCharacters.warning),
@@ -117,14 +117,14 @@ var symbols = {
   pointer: colors.primary(symbolCharacters.pointer),
   section: colors.primary(symbolCharacters.section)
 };
-var isTruthyEnv = (value) => {
+const isTruthyEnv = (value) => {
   if (!value) {
     return false;
   }
   const normalized = value.trim().toLowerCase();
   return normalized !== "" && normalized !== "0" && normalized !== "false" && normalized !== "off";
 };
-var supportsColor = (() => {
+const supportsColor = (() => {
   if (typeof process === "undefined") {
     return false;
   }
@@ -143,8 +143,8 @@ var supportsColor = (() => {
   }
   return true;
 })();
-var passthrough = (fn) => (text) => supportsColor ? fn(text) : text;
-var safeColors = {
+const passthrough = (fn) => (text) => supportsColor ? fn(text) : text;
+const safeColors = {
   success: passthrough(colors.success),
   error: passthrough(colors.error),
   warning: passthrough(colors.warning),
@@ -161,7 +161,7 @@ var safeColors = {
   underline: passthrough(colors.underline),
   inverse: passthrough(colors.inverse)
 };
-var safeSymbols = {
+const safeSymbols = {
   success: supportsColor ? symbols.success : "\u2713",
   error: supportsColor ? symbols.error : "\u2717",
   warning: supportsColor ? symbols.warning : "\u26A0",
@@ -209,7 +209,7 @@ function sideBorderBox(options) {
   lines.push(safeSymbols.border);
   for (let i = 0; i < sections.length; i++) {
     const section2 = sections[i];
-    if (!section2) continue;
+    if (!section2) {continue;}
     if (section2.header) {
       lines.push(`${safeSymbols.border} ${safeColors.bold(section2.header)}`);
     }
@@ -312,7 +312,7 @@ function createTraceContext(options) {
     }
   };
 }
-var DENIED_PATTERNS = [
+const DENIED_PATTERNS = [
   /node_modules/,
   /\.git\//,
   /\.env$/,
@@ -504,7 +504,7 @@ function createFetchShim(options) {
 }
 
 // src/runtime/env-shim.ts
-var ALWAYS_ALLOWED = [
+const ALWAYS_ALLOWED = [
   "NODE_ENV",
   "CI",
   "DEBUG",
@@ -671,7 +671,7 @@ function createArtifactsAPI(options) {
     }
   };
 }
-var BLOCKED_COMMANDS = [
+const BLOCKED_COMMANDS = [
   "rm -rf /",
   "rm -rf /*",
   "mkfs",
@@ -895,7 +895,7 @@ function createPluginContextV3(options) {
     spanId
   };
 }
-var UnixSocketClient = class {
+const UnixSocketClient = class {
   socket = null;
   pending = /* @__PURE__ */ new Map();
   closed = false;
@@ -1061,14 +1061,14 @@ function createSubprocessLogger() {
     child: (_bindings) => createSubprocessLogger()
   };
 }
-var rpcClient = null;
+let rpcClient = null;
 async function connectToPlatform(socketPath) {
   if (!socketPath) {
     throw new Error("Socket path is required for platform RPC connection");
   }
   rpcClient = new UnixSocketClient({ socketPath });
   await rpcClient.connect();
-  const platform = {
+  return {
     // Logger runs in subprocess - doesn't need RPC
     logger: createSubprocessLogger(),
     // LLM service via RPC
@@ -1156,11 +1156,10 @@ async function connectToPlatform(socketPath) {
       }
     }
   };
-  return platform;
 }
 
 // src/sandbox/context-holder.ts
-var globalContext = null;
+let globalContext = null;
 function setGlobalContext(ctx) {
   globalContext = ctx;
 }
@@ -1430,7 +1429,7 @@ Use ctx.runtime.fetch() instead for full control.`
         setImmediate(() => handler(Buffer.from(this._body)));
       } else if (event === "end") {
         setImmediate(() => handler());
-      } else ;
+      } else {;}
       return this;
     }
     once(event, handler) {
@@ -1463,7 +1462,7 @@ Use ctx.runtime.fetch() instead for full control.`
       return true;
     }
     end(callback) {
-      if (callback) this._callback = callback;
+      if (callback) {this._callback = callback;}
       if (this._callback) {
         this._callback();
       }
@@ -1496,7 +1495,7 @@ Use ctx.runtime.fetch() instead for full control.`
       fetchShim(urlStr, { method: "GET", headers }).then(async (response) => {
         const body = await response.text();
         const fakeResponse = new FakeIncomingMessage(response, body);
-        if (callback) callback(fakeResponse);
+        if (callback) {callback(fakeResponse);}
       }).catch((err) => {
         console.error(`[SANDBOX] ${protocol}.get() failed:`, err);
         if (callback) {
@@ -1505,8 +1504,7 @@ Use ctx.runtime.fetch() instead for full control.`
           callback(fakeError);
         }
       });
-      const req = new FakeClientRequest();
-      return req;
+      return new FakeClientRequest();
     },
     // http.request() / https.request()
     request: (url, options, callback) => {
@@ -1529,7 +1527,7 @@ Use ctx.runtime.fetch() instead for full control.`
         fetchShim(urlStr, { method, headers, body: req._body || void 0 }).then(async (response) => {
           const body = await response.text();
           const fakeResponse = new FakeIncomingMessage(response, body);
-          if (callback2) callback2(fakeResponse);
+          if (callback2) {callback2(fakeResponse);}
         }).catch((err) => {
           console.error(`[SANDBOX] ${protocol}.request() failed:`, err);
           if (callback2) {
@@ -1538,7 +1536,7 @@ Use ctx.runtime.fetch() instead for full control.`
             callback2(fakeError);
           }
         });
-        if (callback2) originalEnd(callback2);
+        if (callback2) {originalEnd(callback2);}
         return this;
       };
       if (callback) {
@@ -1660,8 +1658,7 @@ Use async ctx.platform.shell.exec() instead.`
           callback(err, "", "");
         }
       });
-      const proc = new FakeChildProcess();
-      return proc;
+      return new FakeChildProcess();
     },
     /**
      * spawn() - Spawn process
@@ -1717,8 +1714,7 @@ Use async ctx.platform.shell.exec() instead.`
           callback(err, "", "");
         }
       });
-      const proc = new FakeChildProcess();
-      return proc;
+      return new FakeChildProcess();
     },
     /**
      * fork() - Not supported (Node.js process forking not allowed)
@@ -1738,14 +1734,14 @@ Use async ctx.platform.shell.exec() instead.`
 }
 
 // src/sandbox/harden.ts
-var originals = /* @__PURE__ */ new Map();
+const originals = /* @__PURE__ */ new Map();
 function applySandboxPatches(options) {
   const { permissions, mode = "enforce", onViolation } = options;
   const restoreFns = [];
   const shouldShowTrace = (() => {
     const traceEnv = process.env.KB_SANDBOX_TRACE;
-    if (traceEnv === "1") return true;
-    if (traceEnv === "0") return false;
+    if (traceEnv === "1") {return true;}
+    if (traceEnv === "0") {return false;}
     return mode === "enforce";
   })();
   const emitViolation = (event) => {
@@ -1924,7 +1920,7 @@ Tried to fetch: ${url}`;
       }
     } else {
       const allowed = allowedPatterns.some((pattern) => {
-        if (pattern === "*") return true;
+        if (pattern === "*") {return true;}
         if (pattern.startsWith("*.")) {
           return urlObj.hostname.endsWith(pattern.slice(1));
         }
@@ -2037,7 +2033,7 @@ Current directory is locked to: ${process.cwd()}`;
 }
 
 // src/sandbox/bootstrap.ts
-var platformReady;
+let platformReady;
 platformReady = (async () => {
   try {
     const rawConfigJson = process.env.KB_RAW_CONFIG_JSON;
@@ -2116,7 +2112,7 @@ function createStdoutUI() {
       }
     },
     debug: (msg) => {
-      if (process.env.DEBUG) console.debug(msg);
+      if (process.env.DEBUG) {console.debug(msg);}
     },
     spinner: (msg) => {
       console.log(`\u27F3 ${msg}`);
@@ -2133,34 +2129,34 @@ function createStdoutUI() {
     newline: () => console.log(),
     divider: () => console.log("\u2500".repeat(40)),
     box: (content, title) => {
-      if (title) console.log(`\u250C\u2500 ${title} \u2500\u2510`);
+      if (title) {console.log(`\u250C\u2500 ${title} \u2500\u2510`);}
       console.log(content);
-      if (title) console.log(`\u2514${"\u2500".repeat(title.length + 4)}\u2518`);
+      if (title) {console.log(`\u2514${"\u2500".repeat(title.length + 4)}\u2518`);}
     },
     sideBox: (options) => {
-      if (options.title) console.log(`\u250C\u2500 ${options.title} \u2500\u2510`);
+      if (options.title) {console.log(`\u250C\u2500 ${options.title} \u2500\u2510`);}
       if (options.sections) {
         for (const section of options.sections) {
-          if (section.header) console.log(`
-${section.header}`);
+          if (section.header) {console.log(`
+${section.header}`);}
           for (const item of section.items) {
             console.log(`  ${item}`);
           }
         }
       }
-      if (options.title) console.log(`\u2514${"\u2500".repeat(options.title.length + 4)}\u2518`);
+      if (options.title) {console.log(`\u2514${"\u2500".repeat(options.title.length + 4)}\u2518`);}
     },
     confirm: async () => true,
     prompt: async () => ""
   };
 }
-var abortController = new AbortController();
+const abortController = new AbortController();
 process.on("message", async (msg) => {
   if (msg.type === "abort") {
     abortController.abort();
     return;
   }
-  if (msg.type !== "execute") return;
+  if (msg.type !== "execute") {return;}
   const executeMsg = msg;
   const { descriptor, handlerPath, input, socketPath } = executeMsg;
   const sandboxMode = process.env.KB_SANDBOX_MODE || "enforce";
@@ -2213,7 +2209,7 @@ process.on("message", async (msg) => {
     restoreSandbox();
   }
 });
-var readyMsg = { type: "ready" };
+const readyMsg = { type: "ready" };
 process.send?.(readyMsg);
 //# sourceMappingURL=bootstrap.js.map
 //# sourceMappingURL=bootstrap.js.map

@@ -2,7 +2,6 @@
 // - HealthResult uses custom 'status' field ('healthy'|'degraded'|'unhealthy') instead of CommandStatus
 // - HealthSnapshot type is not properly defined
 // - Formatter accesses untyped snapshot properties
-// @ts-nocheck
 import { createCliAPI } from '@kb-labs/cli-api';
 import { generateExamples } from '../../utils/generate-examples';
 import { defineSystemCommand } from '@kb-labs/shared-command-kit';
@@ -14,13 +13,6 @@ type HealthFlags = {
 // TODO: HealthSnapshot type should be defined in @kb-labs/cli-api
 // Currently using inline type until proper health API is implemented
 type HealthSnapshot = Record<string, unknown>;
-
-type HealthResult = {
-  ok: boolean; // Required by CommandResult
-  status: 'healthy' | 'degraded' | 'unhealthy';
-  snapshot?: HealthSnapshot;
-  error?: string;
-};
 
 // TODO: HealthResult has custom status field ('healthy'|'degraded'|'unhealthy') that doesn't match CommandStatus
 // Need to align health command result type with CommandResult contract
@@ -41,7 +33,7 @@ export const health = defineSystemCommand<HealthFlags>({
     startEvent: 'HEALTH_STARTED',
     finishEvent: 'HEALTH_FINISHED',
   },
-  async handler(ctx, argv, flags) {
+  async handler(ctx, _argv, _flags) {
     const cliApi = await createCliAPI({
       cache: { inMemory: true, ttlMs: 5000 },
     });
@@ -75,6 +67,7 @@ export const health = defineSystemCommand<HealthFlags>({
       await cliApi.dispose();
     }
   },
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- Complex health status formatting with nested conditions for different health states
   formatter(result, ctx, flags) {
     // Auto-handle JSON mode
     if (flags.json) {

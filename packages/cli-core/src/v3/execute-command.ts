@@ -9,7 +9,6 @@ import type {
   PluginContextDescriptor,
   UIFacade,
   PlatformServices,
-  CommandResult,
 } from "@kb-labs/plugin-contracts";
 import { wrapCliResult } from "@kb-labs/plugin-runtime";
 import type { PlatformContainer } from "@kb-labs/core-runtime";

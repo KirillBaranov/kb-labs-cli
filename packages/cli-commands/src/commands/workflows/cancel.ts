@@ -1,4 +1,4 @@
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit'
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit'
 import { TimingTracker, box } from '@kb-labs/shared-cli-ui'
 import { cancelWorkflowRun } from './service'
 import { createCliEngineLogger, formatRunHeader } from './utils'

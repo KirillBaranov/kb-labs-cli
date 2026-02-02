@@ -50,7 +50,8 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
     startEvent: 'DIAG_STARTED',
     finishEvent: 'DIAG_FINISHED',
   },
-  async handler(ctx, argv, flags) {
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- Comprehensive diagnostic checks across multiple system components
+  async handler(ctx, _argv, _flags) {
     const cwd = getContextCwd(ctx);
     const diagnostics: Array<{
       category: string;
@@ -231,6 +232,7 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
       summary,
     };
   },
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- Complex formatting logic for diagnostic output with multiple display modes
   formatter(result, ctx, flags) {
     // Auto-handle JSON mode
     if (flags.json) {

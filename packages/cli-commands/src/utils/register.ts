@@ -8,12 +8,6 @@ import {
   debugGroup,
   docsGroup,
 } from "../commands/system/groups";
-import { pluginsList } from "../commands/system/plugins-list";
-import { pluginsDoctor } from "../commands/system/plugins-doctor";
-import { pluginsScaffold } from "../commands/system/plugins-scaffold";
-import { pluginsRegistry } from "../commands/system/plugins-registry";
-import { registryLint } from "../commands/system/registry-lint";
-import { headersDebug } from "../commands/system/headers-debug";
 import { registerManifests, disposeAllPlugins, preflightManifests } from "../registry/register";
 import { PluginRegistry } from "@kb-labs/cli-core";
 import { registerShutdownHook } from "./shutdown";

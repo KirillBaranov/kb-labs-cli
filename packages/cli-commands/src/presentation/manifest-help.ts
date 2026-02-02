@@ -1,5 +1,4 @@
 import {
-  formatTiming,
   TimingTracker,
   type RegisteredCommand,
 } from "./shared";

@@ -222,6 +222,7 @@ export class SnapshotManager {
   /**
    * Normalize a partial snapshot to full format.
    */
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- Complex snapshot normalization with validation, field defaulting, and integrity checks
   normalizeSnapshot(
     snapshot: Partial<RegistrySnapshot>,
     overrides?: { corrupted?: boolean; previousChecksum?: string | null }

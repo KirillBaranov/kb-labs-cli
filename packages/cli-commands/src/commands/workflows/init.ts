@@ -1,5 +1,4 @@
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit'
-import type { StringFlagSchema } from '@kb-labs/shared-command-kit/flags'
 import { writeFile, mkdir, readFile } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { minimatch } from 'minimatch'
@@ -7,8 +6,6 @@ import {
   TimingTracker,
   box,
   keyValue,
-  safeColors,
-  safeSymbols,
   formatTiming,
 } from '@kb-labs/shared-cli-ui'
 import type { EnhancedCliContext } from '@kb-labs/shared-command-kit'

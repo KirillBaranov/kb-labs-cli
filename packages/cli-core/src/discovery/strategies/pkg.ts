@@ -5,7 +5,6 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { ManifestV3 } from "@kb-labs/plugin-contracts";
 import { isManifestV3 } from "@kb-labs/plugin-contracts";
 import type { DiscoveryStrategy, DiscoveryResult } from "../types";
 import { safeImport, isImportTimeout } from "../utils/safe-import.js";

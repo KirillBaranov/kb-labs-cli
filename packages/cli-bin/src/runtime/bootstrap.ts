@@ -16,12 +16,9 @@ import {
   renderManifestCommandHelp,
   renderProductHelp,
   registry,
-  type CommandGroup,
-  type CommandLookupResult,
 } from "@kb-labs/cli-commands";
 import { initLogging, getLogger } from "@kb-labs/core-sys/logging";
 import { createOutput } from "@kb-labs/core-sys/output";
-import type { LogLevel } from "@kb-labs/core-sys";
 import {
   createCliRuntime,
   type RuntimeSetupOptions,
@@ -36,7 +33,7 @@ import { initializePlatform } from "./platform-init";
 import { resolveVersion } from "./helpers/version";
 import { normalizeCmdPath } from "./helpers/cmd-path";
 import { resolveLogLevel } from "./helpers/log-level";
-import { shouldShowLimits, isTruthyBoolean } from "./helpers/flags";
+import { shouldShowLimits } from "./helpers/flags";
 import { isCommandGroup, hasSetContext } from "./helpers/command-types";
 
 type RuntimeInitOptions = RuntimeSetupOptions;
@@ -72,6 +69,7 @@ export async function executeCli(
   argv: string[],
   options: CliRuntimeOptions = {},
 ): Promise<number | void> {
+  try {
   const cwd = options.cwd ?? process.cwd();
 
   // Загружаем .env файл если есть (не перезаписываем существующие переменные)
@@ -234,7 +232,7 @@ export async function executeCli(
     verbosity: global.quiet ? 'quiet' : (global.verbose ? 'verbose' : 'normal'),
     jsonMode: global.json || false,
   });
-  
+
   const runtimeInitOptions: RuntimeInitOptions = {
     presenter,
     env,
@@ -244,7 +242,6 @@ export async function executeCli(
     middlewares: runtimeMiddlewares,
     formatters: options.runtimeFormatters,
   };
-
   if (global.help && cmdPath.length === 0) {
     if (global.json) {
       presenter.json({
@@ -431,7 +428,7 @@ export async function executeCli(
       }
     }
 
-    const exitCode = await runtime.middleware.execute(context, async () => {
+    return await runtime.middleware.execute(context, async () => {
       // Get command with type information for secure routing
       const result = findCommandWithType(normalizedCmdPath);
 
@@ -477,9 +474,11 @@ export async function executeCli(
       // Unknown type - shouldn't happen
       throw new Error(`Unknown command type: ${result.type}`);
     });
-    return exitCode;
   } catch (error: unknown) {
     return handleExecutionError(error, presenter, ctx);
+  }
+  } catch (outerError: unknown) {
+    throw outerError;
   }
 }
 

@@ -3,7 +3,7 @@
  * CLI API implementation using modular components.
  */
 
-import type { ManifestV3, CliCommandDecl } from '@kb-labs/plugin-contracts';
+import type { ManifestV3 } from '@kb-labs/plugin-contracts';
 import {
   PluginRegistry,
   InMemoryCacheAdapter,
@@ -21,7 +21,6 @@ import type {
   CliInitOptions,
   RegistrySnapshot,
   RegistrySnapshotManifestEntry,
-  DiscoveryError,
   RunCommandParams,
   RunCommandResult,
   SystemHealthOptions,
@@ -30,7 +29,7 @@ import type {
 } from './types.js';
 import type { RedisClientType, RedisClientOptions } from 'redis';
 import { randomUUID } from 'node:crypto';
-import { join, resolve } from 'node:path';
+import { resolve } from 'node:path';
 
 // Import modules
 import {
@@ -39,7 +38,6 @@ import {
   type CliApiLogger,
   createCliApiLogger,
   createPlatformLogger,
-  getGitInfo,
 } from './modules/index.js';
 import { cloneValue, safeParseInt } from './modules/snapshot/utils.js';
 
@@ -641,6 +639,7 @@ export class CliAPIImpl implements CliAPI {
     return registry.isInitialized === true;
   }
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- Complex Redis pub/sub setup with multiple conditional branches for producer/consumer modes
   private async setupPubSub(): Promise<void> {
     const pubsub = this.opts?.pubsub;
     if (!pubsub?.redisUrl) {

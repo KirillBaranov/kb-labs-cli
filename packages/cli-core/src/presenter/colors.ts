@@ -1,13 +1,4 @@
-import {
-  bold,
-  dim,
-  gray,
-  green,
-  red,
-  yellow,
-  cyan,
-  blue
-} from "colorette";
+import { bold, dim, gray, green, red, yellow, cyan, blue } from "colorette";
 
 /**
  * Color utilities for CLI output

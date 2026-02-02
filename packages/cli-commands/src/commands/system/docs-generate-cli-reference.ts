@@ -31,6 +31,7 @@ export const docsGenerateCliReference = defineSystemCommand<GenerateCliReference
     startEvent: 'DOCS_GENERATE_CLI_REFERENCE_STARTED',
     finishEvent: 'DOCS_GENERATE_CLI_REFERENCE_FINISHED',
   },
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- Complex markdown generation with nested loops for product groups, commands, and formatting
   async handler(ctx, argv, flags) {
     const cwd = getContextCwd(ctx);
     const outputPath = flags.output || path.join(cwd, 'CLI-REFERENCE.md');

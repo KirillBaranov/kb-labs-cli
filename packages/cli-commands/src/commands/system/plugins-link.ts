@@ -2,7 +2,7 @@
  * plugins:link command - Link a local plugin for development
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '../../utils/generate-examples';
 import { linkPlugin } from '../../registry/plugins-state';
 import { promises as fs } from 'node:fs';

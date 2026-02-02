@@ -7,7 +7,7 @@ import { generateExamples } from '../../utils/generate-examples';
 import type { RegisteredCommand } from '../../registry/types';
 import { registry } from '../../registry/service';
 import { PluginRegistry } from '@kb-labs/cli-core';
-import { formatTiming, formatTable, type TableColumn, type SectionContent, safeColors } from '@kb-labs/shared-cli-ui';
+import { formatTable, type TableColumn, type SectionContent, safeColors } from '@kb-labs/shared-cli-ui';
 import { loadPluginsState, isPluginEnabled } from '../../registry/plugins-state';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';

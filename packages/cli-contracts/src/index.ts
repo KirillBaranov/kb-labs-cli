@@ -13,9 +13,7 @@
  */
 
 // System context
-export type { SystemContext } from './system-context';
+export type { SystemContext } from "./system-context";
 
 // Presenter contracts
-export type {
-  Presenter,
-} from './presenter/index';
+export type { Presenter } from "./presenter/index";

@@ -1,7 +1,5 @@
 import {
   colors,
-  box,
-  formatTiming,
   TimingTracker,
   type Command,
   type CommandGroup,

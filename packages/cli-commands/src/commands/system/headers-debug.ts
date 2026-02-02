@@ -2,10 +2,9 @@
  * headers:debug command — inspect recent header policy decisions emitted by REST API
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '../../utils/generate-examples';
 import { formatTable, formatRelativeTime, keyValue } from '@kb-labs/shared-cli-ui';
-import type { Output } from '@kb-labs/cli-contracts';
 import type { StringFlagSchema } from '@kb-labs/shared-command-kit/flags';
 
 interface HeaderDebugEntry {
@@ -281,6 +280,7 @@ export const headersDebug = defineSystemCommand<HeadersDebugFlags, HeadersDebugR
       entries: filtered,
     };
   },
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- Complex formatting with multiple conditional branches for different display modes
   formatter(result, ctx, flags) {
     if (flags.json) { // Type-safe: boolean
       ctx.ui.json(result);

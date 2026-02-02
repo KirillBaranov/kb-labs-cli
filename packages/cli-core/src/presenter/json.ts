@@ -1,7 +1,9 @@
 import type { Presenter } from "./types";
 import type { SystemContext } from "../context";
 
-export function createJsonPresenter(): Presenter & { setContext(context: SystemContext): void } {
+export function createJsonPresenter(): Presenter & {
+  setContext(context: SystemContext): void;
+} {
   let context: SystemContext | null = null;
 
   return {

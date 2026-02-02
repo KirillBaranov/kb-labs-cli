@@ -9,17 +9,10 @@ import type {
   PluginBrief,
   OpenAPISpec,
   StudioRegistry,
-  StudioRegistryEntry,
   ExplainResult,
   SourceKind,
 } from '@kb-labs/cli-core';
-import type { CliCommandDecl, ManifestV3, PlatformServices } from '@kb-labs/plugin-contracts';
-
-// TODO: Remove when workflow-engine is ported to V3
-type WorkflowRun = any;
-type WorkflowSpec = any;
-type WorkflowWorker = any;
-type CreateRedisClientOptions = any;
+import type { ManifestV3, PlatformServices } from '@kb-labs/plugin-contracts';
 
 type ManifestHeadersConfig = ManifestV3 & { headers?: unknown } extends { headers?: infer H } ? H : unknown;
 

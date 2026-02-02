@@ -188,8 +188,10 @@ describe('discoverManifests', () => {
     }));
 
     // Mock manifest file that times out
-    vi.mocked(readFile).mockImplementationOnce(() => 
-      new Promise((resolve) => setTimeout(() => resolve('{}'), 2000))
+    vi.mocked(readFile).mockImplementationOnce(() =>
+      new Promise((resolve) => {
+        setTimeout(() => resolve('{}'), 2000);
+      })
     );
 
     const { discoverManifests } = await importDiscoverModule();

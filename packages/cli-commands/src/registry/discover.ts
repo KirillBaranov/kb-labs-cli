@@ -3,7 +3,6 @@
  * Command manifest discovery - workspace, node_modules, current package
  */
 
-import { PluginRegistry } from '@kb-labs/cli-core';
 import { pathToFileURL } from 'node:url';
 import { promises as fs } from 'node:fs';
 import { existsSync } from 'node:fs';
@@ -38,7 +37,7 @@ const DEBUG_MODE = process.env.DEBUG_SANDBOX === '1' || process.env.NODE_ENV ===
 // Helper function for logging - only outputs in DEBUG_MODE to avoid polluting user output
 // In production, discovery logs are suppressed unless user explicitly enables --debug
 const log = (level: 'debug' | 'info' | 'warn' | 'error', message: string, fields?: Record<string, unknown>): void => {
-  if (!DEBUG_MODE) return;
+  if (!DEBUG_MODE) {return;}
 
   // In debug mode, use console for immediate output (no lazy logger initialization)
   const prefix = level === 'error' ? '✗' : level === 'warn' ? '⚠' : level === 'info' ? 'ℹ' : '🔍';
@@ -199,8 +198,7 @@ function createUnavailableManifest(pkgName: string, error: any): CommandManifest
     requires,
     loader: async () => {
       // Throw a descriptive error if someone tries to run it
-      const err = new Error(`Cannot load ${pkgName} CLI manifest. ${rawMsg}`);
-      throw err;
+      throw new Error(`Cannot load ${pkgName} CLI manifest. ${rawMsg}`);
     }
   } as any;
   return manifest;
@@ -535,11 +533,9 @@ async function loadManifest(manifestPath: string, pkgName: string, pkgRoot?: str
     log('warn', `ManifestV3 validation warnings for ${pkgName}: ${errorMessages}`);
   }
   
-  const normalized = (validation.success ? validation.data : commandManifests).map(m => 
+  return (validation.success ? validation.data : commandManifests).map(m => 
     normalizeManifest(m, pkgName, namespace)
   );
-  
-  return normalized;
 }
 
 /**

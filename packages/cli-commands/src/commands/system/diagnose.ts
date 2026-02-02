@@ -29,7 +29,7 @@ export const diagnose = defineSystemCommand<DiagnoseFlags, DiagnoseResult>({
     startEvent: 'DIAGNOSE_STARTED',
     finishEvent: 'DIAGNOSE_FINISHED',
   },
-  async handler(ctx, argv, flags) {
+  async handler(ctx, _argv, _flags) {
     const cwd = getContextCwd(ctx);
     const repoRoot = (ctx as any)?.repoRoot ?? cwd;
     const nodeVersion = process.version;

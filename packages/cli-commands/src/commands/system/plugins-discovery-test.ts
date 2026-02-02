@@ -2,7 +2,7 @@
  * plugins:discovery-test command - Test new DiscoveryManager with debug logs
  */
 
-import { defineSystemCommand, type CommandResult, type FlagSchemaDefinition } from '@kb-labs/shared-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '../../utils/generate-examples';
 import { PluginRegistry } from '@kb-labs/cli-core';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';

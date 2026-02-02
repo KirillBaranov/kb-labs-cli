@@ -33,4 +33,3 @@ export interface CacheAdapter {
    */
   clear(): Promise<void>;
 }
-

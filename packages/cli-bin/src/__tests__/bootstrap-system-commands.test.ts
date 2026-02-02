@@ -95,7 +95,7 @@ describe('Bootstrap System Commands', () => {
       });
 
       // Mock executeCli to simulate bootstrap routing
-      mockExecuteCli.mockImplementation(async (argv: string[]) => {
+      mockExecuteCli.mockImplementation(async (_argv: string[]) => {
         // Simulate bootstrap logic
         const result = mockCommandRegistry.resolveCommand('test-system');
 
@@ -435,9 +435,8 @@ describe('Bootstrap System Commands', () => {
         const result = mockCommandRegistry.resolveCommand('test-system');
 
         // Bootstrap should check type === 'system'
-        if (result.type === 'system') {
+        if (result.type === 'system' && 'run' in result.cmd) {
           // System commands execute in-process, NO subprocess
-          if ('run' in result.cmd) {
             const mockContext: PluginContextV3 = {
               host: 'cli',
               requestId: 'test-request-id',
@@ -474,7 +473,7 @@ describe('Bootstrap System Commands', () => {
               },
             };
 
-            return await result.cmd.run(mockContext, [], {});
+            return result.cmd.run(mockContext, [], {});
           }
         }
 
@@ -560,7 +559,7 @@ describe('Bootstrap System Commands', () => {
             // Removed: tracker is no longer part of PluginContextV3
           };
 
-          return await result.cmd.run(mockContext, [], {});
+          return result.cmd.run(mockContext, [], {});
         }
 
         return 1;
@@ -662,7 +661,7 @@ describe('Bootstrap System Commands', () => {
             },
           };
 
-          return await result.cmd.run(mockContext, [], {});
+          return result.cmd.run(mockContext, [], {});
         }
 
         return 1;

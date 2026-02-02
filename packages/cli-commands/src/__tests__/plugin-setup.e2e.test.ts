@@ -5,10 +5,9 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 import type { ManifestV2 } from '@kb-labs/plugin-contracts';
 import type { OperationWithMetadata } from '@kb-labs/setup-engine-operations';
+// eslint-disable-next-line import/extensions -- Test file imports .ts directly
 import { createPluginSetupCommand } from '../commands/system/plugin-setup-command';
 import { createPluginSetupRollbackCommand } from '../commands/system/plugin-setup-rollback';
-
-const fs = await import('node:fs/promises');
 
 vi.mock('@kb-labs/plugin-runtime', () => {
   let counter = 0;

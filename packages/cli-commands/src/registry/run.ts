@@ -144,7 +144,7 @@ export async function runCommand(
   const execStart = Date.now();
   try {
     const executionPromise = (async () => {
-      return await executeCommand(
+      return executeCommand(
         cliCommand,
         manifestV2,
         ctx,

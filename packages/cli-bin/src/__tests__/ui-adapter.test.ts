@@ -99,7 +99,8 @@ describe('UI Adapter', () => {
 
   describe('UIFacade Methods', () => {
     it('should write raw text via write()', () => {
-      const createUIFacade = (context: SystemContext) => ({
+      // eslint-disable-next-line sonarjs/no-identical-functions -- Test fixtures for UI facade need similar structure
+      const createUIFacade = (_context: SystemContext) => ({
         colors: {} as any,
         write: (text: string) => process.stdout.write(text),
         info: vi.fn(),

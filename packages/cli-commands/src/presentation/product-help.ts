@@ -1,7 +1,6 @@
 import {
   colors,
   collectManifestVersions,
-  formatTiming,
   TimingTracker,
   type RegisteredCommand,
 } from "./shared";

@@ -4,13 +4,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { PluginBrief } from '@kb-labs/cli-core';
 import type { ManifestV3 } from '@kb-labs/plugin-contracts';
 import type { RegistrySnapshot, RegistrySnapshotManifestEntry } from '../../snapshot/types.js';
-import { HealthAggregator, type HealthAggregatorDeps, type RegistryError } from '../health-aggregator.js';
+import { HealthAggregator, type HealthAggregatorDeps } from '../health-aggregator.js';
 import { findGitRoot, getGitInfo, resetGitInfoCache } from '../git-info.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -106,7 +106,6 @@ describe('getGitInfo', () => {
 
   it('should return undefined when no git info available and cwd fallback fails', () => {
     // Mock process.cwd to return tempDir (which has no .git)
-    const originalCwd = process.cwd;
     vi.spyOn(process, 'cwd').mockReturnValue(tempDir);
 
     try {

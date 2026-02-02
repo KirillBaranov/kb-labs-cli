@@ -39,7 +39,7 @@ async function loadLogsFromSnapshots(
         const content = await fs.readFile(path.join(snapshotsDir, file), 'utf-8');
         const snapshot = JSON.parse(content) as { pluginId?: string; logs?: string[] };
         
-        if (pluginId && snapshot.pluginId !== pluginId) continue;
+        if (pluginId && snapshot.pluginId !== pluginId) {continue;}
         if (snapshot.logs) {
           const parsed = parseLogs(snapshot.logs);
           allLogs.push(...parsed);
