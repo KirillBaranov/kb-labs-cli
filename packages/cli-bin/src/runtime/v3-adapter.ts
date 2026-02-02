@@ -170,7 +170,11 @@ function createUIFacade(context: SystemContext): UIFacade {
       console.error(boxOutput);
     },
     debug: (msg: string) => {
-      presenter?.debug?.(msg) || console.debug(msg);
+      if (presenter?.debug) {
+        presenter.debug(msg);
+      } else {
+        console.debug(msg);
+      }
     },
     spinner: (text: string): Spinner => {
       const spinner = presenter?.spinner?.(text);
@@ -182,7 +186,11 @@ function createUIFacade(context: SystemContext): UIFacade {
       };
     },
     table: (data: Record<string, unknown>[], columns?) => {
-      presenter?.table?.(data) || console.table(data);
+      if (presenter?.table) {
+        presenter.table(data);
+      } else {
+        console.table(data);
+      }
     },
     json: (data: unknown) => {
       console.log(JSON.stringify(data, null, 2));

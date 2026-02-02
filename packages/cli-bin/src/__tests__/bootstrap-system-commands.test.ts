@@ -437,44 +437,43 @@ describe('Bootstrap System Commands', () => {
         // Bootstrap should check type === 'system'
         if (result.type === 'system' && 'run' in result.cmd) {
           // System commands execute in-process, NO subprocess
-            const mockContext: PluginContextV3 = {
-              host: 'cli',
-              requestId: 'test-request-id',
-              pluginId: '@kb-labs/system',
-              cwd: process.cwd(),
-              ui: {
-                write: vi.fn(),
-                info: vi.fn(),
-                success: vi.fn(),
-                warn: vi.fn(),
-                error: vi.fn(),
-                debug: vi.fn(),
-                spinner: vi.fn(),
-                table: vi.fn(),
-                json: vi.fn(),
-                newline: vi.fn(),
-                divider: vi.fn(),
-                box: vi.fn(),
-                sideBox: vi.fn(),
-                confirm: vi.fn().mockResolvedValue(true),
-                prompt: vi.fn().mockResolvedValue(''),
-                colors: {} as any,
-              },
-              platform: mockPlatform,
-              runtime: {
-                fs: {} as any,
-                fetch: vi.fn(),
-                env: vi.fn(),
-              },
-              api: {} as any,
-              trace: {
-                traceId: 'test-trace-id',
-                spanId: 'test-span-id',
-              },
-            };
+          const mockContext: PluginContextV3 = {
+            host: 'cli',
+            requestId: 'test-request-id',
+            pluginId: '@kb-labs/system',
+            cwd: process.cwd(),
+            ui: {
+              write: vi.fn(),
+              info: vi.fn(),
+              success: vi.fn(),
+              warn: vi.fn(),
+              error: vi.fn(),
+              debug: vi.fn(),
+              spinner: vi.fn(),
+              table: vi.fn(),
+              json: vi.fn(),
+              newline: vi.fn(),
+              divider: vi.fn(),
+              box: vi.fn(),
+              sideBox: vi.fn(),
+              confirm: vi.fn().mockResolvedValue(true),
+              prompt: vi.fn().mockResolvedValue(''),
+              colors: {} as any,
+            },
+            platform: mockPlatform,
+            runtime: {
+              fs: {} as any,
+              fetch: vi.fn(),
+              env: vi.fn(),
+            },
+            api: {} as any,
+            trace: {
+              traceId: 'test-trace-id',
+              spanId: 'test-span-id',
+            },
+          };
 
-            return result.cmd.run(mockContext, [], {});
-          }
+          return result.cmd.run(mockContext, [], {});
         }
 
         return 1;

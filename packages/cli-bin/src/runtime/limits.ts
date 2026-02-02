@@ -1,5 +1,5 @@
 import type { CliCommandDecl, ManifestV2, PermissionSpec } from "@kb-labs/plugin-manifest";
-import type { RegisteredCommand } from "@kb-labs/cli-commands/registry/types.js";
+import type { RegisteredCommand } from "@kb-labs/cli-commands/registry/types";
 import { box, keyValue } from "@kb-labs/shared-cli-ui";
 import { colors } from "@kb-labs/cli-core";
 

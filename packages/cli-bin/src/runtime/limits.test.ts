@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import type { ManifestV2 } from "@kb-labs/plugin-manifest";
-import type { RegisteredCommand } from "@kb-labs/cli-commands/registry/types.js";
+import type { RegisteredCommand } from "@kb-labs/cli-commands/registry/types";
 import { handleLimitFlag } from "./limits";
 
 function createManifest(): ManifestV2 {
