@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 import { vi } from "vitest";
 
 vi.mock("@kb-labs/plugin-adapter-cli", () => {
