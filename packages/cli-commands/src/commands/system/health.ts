@@ -1,22 +1,24 @@
-// TODO: This file needs major refactoring to align with CommandResult contract
-// - HealthResult uses custom 'status' field ('healthy'|'degraded'|'unhealthy') instead of CommandStatus
-// - HealthSnapshot type is not properly defined
-// - Formatter accesses untyped snapshot properties
 import { createCliAPI } from '@kb-labs/cli-api';
 import { generateExamples } from '../../utils/generate-examples';
-import { defineSystemCommand } from '@kb-labs/shared-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 
 type HealthFlags = {
   json: { type: 'boolean'; description?: string };
 };
 
-// TODO: HealthSnapshot type should be defined in @kb-labs/cli-api
-// Currently using inline type until proper health API is implemented
-type HealthSnapshot = Record<string, unknown>;
+type HealthSnapshot = {
+  status: string;
+  version: { kbLabs?: string; cli?: string; rest?: string; git?: { sha: string; dirty?: boolean } };
+  registry: { total: number; withRest: number; withStudio: number; errors: number; generatedAt: string; expiresAt?: string; partial?: boolean; stale?: boolean };
+  uptimeSec: number;
+};
 
-// TODO: HealthResult has custom status field ('healthy'|'degraded'|'unhealthy') that doesn't match CommandStatus
-// Need to align health command result type with CommandResult contract
-export const health = defineSystemCommand<HealthFlags>({
+type HealthResult = CommandResult & {
+  healthStatus: 'healthy' | 'degraded' | 'unhealthy';
+  snapshot?: HealthSnapshot;
+};
+
+export const health = defineSystemCommand<HealthFlags, HealthResult>({
   name: 'health',
   description: 'Report overall CLI health snapshot',
   longDescription: 'Shows the kb.health/1 snapshot shared with REST and Studio.',
@@ -51,16 +53,18 @@ export const health = defineSystemCommand<HealthFlags>({
 
       return {
         ok: snapshot.status === 'healthy',
-        status: snapshot.status,
-        snapshot,
+        status: snapshot.status === 'healthy' ? 'success' as const : 'warning' as const,
+        healthStatus: (snapshot.status as HealthResult['healthStatus']) || 'unhealthy',
+        snapshot: snapshot as HealthSnapshot,
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      ctx.platform?.logger?.error('Health check failed', { error: message });
+      ctx.platform?.logger?.error('Health check failed', error instanceof Error ? error : undefined, { error: message });
 
       return {
         ok: false,
-        status: 'degraded' as const,
+        status: 'error' as const,
+        healthStatus: 'degraded' as const,
         error: message,
       };
     } finally {
@@ -73,24 +77,21 @@ export const health = defineSystemCommand<HealthFlags>({
     if (flags.json) {
       const jsonOutput = result.snapshot || {
         schema: 'kb.health/1',
-        status: result.status,
+        status: result.healthStatus,
         error: result.error,
       };
       console.log(JSON.stringify(jsonOutput, null, 2));
     } else {
-      // Build UI from result data
       if (result.error) {
-        // Error case
         ctx.ui.error('System Health', {
           sections: [
             {
               header: 'Status',
-              items: [`Status: ${result.status}`, `Error: ${result.error}`],
+              items: [`Status: ${result.healthStatus}`, `Error: ${result.error}`],
             },
           ],
         });
       } else if (result.snapshot) {
-        // Success case
         const snapshot = result.snapshot;
         const gitInfo = snapshot.version.git
           ? `${snapshot.version.git.sha}${snapshot.version.git.dirty ? ' (dirty)' : ''}`
@@ -100,7 +101,7 @@ export const health = defineSystemCommand<HealthFlags>({
           {
             header: 'Status',
             items: [
-              `Status: ${snapshot.status}`,
+              `Status: ${result.healthStatus}`,
               `KB Labs: ${snapshot.version.kbLabs}`,
               `CLI: ${snapshot.version.cli}`,
               `REST: ${snapshot.version.rest}`,
@@ -124,7 +125,7 @@ export const health = defineSystemCommand<HealthFlags>({
           },
         ];
 
-        if (result.status === 'healthy') {
+        if (result.healthStatus === 'healthy') {
           ctx.ui.success('System Health', { sections });
         } else {
           ctx.ui.warn('System Health', { sections });

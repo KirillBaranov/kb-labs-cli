@@ -89,12 +89,9 @@ export const CommandManifestSchema = z.object({
           const parts = req.split('@');
           if (parts.length === 2) {
             const version = parts[1];
-            // Allow exact package names without version
-            if (version && !semverPattern.test(version) && !version.startsWith('^') && !version.startsWith('~')) {
-              // Try to parse as semver range
-              if (!version.match(/^[\^~>=<]?[\d\.]+/)) {
-                return false;
-              }
+            // Allow exact package names without version; try to parse as semver range
+            if (version && !semverPattern.test(version) && !version.startsWith('^') && !version.startsWith('~') && !version.match(/^[\^~>=<]?[\d\.]+/)) {
+              return false;
             }
           }
         }

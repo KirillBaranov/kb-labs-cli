@@ -11,7 +11,6 @@ export interface RegisterManifestsOptions {
   cwd?: string;
 }
 import { getLogLevel, type Logger, createNoOpLogger } from '@kb-labs/core-sys/logging';
-import { telemetry } from './telemetry';
 
 const ajv = new Ajv();
 
@@ -124,7 +123,7 @@ const SOURCE_PRIORITY: Record<string, number> = {
 /**
  * Normalize command ID to ensure it follows namespace:command format
  */
-function normalizeCommandId(id: string, namespace: string): string {
+function normalizeCommandId(id: string, _namespace: string): string {
   // IDs are now simple (no namespace prefix) - return as-is
   return id;
 }
@@ -147,7 +146,7 @@ function generateWhitespaceAliases(id: string): string[] {
 function normalizeAliases(manifest: CommandManifest, logger?: Logger): string[] {
   const log = logger ?? createNoOpLogger();
   const aliases = new Set<string>();
-  const namespace = manifest.namespace || manifest.group;
+  const _namespace = manifest.namespace || manifest.group;
 
   // Add existing aliases
   if (manifest.aliases) {
@@ -183,14 +182,12 @@ function checkNamespaceCollision(
   const currentGroup = manifest.group || '';
 
   // If both are in the same group and have same command ID, that's a collision
-  if (existingGroup === currentGroup && existingGroup === namespace) {
-    if (existing.manifest.id === manifest.id) {
-      // Same group + same ID = collision
-      throw new Error(
-        `Command collision in group "${namespace}": "${manifest.id}" conflicts with existing "${existing.manifest.id}". ` +
-        `Rename one of the commands to use a different ID (e.g., "${manifest.id}2" or use --alias to create a different alias).`
-      );
-    }
+  if (existingGroup === currentGroup && existingGroup === namespace && existing.manifest.id === manifest.id) {
+    // Same group + same ID = collision
+    throw new Error(
+      `Command collision in group "${namespace}": "${manifest.id}" conflicts with existing "${existing.manifest.id}". ` +
+      `Rename one of the commands to use a different ID (e.g., "${manifest.id}2" or use --alias to create a different alias).`
+    );
   }
 }
 
@@ -271,7 +268,6 @@ export function preflightManifests(
           source: result.source,
           reason,
         });
-        telemetry.recordSchemaError(manifestId, reason);
         log.warn(`Preflight skipped manifest ${manifestId}: ${reason}`);
       }
     }
@@ -320,7 +316,6 @@ export async function registerManifests(
         try {
           validateManifestStructure(manifest);
         } catch (err: any) {
-          telemetry.recordSchemaError(manifest.id, err.message);
           throw new Error(`Validation failed: ${err.message}`);
         }
 
@@ -472,12 +467,6 @@ export async function registerManifests(
       log.warn(`  • ${skip.id} [${skip.source}] → ${skip.reason}`);
     }
   }
-
-  telemetry.recordRegistration({
-    commandsRegistered: registered.length,
-    collisions,
-    errors,
-  });
 
   return {
     registered,

@@ -104,7 +104,7 @@ describe("Registry Integration", () => {
       json: false,
       onlyAvailable: false,
     });
-    expect(helpText).toContain("test:command");
+    expect(helpText).toContain("test command");
     expect(helpText).toContain("Test command");
 
     const helpJson = renderHelp(registered, {

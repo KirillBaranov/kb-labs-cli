@@ -3,10 +3,8 @@ import type { RegisteredCommand } from "../registry/types";
 import {
   infoGroup,
   pluginsGroup,
-  loggingGroup,
-  registryGroup,
-  debugGroup,
   docsGroup,
+  logsGroup,
 } from "../commands/system/groups";
 import { registerManifests, disposeAllPlugins, preflightManifests } from "../registry/register";
 import { PluginRegistry } from "@kb-labs/cli-core";
@@ -38,10 +36,8 @@ export async function registerBuiltinCommands(
   // Register system command groups (migrated commands)
   registry.registerGroup(infoGroup);
   registry.registerGroup(pluginsGroup);
-  registry.registerGroup(loggingGroup);
-  registry.registerGroup(registryGroup);
-  registry.registerGroup(debugGroup);
   registry.registerGroup(docsGroup);
+  registry.registerGroup(logsGroup);
 
   try {
     const cwd = getContextCwd({ cwd: input.cwd });

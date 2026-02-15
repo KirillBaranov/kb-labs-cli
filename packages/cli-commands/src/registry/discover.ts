@@ -10,7 +10,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 
 /** Very small repo root detector: looks for .git upwards. */
-function detectRepoRoot(start = process.cwd()): string {
+function _detectRepoRoot(start = process.cwd()): string {
   let cur = path.resolve(start);
   while (true) {
     if (existsSync(path.join(cur, '.git'))) {
@@ -28,7 +28,6 @@ import { glob } from 'glob';
 import type { CommandManifest, DiscoveryResult, CacheFile, PackageCacheEntry, CommandModule } from './types';
 import type { ManifestV3 } from '@kb-labs/plugin-contracts';
 import { toPosixPath } from '../utils/path';
-import { telemetry } from './telemetry';
 import { validateManifests, normalizeManifest } from './schema';
 
 // Check if DEBUG_MODE is enabled
@@ -50,7 +49,7 @@ const log = (level: 'debug' | 'info' | 'warn' | 'error', message: string, fields
   }
 };
 
-const SETUP_COMMAND_FLAGS = [
+const _SETUP_COMMAND_FLAGS = [
   {
     name: 'force',
     type: 'boolean' as const,
@@ -85,31 +84,6 @@ function createManifestV3Loader(commandId: string): () => Promise<{ run: any }> 
   };
 }
 
-// TODO V3: V2 setup orchestrator removed - V3 uses SetupSpec in manifest
-// async function loadSetupCommandModule({
-//   manifestV2,
-//   namespace,
-//   pkgName,
-//   pkgRoot,
-// }: SetupCommandFactoryInput): Promise<CommandModule> {
-//   const module = await import('../commands/system/plugin-setup-command.js');
-//   if (typeof module.createPluginSetupCommand !== 'function') {
-//     throw new Error('Failed to load plugin setup command factory');
-//   }
-//   const command = module.createPluginSetupCommand({
-//     manifest: manifestV2,
-//     namespace,
-//     packageName: pkgName,
-//     pkgRoot,
-//   });
-//   return {
-//     run: async (ctx, argv, flags) => {
-//       const result = await command.run(ctx, argv, flags);
-//       return typeof result === 'number' ? result : undefined;
-//     },
-//   };
-// }
-
 async function loadSetupRollbackCommandModule({
   manifestV2,
   namespace,
@@ -140,18 +114,6 @@ async function loadSetupRollbackCommandModule({
 function ensureManifestLoader(manifest: CommandManifest): void {
   if (typeof manifest.loader !== 'function') {
     const commandId = manifest.id || manifest.group || 'unknown';
-    // TODO V3: V2 setup commands removed - V3 uses SetupSpec in manifest
-    // if ((manifest as any).isSetup) {
-    //   log('debug', `[plugins][cache] Rehydrated setup loader for ${commandId}`);
-    //   manifest.loader = () =>
-    //     loadSetupCommandModule({
-    //       manifestV2: (manifest as any).manifestV2,
-    //       namespace: manifest.namespace || manifest.group || deriveNamespace(manifest.package || commandId),
-    //       pkgName: manifest.package || commandId,
-    //       pkgRoot: (manifest as any).pkgRoot,
-    //     });
-    //   return;
-    // }
     if ((manifest as any).isSetupRollback) {
       log('debug', `[plugins][cache] Rehydrated setup rollback loader for ${commandId}`);
       manifest.loader = () =>
@@ -205,6 +167,7 @@ function createUnavailableManifest(pkgName: string, error: any): CommandManifest
 }
 
 // Constants
+const PACKAGE_JSON = 'package.json';
 const MANIFEST_LOAD_TIMEOUT = 1500; // 1.5 seconds
 const IN_PROC_CACHE_TTL_MS = 60_000;
 const DISK_CACHE_TTL_MS = 5 * 60_000;
@@ -285,7 +248,7 @@ async function detectNewWorkspacePackages(
     const knownPackages = new Set(Object.keys(cachedPackages));
 
     for (const pattern of parsed.packages) {
-      const pkgPattern = path.join(pattern, 'package.json');
+      const pkgPattern = path.join(pattern, PACKAGE_JSON);
       const pkgFiles = await glob(pkgPattern, {
         cwd,
         absolute: false,
@@ -658,7 +621,7 @@ async function discoverWorkspace(cwd: string): Promise<DiscoveryResult[]> {
   const packageInfos: Array<{pkgRoot: string, pkg: any, manifestPath: string}> = [];
   
   for (const pattern of parsed.packages) {
-    const pkgPattern = path.join(pattern, 'package.json');
+    const pkgPattern = path.join(pattern, PACKAGE_JSON);
     const pkgFiles = await glob(pkgPattern, { 
       cwd, 
       absolute: false,
@@ -748,7 +711,7 @@ async function discoverWorkspace(cwd: string): Promise<DiscoveryResult[]> {
  */
 async function discoverCurrentPackage(cwd: string): Promise<DiscoveryResult | null> {
   try {
-    const pkg = await readPackageJson(path.join(cwd, 'package.json'));
+    const pkg = await readPackageJson(path.join(cwd, PACKAGE_JSON));
     if (!pkg) {return null;}
     
     const manifestInfo = await findManifestPath(cwd, pkg);
@@ -804,7 +767,7 @@ async function discoverNodeModules(cwd: string): Promise<DiscoveryResult[]> {
             const scopedDirs = await fs.readdir(scopeDir, { withFileTypes: true });
             for (const scopedEntry of scopedDirs.filter(d => d.isDirectory())) {
               pkgRoot = path.join(scopeDir, scopedEntry.name);
-              pkg = await readPackageJson(path.join(pkgRoot, 'package.json'));
+              pkg = await readPackageJson(path.join(pkgRoot, PACKAGE_JSON));
               
               if (!pkg) {continue;}
               
@@ -849,7 +812,7 @@ async function discoverNodeModules(cwd: string): Promise<DiscoveryResult[]> {
         } else {
           // Unscoped package
           pkgRoot = path.join(nmDir, entry.name);
-          pkg = await readPackageJson(path.join(pkgRoot, 'package.json'));
+          pkg = await readPackageJson(path.join(pkgRoot, PACKAGE_JSON));
           
           if (!pkg) {return;}
           
@@ -1052,7 +1015,7 @@ async function isPackageCacheStale(
   options: { validateHash: boolean }
 ): Promise<boolean> {
   const manifestFsPath = entry.manifestPath.split('/').join(path.sep);
-  const pkgJsonPath = path.join(entry.result.pkgRoot.split('/').join(path.sep), 'package.json');
+  const pkgJsonPath = path.join(entry.result.pkgRoot.split('/').join(path.sep), PACKAGE_JSON);
 
   try {
     const pkgStat = await fs.stat(pkgJsonPath);
@@ -1110,7 +1073,7 @@ async function saveCache(cwd: string, results: DiscoveryResult[]): Promise<void>
       const manifestHash = await computeManifestHash(result.manifestPath);
       
       // Get package.json mtime and version
-      const pkgJsonPath = path.join(result.pkgRoot.split('/').join(path.sep), 'package.json');
+      const pkgJsonPath = path.join(result.pkgRoot.split('/').join(path.sep), PACKAGE_JSON);
       const pkgStat = await fs.stat(pkgJsonPath);
       const pkg = await readPackageJson(pkgJsonPath);
       const version = pkg?.version || '0.1.0';
@@ -1194,17 +1157,10 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
     const age = Date.now() - inProcDiscoveryCache.timestamp;
     if (age < IN_PROC_CACHE_TTL_MS) {
       const cachedResults = inProcDiscoveryCache.results;
-      const sourceCounts = cachedResults.reduce((acc, r) => {
+      const _sourceCounts = cachedResults.reduce((acc, r) => {
         acc[r.source] = (acc[r.source] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
-
-      telemetry.recordDiscovery({
-        duration: age,
-        packagesFound: cachedResults.length,
-        cacheHit: true,
-        sources: sourceCounts,
-      });
 
       log('debug', `[plugins][discover] in-proc cache hit (${cachedResults.length} packages, age ${age}ms)`);
       return cachedResults;
@@ -1244,15 +1200,6 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
           acc[r.source] = (acc[r.source] || 0) + 1;
           return acc;
         }, {} as Record<string, number>);
-        
-        // Record telemetry
-        telemetry.recordDiscovery({
-          duration: totalTime,
-          packagesFound: freshResults.length,
-          cacheHit: true,
-          cacheValidated: enforceHashValidation,
-          sources: sourceCounts,
-        });
         
         log('info', `[plugins][discover] ${totalTime}ms (cached: ${Object.entries(sourceCounts).map(([s, c]) => `${s}:${c}`).join(', ')})`);
         inProcDiscoveryCache = { timestamp: Date.now(), results: freshResults };
@@ -1315,14 +1262,6 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
     .filter(([_, t]) => t > 0)
     .map(([k, v]) => `${k}:${v}ms`)
     .join(', ');
-  
-  // Record telemetry
-  telemetry.recordDiscovery({
-    duration: totalTime,
-    packagesFound: results.length,
-    cacheHit: false,
-    sources: sourceCounts,
-  });
   
   log('info', `[plugins][discover] ${totalTime}ms (${Object.entries(sourceCounts).map(([s, c]) => `${s}:${c}`).join(', ')})${timingDetails ? ` | ${timingDetails}` : ''}`);
   

@@ -31,8 +31,8 @@ describe('renderHelp', () => {
 
     expect(typeof result).toBe('string');
     expect(result).toContain('KB Labs CLI');
-    expect(result).toContain('test:command1');
-    expect(result).toContain('test:command2');
+    expect(result).toContain('test command1');
+    expect(result).toContain('test command2');
   });
 
   it('should render JSON help with source and shadowed fields', () => {

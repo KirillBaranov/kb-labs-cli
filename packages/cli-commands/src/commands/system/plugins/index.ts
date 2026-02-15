@@ -1,0 +1,10 @@
+export { pluginsList } from './plugins-list';
+export { pluginsCommands } from './plugins-commands';
+export { pluginsEnable } from './plugins-enable';
+export { pluginsDisable } from './plugins-disable';
+export { pluginsLink } from './plugins-link';
+export { pluginsUnlink } from './plugins-unlink';
+export { pluginsRegistry } from './plugins-registry';
+export { pluginsDoctor } from './plugins-doctor';
+export { pluginsScaffold } from './plugins-scaffold';
+export { pluginValidate } from './plugins-validate';

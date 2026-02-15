@@ -239,7 +239,7 @@ export function renderPluginsHelp(registry: {
 }): string {
   const tracker = new TimingTracker();
 
-  const pluginCommands = registry
+  const _pluginCommands = registry
     .list()
     .filter(
       (cmd) =>

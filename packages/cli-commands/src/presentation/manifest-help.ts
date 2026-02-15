@@ -7,7 +7,7 @@ import { formatCommandHelp } from "@kb-labs/shared-cli-ui";
 export function renderManifestCommandHelp(
   registered: RegisteredCommand,
 ): string {
-  const tracker = new TimingTracker();
+  const _tracker = new TimingTracker();
   const manifest = registered.manifest;
 
   // Map manifest flags to formatCommandHelp format
