@@ -168,7 +168,7 @@ export class LifecycleManager {
     lifecyclePath: string,
   ): Promise<PluginLifecycle> {
     // Parse path: './lifecycle.js#onLoad'
-    const [file, exportName] = lifecyclePath.split("#");
+    const [file, _exportName] = lifecyclePath.split("#");
     if (!file) {
       throw new Error(`Invalid lifecycle path: ${lifecyclePath}`);
     }

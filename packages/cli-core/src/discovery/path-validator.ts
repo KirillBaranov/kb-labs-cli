@@ -59,7 +59,7 @@ export class PathValidator {
   static async realpath(targetPath: string): Promise<string> {
     try {
       return await fs.realpath(targetPath);
-    } catch (error) {
+    } catch (_error) {
       // If realpath fails (e.g., file doesn't exist), return original
       return targetPath;
     }

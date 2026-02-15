@@ -137,7 +137,7 @@ export class DiscoveryManager {
     const result: PluginBrief[] = [];
 
     // Resolve conflicts for each ID
-    for (const [id, candidates] of byId) {
+    for (const [_id, candidates] of byId) {
       if (candidates.length === 1) {
         result.push(candidates[0]!);
         continue;

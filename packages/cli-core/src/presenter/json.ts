@@ -4,7 +4,7 @@ import type { SystemContext } from "../context";
 export function createJsonPresenter(): Presenter & {
   setContext(context: SystemContext): void;
 } {
-  let context: SystemContext | null = null;
+  let _context: SystemContext | null = null;
 
   return {
     isTTY: false,
@@ -20,7 +20,7 @@ export function createJsonPresenter(): Presenter & {
       // System commands use simple JSON output
     },
     setContext(ctx: SystemContext) {
-      context = ctx;
+      _context = ctx;
     },
   };
 }
