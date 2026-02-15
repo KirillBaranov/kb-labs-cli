@@ -13,10 +13,6 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    },
-    "./shared": {
-      "import": "./dist/shared.js",
-      "types": "./dist/shared.d.ts"
     }
   },
   "files": [

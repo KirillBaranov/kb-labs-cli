@@ -32,6 +32,7 @@
     "@kb-labs/cli-api": "workspace:*",
     "@kb-labs/cli-contracts": "workspace:*",
     "@kb-labs/cli-core": "workspace:*",
+    "@kb-labs/core-platform": "link:../../../kb-labs-core/packages/core-platform",
     "@kb-labs/core-ipc": "link:../../../kb-labs-core/packages/core-ipc",
     "@kb-labs/core-resource-broker": "link:../../../kb-labs-core/packages/core-resource-broker",
     "@kb-labs/core-runtime": "link:../../../kb-labs-core/packages/core-runtime",

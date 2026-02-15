@@ -33,21 +33,11 @@ vi.mock('../utils/path.js', () => ({
   toPosixPath: (p: string) => p.replace(/\\/g, '/'),
 }));
 
-const setupCommandMocks = vi.hoisted(() => {
-  const run = vi.fn().mockResolvedValue(0);
-  const create = vi.fn(() => ({ run }));
-  return { run, create };
-});
-
 const rollbackCommandMocks = vi.hoisted(() => {
   const run = vi.fn().mockResolvedValue(0);
   const create = vi.fn(() => ({ run }));
   return { run, create };
 });
-
-vi.mock('../../commands/system/plugin-setup-command.js', () => ({
-  createPluginSetupCommand: setupCommandMocks.create,
-}));
 
 vi.mock('../../commands/system/plugin-setup-rollback.js', () => ({
   createPluginSetupRollbackCommand: rollbackCommandMocks.create,
@@ -216,52 +206,6 @@ describe('discoverManifests', () => {
     __test.ensureManifestLoader(manifest);
     expect(typeof manifest.loader).toBe('function');
     await expect(manifest.loader()).rejects.toThrow(/ManifestV3 command/);
-  });
-
-  it('should rehydrate setup loader and delegate to setup command module', async () => {
-    const { __test } = await import('../discover') as any;
-    setupCommandMocks.create.mockClear();
-    setupCommandMocks.run.mockClear();
-
-    const manifestV2 = {
-      schema: 'kb.plugin/2',
-      id: '@kb-labs/test',
-      setup: { handler: './setup.js#run' },
-    };
-
-    const manifest = {
-      manifestVersion: '1.0',
-      id: 'template:setup',
-      group: 'template',
-      describe: 'Setup command',
-      flags: [],
-      examples: [],
-      package: '@kb-labs/plugin-template',
-      namespace: 'template',
-      loader: undefined,
-    } as unknown as CommandManifest & {
-      isSetup: boolean;
-      manifestV2: typeof manifestV2;
-      pkgRoot: string;
-    };
-
-    manifest.isSetup = true;
-    manifest.manifestV2 = manifestV2;
-    manifest.pkgRoot = '/virtual/template';
-
-    __test.ensureManifestLoader(manifest);
-    expect(typeof manifest.loader).toBe('function');
-
-    const module = await manifest.loader!();
-    expect(setupCommandMocks.create).toHaveBeenCalledWith({
-      manifest: manifestV2,
-      namespace: 'template',
-      packageName: '@kb-labs/plugin-template',
-      pkgRoot: '/virtual/template',
-    });
-    const exitCode = await module.run({ presenter: {} } as any, [], {});
-    expect(exitCode).toBe(0);
-    expect(setupCommandMocks.run).toHaveBeenCalled();
   });
 
   it('should rehydrate setup rollback loader and delegate to rollback module', async () => {
