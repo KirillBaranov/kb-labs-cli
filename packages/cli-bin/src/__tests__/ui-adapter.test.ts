@@ -56,7 +56,7 @@ describe('UI Adapter', () => {
   describe('UIFacade Creation', () => {
     it('should create UIFacade with all required methods', () => {
       // Mock the createUIFacade function (normally internal to v3-adapter)
-      const createUIFacade = (context: SystemContext) => ({
+      const createUIFacade = (_context: SystemContext) => ({
         colors: {} as any,
         write: (text: string) => process.stdout.write(text),
         info: vi.fn(),
@@ -127,7 +127,7 @@ describe('UI Adapter', () => {
     });
 
     it('should output JSON via json()', () => {
-      const createUIFacade = (context: SystemContext) => ({
+      const createUIFacade = (_context: SystemContext) => ({
         colors: {} as any,
         write: (text: string) => process.stdout.write(text),
         info: vi.fn(),
@@ -157,7 +157,7 @@ describe('UI Adapter', () => {
     });
 
     it('should output newline via newline()', () => {
-      const createUIFacade = (context: SystemContext) => ({
+      const createUIFacade = (_context: SystemContext) => ({
         colors: {} as any,
         write: (text: string) => process.stdout.write(text),
         info: vi.fn(),
@@ -184,7 +184,7 @@ describe('UI Adapter', () => {
     });
 
     it('should output divider via divider()', () => {
-      const createUIFacade = (context: SystemContext) => ({
+      const createUIFacade = (_context: SystemContext) => ({
         colors: {} as any,
         write: (text: string) => process.stdout.write(text),
         info: vi.fn(),
@@ -283,35 +283,35 @@ describe('UI Adapter', () => {
   });
 
   describe('Spinner Support', () => {
-    it('should create spinner with all methods', () => {
-      const createUIFacade = (context: SystemContext) => ({
-        colors: {} as any,
-        write: (text: string) => process.stdout.write(text),
-        info: vi.fn(),
-        success: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-        debug: vi.fn(),
-        spinner: (text: string) => {
-          const spinner = context.presenter?.spinner?.(text);
-          return {
-            update: (message: string) => spinner?.update?.(message),
-            succeed: (message?: string) => spinner?.succeed?.(message),
-            fail: (message?: string) => spinner?.fail?.(message),
-            stop: () => spinner?.stop?.(),
-          };
-        },
-        table: vi.fn(),
-        json: vi.fn(),
-        newline: vi.fn(),
-        divider: vi.fn(),
-        box: vi.fn(),
-        sideBox: vi.fn(),
-        confirm: vi.fn().mockResolvedValue(true),
-        prompt: vi.fn().mockResolvedValue(''),
-      });
+    const createSpinnerUIFacade = (context: SystemContext) => ({
+      colors: {} as any,
+      write: (text: string) => process.stdout.write(text),
+      info: vi.fn(),
+      success: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+      spinner: (text: string) => {
+        const spinner = context.presenter?.spinner?.(text);
+        return {
+          update: (message: string) => spinner?.update?.(message),
+          succeed: (message?: string) => spinner?.succeed?.(message),
+          fail: (message?: string) => spinner?.fail?.(message),
+          stop: () => spinner?.stop?.(),
+        };
+      },
+      table: vi.fn(),
+      json: vi.fn(),
+      newline: vi.fn(),
+      divider: vi.fn(),
+      box: vi.fn(),
+      sideBox: vi.fn(),
+      confirm: vi.fn().mockResolvedValue(true),
+      prompt: vi.fn().mockResolvedValue(''),
+    });
 
-      const ui = createUIFacade(mockSystemContext);
+    it('should create spinner with all methods', () => {
+      const ui = createSpinnerUIFacade(mockSystemContext);
 
       const spinner = ui.spinner('Loading...');
 
@@ -334,34 +334,7 @@ describe('UI Adapter', () => {
         spinner: vi.fn(() => mockSpinner),
       } as any;
 
-      const createUIFacade = (context: SystemContext) => ({
-        colors: {} as any,
-        write: (text: string) => process.stdout.write(text),
-        info: vi.fn(),
-        success: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-        debug: vi.fn(),
-        spinner: (text: string) => {
-          const spinner = context.presenter?.spinner?.(text);
-          return {
-            update: (message: string) => spinner?.update?.(message),
-            succeed: (message?: string) => spinner?.succeed?.(message),
-            fail: (message?: string) => spinner?.fail?.(message),
-            stop: () => spinner?.stop?.(),
-          };
-        },
-        table: vi.fn(),
-        json: vi.fn(),
-        newline: vi.fn(),
-        divider: vi.fn(),
-        box: vi.fn(),
-        sideBox: vi.fn(),
-        confirm: vi.fn().mockResolvedValue(true),
-        prompt: vi.fn().mockResolvedValue(''),
-      });
-
-      const ui = createUIFacade(mockSystemContext);
+      const ui = createSpinnerUIFacade(mockSystemContext);
 
       const spinner = ui.spinner('Loading...');
       spinner.update('Still loading...');
@@ -375,7 +348,7 @@ describe('UI Adapter', () => {
 
   describe('Interactive Methods (Non-Interactive Mode)', () => {
     it('should return true for confirm() in non-interactive mode', async () => {
-      const createUIFacade = (context: SystemContext) => ({
+      const createUIFacade = (_context: SystemContext) => ({
         colors: {} as any,
         write: (text: string) => process.stdout.write(text),
         info: vi.fn(),
@@ -390,7 +363,7 @@ describe('UI Adapter', () => {
         divider: vi.fn(),
         box: vi.fn(),
         sideBox: vi.fn(),
-        confirm: async (message: string) => {
+        confirm: async (_message: string) => {
           // For now, return true (non-interactive)
           // TODO: Implement proper confirm via presenter
           return true;
@@ -406,7 +379,7 @@ describe('UI Adapter', () => {
     });
 
     it('should return empty string for prompt() in non-interactive mode', async () => {
-      const createUIFacade = (context: SystemContext) => ({
+      const createUIFacade = (_context: SystemContext) => ({
         colors: {} as any,
         write: (text: string) => process.stdout.write(text),
         info: vi.fn(),
@@ -422,7 +395,7 @@ describe('UI Adapter', () => {
         box: vi.fn(),
         sideBox: vi.fn(),
         confirm: vi.fn().mockResolvedValue(true),
-        prompt: async (message: string, options?) => {
+        prompt: async (_message: string, _options?) => {
           // For now, return empty string (non-interactive)
           // TODO: Implement proper prompt via presenter
           return '';
@@ -441,7 +414,7 @@ describe('UI Adapter', () => {
     it('should support title in MessageOptions', () => {
       const mockInfo = vi.fn();
 
-      const createUIFacade = (context: SystemContext) => ({
+      const createUIFacade = (_context: SystemContext) => ({
         colors: {} as any,
         write: (text: string) => process.stdout.write(text),
         info: mockInfo,
@@ -470,7 +443,7 @@ describe('UI Adapter', () => {
     it('should support sections in MessageOptions', () => {
       const mockSuccess = vi.fn();
 
-      const createUIFacade = (context: SystemContext) => ({
+      const createUIFacade = (_context: SystemContext) => ({
         colors: {} as any,
         write: (text: string) => process.stdout.write(text),
         info: vi.fn(),
@@ -503,7 +476,7 @@ describe('UI Adapter', () => {
     it('should support timing in MessageOptions', () => {
       const mockWarn = vi.fn();
 
-      const createUIFacade = (context: SystemContext) => ({
+      const createUIFacade = (_context: SystemContext) => ({
         colors: {} as any,
         write: (text: string) => process.stdout.write(text),
         info: vi.fn(),
@@ -531,29 +504,28 @@ describe('UI Adapter', () => {
   });
 
   describe('Error Handling', () => {
+    const createErrorUIFacade = (errorFn: ReturnType<typeof vi.fn>) => ({
+      colors: {} as any,
+      write: (text: string) => process.stdout.write(text),
+      info: vi.fn(),
+      success: vi.fn(),
+      warn: vi.fn(),
+      error: errorFn,
+      debug: vi.fn(),
+      spinner: vi.fn(),
+      table: vi.fn(),
+      json: vi.fn(),
+      newline: vi.fn(),
+      divider: vi.fn(),
+      box: vi.fn(),
+      sideBox: vi.fn(),
+      confirm: vi.fn().mockResolvedValue(true),
+      prompt: vi.fn().mockResolvedValue(''),
+    });
+
     it('should handle Error object in error()', () => {
       const mockError = vi.fn();
-
-      const createUIFacade = (context: SystemContext) => ({
-        colors: {} as any,
-        write: (text: string) => process.stdout.write(text),
-        info: vi.fn(),
-        success: vi.fn(),
-        warn: vi.fn(),
-        error: mockError,
-        debug: vi.fn(),
-        spinner: vi.fn(),
-        table: vi.fn(),
-        json: vi.fn(),
-        newline: vi.fn(),
-        divider: vi.fn(),
-        box: vi.fn(),
-        sideBox: vi.fn(),
-        confirm: vi.fn().mockResolvedValue(true),
-        prompt: vi.fn().mockResolvedValue(''),
-      });
-
-      const ui = createUIFacade(mockSystemContext);
+      const ui = createErrorUIFacade(mockError);
 
       const error = new Error('Test error');
       ui.error(error);
@@ -563,27 +535,7 @@ describe('UI Adapter', () => {
 
     it('should handle string in error()', () => {
       const mockError = vi.fn();
-
-      const createUIFacade = (context: SystemContext) => ({
-        colors: {} as any,
-        write: (text: string) => process.stdout.write(text),
-        info: vi.fn(),
-        success: vi.fn(),
-        warn: vi.fn(),
-        error: mockError,
-        debug: vi.fn(),
-        spinner: vi.fn(),
-        table: vi.fn(),
-        json: vi.fn(),
-        newline: vi.fn(),
-        divider: vi.fn(),
-        box: vi.fn(),
-        sideBox: vi.fn(),
-        confirm: vi.fn().mockResolvedValue(true),
-        prompt: vi.fn().mockResolvedValue(''),
-      });
-
-      const ui = createUIFacade(mockSystemContext);
+      const ui = createErrorUIFacade(mockError);
 
       ui.error('Test error string');
 
@@ -593,7 +545,7 @@ describe('UI Adapter', () => {
 
   describe('Colors API', () => {
     it('should provide colors API from shared-cli-ui', () => {
-      const createUIFacade = (context: SystemContext) => ({
+      const createUIFacade = (_context: SystemContext) => ({
         colors: {
           red: (text: string) => `\x1b[31m${text}\x1b[0m`,
           green: (text: string) => `\x1b[32m${text}\x1b[0m`,

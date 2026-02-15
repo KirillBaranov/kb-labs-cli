@@ -129,7 +129,7 @@ describe('Platform Initialization (Real)', () => {
 
         // Restore permissions for cleanup
         await chmod(configPath, 0o644);
-      } catch (err) {
+      } catch (_err) {
         // Skip test if chmod fails (not supported on all systems)
         console.warn('Skipping permission test - chmod not supported');
       }

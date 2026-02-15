@@ -71,30 +71,30 @@ describe('isCommandGroup', () => {
 describe('hasSetContext', () => {
   it('should return true for object with setContext method', () => {
     const presenter = {
-      setContext: (ctx: any) => {},
+      setContext: (_ctx: any) => {},
     };
     expect(hasSetContext(presenter)).toBe(true);
   });
 
   it('should return true when setContext is arrow function', () => {
     const presenter = {
-      setContext: (ctx: any) => {},
-      info: (msg: string) => {},
+      setContext: (_ctx: any) => {},
+      info: (_msg: string) => {},
     };
     expect(hasSetContext(presenter)).toBe(true);
   });
 
   it('should return true when setContext is regular function', () => {
     const presenter = {
-      setContext: function(ctx: any) {},
+      setContext: function(_ctx: any) {},
     };
     expect(hasSetContext(presenter)).toBe(true);
   });
 
   it('should return false for object without setContext', () => {
     const obj = {
-      info: (msg: string) => {},
-      warn: (msg: string) => {},
+      info: (_msg: string) => {},
+      warn: (_msg: string) => {},
     };
     expect(hasSetContext(obj)).toBe(false);
   });
