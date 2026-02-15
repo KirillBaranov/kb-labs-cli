@@ -97,7 +97,7 @@ function createCLIUIProvider(): (hostType: HostType) => UIFacade {
       debug: (msg: string) => {
         console.debug(msg);
       },
-      spinner: (text: string): Spinner => {
+      spinner: (_text: string): Spinner => {
         // No spinner for now, return no-op
         return {
           update: () => {},
@@ -106,7 +106,7 @@ function createCLIUIProvider(): (hostType: HostType) => UIFacade {
           stop: () => {},
         };
       },
-      table: (data: Record<string, unknown>[], columns?) => {
+      table: (data: Record<string, unknown>[], _columns?) => {
         console.table(data);
       },
       json: (data: unknown) => {
@@ -130,10 +130,10 @@ function createCLIUIProvider(): (hostType: HostType) => UIFacade {
         const boxOutput = sideBorderBox(options);
         console.log(boxOutput);
       },
-      confirm: async (message: string) => {
+      confirm: async (_message: string) => {
         return true;
       },
-      prompt: async (message: string, options?) => {
+      prompt: async (_message: string, _options?) => {
         return '';
       },
     };

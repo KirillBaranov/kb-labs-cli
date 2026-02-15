@@ -63,7 +63,7 @@ export interface CliRuntimeOptions {
   runtimeFormatters?: OutputFormatter[];
 }
 
-const DEFAULT_VERSION = "0.1.0";
+const _DEFAULT_VERSION = "0.1.0";
 
 export async function executeCli(
   argv: string[],

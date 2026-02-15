@@ -12,6 +12,7 @@ import type { PlatformContainer } from '@kb-labs/core-runtime';
 import { sideBorderBox, safeColors } from '@kb-labs/shared-cli-ui';
 import path from 'node:path';
 import type { RegisteredCommand } from '@kb-labs/cli-commands/registry';
+import type { PluginContextV3 } from '@kb-labs/plugin-contracts';
 
 interface V3ExecutionOptions {
   context: SystemContext;
@@ -185,7 +186,7 @@ function createUIFacade(context: SystemContext): UIFacade {
         stop: () => spinner?.stop?.(),
       };
     },
-    table: (data: Record<string, unknown>[], columns?) => {
+    table: (data: Record<string, unknown>[], _columns?) => {
       if (presenter?.table) {
         presenter.table(data);
       } else {
@@ -213,12 +214,12 @@ function createUIFacade(context: SystemContext): UIFacade {
       const boxOutput = sideBorderBox(options);
       console.log(boxOutput);
     },
-    confirm: async (message: string) => {
+    confirm: async (_message: string) => {
       // For now, return true (non-interactive)
       // TODO: Implement proper confirm via presenter
       return true;
     },
-    prompt: async (message: string, options?) => {
+    prompt: async (_message: string, _options?) => {
       // For now, return empty string (non-interactive)
       // TODO: Implement proper prompt via presenter
       return '';
@@ -253,7 +254,7 @@ function createPlatformServices(platformContainer: PlatformContainer): PlatformS
 export function createPluginContextV3ForSystemCommand(
   context: SystemContext,
   platform: PlatformContainer
-): import('@kb-labs/plugin-contracts').PluginContextV3 {
+): PluginContextV3 {
   const ui = createUIFacade(context);
   const platformServices = createPlatformServices(platform);
 

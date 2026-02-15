@@ -47,7 +47,7 @@ export function loadEnvFile(cwd: string): void {
         process.env[key] = unquotedValue;
       }
     }
-  } catch (error) {
+  } catch (_error) {
     // Молча игнорируем ошибки загрузки .env
     // Это не критично для работы CLI
   }
