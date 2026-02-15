@@ -19,10 +19,10 @@ export function renderGroupHelp(group: CommandGroup): string {
   });
 
   // Commands section
-  // Convert command IDs to user-friendly format (replace : with space for display)
+  // Convert command IDs to user-friendly format (replace all colons with spaces for display)
   const commandDisplayNames = sortedCommands.map((cmd) => {
-    // Replace first colon with space for display (e.g., "plugins:list" -> "plugins list")
-    return cmd.name.replace(':', ' ');
+    // Replace all colons with spaces for display (e.g., "agent:trace:stats" -> "agent trace stats")
+    return cmd.name.replace(/:/g, ' ');
   });
   const maxNameLength = Math.max(...commandDisplayNames.map((name) => name.length));
   const commandItems: string[] = [];

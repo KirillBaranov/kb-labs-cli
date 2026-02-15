@@ -44,8 +44,10 @@ export function renderHelp(
   for (const group of grouped) {
     lines.push(colors.bold(group.name));
     for (const cmd of group.commands) {
+      // Convert command ID to user-friendly format (replace : with space for display)
+      const displayId = cmd.manifest.id.replace(/:/g, ' ');
       lines.push(
-        `  ${colors.cyan(cmd.manifest.id)}  ${colors.dim(
+        `  ${colors.cyan(displayId)}  ${colors.dim(
           cmd.manifest.describe ?? "",
         )}`,
       );

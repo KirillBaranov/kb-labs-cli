@@ -41,8 +41,9 @@ export function renderProductHelp(
     a.manifest.id.localeCompare(b.manifest.id),
   );
 
+  // Calculate max length based on display format (with spaces instead of colons)
   const maxLength = Math.max(
-    ...[...available, ...unavailable].map((c) => c.manifest.id.length),
+    ...[...available, ...unavailable].map((c) => c.manifest.id.replace(/:/g, ' ').length),
     20,
   );
 
@@ -50,7 +51,9 @@ export function renderProductHelp(
   const availableItems: string[] = [];
   for (const cmd of available) {
     const status = colors.green("✓");
-    const paddedId = cmd.manifest.id.padEnd(maxLength);
+    // Convert command ID to user-friendly format (replace : with space for display)
+    const displayId = cmd.manifest.id.replace(/:/g, ' ');
+    const paddedId = displayId.padEnd(maxLength);
     availableItems.push(
       `${status} ${colors.cyan(paddedId)}  ${colors.dim(
         cmd.manifest.describe,
@@ -74,7 +77,9 @@ export function renderProductHelp(
     const unavailableItems: string[] = [];
     for (const cmd of unavailable) {
       const status = colors.red("✗");
-      const paddedId = cmd.manifest.id.padEnd(maxLength);
+      // Convert command ID to user-friendly format (replace : with space for display)
+      const displayId = cmd.manifest.id.replace(/:/g, ' ');
+      const paddedId = displayId.padEnd(maxLength);
       unavailableItems.push(
         `${status} ${colors.dim(paddedId)}  ${colors.dim(
           cmd.manifest.describe,
@@ -107,12 +112,13 @@ export function renderProductHelp(
 
   const nextStepsItems = Array.from(uniqueCommands.values())
     .slice(0, 3)
-    .map(
-      (cmd) =>
-        `${colors.cyan(`kb ${cmd.manifest.id}`)}  ${colors.dim(
-          cmd.manifest.describe,
-        )}`,
-    );
+    .map((cmd) => {
+      // Convert command ID to user-friendly format (replace : with space for display)
+      const displayId = cmd.manifest.id.replace(/:/g, ' ');
+      return `${colors.cyan(`kb ${displayId}`)}  ${colors.dim(
+        cmd.manifest.describe,
+      )}`;
+    });
 
   if (nextStepsItems.length === 0) {
     nextStepsItems.push(colors.dim("No available commands in this product"));
@@ -120,7 +126,7 @@ export function renderProductHelp(
     nextStepsItems.push("");
     nextStepsItems.push(
       colors.dim(
-        `Use 'kb ${groupName}:<command> --help' for detailed help`,
+        `Use 'kb ${groupName} <command> --help' for detailed help`,
       ),
     );
   }

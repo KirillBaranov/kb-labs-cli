@@ -110,6 +110,13 @@ class InMemoryRegistry implements CommandRegistry {
       this.byName.set(cmdId, commandAdapter);
       this.byName.set(commandAdapter.name, commandAdapter);
 
+      // Also register with space-separated format for multi-part commands
+      // e.g., "agent:trace:stats" → "agent trace stats"
+      if (cmdId.includes(':')) {
+        const spaceSeparated = cmdId.replace(/:/g, ' ');
+        this.byName.set(spaceSeparated, commandAdapter);
+      }
+
       // Register with full group + command format for invocation
       if (cmd.manifest.group) {
         const fullName = `${cmd.manifest.group} ${cmd.manifest.id}`;
@@ -334,7 +341,8 @@ class InMemoryRegistry implements CommandRegistry {
       if (cmd.manifest.aliases?.includes(idOrAlias)) {
         return cmd;
       }
-      if (cmd.manifest.id.replace(":", " ") === idOrAlias) {
+      // Support both colon and space separators (e.g., "agent:trace:stats" or "agent trace stats")
+      if (cmd.manifest.id.replace(/:/g, " ") === idOrAlias) {
         return cmd;
       }
     }

@@ -176,17 +176,30 @@ export async function executeCli(
     }
   }
 
-  // If command not found and cmdPath has more than 2 elements, try shorter paths
+  // If command not found and cmdPath has more than 2 elements, try manifest command with colons
+  // This handles nested commands like "agent trace stats" → "agent:trace:stats"
   if (!cmd && cmdPath.length > 2) {
-    for (let i = cmdPath.length - 1; i >= 1; i--) {
-      const shorterPath = cmdPath.slice(0, i);
-      const remainingArgs = cmdPath.slice(i);
-      normalizedCmdPath = normalizeCmdPath(shorterPath);
-      cmd = find(normalizedCmdPath);
-      if (cmd) {
-        // Found command at shorter path, prepend remaining args to rest
-        actualRest = [...remainingArgs, ...rest];
-        break;
+    // First try to find as manifest command (e.g., agent:trace:stats)
+    const maybeManifestId = cmdPath.join(":");
+    const manifestCmd = registryStore.getManifestCommand(maybeManifestId);
+
+    if (manifestCmd && manifestCmd.available && !manifestCmd.shadowed) {
+      // Found manifest command! Use it as cmd
+      // We'll handle this via V3 adapter later in execution
+      cmd = manifestCmd as any; // Will be processed by findCommandWithType
+      normalizedCmdPath = cmdPath;
+    } else {
+      // Fall back to trying shorter paths
+      for (let i = cmdPath.length - 1; i >= 1; i--) {
+        const shorterPath = cmdPath.slice(0, i);
+        const remainingArgs = cmdPath.slice(i);
+        normalizedCmdPath = normalizeCmdPath(shorterPath);
+        cmd = find(normalizedCmdPath);
+        if (cmd) {
+          // Found command at shorter path, prepend remaining args to rest
+          actualRest = [...remainingArgs, ...rest];
+          break;
+        }
       }
     }
   }
