@@ -1,7 +1,15 @@
 import { CliError, CLI_ERROR_CODES } from "./errors";
-import { getLogger } from "@kb-labs/core-sys/logging";
+import { getLogger } from "./platform-logger.js";
 
 const logger = getLogger("cli:flags");
+
+/**
+ * Convert kebab-case flag name to camelCase
+ * Examples: "task-id" → "taskId", "dry-run" → "dryRun"
+ */
+function kebabToCamel(str: string): string {
+  return str.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+}
 
 export type GlobalFlags = {
   json?: boolean;
@@ -192,5 +200,19 @@ export function parseArgs(argv: string[]): {
     global.profile = process.env.KB_PROFILE;
   }
 
-  return { cmdPath, rest, global, flagsObj };
+  // Normalize all kebab-case flag keys to camelCase
+  // This ensures handlers can use camelCase consistently regardless of CLI input format
+  // Examples: --task-id → taskId, --dry-run → dryRun
+  const normalizedFlags: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(flagsObj)) {
+    const camelKey = kebabToCamel(key);
+    normalizedFlags[camelKey] = value;
+
+    // Also preserve original kebab-case key for backward compatibility
+    if (camelKey !== key) {
+      normalizedFlags[key] = value;
+    }
+  }
+
+  return { cmdPath, rest, global, flagsObj: normalizedFlags };
 }
