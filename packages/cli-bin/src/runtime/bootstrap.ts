@@ -17,7 +17,6 @@ import {
   renderProductHelp,
   registry,
 } from "@kb-labs/cli-commands";
-import { initLogging, getLogger } from "@kb-labs/core-sys/logging";
 import { createOutput } from "@kb-labs/core-sys/output";
 import {
   createCliRuntime,
@@ -35,6 +34,8 @@ import { normalizeCmdPath } from "./helpers/cmd-path";
 import { resolveLogLevel } from "./helpers/log-level";
 import { shouldShowLimits } from "./helpers/flags";
 import { isCommandGroup, hasSetContext } from "./helpers/command-types";
+import { randomUUID } from "node:crypto";
+import type { ILogger } from "@kb-labs/core-platform";
 
 type RuntimeInitOptions = RuntimeSetupOptions;
 type CliRuntimeInstance = Awaited<ReturnType<typeof createCliRuntime>>;
@@ -64,6 +65,39 @@ export interface CliRuntimeOptions {
 }
 
 const _DEFAULT_VERSION = "0.1.0";
+
+type LegacyLikeLogger = {
+  debug(msg: string, meta?: Record<string, unknown>): void;
+  info(msg: string, meta?: Record<string, unknown>): void;
+  warn(msg: string, meta?: Record<string, unknown>): void;
+  error(msg: string, meta?: Record<string, unknown> | Error): void;
+  child(bindings: { category?: string; meta?: Record<string, unknown> }): LegacyLikeLogger;
+};
+
+function adaptPlatformLogger(logger: ILogger): LegacyLikeLogger {
+  return {
+    debug: (msg, meta) => logger.debug(msg, meta),
+    info: (msg, meta) => logger.info(msg, meta),
+    warn: (msg, meta) => logger.warn(msg, meta),
+    error: (msg, metaOrError) => {
+      if (metaOrError instanceof Error) {
+        logger.error(msg, metaOrError);
+        return;
+      }
+      logger.error(msg, undefined, metaOrError);
+    },
+    child: (bindings) => {
+      const childBindings: Record<string, unknown> = {};
+      if (bindings.category) {
+        childBindings.category = bindings.category;
+      }
+      if (bindings.meta && typeof bindings.meta === "object") {
+        Object.assign(childBindings, bindings.meta);
+      }
+      return adaptPlatformLogger(logger.child(childBindings));
+    },
+  };
+}
 
 export async function executeCli(
   argv: string[],
@@ -131,18 +165,31 @@ export async function executeCli(
     process.env.DEBUG_SANDBOX = '1';
   }
 
-  // Initialize logging with unified system
-  // Force replaceSinks=true to ensure we replace any sinks from auto-init
-  initLogging({
-    level: logLevel,
-    quiet: global.quiet,
-    debug: global.debug,
-    mode: global.json ? 'json' : 'auto',
-    replaceSinks: true, // Always replace sinks to avoid duplicate output
-  });
+  const cliRequestId = `cli-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const cliTraceId = `trace-${randomUUID()}`;
+  const cliSpanId = `span-${randomUUID()}`;
+  const cliInvocationId = `inv-${randomUUID()}`;
 
-  // Create logger early for registerCommands - MUST be after initLogging()
-  const cliLogger = getLogger('cli');
+  // Use platform logger as primary runtime logger (persistent, extensions-aware)
+  const platformCliLogger = platform.logger.child({
+    layer: "cli",
+    cwd,
+    version,
+    requestId: cliRequestId,
+    reqId: cliRequestId,
+    traceId: cliTraceId,
+    spanId: cliSpanId,
+    invocationId: cliInvocationId,
+    argv,
+  });
+  const cliLogger = adaptPlatformLogger(platformCliLogger);
+  platformCliLogger.info("CLI invocation started", {
+    commandPath: cmdPath.join(" "),
+    argsCount: argv.length,
+    jsonMode: Boolean(global.json),
+    quietMode: Boolean(global.quiet),
+    debugMode: Boolean(global.debug),
+  });
 
   const registerCommands =
     options.registerBuiltinCommands ?? registerBuiltinCommands;
@@ -217,19 +264,21 @@ export async function executeCli(
     category: 'cli',
   });
   
-  const logger = getLogger('cli').child({
+  const logger = cliLogger.child({
+    category: "bootstrap",
     meta: {
-      cwd,
-      version,
+      service: "runtime-bootstrap",
     },
   });
 
   // Debug logging AFTER logger is properly initialized
-  logger.debug('[bootstrap] rawConfig:', rawConfig ? 'EXISTS' : 'UNDEFINED');
+  logger.debug('[bootstrap] rawConfig', { state: rawConfig ? 'EXISTS' : 'UNDEFINED' });
   if (rawConfig) {
-    logger.debug('[bootstrap] rawConfig keys:', Object.keys(rawConfig));
+    logger.debug('[bootstrap] rawConfig keys', { keys: Object.keys(rawConfig) });
   }
-  logger.debug('[bootstrap] Stored in globalThis.__KB_RAW_CONFIG__:', (globalThis as any).__KB_RAW_CONFIG__ ? 'EXISTS' : 'UNDEFINED');
+  logger.debug('[bootstrap] Stored in globalThis.__KB_RAW_CONFIG__', {
+    state: (globalThis as any).__KB_RAW_CONFIG__ ? 'EXISTS' : 'UNDEFINED',
+  });
 
   const runtimeMiddlewares =
     options.runtimeMiddlewares ?? getDefaultMiddlewares();
@@ -540,4 +589,3 @@ function handleExecutionError(
   }
   return 1;
 }
-

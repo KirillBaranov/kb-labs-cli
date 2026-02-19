@@ -14,9 +14,22 @@ if (process.argv.includes('--json')) {
 }
 
 import { run } from "./index";
+import { platform } from "@kb-labs/core-runtime";
 
 (async () => {
-  const code = await run(process.argv.slice(2));
+  let code: number | void;
+  try {
+    code = await run(process.argv.slice(2));
+  } finally {
+    try {
+      await platform.shutdown();
+    } catch (error) {
+      process.stderr.write(
+        `[kb] platform shutdown failed: ${error instanceof Error ? error.message : String(error)}\n`
+      );
+    }
+  }
+
   if (typeof code === "number") {
     process.exit(code);
   }

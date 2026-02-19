@@ -11,6 +11,7 @@ import { getHandlerPermissions } from '@kb-labs/plugin-contracts';
 import type { PlatformContainer } from '@kb-labs/core-runtime';
 import { sideBorderBox, safeColors } from '@kb-labs/shared-cli-ui';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import type { RegisteredCommand } from '@kb-labs/cli-commands/registry';
 import type { PluginContextV3 } from '@kb-labs/plugin-contracts';
 
@@ -256,15 +257,34 @@ export function createPluginContextV3ForSystemCommand(
   platform: PlatformContainer
 ): PluginContextV3 {
   const ui = createUIFacade(context);
+  const requestId = `cli-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const traceId = `trace-${randomUUID()}`;
+  const spanId = `span-${randomUUID()}`;
+  const invocationId = `inv-${randomUUID()}`;
+  const executionId = `exec-${randomUUID()}`;
+
   const platformServices = createPlatformServices(platform);
+  const scopedPlatformServices: PlatformServices = {
+    ...platformServices,
+    logger: platformServices.logger.child({
+      layer: 'cli',
+      requestId,
+      reqId: requestId,
+      traceId,
+      spanId,
+      invocationId,
+      executionId,
+      pluginId: '@kb-labs/system',
+    }),
+  };
 
   return {
     host: 'cli',
-    requestId: `cli-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    requestId,
     pluginId: '@kb-labs/system',
     cwd: context.cwd || process.cwd(),
     ui,
-    platform: platformServices,
+    platform: scopedPlatformServices,
     runtime: {
       fs: {} as any, // System commands don't use sandboxed fs
       fetch: fetch as any,
@@ -273,8 +293,8 @@ export function createPluginContextV3ForSystemCommand(
     },
     api: {} as any, // System commands don't use remote API
     trace: {
-      traceId: `trace-${Date.now()}`,
-      spanId: `span-${Date.now()}`,
+      traceId,
+      spanId,
     },
   };
 }
