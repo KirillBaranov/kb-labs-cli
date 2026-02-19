@@ -3,14 +3,64 @@
  * Loads adapters from kb.config.json and initializes the platform singleton.
  */
 
-import { initPlatform, type PlatformConfig, type PlatformContainer } from '@kb-labs/core-runtime';
+import {
+  initPlatform,
+  platform,
+  type PlatformConfig,
+  type PlatformContainer,
+  type PlatformLifecycleContext,
+  type PlatformLifecycleHooks,
+  type PlatformLifecyclePhase,
+} from '@kb-labs/core-runtime';
 import { findNearestConfig, readJsonWithDiagnostics } from '@kb-labs/core-config';
-import { getLogger } from '@kb-labs/core-sys/logging';
 import { sideBorderBox, safeColors, safeSymbols } from '@kb-labs/shared-cli-ui';
 import type { UIFacade, HostType, MessageOptions, Spinner } from '@kb-labs/plugin-contracts';
 import { noopUI } from '@kb-labs/plugin-contracts';
 
-const logger = getLogger('platform');
+const CLI_LIFECYCLE_HOOK_ID = 'cli-runtime';
+let lifecycleHooksRegistered = false;
+
+function lifecycleLogger() {
+  return platform.logger.child({
+    layer: 'cli',
+    service: 'platform-lifecycle',
+  });
+}
+
+function ensureLifecycleHooksRegistered(): void {
+  if (lifecycleHooksRegistered) {
+    return;
+  }
+
+  const hooks: PlatformLifecycleHooks = {
+    onStart: (ctx: PlatformLifecycleContext) => {
+      lifecycleLogger().debug('Platform lifecycle: start', {
+        app: 'cli',
+        cwd: ctx.cwd,
+        isChildProcess: ctx.isChildProcess,
+      });
+    },
+    onReady: (ctx: PlatformLifecycleContext) => {
+      lifecycleLogger().debug('Platform lifecycle: ready', {
+        app: 'cli',
+        durationMs: ctx.metadata?.durationMs,
+      });
+    },
+    onShutdown: () => {
+      lifecycleLogger().debug('Platform lifecycle: shutdown', { app: 'cli' });
+    },
+    onError: (error: unknown, phase: PlatformLifecyclePhase) => {
+      lifecycleLogger().warn('Platform lifecycle hook error', {
+        app: 'cli',
+        phase,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    },
+  };
+
+  platform.registerLifecycleHooks(CLI_LIFECYCLE_HOOK_ID, hooks);
+  lifecycleHooksRegistered = true;
+}
 
 /**
  * Create CLI-specific UI provider.
@@ -152,6 +202,8 @@ export interface PlatformInitResult {
  * @returns The platform config and raw config that was loaded
  */
 export async function initializePlatform(cwd: string): Promise<PlatformInitResult> {
+  ensureLifecycleHooksRegistered();
+
   // Create CLI-specific UI provider
   const uiProvider = createCLIUIProvider();
 
@@ -166,55 +218,62 @@ export async function initializePlatform(cwd: string): Promise<PlatformInitResul
     });
 
     if (!configPath) {
-      logger.debug('No kb.config.json found, using NoOp adapters');
       // Initialize with empty config (all NoOp adapters)
       const fallbackConfig = { adapters: {} };
       const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
+      platform.logger.debug('No kb.config.json found, using NoOp adapters', {
+        layer: 'cli',
+        service: 'platform-init',
+      });
       return { platform, platformConfig: fallbackConfig };
     }
 
     // Read config
     const result = await readJsonWithDiagnostics<{ platform?: PlatformConfig }>(configPath);
     if (!result.ok) {
-      logger.warn('Failed to read kb.config.json, using NoOp adapters', {
-        errors: result.diagnostics.map(d => d.message),
-      });
       const fallbackConfig = { adapters: {} };
       const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
+      platform.logger.warn('Failed to read kb.config.json, using NoOp adapters', {
+        layer: 'cli',
+        service: 'platform-init',
+        errors: result.diagnostics.map(d => d.message),
+      });
       return { platform, platformConfig: fallbackConfig };
     }
 
     // Extract platform config
     const platformConfig = result.data.platform;
     if (!platformConfig) {
-      logger.debug('No platform config in kb.config.json, using NoOp adapters');
       const fallbackConfig = { adapters: {} };
       const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
+      platform.logger.debug('No platform config in kb.config.json, using NoOp adapters', {
+        layer: 'cli',
+        service: 'platform-init',
+      });
       return { platform, platformConfig: fallbackConfig, rawConfig: result.data };
     }
 
     // Initialize platform with config
-    logger.info('Initializing platform adapters', {
+    const platform = await initPlatform(platformConfig, cwd, uiProvider);
+
+    platform.logger.info('Platform adapters initialized', {
+      layer: 'cli',
+      service: 'platform-init',
       configPath,
       adapters: Object.keys(platformConfig.adapters ?? {}),
       hasAdapterOptions: !!platformConfig.adapterOptions,
     });
-
-    const platform = await initPlatform(platformConfig, cwd, uiProvider);
-
-    logger.info('Platform adapters initialized', {
-      configPath,
-      adapters: Object.keys(platformConfig.adapters ?? {}),
-    });
     return { platform, platformConfig, rawConfig: result.data };
 
   } catch (error) {
-    logger.warn('Platform initialization failed, using NoOp adapters', {
-      error: error instanceof Error ? error.message : String(error),
-    });
     // Fallback to NoOp adapters on error
     const fallbackConfig = { adapters: {} };
     const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
+    platform.logger.warn('Platform initialization failed, using NoOp adapters', {
+      layer: 'cli',
+      service: 'platform-init',
+      error: error instanceof Error ? error.message : String(error),
+    });
     return { platform, platformConfig: fallbackConfig };
   }
 }
