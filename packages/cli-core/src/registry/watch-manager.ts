@@ -5,7 +5,7 @@
 
 import * as chokidar from "chokidar";
 import * as path from "node:path";
-import { getLogger } from "@kb-labs/core-sys/logging";
+import { getLogger } from "../platform-logger.js";
 
 const logger = getLogger("WatchManager");
 

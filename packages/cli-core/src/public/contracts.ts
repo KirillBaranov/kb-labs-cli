@@ -6,12 +6,11 @@
  * to provide a stable public API for CLI commands and plugins.
  */
 
-// Re-export Output and Logger types from core-sys
+// Re-export Output and Logger types from stable public modules
 export type { Output } from "@kb-labs/core-sys/output";
-export type { Logger } from "@kb-labs/core-sys/logging";
+export type { Logger, LogLevel, LogContext } from "../platform-logger";
 
 // Re-export other useful types
-export type { LogLevel, LogContext } from "@kb-labs/core-sys/logging";
 export type {
   OutputMode,
   VerbosityLevel,

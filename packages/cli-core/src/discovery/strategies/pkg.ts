@@ -9,7 +9,7 @@ import { isManifestV3 } from "@kb-labs/plugin-contracts";
 import type { DiscoveryStrategy, DiscoveryResult } from "../types";
 import { safeImport, isImportTimeout } from "../utils/safe-import.js";
 import type { PluginBrief } from "../../registry/plugin-registry";
-import { getLogger } from "@kb-labs/core-sys/logging";
+import { getLogger } from "../../platform-logger.js";
 
 const logger = getLogger("PkgStrategy");
 

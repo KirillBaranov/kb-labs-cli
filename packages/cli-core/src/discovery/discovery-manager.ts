@@ -16,7 +16,7 @@ import { DirStrategy } from "./strategies/dir";
 import { FileStrategy } from "./strategies/file";
 import type { ManifestV3 } from "@kb-labs/plugin-contracts";
 
-import { getLogger } from "@kb-labs/core-sys/logging";
+import { getLogger } from "../platform-logger.js";
 
 const logger = getLogger("DiscoveryManager");
 

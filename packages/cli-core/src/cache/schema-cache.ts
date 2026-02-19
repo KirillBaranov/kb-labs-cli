@@ -5,7 +5,7 @@
 
 import type { z } from "zod";
 import * as crypto from "node:crypto";
-import { getLogger } from "@kb-labs/core-sys/logging";
+import { getLogger } from "../platform-logger.js";
 import type { ManifestV3 } from "@kb-labs/plugin-contracts";
 
 const logger = getLogger("cli:schema-cache");

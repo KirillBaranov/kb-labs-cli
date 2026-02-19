@@ -3,7 +3,7 @@
 
 import type { Presenter } from "@kb-labs/cli-contracts";
 import type { Output } from "@kb-labs/core-sys/output";
-import type { Logger as CoreLogger } from "@kb-labs/core-sys/logging";
+import type { Logger as CoreLogger } from "./platform-logger.js";
 import { createId } from "@kb-labs/plugin-runtime";
 import path from "node:path";
 import { existsSync } from "node:fs";

@@ -2,13 +2,13 @@
  * @module @kb-labs/cli-core/context/services/logger
  * Logging service with structured logging support
  *
- * Wrapper around @kb-labs/core-sys/logging for CLI context
+ * Wrapper around platform logger for CLI context
  */
 
 import {
   getLogger,
   type Logger as CoreLogger,
-} from "@kb-labs/core-sys/logging";
+} from "../../platform-logger.js";
 
 /**
  * Log level type (backward compatible)

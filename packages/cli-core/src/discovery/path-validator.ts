@@ -5,7 +5,7 @@
 
 import * as path from "node:path";
 import { promises as fs } from "node:fs";
-import { getLogger } from "@kb-labs/core-sys/logging";
+import { getLogger } from "../platform-logger.js";
 
 const logger = getLogger("PathValidator");
 
