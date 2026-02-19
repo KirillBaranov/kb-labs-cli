@@ -10,17 +10,20 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
     },
     "./public": {
       "types": "./dist/public.d.ts",
       "import": "./dist/public.js",
-      "require": "./dist/public.cjs"
+      "require": "./dist/public.cjs",
+      "default": "./dist/public.js"
     },
     "./v3": {
       "types": "./dist/v3/index.d.ts",
       "import": "./dist/v3/index.js",
-      "require": "./dist/v3/index.cjs"
+      "require": "./dist/v3/index.cjs",
+      "default": "./dist/v3/index.js"
     }
   },
   "files": [
