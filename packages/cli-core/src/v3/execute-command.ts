@@ -14,6 +14,7 @@ import { wrapCliResult } from "@kb-labs/plugin-runtime";
 import type { PlatformContainer } from "@kb-labs/core-runtime";
 import type { ExecutionRequest, ExecutionResult } from "@kb-labs/core-platform";
 import * as path from "node:path";
+import { randomUUID } from "node:crypto";
 
 export interface ExecuteCommandV3Options {
   /**
@@ -155,6 +156,12 @@ export async function executeCommandV3(
   } = options;
 
   // Create plugin context descriptor
+  const requestId = `cli-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const traceId = `trace-${randomUUID()}`;
+  const spanId = `span-${randomUUID()}`;
+  const invocationId = `inv-${randomUUID()}`;
+  const executionId = `exec-${randomUUID()}`;
+
   const descriptor: PluginContextDescriptor = {
     hostType: "cli",
     pluginId,
@@ -162,9 +169,15 @@ export async function executeCommandV3(
     tenantId,
     permissions,
     hostContext: { host: "cli", argv, flags },
-    requestId: `cli-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    requestId,
     configSection,
   };
+  Object.assign(descriptor as unknown as Record<string, unknown>, {
+    traceId,
+    spanId,
+    invocationId,
+    executionId,
+  });
 
   // DEBUG: Log descriptor permissions
   console.log("[executeCommandV3 DEBUG] Descriptor permissions:", {
@@ -182,7 +195,7 @@ export async function executeCommandV3(
 
     // Build ExecutionRequest for platform.executionBackend
     const request: ExecutionRequest = {
-      executionId: descriptor.requestId,
+      executionId,
       descriptor,
       pluginRoot,
       handlerRef: handlerPath,

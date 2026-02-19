@@ -3,6 +3,7 @@ export * from "./types/index";
 // export * from "./command"; // DELETED - V1 legacy
 export * from "./context";
 export * from "./flags";
+export * from "./platform-logger";
 
 // Error handling
 export {
