@@ -11,7 +11,7 @@ vi.mock('../availability.js', () => ({
   checkRequires: vi.fn(),
 }));
 
-// Logger mock removed - using @kb-labs/core-sys/logging directly
+// Logger mock removed - using cli-core logger abstraction directly
 
 describe('registerManifests', () => {
   const mockRegistry = {

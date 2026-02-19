@@ -1,4 +1,4 @@
-import { getLogger } from '@kb-labs/core-sys/logging';
+import { getLogger } from '@kb-labs/cli-core';
 
 const log = getLogger('cli:shutdown');
 

@@ -10,7 +10,7 @@ import { registerManifests, disposeAllPlugins, preflightManifests } from "../reg
 import { PluginRegistry } from "@kb-labs/cli-core";
 import { registerShutdownHook } from "./shutdown";
 import { getContextCwd } from "@kb-labs/shared-cli-ui";
-import { type Logger, createNoOpLogger } from "@kb-labs/core-sys/logging";
+import { type Logger, createNoOpLogger } from "@kb-labs/cli-core";
 
 let _registered = false;
 const registeredCommands: any[] = [];

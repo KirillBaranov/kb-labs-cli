@@ -27,7 +27,7 @@ vi.mock('glob', () => ({
   glob: vi.fn(),
 }));
 
-// Logger mock removed - using @kb-labs/core-sys/logging directly
+// Logger mock removed - using cli-core logger abstraction directly
 
 vi.mock('../utils/path.js', () => ({
   toPosixPath: (p: string) => p.replace(/\\/g, '/'),

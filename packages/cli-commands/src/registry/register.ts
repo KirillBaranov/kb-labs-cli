@@ -6,11 +6,11 @@
 import Ajv from 'ajv';
 import type { CommandManifest, DiscoveryResult, RegisteredCommand } from './types';
 import { checkRequires } from './availability';
+import { getLogLevel, type Logger, createNoOpLogger } from '@kb-labs/cli-core';
 
 export interface RegisterManifestsOptions {
   cwd?: string;
 }
-import { getLogLevel, type Logger, createNoOpLogger } from '@kb-labs/core-sys/logging';
 
 const ajv = new Ajv();
 
@@ -500,4 +500,3 @@ export async function disposeAllPlugins(registry: any, logger?: Logger): Promise
 
   await Promise.allSettled(disposePromises);
 }
-
