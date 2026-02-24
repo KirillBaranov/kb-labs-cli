@@ -62,6 +62,7 @@ export interface RegistrySnapshot {
   plugins: Array<{
     id: string;
     version: string;
+    kind: 'v2' | 'v3';
     source: { kind: SourceKind; path: string };
   }>;
   manifests: RegistrySnapshotManifestEntry[];

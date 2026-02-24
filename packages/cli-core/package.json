@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/cli-core",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "private": true,
   "description": "Core functionality for KB Labs CLI - command framework, context, and utilities",
