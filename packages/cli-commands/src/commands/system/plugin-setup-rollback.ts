@@ -1,13 +1,11 @@
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import type { Command } from '../../types/index';
-import type { ManifestV2 } from '@kb-labs/plugin-contracts';
+import type { Command } from '../../registry/legacy-types';
 import type { JournalEntry } from '@kb-labs/setup-engine-core';
 
 interface SetupRollbackCommandFactoryOptions {
   namespace: string;
-  manifest: ManifestV2;
   packageName: string;
   pkgRoot: string;
 }
@@ -45,7 +43,7 @@ export function createPluginSetupRollbackCommand(
       `kb ${namespace} setup:rollback --log .kb/logs/setup/${namespace}-<id>.json --yes`,
     ],
     flags: ROLLBACK_COMMAND_FLAGS,
-    async run(ctx, argv, rawFlags) {
+    async run(ctx: any, _argv: string[], rawFlags: Record<string, unknown>) {
       const presenter = ctx.presenter ?? {};
       const output = ctx.output;
       const logger = ctx.platform?.logger;
@@ -168,7 +166,7 @@ async function findLatestLog(logsDir: string, namespace: string): Promise<string
   }
 
   candidates.sort((a, b) => b.mtime - a.mtime);
-  return candidates[0].path;
+  return candidates[0]?.path ?? null;
 }
 
 async function readJournalEntries(logPath: string): Promise<JournalEntry[]> {

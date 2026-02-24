@@ -4,7 +4,7 @@
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '../../../utils/generate-examples';
-import type { ManifestV2 } from '@kb-labs/plugin-contracts';
+import type { ManifestV3 } from '@kb-labs/plugin-contracts';
 import { promises as fs } from 'node:fs';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -28,13 +28,13 @@ import { glob } from 'glob';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
 
 interface PluginManifestWithPath {
-  manifest: ManifestV2;
+  manifest: ManifestV3;
   manifestPath: string;
   pluginRoot: string;
 }
 
 type PluginsRegistryResult = CommandResult & {
-  manifests?: ManifestV2[];
+  manifests?: ManifestV3[];
   manifestsWithPaths?: PluginManifestWithPath[];
   total?: number;
   plugins?: PluginManifestWithPath[];
@@ -220,7 +220,7 @@ async function discoverRestApiPlugins(repoRoot: string): Promise<PluginManifestW
         const module = await import(manifestPath);
         const manifest: unknown = module.default || module.manifest || module;
         
-        // Check if it's ManifestV2 with rest.routes
+        // Check if it's ManifestV3 with rest.routes
         if (
           manifest &&
           typeof manifest === 'object' &&
@@ -233,7 +233,7 @@ async function discoverRestApiPlugins(repoRoot: string): Promise<PluginManifestW
           Array.isArray(manifest.rest.routes) &&
           manifest.rest.routes.length > 0
         ) {
-          const manifestV2 = manifest as ManifestV2;
+          const manifestV2 = manifest as ManifestV3;
           results.push({
             manifest: manifestV2,
             manifestPath: path.resolve(manifestPath),
@@ -275,7 +275,7 @@ export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, Plugins
   },
   async handler(ctx, argv, flags) {
     const cwd = getContextCwd(ctx);
-    const repoRoot = ctx.repoRoot || detectRepoRoot(cwd);
+    const repoRoot = detectRepoRoot(cwd);
 
 
     // Discover REST API plugins from workspace

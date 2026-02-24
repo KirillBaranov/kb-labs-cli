@@ -15,7 +15,7 @@ export interface CommandManifest {
   requires?: string[];       // ["@kb-labs/mind-pack@^1.0.0"] (semver ranges)
   flags?: FlagDefinition[];
   examples?: string[];
-  loader: () => Promise<CommandModule>;
+  loader?: () => Promise<CommandModule>;
   
   // New fields (optional for backward compatibility)
   package?: string;          // Full package name (e.g., "@kb-labs/devlink-cli")

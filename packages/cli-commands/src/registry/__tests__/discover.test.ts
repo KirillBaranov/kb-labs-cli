@@ -205,7 +205,7 @@ describe('discoverManifests', () => {
     expect(typeof manifest.loader).not.toBe('function');
     __test.ensureManifestLoader(manifest);
     expect(typeof manifest.loader).toBe('function');
-    await expect(manifest.loader()).rejects.toThrow(/ManifestV3 command/);
+    await expect(manifest.loader!()).rejects.toThrow(/ManifestV3 command/);
   });
 
   it('should rehydrate setup rollback loader and delegate to rollback module', async () => {
@@ -214,9 +214,10 @@ describe('discoverManifests', () => {
     rollbackCommandMocks.run.mockClear();
 
     const manifestV2 = {
-      schema: 'kb.plugin/2',
+      schema: 'kb.plugin/3' as const,
       id: '@kb-labs/test',
-      setup: { handler: './setup.js#run' },
+      version: '1.0.0',
+      setup: { handler: './setup.js#run', describe: 'Setup test', permissions: {} },
     };
 
     const manifest = {
@@ -244,7 +245,6 @@ describe('discoverManifests', () => {
 
     const module = await manifest.loader!();
     expect(rollbackCommandMocks.create).toHaveBeenCalledWith({
-      manifest: manifestV2,
       namespace: 'template',
       packageName: '@kb-labs/plugin-template',
       pkgRoot: '/virtual/template',

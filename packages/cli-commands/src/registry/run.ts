@@ -1,11 +1,10 @@
-import { executeCommand } from '@kb-labs/plugin-adapter-cli';
 import type { RegisteredCommand } from './types';
 
 /**
  * Execute a registered command.
  *
- * - Unavailable commands return exit code 2 with structured error output.
- * - Available commands are delegated to plugin-adapter-cli executeCommand.
+ * - Unavailable commands return exit code 2.
+ * - Available commands are executed via manifest.loader().
  */
 export async function runCommand(
   cmd: RegisteredCommand,
@@ -26,13 +25,12 @@ export async function runCommand(
     return 2;
   }
 
+  if (!cmd.manifest.loader) {
+    return 1;
+  }
+
   const implementation = await cmd.manifest.loader();
-  const result = await executeCommand(
-    cmd.v3Manifest ?? cmd.manifest.manifestV2,
-    implementation,
-    ctx,
-    flags,
-  );
+  const result = await implementation.run(ctx, argv, flags);
 
   return typeof result === 'number' ? result : 0;
 }

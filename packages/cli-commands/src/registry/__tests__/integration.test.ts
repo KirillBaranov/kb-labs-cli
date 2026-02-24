@@ -5,25 +5,12 @@ import { renderHelp } from "../../utils/help-generator";
 import type { ManifestV3 } from "@kb-labs/plugin-contracts";
 import type { CommandManifest } from "../types";
 
-const executeCommandMock = vi.hoisted(() =>
-  vi.fn(async (_manifest, implementation, ctx, flags) => {
-    if (typeof implementation.run === "function") {
-      return implementation.run(ctx, [], flags);
-    }
-    return 0;
-  }),
-);
-
-vi.mock("@kb-labs/plugin-adapter-cli", () => ({
-  executeCommand: executeCommandMock,
-}));
 
 const baseManifestV3: ManifestV3 = {
-  schema: "kb.plugin/2",
+  schema: "kb.plugin/3",
   id: "@kb-labs/test-plugin",
   version: "0.0.1",
   permissions: {},
-  capabilities: [],
   cli: {
     commands: [
       {
@@ -48,7 +35,6 @@ describe("Registry Integration", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    executeCommandMock.mockClear();
   });
 
   it("registers a workspace manifest and executes successfully", async () => {
@@ -98,7 +84,6 @@ describe("Registry Integration", () => {
     });
 
     expect(exitCode).toBe(0);
-    expect(executeCommandMock).toHaveBeenCalled();
 
     const helpText = renderHelp(registered, {
       json: false,

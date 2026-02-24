@@ -2,7 +2,8 @@
  * docs:generate-cli-reference command - Generate CLI reference documentation
  */
 
-import { defineSystemCommand, type CommandOutput } from '@kb-labs/shared-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
+import type { SectionContent } from '@kb-labs/shared-cli-ui';
 import { generateExamples } from '../../utils/generate-examples';
 import { registry } from '../../registry/service';
 import { promises as fs } from 'node:fs';
@@ -14,7 +15,13 @@ type GenerateCliReferenceFlags = {
   json: { type: 'boolean'; description?: string };
 };
 
-export const docsGenerateCliReference = defineSystemCommand<GenerateCliReferenceFlags, CommandOutput>({
+type DocsGenerateResult = CommandResult & {
+  message: string;
+  sections: SectionContent[];
+  json: { output: string; commands: number; groups: number; size: number };
+};
+
+export const docsGenerateCliReference = defineSystemCommand<GenerateCliReferenceFlags, DocsGenerateResult>({
   name: 'generate-cli-reference',
   description: 'Generate CLI reference documentation from command registry',
   category: 'docs',

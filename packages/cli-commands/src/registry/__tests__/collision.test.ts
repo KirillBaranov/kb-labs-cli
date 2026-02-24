@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { registry, findCommandWithType } from '../service';
-import type { Command, CommandGroup } from '../../types';
+import type { Command, CommandGroup } from '../legacy-types';
 import type { RegisteredCommand } from '../types';
 
 describe('Collision Detection', () => {
@@ -148,6 +148,7 @@ describe('Collision Detection', () => {
         describe: 'Custom plugin',
         loader: async () => ({ run: async () => 0 }),
         manifestV2: {
+          schema: 'kb.plugin/3' as const,
           id: '@kb-labs/my-plugin',
           version: '1.0.0',
           display: { name: 'My Plugin' },
@@ -156,7 +157,7 @@ describe('Collision Detection', () => {
               {
                 id: 'my-plugin',
                 describe: 'My plugin command',
-                handlerPath: './dist/handler.js',
+                handler: './dist/handler.js',
               },
             ],
           },

@@ -26,6 +26,7 @@ type DiagSummary = {
 };
 
 type DiagResult = {
+  ok: boolean;
   diagnostics: DiagDetails[];
   summary: DiagSummary;
 };
@@ -228,6 +229,7 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
 
     // Return typed data
     return {
+      ok: summary.errors === 0,
       diagnostics,
       summary,
     };

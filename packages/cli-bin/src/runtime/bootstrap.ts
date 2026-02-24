@@ -5,6 +5,7 @@ import {
   parseArgs,
   CliError,
   mapCliErrorToExitCode,
+  colors,
   type ExecutionLimits,
 } from "@kb-labs/cli-core";
 import {
@@ -31,11 +32,11 @@ import { loadEnvFile } from "./env-loader";
 import { initializePlatform } from "./platform-init";
 import { resolveVersion } from "./helpers/version";
 import { normalizeCmdPath } from "./helpers/cmd-path";
-import { resolveLogLevel } from "./helpers/log-level";
 import { shouldShowLimits } from "./helpers/flags";
-import { isCommandGroup, hasSetContext } from "./helpers/command-types";
 import { randomUUID } from "node:crypto";
-import type { ILogger } from "@kb-labs/core-platform";
+import type { PlatformContainer } from "@kb-labs/core-runtime";
+
+type ILogger = PlatformContainer["logger"];
 
 type RuntimeInitOptions = RuntimeSetupOptions;
 type CliRuntimeInstance = Awaited<ReturnType<typeof createCliRuntime>>;
@@ -150,9 +151,12 @@ export async function executeCli(
   // Set log level based on --debug flag or explicit --log-level
   // This must happen BEFORE registerCommands/discovery
   // Default to 'silent' to completely suppress logs (user can use --debug for full logs)
-  const logLevel = global.debug
+  const rawLevel = String(global.logLevel ?? env.KB_LOG_LEVEL ?? 'silent').toLowerCase();
+  const validLevels = ['trace', 'debug', 'info', 'warn', 'error', 'silent'] as const;
+  type LogLevel = typeof validLevels[number];
+  const logLevel: LogLevel = global.debug
     ? 'debug'
-    : resolveLogLevel(global.logLevel ?? env.KB_LOG_LEVEL ?? 'silent');
+    : (validLevels.includes(rawLevel as LogLevel) ? rawLevel as LogLevel : 'silent');
 
   // Set env vars BEFORE any logger initialization (including auto-init)
   // This ensures that even lazy-loaded loggers respect the correct level
@@ -207,14 +211,15 @@ export async function executeCli(
   // e.g., ["plugins", "clear-cache"] -> group "plugins" + command "clear-cache"
   if (!cmd && cmdPath.length === 2) {
     const [groupName, commandName] = cmdPath;
+    if (!groupName) { return 1; }
 
     // Find group (e.g., "plugins")
     const maybeGroup = find([groupName]);
 
-    if (maybeGroup && isCommandGroup(maybeGroup)) {
+    if (maybeGroup && typeof maybeGroup === 'object' && 'commands' in maybeGroup && Array.isArray((maybeGroup as any).commands)) {
       // Search through group's commands for matching name or alias
       for (const groupCmd of maybeGroup.commands) {
-        if (groupCmd.name === commandName || groupCmd.aliases?.includes(commandName)) {
+        if (groupCmd.name === commandName || (commandName && groupCmd.aliases?.includes(commandName))) {
           cmd = groupCmd;
           normalizedCmdPath = [groupCmd.name];
           break;
@@ -258,7 +263,6 @@ export async function executeCli(
   // Create unified output and logger
   const output = createOutput({
     verbosity: global.quiet ? 'quiet' : global.debug ? 'debug' : 'normal',
-    mode: global.json ? 'json' : 'auto',
     json: global.json,
     format: global.debug ? 'human' : 'human',
     category: 'cli',
@@ -389,13 +393,12 @@ export async function executeCli(
           }))
         });
       } else {
-        const colors = presenter.colors || { bold: (s: string) => s, cyan: (s: string) => s, dim: (s: string) => s };
         const lines: string[] = [];
         lines.push(colors.bold(`${groupPrefix} groups:`));
         lines.push('');
 
         for (const group of matchingGroups) {
-          lines.push(`  ${colors.cyan(group.name.padEnd(20))}  ${colors.dim(group.describe)}`);
+          lines.push(`  ${colors.cyan(group.name.padEnd(20))}  ${colors.dim(group.describe ?? '')}`);
         }
 
         lines.push('');
@@ -439,31 +442,28 @@ export async function executeCli(
     return 1;
   }
 
-  if (isCommandGroup(cmd)) {
+  if (typeof cmd === 'object' && cmd !== null && 'commands' in cmd && Array.isArray((cmd as any).commands)) {
     if (global.json) {
       presenter.json({
         ok: false,
         error: {
           code: "CMD_NOT_FOUND",
-          message: `Group '${cmd.name}' requires a subcommand`,
+          message: `Group '${(cmd as any).name}' requires a subcommand`,
         },
       });
     } else {
-      presenter.write(renderGroupHelp(cmd));
+      presenter.write(renderGroupHelp(cmd as any));
     }
     return 0;
   }
-
-  let ctx: CliExecutionContext | undefined;
 
   try {
     const runtime = await runtimeFactory(runtimeInitOptions);
     // Use cliContext instead of runtime.context because runtime.context doesn't have output
     const context = cliContext;
-    ctx = context;
 
-    if (global.json && hasSetContext(presenter)) {
-      presenter.setContext(context);
+    if (global.json && typeof (presenter as any).setContext === 'function') {
+      (presenter as any).setContext(context);
     }
 
     if (global.help && cmdPath.length > 0) {
@@ -537,7 +537,7 @@ export async function executeCli(
       throw new Error(`Unknown command type: ${result.type}`);
     });
   } catch (error: unknown) {
-    return handleExecutionError(error, presenter, ctx);
+    return handleExecutionError(error, presenter);
   }
   } catch (outerError: unknown) {
     throw outerError;
@@ -547,11 +547,10 @@ export async function executeCli(
 function handleExecutionError(
   error: unknown,
   presenter: any,
-  ctx: CliExecutionContext | undefined,
 ): number {
   if (error instanceof CliError) {
     const exitCode = mapCliErrorToExitCode(error.code);
-    const diagnostics = ctx?.diagnostics ?? [];
+    const diagnostics: unknown[] = [];
 
     // Check if presenter is in JSON mode before calling json()
     if (presenter.isJSON && typeof presenter.json === "function") {
@@ -573,7 +572,7 @@ function handleExecutionError(
   }
 
   const message = String((error as any)?.message ?? error);
-  const diagnostics = ctx?.diagnostics ?? [];
+  const diagnostics: unknown[] = [];
 
   // Check if presenter is in JSON mode before calling json()
   if (presenter.isJSON && typeof presenter.json === "function") {

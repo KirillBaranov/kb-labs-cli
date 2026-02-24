@@ -19,7 +19,8 @@ describe('V3 Manifest Field', () => {
         commands: [
           {
             id: 'test:command',
-            handlerPath: 'dist/commands/test.js',
+            describe: 'Test command',
+            handler: 'dist/commands/test.js',
           },
         ],
       },
@@ -145,7 +146,7 @@ describe('V3 Manifest Field', () => {
       id: '@kb-labs/test',
       version: '1.0.0',
       cli: {
-        commands: [{ id: 'test', handlerPath: 'dist/test.js' }],
+        commands: [{ id: 'test', describe: 'Test', handler: 'dist/test.js' }],
       },
     };
 

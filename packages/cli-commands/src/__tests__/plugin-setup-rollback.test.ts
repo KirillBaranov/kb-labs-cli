@@ -2,24 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtemp, rm, writeFile, mkdir, access } from 'node:fs/promises';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
-import type { ManifestV2 } from '@kb-labs/plugin-contracts';
 import type { JournalEntry } from '@kb-labs/setup-engine-core';
 import { createPluginSetupRollbackCommand } from '../commands/system/plugin-setup-rollback';
-
-const manifest: ManifestV2 = {
-  schema: 'kb.plugin/2',
-  id: '@kb-labs/template',
-  version: '1.0.0',
-  setup: {
-    handler: './setup/handler.ts#run',
-    permissions: {
-      fs: {
-        mode: 'readWrite',
-        allow: ['.kb/template/**'],
-      },
-    },
-  },
-};
 
 describe('plugin setup rollback command', () => {
   let cwd: string;
@@ -40,7 +24,6 @@ describe('plugin setup rollback command', () => {
     await writeFile(path.join(logsDir, 'template-2.json'), '[]', 'utf8');
 
     const command = createPluginSetupRollbackCommand({
-      manifest,
       namespace: 'template',
       packageName: '@kb-labs/template-cli',
       pkgRoot: cwd,
@@ -70,7 +53,6 @@ describe('plugin setup rollback command', () => {
     await writeFile(targetPath, 'NEW CONTENT', 'utf8');
 
     const command = createPluginSetupRollbackCommand({
-      manifest,
       namespace: 'template',
       packageName: '@kb-labs/template-cli',
       pkgRoot: cwd,
@@ -101,7 +83,6 @@ describe('plugin setup rollback command', () => {
     ]);
 
     const command = createPluginSetupRollbackCommand({
-      manifest,
       namespace: 'template',
       packageName: '@kb-labs/template-cli',
       pkgRoot: cwd,

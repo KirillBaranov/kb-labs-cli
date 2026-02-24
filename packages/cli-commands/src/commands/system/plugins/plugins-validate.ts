@@ -3,7 +3,7 @@
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
-import { validateManifest } from '@kb-labs/plugin-contracts';
+import { validateManifest, type ManifestV3 } from '@kb-labs/plugin-contracts';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
@@ -92,7 +92,7 @@ export const pluginValidate = defineSystemCommand<PluginValidateFlags, PluginVal
     },
   },
   async handler(ctx, argv, flags) {
-    const cwd = getContextCwd();
+    const cwd = getContextCwd(ctx);
     const manifestPath = path.resolve(cwd, flags.manifest || 'manifest.v2.ts');
 
     ctx.ui.write(`Validating manifest: ${manifestPath}\n`);
@@ -124,23 +124,14 @@ export const pluginValidate = defineSystemCommand<PluginValidateFlags, PluginVal
     }
 
     // Validate manifest structure
-    const validationResult = validateManifest(manifest);
+    const validationResult = validateManifest(manifest as ManifestV3);
 
     if (!validationResult.valid) {
       ctx.ui.error('❌ Manifest validation failed:\n');
-      for (const zodError of validationResult.errors) {
-        // ZodError имеет структуру { issues: Array<{ path, message, code }> }
-        for (const issue of zodError.issues) {
-          const path = issue.path.length > 0 ? issue.path.join('.') : 'root';
-          ctx.ui.write(`  - ${path}: ${issue.message}\n`);
-        }
+      for (const msg of validationResult.errors) {
+        ctx.ui.write(`  - ${msg}\n`);
       }
-      return { ok: false, valid: false, errors: validationResult.errors.flatMap((zodError) =>
-        zodError.issues.map((issue) => ({
-          path: issue.path.join('.'),
-          message: issue.message,
-        }))
-      ) };
+      return { ok: false, valid: false, errors: validationResult.errors.map((msg) => ({ path: '', message: msg })) };
     }
 
     ctx.ui.success('✅ Manifest structure is valid!\n');

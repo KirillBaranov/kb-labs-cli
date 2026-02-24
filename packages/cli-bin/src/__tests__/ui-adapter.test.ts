@@ -223,8 +223,8 @@ describe('UI Adapter', () => {
         debug: vi.fn(),
         spinner: vi.fn(),
         table: (data: Record<string, unknown>[]) => {
-          if (context.presenter?.table) {
-            context.presenter.table(data);
+          if ((context.presenter as any)?.table) {
+            (context.presenter as any).table(data);
           } else {
             console.table(data);
           }
@@ -245,7 +245,7 @@ describe('UI Adapter', () => {
         { name: 'Bob', age: 25 },
       ]);
 
-      expect(mockSystemContext.presenter?.table).toHaveBeenCalled();
+      expect((mockSystemContext.presenter as any)?.table).toHaveBeenCalled();
     });
 
     it('should delegate debug to presenter', () => {
@@ -257,8 +257,8 @@ describe('UI Adapter', () => {
         warn: vi.fn(),
         error: vi.fn(),
         debug: (msg: string) => {
-          if (context.presenter?.debug) {
-            context.presenter.debug(msg);
+          if ((context.presenter as any)?.debug) {
+            (context.presenter as any).debug(msg);
           } else {
             console.debug(msg);
           }
@@ -278,7 +278,7 @@ describe('UI Adapter', () => {
 
       ui.debug('Debug message');
 
-      expect(mockSystemContext.presenter?.debug).toHaveBeenCalledWith('Debug message');
+      expect((mockSystemContext.presenter as any)?.debug).toHaveBeenCalledWith('Debug message');
     });
   });
 
@@ -292,7 +292,7 @@ describe('UI Adapter', () => {
       error: vi.fn(),
       debug: vi.fn(),
       spinner: (text: string) => {
-        const spinner = context.presenter?.spinner?.(text);
+        const spinner = (context.presenter as any)?.spinner?.(text);
         return {
           update: (message: string) => spinner?.update?.(message),
           succeed: (message?: string) => spinner?.succeed?.(message),
@@ -340,7 +340,7 @@ describe('UI Adapter', () => {
       spinner.update('Still loading...');
       spinner.succeed('Done!');
 
-      expect(mockSystemContext.presenter?.spinner).toHaveBeenCalledWith('Loading...');
+      expect((mockSystemContext.presenter as any)?.spinner).toHaveBeenCalledWith('Loading...');
       expect(mockSpinner.update).toHaveBeenCalledWith('Still loading...');
       expect(mockSpinner.succeed).toHaveBeenCalledWith('Done!');
     });
@@ -395,7 +395,7 @@ describe('UI Adapter', () => {
         box: vi.fn(),
         sideBox: vi.fn(),
         confirm: vi.fn().mockResolvedValue(true),
-        prompt: async (_message: string, _options?) => {
+        prompt: async (_message: string, _options?: unknown) => {
           // For now, return empty string (non-interactive)
           // TODO: Implement proper prompt via presenter
           return '';

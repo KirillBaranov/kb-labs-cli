@@ -215,7 +215,7 @@ export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResul
     const summaryItems = [
       `Total Issues: ${issues.length}`,
       `Errors: ${errorCount > 0 ? ctx.ui.colors.error(errorCount.toString()) : 'none'}`,
-      `Warnings: ${warningCount > 0 ? ctx.ui.colors.warn(warningCount.toString()) : 'none'}`,
+      `Warnings: ${warningCount > 0 ? ctx.ui.colors.warning(warningCount.toString()) : 'none'}`,
     ];
 
     const issueItems: string[] = [];
@@ -233,7 +233,7 @@ export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResul
 
       for (const issue of pkgIssues) {
         const icon = issue.severity === 'error' ? ctx.ui.symbols.error : ctx.ui.symbols.warning;
-        const color = issue.severity === 'error' ? ctx.ui.colors.error : ctx.ui.colors.warn;
+        const color = issue.severity === 'error' ? ctx.ui.colors.error : ctx.ui.colors.warning;
 
         issueItems.push(`  ${icon} ${color(issue.code)}: ${issue.message}`);
         if (issue.fix) {

@@ -2,7 +2,7 @@
  * plugins:list command - List all discovered CLI plugins
  */
 
-import { defineSystemCommand, type CommandOutput } from '@kb-labs/shared-command-kit';
+import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '../../../utils/generate-examples';
 import type { RegisteredCommand } from '../../../registry/types';
 import { registry } from '../../../registry/service';
@@ -34,7 +34,27 @@ type PluginsListFlags = {
   json: { type: 'boolean'; description?: string };
 };
 
-export const pluginsList = defineSystemCommand<PluginsListFlags, CommandOutput>({
+type PluginsListResult = CommandResult & {
+  message: string;
+  sections: SectionContent[];
+  json: {
+    plugins: Array<{
+      name: string;
+      namespace: string;
+      version: string;
+      source: string;
+      enabled: boolean;
+      state: string;
+      commands: Array<{ id: string; aliases: string[]; describe: string; available: boolean; shadowed: boolean; reason?: string }>;
+    }>;
+    total: number;
+    enabled: number;
+    disabled: number;
+    products: number;
+  };
+};
+
+export const pluginsList = defineSystemCommand<PluginsListFlags, PluginsListResult>({
   name: 'list',
   description: 'List all discovered CLI plugins',
   category: 'plugins',

@@ -95,7 +95,6 @@ async function loadSetupRollbackCommandModule({
     throw new Error('Failed to load plugin setup rollback command factory');
   }
   const command = module.createPluginSetupRollbackCommand({
-    manifest: manifestV2,
     namespace,
     packageName: pkgName,
     pkgRoot,

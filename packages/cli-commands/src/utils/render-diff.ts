@@ -27,6 +27,7 @@ export function renderSetupDiff(plan: ExecutionPlan): string[] {
 
   for (let i = 0; i < plan.stages.length; i += 1) {
     const stage = plan.stages[i];
+    if (!stage) { continue; }
     lines.push('');
     lines.push(formatStageHeader(stage, i));
     stage.operations.forEach((operation, index) => {
@@ -139,7 +140,7 @@ function describeOperation(operation: Operation): string {
       return `${op} script "${operation.name}" in ${operation.file}`;
     }
     default:
-      return operation.kind;
+      return (operation as { kind: string }).kind;
   }
 }
 
