@@ -7,12 +7,12 @@
 import type { SystemContext } from '@kb-labs/cli-core';
 import { executeCommandV3 } from '@kb-labs/cli-core/v3';
 import type { UIFacade, PlatformServices, MessageOptions, Spinner } from '@kb-labs/plugin-contracts';
-import { getHandlerPermissions } from '@kb-labs/plugin-contracts';
+import { getHandlerPermissions, noopTraceContext, noopUI } from '@kb-labs/plugin-contracts';
 import type { PlatformContainer } from '@kb-labs/core-runtime';
 import { sideBorderBox, safeColors } from '@kb-labs/shared-cli-ui';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import type { RegisteredCommand } from '@kb-labs/cli-commands/registry';
+import type { RegisteredCommand } from '@kb-labs/cli-commands';
 import type { PluginContextV3 } from '@kb-labs/plugin-contracts';
 
 interface V3ExecutionOptions {
@@ -128,6 +128,7 @@ function createUIFacade(context: SystemContext): UIFacade {
   return {
     // Colors API from shared-cli-ui
     colors: safeColors,
+    symbols: noopUI.symbols,
 
     // Write raw text
     write: (text: string) => {
@@ -212,7 +213,12 @@ function createUIFacade(context: SystemContext): UIFacade {
       console.log(boxOutput);
     },
     sideBox: (options) => {
-      const boxOutput = sideBorderBox(options);
+      const boxOutput = sideBorderBox({
+        title: options.title,
+        sections: options.sections ?? [],
+        status: options.status,
+        timing: options.timing,
+      });
       console.log(boxOutput);
     },
     confirm: async (_message: string) => {
@@ -243,6 +249,8 @@ function createPlatformServices(platformContainer: PlatformContainer): PlatformS
     cache: platformContainer.cache,
     storage: platformContainer.storage,
     analytics: platformContainer.analytics,
+    eventBus: platformContainer.eventBus,
+    logs: platformContainer.logs,
   };
 }
 
@@ -289,10 +297,12 @@ export function createPluginContextV3ForSystemCommand(
       fs: {} as any, // System commands don't use sandboxed fs
       fetch: fetch as any,
       env: (key: string) => process.env[key],
-      state: platform.stateBroker as any,
     },
     api: {} as any, // System commands don't use remote API
+    hostContext: { host: 'cli' as const, argv: process.argv.slice(2), flags: {} },
+    pluginVersion: '1.0.0',
     trace: {
+      ...noopTraceContext,
       traceId,
       spanId,
     },

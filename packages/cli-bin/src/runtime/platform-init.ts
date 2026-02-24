@@ -66,8 +66,8 @@ function ensureLifecycleHooksRegistered(): void {
  * Create CLI-specific UI provider.
  * Returns beautiful UI for CLI host, noopUI for other hosts (REST, workflow, etc.)
  */
-function createCLIUIProvider(): (hostType: HostType) => UIFacade {
-  return (hostType: HostType): UIFacade => {
+function createCLIUIProvider(): (hostType: string) => UIFacade {
+  return (hostType: string): UIFacade => {
     // Only provide rich UI for CLI host
     if (hostType !== 'cli') {
       return noopUI;
@@ -177,7 +177,12 @@ function createCLIUIProvider(): (hostType: HostType) => UIFacade {
         console.log(boxOutput);
       },
       sideBox: (options) => {
-        const boxOutput = sideBorderBox(options);
+        const boxOutput = sideBorderBox({
+          title: options.title,
+          sections: options.sections ?? [],
+          status: options.status,
+          timing: options.timing,
+        });
         console.log(boxOutput);
       },
       confirm: async (_message: string) => {

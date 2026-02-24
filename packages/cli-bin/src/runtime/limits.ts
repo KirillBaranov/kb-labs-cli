@@ -1,5 +1,5 @@
-import type { CliCommandDecl, ManifestV2, PermissionSpec } from "@kb-labs/plugin-manifest";
-import type { RegisteredCommand } from "@kb-labs/cli-commands/registry/types";
+import type { CliCommandDecl, ManifestV3, PermissionSpec } from "@kb-labs/plugin-contracts";
+import type { RegisteredCommand } from "@kb-labs/cli-commands";
 import { box, keyValue } from "@kb-labs/shared-cli-ui";
 import { colors } from "@kb-labs/cli-core";
 
@@ -33,9 +33,6 @@ interface LimitJsonPayload {
   limits?: {
     permissions?: PermissionSpec;
     setupPermissions?: PermissionSpec;
-    capabilities?: string[];
-    artifacts?: ManifestV2["artifacts"];
-    artifactAccess?: PermissionSpec["artifacts"];
     command?: {
       id: string;
       describe?: string;
@@ -88,7 +85,7 @@ function renderProductLimits(
   const manifest = findManifest(commands);
   if (!manifest) {
     renderError(
-      `Product '${group}' has no ManifestV2 metadata. Rebuild the plugin to expose permissions info.`,
+      `Product '${group}' has no manifest metadata. Rebuild the plugin to expose permissions info.`,
       presenter,
       asJson,
     );
@@ -106,9 +103,6 @@ function renderProductLimits(
     limits: {
       permissions: manifest.permissions,
       setupPermissions: manifest.setup?.permissions,
-      capabilities: manifest.capabilities,
-      artifacts: manifest.artifacts,
-      artifactAccess: manifest.permissions?.artifacts,
     },
     commands: commands.map((cmd) => ({
       id: cmd.manifest.id,
@@ -133,8 +127,6 @@ function renderProductLimits(
   pushSection(lines, `${manifest.display?.name ?? group}`, meta);
   pushPermissionSection(lines, "Default Permissions", manifest.permissions);
   pushSetupSection(lines, manifest.setup?.permissions);
-  pushCapabilitiesSection(lines, manifest.capabilities);
-  pushArtifactsSection(lines, manifest.permissions?.artifacts, manifest.artifacts);
 
   presenter.write?.(box(`${group} · Limits`, lines));
   return 0;
@@ -165,7 +157,7 @@ function renderCommandLimits(
   const manifest = registered.manifest.manifestV2;
   if (!manifest) {
     renderError(
-      `Command '${registered.manifest.id}' is missing ManifestV2 metadata.`,
+      `Command '${registered.manifest.id}' is missing manifest metadata.`,
       presenter,
       asJson,
     );
@@ -187,9 +179,6 @@ function renderCommandLimits(
     limits: {
       permissions: manifest.permissions,
       setupPermissions: manifest.setup?.permissions,
-      capabilities: manifest.capabilities,
-      artifacts: manifest.artifacts,
-      artifactAccess: manifest.permissions?.artifacts,
       command: cliCommand
         ? {
             id: cliCommand.id,
@@ -223,8 +212,6 @@ function renderCommandLimits(
 
   pushPermissionSection(lines, "Inherited Permissions", manifest.permissions);
   pushSetupSection(lines, manifest.setup?.permissions);
-  pushCapabilitiesSection(lines, manifest.capabilities);
-  pushArtifactsSection(lines, manifest.permissions?.artifacts, manifest.artifacts);
 
   presenter.write?.(
     box(`${registered.manifest.id} · Limits`, lines),
@@ -232,7 +219,7 @@ function renderCommandLimits(
   return 0;
 }
 
-function findManifest(commands: RegisteredCommand[]): ManifestV2 | undefined {
+function findManifest(commands: RegisteredCommand[]): ManifestV3 | undefined {
   for (const cmd of commands) {
     if (cmd.manifest.manifestV2) {
       return cmd.manifest.manifestV2;
@@ -242,7 +229,7 @@ function findManifest(commands: RegisteredCommand[]): ManifestV2 | undefined {
 }
 
 function findCliCommandDecl(
-  manifest: ManifestV2,
+  manifest: ManifestV3,
   fullId: string,
 ): CliCommandDecl | undefined {
   const cliCommands = manifest.cli?.commands ?? [];
@@ -268,7 +255,7 @@ function findCliCommandDecl(
   });
 }
 
-function formatFlag(flag: CliCommandDecl["flags"][number]): string {
+function formatFlag(flag: NonNullable<CliCommandDecl["flags"]>[number]): string {
   const alias = flag.alias ? `, -${flag.alias}` : "";
   const desc = flag.description ? ` – ${flag.description}` : "";
   return `${colors.cyan(`--${flag.name}${alias}`)}${colors.dim(desc)}`;
@@ -310,17 +297,11 @@ function pushPermissionSection(
 
   section.push("");
   section.push(colors.bold("Network"));
-  section.push(...formatNetSection(permissions.net));
+  section.push(...formatNetSection(permissions.network));
 
   section.push("");
   section.push(colors.bold("Environment"));
   section.push(...formatEnvSection(permissions.env));
-
-  if (permissions.capabilities?.length) {
-    section.push("");
-    section.push(colors.bold("Capabilities"));
-    section.push(`${permissions.capabilities.join(", ")}`);
-  }
 
   pushSection(lines, title, section);
 }
@@ -335,46 +316,6 @@ function pushSetupSection(
   pushPermissionSection(lines, "Setup Permissions", setupPermissions);
 }
 
-function pushCapabilitiesSection(
-  lines: string[],
-  capabilities?: string[],
-) {
-  if (!capabilities || capabilities.length === 0) {
-    return;
-  }
-  pushSection(lines, "Plugin Capabilities", [`${capabilities.join(", ")}`]);
-}
-
-function pushArtifactsSection(
-  lines: string[],
-  artifactAccess?: PermissionSpec["artifacts"],
-  artifacts?: ManifestV2["artifacts"],
-) {
-  if (artifactAccess) {
-    const readEntries = artifactAccess.read?.map(
-      (entry) =>
-        `Read from ${entry.from}: ${entry.paths.join(", ")}`,
-    ) ?? [];
-    const writeEntries = artifactAccess.write?.map(
-      (entry) =>
-        `Write to ${entry.to}: ${entry.paths.join(", ")}`,
-    ) ?? [];
-    const accessLines = [...readEntries, ...writeEntries];
-    if (accessLines.length > 0) {
-      pushSection(lines, "Artifact Access", accessLines.map((line) => colors.cyan(line)));
-    }
-  }
-
-  if (artifacts && artifacts.length > 0) {
-    const declared = artifacts.map((artifact) =>
-      `${artifact.id}: ${artifact.pathTemplate}${
-        artifact.description ? colors.dim(` – ${artifact.description}`) : ""
-      }`
-    );
-    pushSection(lines, "Declared Artifacts", declared);
-  }
-}
-
 function formatFsSection(
   fsPerm?: PermissionSpec["fs"],
 ): string[] {
@@ -382,26 +323,19 @@ function formatFsSection(
     return ["mode: none"];
   }
   return keyValue({
-    Mode: fsPerm.mode ?? "none",
-    Allow: formatList(fsPerm.allow),
-    Deny: formatList(fsPerm.deny),
+    Read: formatList(fsPerm.read),
+    Write: formatList(fsPerm.write),
   });
 }
 
 function formatNetSection(
-  netPerm?: PermissionSpec["net"],
+  netPerm?: PermissionSpec["network"],
 ): string[] {
   if (!netPerm) {
     return ["not declared"];
   }
-  if (netPerm === "none") {
-    return ["denied"];
-  }
   return keyValue({
-    "Allow Hosts": formatList(netPerm.allowHosts),
-    "Deny Hosts": formatList(netPerm.denyHosts),
-    "Allow CIDRs": formatList(netPerm.allowCidrs),
-    Timeout: formatMaybeMs(netPerm.timeoutMs),
+    "Allow Fetch": formatList(netPerm.fetch),
   });
 }
 
@@ -412,7 +346,7 @@ function formatEnvSection(
     return ["not declared"];
   }
   return keyValue({
-    Allow: formatList(envPerm.allow),
+    Read: formatList(envPerm.read),
   });
 }
 
@@ -472,4 +406,3 @@ function toCommandId(cmdPath: string[]): string | undefined {
   const [group, ...rest] = cmdPath;
   return `${group}:${rest.join(":")}`;
 }
-
