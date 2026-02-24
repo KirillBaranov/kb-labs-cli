@@ -7,10 +7,10 @@ This document defines the documentation standards for **KB Labs CLI**. This proj
 
 ## Project-Specific Customizations
 
-KB Labs CLI is the UX wrapper over core providing unified CLI commands (kb *). Documentation should focus on:
+KB Labs CLI is the UX layer over the KB Labs platform. Documentation should focus on:
 
 - Command reference and usage examples
-- Command registration process
+- Plugin discovery and command registration
 - CLI output formatting standards
 - Integration with other KB Labs projects
 
@@ -18,18 +18,23 @@ KB Labs CLI is the UX wrapper over core providing unified CLI commands (kb *). D
 
 ```
 docs/
-├── README.md              # Documentation index
-├── DOCUMENTATION.md       # This standard (REQUIRED)
-├── ARCHITECTURE.md        # System architecture
-├── COMMAND_QUICK_REFERENCE.md  # Quick command reference
-├── COMMAND_REGISTRATION.md     # Command registration guide
-├── DEVLINK_COMMANDS.md         # DevLink command documentation
-├── guides/                # Detailed guides
-│   ├── cli-style.md       # CLI design principles
-│   └── command-output.md  # Output formatting guide
-└── adr/                   # Architecture Decision Records
-    ├── 0000-template.md  # ADR template
-    └── *.md               # ADR files
+├── README.md                    # Documentation index
+├── DOCUMENTATION.md             # This standard (REQUIRED)
+├── ARCHITECTURE.md              # System architecture
+├── COMMAND_QUICK_REFERENCE.md   # Quick command reference
+├── COMMAND_REGISTRATION.md      # Command registration guide
+├── DEVLINK_COMMANDS.md          # DevLink command documentation
+├── guides/                      # Detailed guides
+│   ├── CLI-STYLE.md             # CLI design principles
+│   ├── COMMAND-OUTPUT.md        # Output formatting guide
+│   └── PLUGIN-COMMAND-TEMPLATE.md  # Plugin command template
+├── plugins/                     # Plugin integration docs
+│   ├── ANALYTICS.md
+│   ├── DEBUGGING.md
+│   └── VSCODE-DEBUGGING.md
+└── adr/                         # Architecture Decision Records
+    ├── 0000-template.md
+    └── *.md
 ```
 
 ## Required Documentation
@@ -39,16 +44,7 @@ This project requires:
 - [x] `README.md` in root with all required sections
 - [x] `CONTRIBUTING.md` in root with development guidelines
 - [x] `docs/DOCUMENTATION.md` (this file)
-- [ ] `docs/adr/0000-template.md` (ADR template - should be created from main standard)
 - [x] `LICENSE` in root
-
-## Optional Documentation
-
-Consider adding:
-
-- [ ] `docs/glossary.md` - CLI-specific terms
-- [ ] `docs/examples.md` - Command usage examples
-- [ ] `docs/faq.md` - Frequently asked questions
 
 ## ADR Requirements
 
@@ -57,28 +53,25 @@ All ADRs must follow the format defined in the [main standard](https://github.co
 - Required metadata: Date, Status, Deciders, Last Reviewed, Tags
 - Minimum 1 tag, maximum 5 tags
 - Tags from approved list
-- See main standard `docs/templates/ADR.template.md` for template
 
 ## Cross-Linking
 
 This project links to:
 
 **Dependencies:**
-- [@kb-labs/core](https://github.com/KirillBaranov/kb-labs-core) - Core utilities
-- [@kb-labs/shared](https://github.com/KirillBaranov/kb-labs-shared) - Shared types
+- [@kb-labs/core](https://github.com/KirillBaranov/kb-labs-core) — Core utilities and platform abstractions
+- [@kb-labs/plugin](https://github.com/KirillBaranov/kb-labs-plugin) — Plugin execution infrastructure
+- [@kb-labs/shared](https://github.com/KirillBaranov/kb-labs-shared) — Shared utilities and types
 
 **Used By:**
-- [kb-labs-studio](https://github.com/KirillBaranov/kb-labs-studio) - Web UI
-- Other KB Labs projects using CLI commands
+- [kb-labs-studio](https://github.com/KirillBaranov/kb-labs-studio) — Web UI
+- All KB Labs plugins (register commands via CLI)
 
 **Ecosystem:**
-- [KB Labs](https://github.com/KirillBaranov/kb-labs) - Main ecosystem repository
+- [KB Labs](https://github.com/KirillBaranov/kb-labs) — Main ecosystem repository
 
 ---
 
-**Last Updated:** 2025-11-03  
+**Last Updated:** 2026-02-24
 **Standard Version:** 1.0 (following KB Labs ecosystem standard)  
 **See Main Standard:** [KB Labs Documentation Standard](https://github.com/KirillBaranov/kb-labs/blob/main/docs/DOCUMENTATION.md)
-
-
-

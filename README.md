@@ -1,6 +1,6 @@
 # KB Labs CLI (@kb-labs/cli)
 
-> **KB Labs CLI tool for project management and automation.** This is part of the **@kb-labs** ecosystem, designed for multi-package repositories using pnpm workspaces.
+> **KB Labs CLI tool for project management and automation.** Unified `kb` command for all KB Labs tools — workspace setup, health checks, diagnostics, and plugin-powered commands.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18.18.0+-green.svg)](https://nodejs.org/)
@@ -8,314 +8,111 @@
 
 ## 🎯 Vision
 
-KB Labs CLI is the UX wrapper over core providing unified CLI commands (kb *). It enables fast bootstrap, unified quality rules, simple publishing, and reusable core across all KB Labs projects. The CLI provides a consistent interface for all KB Labs tools, making it easy for developers to interact with the ecosystem.
-
-The project solves the problem of inconsistent command interfaces across different KB Labs products by providing a unified CLI experience. Developers can use a single `kb` command to access all functionality, from workspace initialization to profile management, configuration inspection, and diagnostics.
-
-This project is part of the **@kb-labs** ecosystem and integrates seamlessly with other KB Labs tools including Core, DevLink, Mind, Release Manager, and all AI-powered products.
+KB Labs CLI is the UX layer over the KB Labs platform providing a unified `kb` command for all ecosystem functionality. It enables workspace initialization, health diagnostics, plugin discovery, and consistent output formatting across all KB Labs tools.
 
 ## 🚀 Quick Start
 
-### Installation
-
 ```bash
-# Install dependencies
+# From KB Labs monorepo root
 pnpm install
-```
-
-### Development
-
-```bash
-# Start development mode for all packages
-pnpm dev
-
-# Build all packages
 pnpm build
 
-# Run tests
-pnpm test
-
-# Lint code
-pnpm lint
+# Run CLI locally during development
+pnpm kb --help
 ```
 
-### Using the CLI
-
-#### Global Installation
+### Basic Commands
 
 ```bash
-# Install globally
-npm install -g @kb-labs/cli
-
-# Or use with npx
-npx @kb-labs/cli
+kb --help           # Show help
+kb --version        # Show version
+kb health           # System health snapshot (kb.health/1)
+kb diagnose         # Diagnose project health and configuration
+kb setup --yes      # Initialize KB Labs workspace with defaults
+kb plugins list     # List discovered plugins
 ```
 
-#### Basic Commands
-
-```bash
-# Show help
-kb --help
-
-# Show version
-kb --version
-
-# Run commands
-kb hello
-kb health
-kb version
-kb diagnose
-kb setup profile
-
-# JSON output
-kb hello --json
-kb health --json
-kb version --json
-```
-
-#### Available Commands
-
-| Command | Description | Exit Code |
-|---------|-------------|-----------|
-| `hello` | Print a friendly greeting | 0 |
-| `health` | Show system health snapshot (`kb.health/1`) | 0 |
-| `version` | Show CLI version | 0 |
-| `diagnose` | Diagnose project health and configuration | 0 |
-| `init` | Initialize complete KB Labs workspace | 0/1/2 |
-| `init workspace` | Initialize workspace configuration file | 0/1/2 |
-| `init policy` | Add policy scaffold to workspace config | 0/1 |
-
-#### Global Options
+### Global Options
 
 | Option | Description |
 |--------|-------------|
-| `--help` | Show help information |
+| `--help` | Show help |
 | `--version` | Show CLI version |
-| `--json` | Output in JSON format |
+| `--json` | Machine-readable JSON output |
 
-#### Exit Codes
+### Exit Codes
 
 | Code | Description |
 |------|-------------|
 | 0 | Success |
-| 1 | General error (unknown command, validation error, etc.) |
-| 2 | Conflict or path validation error (use --force to override) |
-
-### Workspace Initialization
-
-The CLI provides powerful workspace initialization commands to configure your project.
-
-#### Quick Setup
-
-```bash
-# Quick start with defaults
-kb setup --yes
-
-# What gets created:
-# - kb-labs.config.yaml (workspace config)
-# - profiles[] section inside kb.config.json
-# - .kb/ai-review/ai-review.config.json (product config)
-# - .kb/lock.json (lockfile with versions)
-```
-
-#### Setup Options
-
-```bash
-kb setup [options]
-
-Options:
-  --yes                      Use defaults without prompts
-  --dry-run                  Preview changes without writing files
-  --force                    Overwrite existing files
-  --format <yaml|json>       Config file format (default: yaml)
-  --profile-key <key>        Profile key (default: default)
-  --profile-ref <ref>        Profile reference (npm or local path)
-  --products <list>          Comma-separated products (default: aiReview)
-  --preset <ref>             Org preset to extend
-  --policy-bundle <name>     Policy bundle name
-  --json                     Output in JSON format
-```
-
-#### Examples
-
-```bash
-# Initialize with defaults
-kb setup --yes
-
-# Initialize with custom profile
-kb setup --profile-ref @kb-labs/profile-node-ts@^1.0.0
-
-# Initialize multiple products
-kb setup --products aiReview,devlink --yes
-
-# Preview changes without writing
-kb setup --dry-run --yes
-
-# JSON format config
-kb setup --format json --yes
-```
-
-#### What Gets Created
-
-```
-workspace/
-├── kb-labs.config.yaml          # Workspace configuration
-├── .kb/
-│   ├── lock.json               # Lockfile with dependencies
-│   ├── profiles/
-│   │   └── node-ts-lib/
-│   │       ├── profile.json    # Profile manifest
-│   │       ├── defaults/
-│   │       │   └── ai-review.json
-│   │       └── artifacts/
-│   │           └── ai-review/
-│   │               ├── rules.yml
-│   │               └── prompts/
-│   │                   └── review.md
-│   └── ai-review/
-│       └── ai-review.config.json
-└── .gitignore                   # Updated with KB Labs entries
-```
-
-## ✨ Features
-
-- **Unified CLI Interface**: Single `kb` command for all KB Labs functionality
-- **Workspace Initialization**: One-command setup with `kb setup --yes`
-- **Profile Management**: Initialize, link, and manage profiles easily
-- **Configuration Inspection**: View and explain configuration resolution
-- **Diagnostics**: Shared `kb.health/1` snapshot via `kb health` and REST `/health`
-- **JSON Output**: Machine-readable output for automation and CI/CD
-- **Extensible Architecture**: Plugin system for adding custom commands
-- **Consistent UX**: Unified output formatting and error handling
+| 1 | General error (unknown command, validation error) |
+| 2 | Conflict or path validation error (use `--force` to override) |
 
 ## 📁 Repository Structure
 
 ```
 kb-labs-cli/
-├── apps/                    # Example applications
-│   └── demo/                # Example app / playground
-├── packages/                # Core packages
-│   ├── cli/                 # Main CLI package (@kb-labs/cli)
-│   ├── commands/            # Commands package (@kb-labs/cli-commands)
-│   └── core/                # Core package (@kb-labs/cli-core)
-├── docs/                    # Documentation
-│   ├── guides/              # Comprehensive guides
-│   │   ├── cli-style.md     # CLI design principles
-│   │   └── command-output.md # Output formatting guide
-│   ├── adr/                 # Architecture Decision Records
-│   └── README.md            # Documentation overview
-└── scripts/                 # Utility scripts
+├── packages/
+│   ├── cli-bin/         # Binary entry point (@kb-labs/cli-bin)
+│   ├── cli-api/         # Plugin registry and discovery API (@kb-labs/cli-api)
+│   ├── cli-commands/    # Built-in command implementations (@kb-labs/cli-commands)
+│   ├── cli-contracts/   # Shared types and interfaces (@kb-labs/cli-contracts)
+│   ├── cli-core/        # Core framework: context, flags, output (@kb-labs/cli-core)
+│   └── cli-runtime/     # Plugin execution runtime (@kb-labs/cli-runtime)
+└── docs/                # Documentation and guides
 ```
-
-### Directory Descriptions
-
-- **`apps/`** - Example applications demonstrating CLI usage and integration patterns
-- **`packages/`** - Individual packages with their own package.json, each serving a specific purpose in the CLI architecture
-- **`docs/`** - Comprehensive documentation including guides, ADRs, and API references
-- **`scripts/`** - Utility scripts for development and maintenance tasks
 
 ## 📦 Packages
 
 | Package | Description |
 |---------|-------------|
-| [@kb-labs/cli](./packages/cli/) | Main CLI package with `kb` command entry point |
-| [@kb-labs/cli-commands](./packages/commands/) | Command implementations and registry |
-| [@kb-labs/cli-core](./packages/core/) | Core framework and utilities for command execution |
-
-### Package Details
-
-**@kb-labs/cli** provides the main CLI entry point:
-- Binary executable (`kb` command)
-- Command routing and execution
-- Help generation
-- Version display
-
-**@kb-labs/cli-commands** contains command implementations:
-- Built-in commands (init, setup, diagnose, etc.)
-- Command registry
-- Plugin system for extensibility
-- Manifest system for command discovery
-
-**@kb-labs/cli-core** provides the core framework:
-- Command base classes
-- Context management
-- Flag parsing and validation
-- Output formatting (text, JSON, markdown)
+| [@kb-labs/cli-bin](./packages/cli-bin/) | Binary entry point — `kb` command, arg routing |
+| [@kb-labs/cli-api](./packages/cli-api/) | Plugin registry, discovery, Redis-backed multi-instance support |
+| [@kb-labs/cli-commands](./packages/cli-commands/) | Built-in commands: `health`, `diagnose`, `setup`, `init`, `plugins` |
+| [@kb-labs/cli-contracts](./packages/cli-contracts/) | Shared TypeScript types and interfaces |
+| [@kb-labs/cli-core](./packages/cli-core/) | Core framework: context management, flag parsing, output formatting |
+| [@kb-labs/cli-runtime](./packages/cli-runtime/) | Plugin execution runtime and sandboxing |
 
 ## 🛠️ Available Scripts
 
 | Script | Description |
 |--------|-------------|
-| `pnpm dev` | Start development mode for all packages |
 | `pnpm build` | Build all packages |
-| `pnpm build:commands` | Build commands package |
-| `pnpm build:bin` | Build CLI binary |
-| `pnpm build:clean` | Clean and build all packages |
 | `pnpm test` | Run all tests |
-| `pnpm test:watch` | Run tests in watch mode |
-| `pnpm test:coverage` | Run tests with coverage reporting |
 | `pnpm lint` | Lint all code |
-| `pnpm lint:fix` | Fix linting issues |
-| `pnpm format` | Format code with Prettier |
 | `pnpm type-check` | TypeScript type checking |
-| `pnpm check` | Run lint, type-check, and tests |
-| `pnpm ci` | Full CI pipeline (clean, build, check) |
-| `pnpm clean:all` | Clean all node_modules and build artifacts |
 | `pnpm kb` | Run CLI locally during development |
 
-## 📋 Development Policies
-
-- **Code Style**: ESLint + Prettier, TypeScript strict mode
-- **Testing**: Vitest with comprehensive test coverage (94.61%+ required)
-- **Test Structure**: Organized in `__tests__` directories with unit and integration tests
-- **Versioning**: SemVer with automated releases through Changesets
-- **Architecture**: Document decisions in ADRs (see `docs/adr/`)
-- **CLI Design**: Follow CLI style guide for consistent UX
-- **Output Formatting**: Unified output format (text, JSON, markdown)
-
-## 🔧 Requirements
+## 📋 Requirements
 
 - **Node.js**: >= 18.18.0
 - **pnpm**: >= 9.0.0
 
 ## 📚 Documentation
 
-- [Documentation Standard](./docs/DOCUMENTATION.md) - Full documentation guidelines
-- [Contributing Guide](./CONTRIBUTING.md) - How to contribute
-- [Architecture Decisions](./docs/adr/) - ADRs for this project
+- [Documentation Standard](./docs/DOCUMENTATION.md) — Documentation guidelines
+- [Architecture](./docs/ARCHITECTURE.md) — System design
+- [Command Quick Reference](./docs/COMMAND_QUICK_REFERENCE.md) — Basic patterns
+- [Command Registration](./docs/COMMAND_REGISTRATION.md) — How to add commands
+- [Architecture Decisions](./docs/adr/) — ADRs for this project
 
-**Quick Start:**
-- [Command Quick Reference](./docs/COMMAND_QUICK_REFERENCE.md) - Basic patterns
-- [Command Registration](./docs/COMMAND_REGISTRATION.md) - Implementation guide
-
-**Comprehensive Guides:**
-- [CLI Style Guide](./docs/guides/cli-style.md) - Design principles and conventions
-- [Command Output Guide](./docs/guides/command-output.md) - Detailed formatting patterns
-
-**Architecture:**
-- [ADR-0005: Unified CLI Output Formatting](./docs/adr/0005-unified-cli-output-formatting.md) - Output standards
-- [Architecture Overview](./docs/ARCHITECTURE.md) - System design
-
-**Need help finding something?** → [Documentation Overview](./docs/README.md)
+**Guides:**
+- [CLI Style Guide](./docs/guides/CLI-STYLE.md) — Design principles and conventions
+- [Command Output Guide](./docs/guides/COMMAND-OUTPUT.md) — Output formatting patterns
 
 ## 🔗 Related Packages
 
-### Dependencies
+**Dependencies:**
+- [@kb-labs/core](https://github.com/KirillBaranov/kb-labs-core) — Core utilities and platform abstractions
+- [@kb-labs/plugin](https://github.com/KirillBaranov/kb-labs-plugin) — Plugin execution infrastructure
+- [@kb-labs/shared](https://github.com/KirillBaranov/kb-labs-shared) — Shared utilities and types
 
-- [@kb-labs/core](https://github.com/KirillBaranov/kb-labs-core) - Core utilities and infrastructure abstractions
-- [@kb-labs/devkit](https://github.com/KirillBaranov/kb-labs-devkit) - Bootstrap and standards
-- [@kb-labs/devlink](https://github.com/KirillBaranov/kb-labs-devlink) - Developer linker and ecosystem orchestrator
-- [@kb-labs/mind](https://github.com/KirillBaranov/kb-labs-mind) - Headless context layer
-- [@kb-labs/release-manager](https://github.com/KirillBaranov/kb-labs-release-manager) - Release orchestration
+**Used By:**
+- [kb-labs-studio](https://github.com/KirillBaranov/kb-labs-studio) — Web UI
+- All KB Labs plugins (register commands via CLI)
 
-### Used By
-
-- [kb-labs-studio](https://github.com/KirillBaranov/kb-labs-studio) - Web UI
-- All KB Labs projects using CLI commands
-
-### Ecosystem
-
-- [KB Labs](https://github.com/KirillBaranov/kb-labs) - Main ecosystem repository
+**Ecosystem:**
+- [KB Labs](https://github.com/KirillBaranov/kb-labs) — Main ecosystem repository
 
 ## 🤝 Contributing
 
@@ -323,23 +120,8 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines and contribu
 
 ## 📄 License
 
-MIT © KB Labs
+KB Public License v1.1 © KB Labs
 
 ---
 
 **See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines and contribution process.**
-
-
-## License
-
-KB Public License v1.1 - see [LICENSE](LICENSE) for details.
-
-This is open source software with some restrictions on:
-- Offering as a hosted service (SaaS/PaaS)
-- Creating competing platform products
-
-For commercial licensing inquiries: contact@kblabs.dev
-
-**User Guides:**
-- [English Guide](../LICENSE-GUIDE.en.md)
-- [Русское руководство](../LICENSE-GUIDE.ru.md)
