@@ -42,16 +42,131 @@ describe('CLI API Integration', () => {
     }
   });
 
-  describe('Discovery Priority', () => {
-    it('should prioritize workspace over pkg', async () => {
-      // This test would require setting up actual test fixtures
-      // Skipping for now as it needs file system setup
-      expect(true).toBe(true);
+  describe('Discovery', () => {
+    /**
+     * Helper: create a fixture plugin directory with package.json + manifest.mjs.
+     * The `pkg` discovery strategy reads package.json#kbLabs.manifest to locate
+     * the manifest module, then dynamically imports it.
+     */
+    function createFixturePlugin(
+      dir: string,
+      opts: { id: string; version: string; name?: string },
+    ): void {
+      fs.mkdirSync(dir, { recursive: true });
+      // package.json with kbLabs.manifest pointing to manifest.mjs
+      fs.writeFileSync(
+        path.join(dir, 'package.json'),
+        JSON.stringify({
+          name: opts.id,
+          version: opts.version,
+          kbLabs: { manifest: './manifest.mjs' },
+        }),
+      );
+      // manifest.mjs — ES module exporting the V3 manifest as default
+      fs.writeFileSync(
+        path.join(dir, 'manifest.mjs'),
+        [
+          'export default {',
+          `  schema: 'kb.plugin/3',`,
+          `  id: '${opts.id}',`,
+          `  version: '${opts.version}',`,
+          opts.name ? `  display: { name: '${opts.name}' },` : '',
+          '};',
+        ]
+          .filter(Boolean)
+          .join('\n') + '\n',
+      );
+    }
+
+    it('should discover a plugin via pkg strategy', async () => {
+      const pluginDir = path.join(testRoot, 'fixture-plugin');
+      createFixturePlugin(pluginDir, {
+        id: '@kb-labs/test-fixture-plugin',
+        version: '1.0.0',
+        name: 'Test Fixture Plugin',
+      });
+
+      const fixtureApi = await createCliAPI({
+        discovery: {
+          strategies: ['pkg'],
+          roots: [pluginDir],
+        },
+        cache: { inMemory: true },
+        logger: { level: 'silent' },
+      });
+
+      try {
+        const plugins = await fixtureApi.listPlugins();
+        const found = plugins.find((p) => p.id === '@kb-labs/test-fixture-plugin');
+        expect(found).toBeDefined();
+        expect(found?.version).toBe('1.0.0');
+        expect(found?.kind).toBe('v3');
+      } finally {
+        await fixtureApi.dispose();
+        fs.rmSync(pluginDir, { recursive: true, force: true });
+      }
     });
 
-    it('should prioritize higher semver versions', async () => {
-      // This test would require setting up actual test fixtures
-      expect(true).toBe(true);
+    it('should return empty list when pkg has no kbLabs.manifest', async () => {
+      const emptyDir = path.join(testRoot, 'empty-plugin');
+      fs.mkdirSync(emptyDir, { recursive: true });
+      // package.json without kbLabs.manifest — not a plugin
+      fs.writeFileSync(
+        path.join(emptyDir, 'package.json'),
+        JSON.stringify({ name: 'not-a-plugin', version: '1.0.0' }),
+      );
+
+      const emptyApi = await createCliAPI({
+        discovery: {
+          strategies: ['pkg'],
+          roots: [emptyDir],
+        },
+        cache: { inMemory: true },
+        logger: { level: 'silent' },
+      });
+
+      try {
+        const plugins = await emptyApi.listPlugins();
+        expect(Array.isArray(plugins)).toBe(true);
+        expect(plugins.length).toBe(0);
+      } finally {
+        await emptyApi.dispose();
+        fs.rmSync(emptyDir, { recursive: true, force: true });
+      }
+    });
+
+    it('discovered plugin has required PluginBrief fields', async () => {
+      const pluginDir = path.join(testRoot, 'brief-check-plugin');
+      createFixturePlugin(pluginDir, {
+        id: '@kb-labs/brief-check',
+        version: '2.1.0',
+        name: 'Brief Check Plugin',
+      });
+
+      const briefApi = await createCliAPI({
+        discovery: {
+          strategies: ['pkg'],
+          roots: [pluginDir],
+        },
+        cache: { inMemory: true },
+        logger: { level: 'silent' },
+      });
+
+      try {
+        const plugins = await briefApi.listPlugins();
+        const found = plugins.find((p) => p.id === '@kb-labs/brief-check');
+        expect(found).toBeDefined();
+        // All required PluginBrief fields must be present
+        expect(typeof found?.id).toBe('string');
+        expect(typeof found?.version).toBe('string');
+        expect(found?.kind === 'v3' || found?.kind === 'v2').toBe(true);
+        expect(found?.source).toBeDefined();
+        expect(typeof found?.source.kind).toBe('string');
+        expect(typeof found?.source.path).toBe('string');
+      } finally {
+        await briefApi.dispose();
+        fs.rmSync(pluginDir, { recursive: true, force: true });
+      }
     });
   });
 

@@ -8,7 +8,7 @@ import { existsSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'node
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { ICache } from '@kb-labs/core-platform/adapters';
-import { SnapshotManager } from '../snapshot-manager.js';
+import { SnapshotManager, type SnapshotManagerOptions } from '../snapshot-manager.js';
 import { cloneValue, stableStringify, computeSnapshotChecksum, safeParseInt } from '../utils.js';
 import type { RegistrySnapshot } from '../types.js';
 import type { CliApiLogger } from '../../logger/index.js';
@@ -150,7 +150,7 @@ describe('SnapshotManager', () => {
     }
   });
 
-  function createManager(options?: Partial<Parameters<typeof SnapshotManager.prototype.constructor>[0]>) {
+  function createManager(options?: Partial<SnapshotManagerOptions>) {
     return new SnapshotManager({
       root: tempDir,
       cliVersion: '1.0.0',
@@ -298,6 +298,10 @@ describe('SnapshotManager', () => {
         set: vi.fn().mockResolvedValue(undefined),
         delete: vi.fn().mockResolvedValue(undefined),
         clear: vi.fn().mockResolvedValue(undefined),
+        zadd: vi.fn().mockResolvedValue(undefined),
+        zrangebyscore: vi.fn().mockResolvedValue([]),
+        zrem: vi.fn().mockResolvedValue(undefined),
+        setIfNotExists: vi.fn().mockResolvedValue(true),
       };
 
       const manager = createManager({
@@ -318,6 +322,10 @@ describe('SnapshotManager', () => {
         set: vi.fn().mockResolvedValue(undefined),
         delete: vi.fn().mockResolvedValue(undefined),
         clear: vi.fn().mockResolvedValue(undefined),
+        zadd: vi.fn().mockResolvedValue(undefined),
+        zrangebyscore: vi.fn().mockResolvedValue([]),
+        zrem: vi.fn().mockResolvedValue(undefined),
+        setIfNotExists: vi.fn().mockResolvedValue(true),
       };
 
       const manager = createManager({
@@ -336,6 +344,10 @@ describe('SnapshotManager', () => {
         set: vi.fn().mockResolvedValue(undefined),
         delete: vi.fn().mockResolvedValue(undefined),
         clear: vi.fn().mockResolvedValue(undefined),
+        zadd: vi.fn().mockResolvedValue(undefined),
+        zrangebyscore: vi.fn().mockResolvedValue([]),
+        zrem: vi.fn().mockResolvedValue(undefined),
+        setIfNotExists: vi.fn().mockResolvedValue(true),
       };
 
       const manager = createManager({
@@ -417,7 +429,7 @@ describe('SnapshotManager', () => {
         schema: 'kb.registry/1' as const,
         rev: 5,
         version: '2.0.0',
-        plugins: [{ id: 'test', version: '1.0', source: { kind: 'pkg' as const, path: '/test' } }],
+        plugins: [{ id: 'test', version: '1.0', kind: 'v3' as const, source: { kind: 'pkg' as const, path: '/test' } }],
       };
 
       const normalized = manager.normalizeSnapshot(partial);

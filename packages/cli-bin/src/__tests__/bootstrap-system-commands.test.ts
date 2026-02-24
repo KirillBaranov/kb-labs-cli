@@ -12,6 +12,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Command } from '@kb-labs/shared-command-kit';
 import type { PluginContextV3 } from '@kb-labs/plugin-contracts';
+import { noopUI, noopTraceContext } from '@kb-labs/plugin-contracts';
 
 // Mock the entire bootstrap module
 const { mockExecuteCli, mockCommandRegistry, mockPlatform } = vi.hoisted(() => {
@@ -21,9 +22,13 @@ const { mockExecuteCli, mockCommandRegistry, mockPlatform } = vi.hoisted(() => {
 
   const mockPlatform = {
     logger: {
-      info: vi.fn(),
-      error: vi.fn(),
+      trace: vi.fn(),
       debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      fatal: vi.fn(),
+      child: vi.fn(),
     },
     llm: {} as any,
     embeddings: {} as any,
@@ -31,6 +36,8 @@ const { mockExecuteCli, mockCommandRegistry, mockPlatform } = vi.hoisted(() => {
     cache: {} as any,
     storage: {} as any,
     analytics: {} as any,
+    eventBus: { publish: vi.fn(async () => {}), subscribe: vi.fn(() => () => {}) },
+    logs: {} as any,
   };
 
   const mockExecuteCli = vi.fn();
@@ -104,25 +111,9 @@ describe('Bootstrap System Commands', () => {
             host: 'cli',
             requestId: 'test-request-id',
             pluginId: '@kb-labs/system',
+            pluginVersion: '1.0.0',
             cwd: process.cwd(),
-            ui: {
-              write: vi.fn(),
-              info: vi.fn(),
-              success: vi.fn(),
-              warn: vi.fn(),
-              error: vi.fn(),
-              debug: vi.fn(),
-              spinner: vi.fn(),
-              table: vi.fn(),
-              json: vi.fn(),
-              newline: vi.fn(),
-              divider: vi.fn(),
-              box: vi.fn(),
-              sideBox: vi.fn(),
-              confirm: vi.fn().mockResolvedValue(true),
-              prompt: vi.fn().mockResolvedValue(''),
-              colors: {} as any,
-            },
+            ui: noopUI,
             platform: mockPlatform,
             runtime: {
               fs: {} as any,
@@ -130,10 +121,8 @@ describe('Bootstrap System Commands', () => {
               env: vi.fn(),
             },
             api: {} as any,
-            trace: {
-              traceId: 'test-trace-id',
-              spanId: 'test-span-id',
-            },
+            hostContext: { host: 'cli' as const, argv: [], flags: {} },
+            trace: noopTraceContext,
           };
 
           const exitCode = await result.cmd.run(mockContext, [], { verbose: true });
@@ -164,25 +153,9 @@ describe('Bootstrap System Commands', () => {
             host: 'cli',
             requestId: 'test-request-id',
             pluginId: '@kb-labs/system',
+            pluginVersion: '1.0.0',
             cwd: '/test-cwd',
-            ui: {
-              write: vi.fn(),
-              info: vi.fn(),
-              success: vi.fn(),
-              warn: vi.fn(),
-              error: vi.fn(),
-              debug: vi.fn(),
-              spinner: vi.fn(),
-              table: vi.fn(),
-              json: vi.fn(),
-              newline: vi.fn(),
-              divider: vi.fn(),
-              box: vi.fn(),
-              sideBox: vi.fn(),
-              confirm: vi.fn().mockResolvedValue(true),
-              prompt: vi.fn().mockResolvedValue(''),
-              colors: {} as any,
-            },
+            ui: noopUI,
             platform: mockPlatform,
             runtime: {
               fs: {} as any,
@@ -190,10 +163,8 @@ describe('Bootstrap System Commands', () => {
               env: vi.fn(),
             },
             api: {} as any,
-            trace: {
-              traceId: 'test-trace-id',
-              spanId: 'test-span-id',
-            },
+            hostContext: { host: 'cli' as const, argv: [], flags: {} },
+            trace: noopTraceContext,
           };
 
           await result.cmd.run(mockContext, [], {});
@@ -229,25 +200,9 @@ describe('Bootstrap System Commands', () => {
             host: 'cli',
             requestId: 'test-request-id',
             pluginId: '@kb-labs/system',
+            pluginVersion: '1.0.0',
             cwd: process.cwd(),
-            ui: {
-              write: vi.fn(),
-              info: vi.fn(),
-              success: vi.fn(),
-              warn: vi.fn(),
-              error: vi.fn(),
-              debug: vi.fn(),
-              spinner: vi.fn(),
-              table: vi.fn(),
-              json: vi.fn(),
-              newline: vi.fn(),
-              divider: vi.fn(),
-              box: vi.fn(),
-              sideBox: vi.fn(),
-              confirm: vi.fn().mockResolvedValue(true),
-              prompt: vi.fn().mockResolvedValue(''),
-              colors: {} as any,
-            },
+            ui: noopUI,
             platform: mockPlatform,
             runtime: {
               fs: {} as any,
@@ -255,10 +210,8 @@ describe('Bootstrap System Commands', () => {
               env: vi.fn(),
             },
             api: {} as any,
-            trace: {
-              traceId: 'test-trace-id',
-              spanId: 'test-span-id',
-            },
+            hostContext: { host: 'cli' as const, argv: [], flags: {} },
+            trace: noopTraceContext,
           };
 
           const argv = ['arg1', 'arg2'];
@@ -301,25 +254,9 @@ describe('Bootstrap System Commands', () => {
             host: 'cli',
             requestId: 'test-request-id',
             pluginId: '@kb-labs/system',
+            pluginVersion: '1.0.0',
             cwd: process.cwd(),
-            ui: {
-              write: vi.fn(),
-              info: vi.fn(),
-              success: vi.fn(),
-              warn: vi.fn(),
-              error: vi.fn(),
-              debug: vi.fn(),
-              spinner: vi.fn(),
-              table: vi.fn(),
-              json: vi.fn(),
-              newline: vi.fn(),
-              divider: vi.fn(),
-              box: vi.fn(),
-              sideBox: vi.fn(),
-              confirm: vi.fn().mockResolvedValue(true),
-              prompt: vi.fn().mockResolvedValue(''),
-              colors: {} as any,
-            },
+            ui: noopUI,
             platform: mockPlatform,
             runtime: {
               fs: {} as any,
@@ -327,10 +264,8 @@ describe('Bootstrap System Commands', () => {
               env: vi.fn(),
             },
             api: {} as any,
-            trace: {
-              traceId: 'test-trace-id',
-              spanId: 'test-span-id',
-            },
+            hostContext: { host: 'cli' as const, argv: [], flags: {} },
+            trace: noopTraceContext,
           };
 
           const exitCode = await result.cmd.run(mockContext, [], {});
@@ -373,25 +308,9 @@ describe('Bootstrap System Commands', () => {
             host: 'cli',
             requestId: 'test-request-id',
             pluginId: '@kb-labs/system',
+            pluginVersion: '1.0.0',
             cwd: process.cwd(),
-            ui: {
-              write: vi.fn(),
-              info: vi.fn(),
-              success: vi.fn(),
-              warn: vi.fn(),
-              error: vi.fn(),
-              debug: vi.fn(),
-              spinner: vi.fn(),
-              table: vi.fn(),
-              json: vi.fn(),
-              newline: vi.fn(),
-              divider: vi.fn(),
-              box: vi.fn(),
-              sideBox: vi.fn(),
-              confirm: vi.fn().mockResolvedValue(true),
-              prompt: vi.fn().mockResolvedValue(''),
-              colors: {} as any,
-            },
+            ui: noopUI,
             platform: mockPlatform,
             runtime: {
               fs: {} as any,
@@ -399,10 +318,8 @@ describe('Bootstrap System Commands', () => {
               env: vi.fn(),
             },
             api: {} as any,
-            trace: {
-              traceId: 'test-trace-id',
-              spanId: 'test-span-id',
-            },
+            hostContext: { host: 'cli' as const, argv: [], flags: {} },
+            trace: noopTraceContext,
           };
 
           try {
@@ -441,25 +358,9 @@ describe('Bootstrap System Commands', () => {
             host: 'cli',
             requestId: 'test-request-id',
             pluginId: '@kb-labs/system',
+            pluginVersion: '1.0.0',
             cwd: process.cwd(),
-            ui: {
-              write: vi.fn(),
-              info: vi.fn(),
-              success: vi.fn(),
-              warn: vi.fn(),
-              error: vi.fn(),
-              debug: vi.fn(),
-              spinner: vi.fn(),
-              table: vi.fn(),
-              json: vi.fn(),
-              newline: vi.fn(),
-              divider: vi.fn(),
-              box: vi.fn(),
-              sideBox: vi.fn(),
-              confirm: vi.fn().mockResolvedValue(true),
-              prompt: vi.fn().mockResolvedValue(''),
-              colors: {} as any,
-            },
+            ui: noopUI,
             platform: mockPlatform,
             runtime: {
               fs: {} as any,
@@ -467,10 +368,8 @@ describe('Bootstrap System Commands', () => {
               env: vi.fn(),
             },
             api: {} as any,
-            trace: {
-              traceId: 'test-trace-id',
-              spanId: 'test-span-id',
-            },
+            hostContext: { host: 'cli' as const, argv: [], flags: {} },
+            trace: noopTraceContext,
           };
 
           return result.cmd.run(mockContext, [], {});
@@ -525,25 +424,9 @@ describe('Bootstrap System Commands', () => {
             host: 'cli',
             requestId: 'test-request-id',
             pluginId: '@kb-labs/system',
+            pluginVersion: '1.0.0',
             cwd: process.cwd(),
-            ui: {
-              write: vi.fn(),
-              info: vi.fn(),
-              success: vi.fn(),
-              warn: vi.fn(),
-              error: vi.fn(),
-              debug: vi.fn(),
-              spinner: vi.fn(),
-              table: vi.fn(),
-              json: vi.fn(),
-              newline: vi.fn(),
-              divider: vi.fn(),
-              box: vi.fn(),
-              sideBox: vi.fn(),
-              confirm: vi.fn().mockResolvedValue(true),
-              prompt: vi.fn().mockResolvedValue(''),
-              colors: {} as any,
-            },
+            ui: noopUI,
             platform: mockPlatform,
             runtime: {
               fs: {} as any,
@@ -551,10 +434,8 @@ describe('Bootstrap System Commands', () => {
               env: vi.fn(),
             },
             api: {} as any,
-            trace: {
-              traceId: 'test-trace-id',
-              spanId: 'test-span-id',
-            },
+            hostContext: { host: 'cli' as const, argv: [], flags: {} },
+            trace: noopTraceContext,
             // Removed: tracker is no longer part of PluginContextV3
           };
 
@@ -628,25 +509,9 @@ describe('Bootstrap System Commands', () => {
             host: 'cli',
             requestId: 'test-request-id',
             pluginId: '@kb-labs/system',
+            pluginVersion: '1.0.0',
             cwd: process.cwd(),
-            ui: {
-              write: vi.fn(),
-              info: vi.fn(),
-              success: vi.fn(),
-              warn: vi.fn(),
-              error: vi.fn(),
-              debug: vi.fn(),
-              spinner: vi.fn(),
-              table: vi.fn(),
-              json: vi.fn(),
-              newline: vi.fn(),
-              divider: vi.fn(),
-              box: vi.fn(),
-              sideBox: vi.fn(),
-              confirm: vi.fn().mockResolvedValue(true),
-              prompt: vi.fn().mockResolvedValue(''),
-              colors: {} as any,
-            },
+            ui: noopUI,
             platform: mockPlatform,
             runtime: {
               fs: {} as any,
@@ -654,10 +519,8 @@ describe('Bootstrap System Commands', () => {
               env: vi.fn(),
             },
             api: {} as any,
-            trace: {
-              traceId: 'test-trace-id',
-              spanId: 'test-span-id',
-            },
+            hostContext: { host: 'cli' as const, argv: [], flags: {} },
+            trace: noopTraceContext,
           };
 
           return result.cmd.run(mockContext, [], {});

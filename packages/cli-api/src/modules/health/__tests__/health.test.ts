@@ -430,7 +430,7 @@ function createMockPlugin(id: string, path = `/path/to/${id}`): PluginBrief {
   return {
     id,
     version: '1.0.0',
-    kind: 'plugin',
+    kind: 'v3',
     source: {
       kind: 'pkg',
       path,

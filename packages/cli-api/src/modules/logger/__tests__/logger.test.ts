@@ -194,6 +194,7 @@ describe('createPlatformLogger', () => {
         mockCalls.error.push([msg, error, meta]);
       }),
       trace: vi.fn(),
+      fatal: vi.fn(),
       child: vi.fn().mockReturnThis(),
     };
   });
@@ -303,6 +304,7 @@ describe('CliApiLogger type', () => {
       warn: vi.fn(),
       error: vi.fn(),
       trace: vi.fn(),
+      fatal: vi.fn(),
       child: vi.fn().mockReturnThis(),
     };
     const platformLogger: CliApiLogger = createPlatformLogger(mockPlatformLogger, {});
