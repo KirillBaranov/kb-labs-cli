@@ -2,7 +2,6 @@
   "name": "@kb-labs/cli-commands",
   "version": "1.0.0",
   "type": "module",
-  "private": true,
   "description": "Command implementations for KB Labs CLI",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,19 +31,19 @@
     "@kb-labs/cli-api": "workspace:*",
     "@kb-labs/cli-contracts": "workspace:*",
     "@kb-labs/cli-core": "workspace:*",
-    "@kb-labs/core-platform": "link:../../../kb-labs-core/packages/core-platform",
-    "@kb-labs/core-ipc": "link:../../../kb-labs-core/packages/core-ipc",
-    "@kb-labs/core-resource-broker": "link:../../../kb-labs-core/packages/core-resource-broker",
-    "@kb-labs/core-runtime": "link:../../../kb-labs-core/packages/core-runtime",
-    "@kb-labs/core-state-broker": "link:../../../kb-labs-core/packages/core-state-broker",
-    "@kb-labs/core-sys": "link:../../../kb-labs-core/packages/core-sys",
-    "@kb-labs/plugin-contracts": "link:../../../kb-labs-plugin/packages/plugin-contracts",
-    "@kb-labs/plugin-execution": "link:../../../kb-labs-plugin/packages/plugin-execution",
-    "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/plugin-runtime",
+    "@kb-labs/core-platform": "^1.0.0",
+    "@kb-labs/core-ipc": "^1.0.0",
+    "@kb-labs/core-resource-broker": "^1.0.0",
+    "@kb-labs/core-runtime": "^1.0.0",
+    "@kb-labs/core-state-broker": "^1.0.0",
+    "@kb-labs/core-sys": "^1.0.0",
+    "@kb-labs/plugin-contracts": "^1.0.0",
+    "@kb-labs/plugin-execution": "^1.0.0",
+    "@kb-labs/plugin-runtime": "^1.0.0",
     "@kb-labs/setup-engine-core": "link:../../../kb-labs-setup-engine/packages/setup-engine-core",
     "@kb-labs/setup-engine-operations": "link:../../../kb-labs-setup-engine/packages/setup-engine-operations",
-    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/shared-cli-ui",
-    "@kb-labs/shared-command-kit": "link:../../../kb-labs-shared/packages/shared-command-kit",
+    "@kb-labs/shared-cli-ui": "^1.0.0",
+    "@kb-labs/shared-command-kit": "^1.0.0",
     "@kb-labs/workflow-artifacts": "link:../../../kb-labs-workflow/packages/workflow-artifacts",
     "@kb-labs/workflow-constants": "link:../../../kb-labs-workflow/packages/workflow-constants",
     "@kb-labs/workflow-contracts": "link:../../../kb-labs-workflow/packages/workflow-contracts",
@@ -64,7 +63,7 @@
     "pathe": "^1.1.2"
   },
   "devDependencies": {
-    "@kb-labs/devkit": "link:../../../kb-labs-devkit",
+    "@kb-labs/devkit": "^1.0.0",
     "@types/node": "^24.3.3",
     "@types/picomatch": "^4",
     "rimraf": "^6.0.1",
@@ -76,5 +75,8 @@
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

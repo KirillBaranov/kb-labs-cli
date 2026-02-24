@@ -2,7 +2,6 @@
   "name": "@kb-labs/cli-bin",
   "version": "1.0.0",
   "type": "module",
-  "private": true,
   "description": "KB Labs CLI tool for project management and automation",
   "bin": {
     "kb": "dist/bin.js"
@@ -37,14 +36,14 @@
     "@kb-labs/cli-commands": "workspace:*",
     "@kb-labs/cli-core": "workspace:*",
     "@kb-labs/cli-runtime": "workspace:*",
-    "@kb-labs/core-config": "link:../../../kb-labs-core/packages/core-config",
-    "@kb-labs/core-runtime": "link:../../../kb-labs-core/packages/core-runtime",
-    "@kb-labs/core-sandbox": "link:../../../kb-labs-core/packages/core-sandbox",
-    "@kb-labs/core-sys": "link:../../../kb-labs-core/packages/core-sys",
-    "@kb-labs/plugin-contracts": "link:../../../kb-labs-plugin/packages/plugin-contracts",
-    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/plugin-manifest",
-    "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/plugin-runtime",
-    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/shared-cli-ui",
+    "@kb-labs/core-config": "^1.0.0",
+    "@kb-labs/core-runtime": "^1.0.0",
+    "@kb-labs/core-sandbox": "^1.0.0",
+    "@kb-labs/core-sys": "^1.0.0",
+    "@kb-labs/plugin-contracts": "^1.0.0",
+    "@kb-labs/plugin-manifest": "^1.0.0",
+    "@kb-labs/plugin-runtime": "^1.0.0",
+    "@kb-labs/shared-cli-ui": "^1.0.0",
     "@kb-labs/shared-command-kit": "workspace:*",
     "ajv": "^8.17.1",
     "chokidar": "^4.0.3",
@@ -60,12 +59,15 @@
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",
     "vitest": "^3.2.4",
-    "@kb-labs/devkit": "link:../../../kb-labs-devkit",
+    "@kb-labs/devkit": "^1.0.0",
     "@types/node": "^24.3.3",
     "typescript": "^5.6.3"
   },
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
