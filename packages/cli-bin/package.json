@@ -28,7 +28,7 @@
     "smoke": "node ./dist/bin.js hello",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },
@@ -41,7 +41,6 @@
     "@kb-labs/core-sandbox": "^1.0.0",
     "@kb-labs/core-sys": "^1.0.0",
     "@kb-labs/plugin-contracts": "^1.0.0",
-    "@kb-labs/plugin-manifest": "^1.0.0",
     "@kb-labs/plugin-runtime": "^1.0.0",
     "@kb-labs/shared-cli-ui": "^1.0.0",
     "@kb-labs/shared-command-kit": "workspace:*",

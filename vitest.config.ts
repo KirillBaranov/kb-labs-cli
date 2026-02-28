@@ -37,7 +37,6 @@ export default defineConfig({
     ],
     coverage: {
       ...nodePreset.test?.coverage,
-      enabled: true,
       exclude: [
         "**/dist/**",
         "**/fixtures/**",

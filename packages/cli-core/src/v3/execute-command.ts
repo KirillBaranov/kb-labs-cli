@@ -179,13 +179,6 @@ export async function executeCommandV3(
     executionId,
   });
 
-  // DEBUG: Log descriptor permissions
-  console.log("[executeCommandV3 DEBUG] Descriptor permissions:", {
-    pluginId,
-    hasInvoke: !!descriptor.permissions.invoke,
-    invokeAllow: descriptor.permissions.invoke?.allow,
-  });
-
   // Prepare input
   const input = { argv, flags };
 

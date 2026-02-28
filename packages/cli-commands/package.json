@@ -40,8 +40,6 @@
     "@kb-labs/plugin-contracts": "^1.0.0",
     "@kb-labs/plugin-execution": "^1.0.0",
     "@kb-labs/plugin-runtime": "^1.0.0",
-    "@kb-labs/setup-engine-core": "link:../../../kb-labs-setup-engine/packages/setup-engine-core",
-    "@kb-labs/setup-engine-operations": "link:../../../kb-labs-setup-engine/packages/setup-engine-operations",
     "@kb-labs/shared-cli-ui": "^1.0.0",
     "@kb-labs/shared-command-kit": "^1.0.0",
     "@kb-labs/workflow-artifacts": "link:../../../kb-labs-workflow/packages/workflow-artifacts",

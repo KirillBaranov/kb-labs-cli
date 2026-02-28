@@ -87,6 +87,12 @@
       "@kb-labs/core/*": [
         "../kb-labs-core/src/*"
       ],
+      "@kb-labs/devlink-core": [
+        "../kb-labs-devlink/packages/devlink-core/src/index.ts"
+      ],
+      "@kb-labs/devlink-core/*": [
+        "../kb-labs-devlink/packages/devlink-core/src/*"
+      ],
       "@kb-labs/mind-cli": [
         "../kb-labs-mind/packages/mind-cli/src/index.ts"
       ],

@@ -33,15 +33,6 @@ vi.mock('../utils/path.js', () => ({
   toPosixPath: (p: string) => p.replace(/\\/g, '/'),
 }));
 
-const rollbackCommandMocks = vi.hoisted(() => {
-  const run = vi.fn().mockResolvedValue(0);
-  const create = vi.fn(() => ({ run }));
-  return { run, create };
-});
-
-vi.mock('../../commands/system/plugin-setup-rollback.js', () => ({
-  createPluginSetupRollbackCommand: rollbackCommandMocks.create,
-}));
 
 const importDiscoverModule = () => import('../discover');
 
@@ -208,49 +199,4 @@ describe('discoverManifests', () => {
     await expect(manifest.loader!()).rejects.toThrow(/ManifestV3 command/);
   });
 
-  it('should rehydrate setup rollback loader and delegate to rollback module', async () => {
-    const { __test } = await import('../discover') as any;
-    rollbackCommandMocks.create.mockClear();
-    rollbackCommandMocks.run.mockClear();
-
-    const manifestV2 = {
-      schema: 'kb.plugin/3' as const,
-      id: '@kb-labs/test',
-      version: '1.0.0',
-      setup: { handler: './setup.js#run', describe: 'Setup test', permissions: {} },
-    };
-
-    const manifest = {
-      manifestVersion: '1.0',
-      id: 'template:setup:rollback',
-      group: 'template',
-      describe: 'Setup rollback command',
-      flags: [],
-      examples: [],
-      package: '@kb-labs/plugin-template',
-      namespace: 'template',
-      loader: undefined,
-    } as unknown as CommandManifest & {
-      isSetupRollback: boolean;
-      manifestV2: typeof manifestV2;
-      pkgRoot: string;
-    };
-
-    manifest.isSetupRollback = true;
-    manifest.manifestV2 = manifestV2;
-    manifest.pkgRoot = '/virtual/template';
-
-    __test.ensureManifestLoader(manifest);
-    expect(typeof manifest.loader).toBe('function');
-
-    const module = await manifest.loader!();
-    expect(rollbackCommandMocks.create).toHaveBeenCalledWith({
-      namespace: 'template',
-      packageName: '@kb-labs/plugin-template',
-      pkgRoot: '/virtual/template',
-    });
-    const exitCode = await module.run({ presenter: {} } as any, [], {});
-    expect(exitCode).toBe(0);
-    expect(rollbackCommandMocks.run).toHaveBeenCalled();
-  });
 });

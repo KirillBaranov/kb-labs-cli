@@ -3,7 +3,16 @@
   "extends": "@kb-labs/devkit/tsconfig/node.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "baseUrl": "../..",
+    "paths": {
+      "@kb-labs/cli-runtime": [
+        "packages/cli-runtime/src/index.ts"
+      ],
+      "@kb-labs/cli-runtime/*": [
+        "packages/cli-runtime/src/*"
+      ]
+    }
   },
   "include": ["src"]
 }
