@@ -25,7 +25,7 @@ function _detectRepoRoot(start = process.cwd()): string {
 }
 import { parse as parseYaml } from 'yaml';
 import { glob } from 'glob';
-import type { CommandManifest, DiscoveryResult, CacheFile, PackageCacheEntry, CommandModule } from './types';
+import type { CommandManifest, DiscoveryResult, CacheFile, PackageCacheEntry } from './types';
 import type { ManifestV3 } from '@kb-labs/plugin-contracts';
 import { toPosixPath } from '../utils/path';
 import { validateManifests, normalizeManifest } from './schema';
@@ -84,28 +84,7 @@ function createManifestV3Loader(commandId: string): () => Promise<{ run: any }> 
   };
 }
 
-async function loadSetupRollbackCommandModule({
-  manifestV2,
-  namespace,
-  pkgName,
-  pkgRoot,
-}: SetupCommandFactoryInput): Promise<CommandModule> {
-  const module = await import('../commands/system/plugin-setup-rollback.js');
-  if (typeof module.createPluginSetupRollbackCommand !== 'function') {
-    throw new Error('Failed to load plugin setup rollback command factory');
-  }
-  const command = module.createPluginSetupRollbackCommand({
-    namespace,
-    packageName: pkgName,
-    pkgRoot,
-  });
-  return {
-    run: async (ctx, argv, flags) => {
-      const result = await command.run(ctx, argv, flags);
-      return typeof result === 'number' ? result : undefined;
-    },
-  };
-}
+// Setup rollback command removed — setup-engine eliminated from project
 
 /**
  * Ensure manifest has loader function (rehydrate after JSON serialization).
@@ -113,17 +92,6 @@ async function loadSetupRollbackCommandModule({
 function ensureManifestLoader(manifest: CommandManifest): void {
   if (typeof manifest.loader !== 'function') {
     const commandId = manifest.id || manifest.group || 'unknown';
-    if ((manifest as any).isSetupRollback) {
-      log('debug', `[plugins][cache] Rehydrated setup rollback loader for ${commandId}`);
-      manifest.loader = () =>
-        loadSetupRollbackCommandModule({
-          manifestV2: (manifest as any).manifestV2,
-          namespace: manifest.namespace || manifest.group || deriveNamespace(manifest.package || commandId),
-          pkgName: manifest.package || commandId,
-          pkgRoot: (manifest as any).pkgRoot,
-        });
-      return;
-    }
     log('debug', `[plugins][cache] Rehydrated loader for ${commandId}`);
     manifest.loader = createManifestV3Loader(commandId);
   }
@@ -324,12 +292,6 @@ function deriveNamespace(packageName: string): string {
   return lastPart.replace(/^@/, '');
 }
 
-interface SetupCommandFactoryInput {
-  manifestV2: ManifestV3;
-  namespace: string;
-  pkgName: string;
-  pkgRoot: string;
-}
 
 // TODO V3: V2 setup command manifest generators removed - V3 uses SetupSpec in manifest
 // function createSetupCommandManifest({
