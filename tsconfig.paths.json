@@ -33,14 +33,17 @@
       "@kb-labs/cli-runtime/*": [
         "packages/cli-runtime/src/*"
       ],
-      "@kb-labs/core": [
-        "../kb-labs-core/src/index.ts"
-      ],
       "@kb-labs/core-config": [
         "../kb-labs-core/packages/core-config/src/index.ts"
       ],
       "@kb-labs/core-config/*": [
         "../kb-labs-core/packages/core-config/src/*"
+      ],
+      "@kb-labs/core-contracts": [
+        "../kb-labs-core/packages/core-contracts/src/index.ts"
+      ],
+      "@kb-labs/core-contracts/*": [
+        "../kb-labs-core/packages/core-contracts/src/*"
       ],
       "@kb-labs/core-ipc": [
         "../kb-labs-core/packages/core-ipc/src/index.ts"
@@ -84,9 +87,6 @@
       "@kb-labs/core-sys/*": [
         "../kb-labs-core/packages/core-sys/src/*"
       ],
-      "@kb-labs/core/*": [
-        "../kb-labs-core/src/*"
-      ],
       "@kb-labs/devlink-core": [
         "../kb-labs-devlink/packages/devlink-core/src/index.ts"
       ],
@@ -126,6 +126,12 @@
       "@kb-labs/plugin-execution": [
         "../kb-labs-plugin/packages/plugin-execution/src/index.ts"
       ],
+      "@kb-labs/plugin-execution-factory": [
+        "../kb-labs-plugin/packages/plugin-execution-factory/src/index.ts"
+      ],
+      "@kb-labs/plugin-execution-factory/*": [
+        "../kb-labs-plugin/packages/plugin-execution-factory/src/*"
+      ],
       "@kb-labs/plugin-execution/*": [
         "../kb-labs-plugin/packages/plugin-execution/src/*"
       ],
@@ -146,18 +152,6 @@
       ],
       "@kb-labs/release-manager-core/*": [
         "../kb-labs-release-manager/packages/release-manager-core/src/*"
-      ],
-      "@kb-labs/setup-engine-core": [
-        "../kb-labs-setup-engine/packages/setup-engine-core/src/index.ts"
-      ],
-      "@kb-labs/setup-engine-core/*": [
-        "../kb-labs-setup-engine/packages/setup-engine-core/src/*"
-      ],
-      "@kb-labs/setup-engine-operations": [
-        "../kb-labs-setup-engine/packages/setup-engine-operations/src/index.ts"
-      ],
-      "@kb-labs/setup-engine-operations/*": [
-        "../kb-labs-setup-engine/packages/setup-engine-operations/src/*"
       ],
       "@kb-labs/shared-cli-ui": [
         "../kb-labs-shared/packages/shared-cli-ui/src/index.ts"
