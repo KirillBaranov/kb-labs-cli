@@ -12,7 +12,7 @@ import type {
 } from "@kb-labs/plugin-contracts";
 import { wrapCliResult } from "@kb-labs/plugin-runtime";
 import type { PlatformContainer } from "@kb-labs/core-runtime";
-import type { ExecutionRequest, ExecutionResult } from "@kb-labs/core-platform";
+import type { ExecutionRequest } from "@kb-labs/plugin-execution-factory";
 import * as path from "node:path";
 import { randomUUID } from "node:crypto";
 
@@ -201,7 +201,7 @@ export async function executeCommandV3(
     //
     // Use the platformContainer passed from v3-adapter (which got it from bootstrap)
     // This ensures we use the SAME instance that was initialized with ExecutionBackend
-    const result: ExecutionResult =
+    const result =
       await options.platformContainer.executionBackend.execute(request, {
         signal,
       });
@@ -213,10 +213,18 @@ export async function executeCommandV3(
     }
 
     // Wrap result for CLI (preserves backward compatibility)
+    const executionMeta = result.metadata?.executionMeta ?? {
+      startTime: Date.now(),
+      endTime: Date.now(),
+      duration: 0,
+      pluginId,
+      pluginVersion,
+      requestId,
+    };
     const runResult = {
-      ok: true,
+      ok: true as const,
       data: result.data,
-      executionMeta: result.metadata?.executionMeta,
+      executionMeta,
     };
     const cliResult = wrapCliResult(runResult, descriptor);
 

@@ -13,6 +13,7 @@ import {
   type PlatformLifecyclePhase,
 } from '@kb-labs/core-runtime';
 import { findNearestConfig, readJsonWithDiagnostics } from '@kb-labs/core-config';
+import path from 'node:path';
 import { sideBorderBox, safeColors, safeSymbols } from '@kb-labs/shared-cli-ui';
 import type { UIFacade, MessageOptions, Spinner } from '@kb-labs/plugin-contracts';
 import { noopUI } from '@kb-labs/plugin-contracts';
@@ -201,6 +202,14 @@ export interface PlatformInitResult {
   rawConfig?: any; // Full kb.config.json for ctx.config extraction
 }
 
+function resolvePlatformRootFromConfigPath(configPath: string): string {
+  const configDir = path.dirname(configPath);
+  if (path.basename(configDir) === '.kb') {
+    return path.dirname(configDir);
+  }
+  return configDir;
+}
+
 /**
  * Initialize platform adapters from kb.config.json.
  * Falls back to NoOp adapters if config not found.
@@ -235,6 +244,7 @@ export async function initializePlatform(cwd: string): Promise<PlatformInitResul
 
     // Read config
     const result = await readJsonWithDiagnostics<{ platform?: PlatformConfig }>(configPath);
+    const platformRoot = resolvePlatformRootFromConfigPath(configPath);
     if (!result.ok) {
       const fallbackConfig = { adapters: {} };
       const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
@@ -258,13 +268,16 @@ export async function initializePlatform(cwd: string): Promise<PlatformInitResul
       return { platform, platformConfig: fallbackConfig, rawConfig: result.data };
     }
 
-    // Initialize platform with config
-    const platform = await initPlatform(platformConfig, cwd, uiProvider);
+    // Initialize platform with config rooted at config location.
+    // This guarantees all relative adapter paths (like ".kb/database/kb.sqlite")
+    // resolve to the same monorepo root even when CLI runs from subdirectories.
+    const platform = await initPlatform(platformConfig, platformRoot, uiProvider);
 
     platform.logger.info('Platform adapters initialized', {
       layer: 'cli',
       service: 'platform-init',
       configPath,
+      platformRoot,
       adapters: Object.keys(platformConfig.adapters ?? {}),
       hasAdapterOptions: !!platformConfig.adapterOptions,
     });
