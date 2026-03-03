@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/cli-bin",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "description": "KB Labs CLI tool for project management and automation",
   "bin": {
@@ -36,10 +36,10 @@
     "@kb-labs/cli-commands": "workspace:*",
     "@kb-labs/cli-core": "workspace:*",
     "@kb-labs/cli-runtime": "workspace:*",
-    "@kb-labs/core-config": "^1.0.0",
-    "@kb-labs/core-runtime": "^1.0.0",
-    "@kb-labs/core-sandbox": "^1.0.0",
-    "@kb-labs/core-sys": "^1.0.0",
+    "@kb-labs/core-config": "^1.2.0",
+    "@kb-labs/core-runtime": "^1.2.0",
+    "@kb-labs/core-sandbox": "^1.2.0",
+    "@kb-labs/core-sys": "^1.2.0",
     "@kb-labs/plugin-contracts": "^1.0.0",
     "@kb-labs/plugin-runtime": "^1.0.0",
     "@kb-labs/shared-cli-ui": "^1.0.0",

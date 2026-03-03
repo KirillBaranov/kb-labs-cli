@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/cli-runtime",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "CLI runtime - command execution, middleware, formatters",
   "type": "module",
   "main": "./dist/index.js",
@@ -28,7 +28,7 @@
   "dependencies": {
     "@kb-labs/cli-contracts": "workspace:*",
     "@kb-labs/cli-core": "workspace:*",
-    "@kb-labs/core-sys": "^1.0.0",
+    "@kb-labs/core-sys": "^1.2.0",
     "cli-table3": "^0.6.5",
     "yaml": "^2.8.0"
   },
