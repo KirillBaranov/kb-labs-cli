@@ -17,7 +17,7 @@ export interface Output {
  * Context for system commands (main process, full privileges)
  *
  * Used by: defineSystemCommand()
- * Examples: kb workflow:run, kb plugins:install
+ * Examples: kb workflow:run, kb plugins:list
  *
  * System commands run in the main process WITHOUT sandbox isolation.
  * They have full access to the filesystem, environment, and network.
