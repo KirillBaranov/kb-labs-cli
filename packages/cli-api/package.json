@@ -34,15 +34,15 @@
   },
   "dependencies": {
     "@kb-labs/cli-core": "workspace:*",
-    "@kb-labs/core-platform": "^1.2.0",
-    "@kb-labs/plugin-contracts": "^1.0.0",
+    "@kb-labs/core-platform": "workspace:*",
+    "@kb-labs/plugin-contracts": "workspace:*",
     "glob": "^11.0.0",
     "redis": "latest",
     "yaml": "^2.8.2",
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@kb-labs/devkit": "^1.0.0",
+    "@kb-labs/devkit": "workspace:*",
     "@types/node": "^24.3.3",
     "tsup": "^8.5.0",
     "typescript": "^5.6.3",
