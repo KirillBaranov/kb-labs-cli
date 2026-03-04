@@ -752,7 +752,7 @@ async function discoverNodeModules(cwd: string): Promise<DiscoveryResult[]> {
                 // Must be allowlisted OR in linked list
                 const isAllowlisted = config.allow?.includes(pkg.name) || config.linked?.includes(pkg.name);
                 if (!isAllowlisted) {
-                  log('debug', `Plugin ${pkg.name} skipped (not allowlisted). Add to kb-labs.config.json plugins.allow or enable via 'kb plugins enable'`);
+                  log('debug', `Plugin ${pkg.name} skipped (not allowlisted). Add to kb-labs.config.json plugins.allow or enable via 'kb marketplace enable'`);
                   return;
                 }
                 
@@ -788,7 +788,7 @@ async function discoverNodeModules(cwd: string): Promise<DiscoveryResult[]> {
             
             const isAllowlisted = config.allow?.includes(pkg.name) || config.linked?.includes(pkg.name);
             if (!isAllowlisted) {
-              log('debug', `Plugin ${pkg.name} skipped (not allowlisted). Add to kb-labs.config.json plugins.allow or enable via 'kb plugins enable'`);
+              log('debug', `Plugin ${pkg.name} skipped (not allowlisted). Add to kb-labs.config.json plugins.allow or enable via 'kb marketplace enable'`);
               return;
             }
             

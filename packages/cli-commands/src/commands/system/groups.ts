@@ -10,7 +10,7 @@ import { diag } from './diag';
 import {
   pluginsList, pluginsCommands, pluginsEnable, pluginsDisable,
   pluginsLink, pluginsUnlink, pluginsRegistry, pluginsDoctor,
-  pluginsScaffold, pluginValidate,
+  pluginsScaffold, pluginValidate, marketplaceInstall, marketplaceUpdate,
 } from './plugins';
 import { pluginsCacheClear } from '../../builtins/plugins-cache-clear';
 import { docsGenerateCliReference } from './docs-generate-cli-reference';
@@ -28,10 +28,12 @@ export const infoGroup = defineSystemCommandGroup('info', 'System information co
 ]);
 
 /**
- * Plugins Commands Group
- * Plugin management and discovery
+ * Marketplace Commands Group
+ * Marketplace package management and discovery
  */
-export const pluginsGroup = defineSystemCommandGroup('plugins', 'Plugin management commands', [
+export const marketplaceGroup = defineSystemCommandGroup('marketplace', 'Marketplace management commands', [
+  marketplaceInstall,
+  marketplaceUpdate,
   pluginsList,
   pluginsCommands,
   pluginsEnable,

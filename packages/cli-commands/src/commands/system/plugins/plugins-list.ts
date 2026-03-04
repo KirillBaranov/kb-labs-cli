@@ -1,5 +1,5 @@
 /**
- * plugins:list command - List all discovered CLI plugins
+ * marketplace:list command - List all discovered CLI plugins
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
@@ -57,19 +57,19 @@ type PluginsListResult = CommandResult & {
 export const pluginsList = defineSystemCommand<PluginsListFlags, PluginsListResult>({
   name: 'list',
   description: 'List all discovered CLI plugins',
-  category: 'plugins',
+  category: 'marketplace',
   // Type-safe examples using generateExamples()
-  examples: generateExamples('list', 'plugins', [
-    { flags: {} },  // kb plugins list
-    { flags: { json: true } },  // kb plugins list --json
+  examples: generateExamples('list', 'marketplace', [
+    { flags: {} },  // kb marketplace list
+    { flags: { json: true } },  // kb marketplace list --json
   ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
   },
   analytics: {
-    command: 'plugins:list',
-    startEvent: 'PLUGINS_LIST_STARTED',
-    finishEvent: 'PLUGINS_LIST_FINISHED',
+    command: 'marketplace:list',
+    startEvent: 'MARKETPLACE_LIST_STARTED',
+    finishEvent: 'MARKETPLACE_LIST_FINISHED',
   },
   async handler(ctx, _argv, _flags) {
     const cwd = getContextCwd(ctx);
@@ -283,10 +283,10 @@ export const pluginsList = defineSystemCommand<PluginsListFlags, PluginsListResu
     sections.push({
       header: 'Next Steps',
       items: [
-        `kb plugins enable <name>  ${safeColors.muted('Enable a plugin')}`,
-        `kb plugins disable <name>  ${safeColors.muted('Disable a plugin')}`,
-        `kb plugins doctor  ${safeColors.muted('Diagnose plugin issues')}`,
-        `kb plugins --json  ${safeColors.muted('Get machine-readable output')}`,
+        `kb marketplace enable <name>  ${safeColors.muted('Enable a plugin')}`,
+        `kb marketplace disable <name>  ${safeColors.muted('Disable a plugin')}`,
+        `kb marketplace doctor  ${safeColors.muted('Diagnose plugin issues')}`,
+        `kb marketplace --json  ${safeColors.muted('Get machine-readable output')}`,
       ],
     });
 

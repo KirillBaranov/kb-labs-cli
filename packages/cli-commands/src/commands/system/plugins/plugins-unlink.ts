@@ -1,5 +1,5 @@
 /**
- * plugins:unlink command - Unlink a local plugin
+ * marketplace:unlink command - Unlink a local plugin
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
@@ -20,15 +20,15 @@ type PluginsUnlinkFlags = Record<string, never>;
 export const pluginsUnlink = defineSystemCommand<PluginsUnlinkFlags, PluginsUnlinkResult>({
   name: 'unlink',
   description: 'Unlink a local plugin',
-  category: 'plugins',
-  examples: generateExamples('unlink', 'plugins', [
-    { flags: {} },  // kb plugins unlink (requires <path-or-name> arg)
+  category: 'marketplace',
+  examples: generateExamples('unlink', 'marketplace', [
+    { flags: {} },  // kb marketplace unlink (requires <path-or-name> arg)
   ]),
   flags: {},
   analytics: {
-    command: 'plugins:unlink',
-    startEvent: 'PLUGINS_UNLINK_STARTED',
-    finishEvent: 'PLUGINS_UNLINK_FINISHED',
+    command: 'marketplace:unlink',
+    startEvent: 'MARKETPLACE_UNLINK_STARTED',
+    finishEvent: 'MARKETPLACE_UNLINK_FINISHED',
   },
   async handler(ctx, argv, _flags) {
     if (argv.length === 0) {
@@ -78,7 +78,7 @@ export const pluginsUnlink = defineSystemCommand<PluginsUnlinkFlags, PluginsUnli
   },
   formatter(result, ctx, _flags) {
     ctx.ui.info(result.message ?? 'Plugin unlinked');
-    ctx.ui.info(`Run 'kb plugins ls' to see updated status`);
+    ctx.ui.info(`Run 'kb marketplace list' to see updated status`);
   },
 });
 

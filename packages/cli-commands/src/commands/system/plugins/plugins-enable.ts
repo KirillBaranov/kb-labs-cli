@@ -1,5 +1,5 @@
 /**
- * plugins:enable command - Enable a plugin
+ * marketplace:enable command - Enable a plugin
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
@@ -20,10 +20,10 @@ type PluginsEnableFlags = {
 export const pluginsEnable = defineSystemCommand<PluginsEnableFlags, PluginsEnableResult>({
   name: 'enable',
   description: 'Enable a plugin',
-  category: 'plugins',
-  examples: generateExamples('enable', 'plugins', [
-    { flags: {} },  // kb plugins enable (will need <package> arg in actual usage)
-    { flags: { perm: ['fs.write'] } },  // kb plugins enable --perm fs.write
+  category: 'marketplace',
+  examples: generateExamples('enable', 'marketplace', [
+    { flags: {} },  // kb marketplace enable (will need <package> arg in actual usage)
+    { flags: { perm: ['fs.write'] } },  // kb marketplace enable --perm fs.write
   ]),
   flags: {
     perm: {
@@ -32,9 +32,9 @@ export const pluginsEnable = defineSystemCommand<PluginsEnableFlags, PluginsEnab
     },
   },
   analytics: {
-    command: 'plugins:enable',
-    startEvent: 'PLUGINS_ENABLE_STARTED',
-    finishEvent: 'PLUGINS_ENABLE_FINISHED',
+    command: 'marketplace:enable',
+    startEvent: 'MARKETPLACE_ENABLE_STARTED',
+    finishEvent: 'MARKETPLACE_ENABLE_FINISHED',
   },
   async handler(ctx, argv, flags) {
     if (argv.length === 0) {
@@ -72,7 +72,7 @@ export const pluginsEnable = defineSystemCommand<PluginsEnableFlags, PluginsEnab
   },
   formatter(result, ctx, _flags) {
     ctx.ui.info(result.message ?? 'Plugin enabled');
-    ctx.ui.info(`Run 'kb plugins ls' to see updated status`);
+    ctx.ui.info(`Run 'kb marketplace list' to see updated status`);
   },
 });
 

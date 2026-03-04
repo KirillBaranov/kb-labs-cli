@@ -1,5 +1,5 @@
 /**
- * plugins:registry command - List all REST API plugin manifests
+ * marketplace:registry command - List all REST API plugin manifests
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
@@ -260,8 +260,8 @@ type PluginsRegistryFlags = {
 export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, PluginsRegistryResult>({
   name: 'registry',
   description: 'List all REST API plugin manifests for REST API server',
-  category: 'plugins',
-  examples: generateExamples('registry', 'plugins', [
+  category: 'marketplace',
+  examples: generateExamples('registry', 'marketplace', [
     { flags: {} },
     { flags: { json: true } },
   ]),
@@ -269,9 +269,9 @@ export const pluginsRegistry = defineSystemCommand<PluginsRegistryFlags, Plugins
     json: { type: 'boolean', description: 'Output in JSON format' },
   },
   analytics: {
-    command: 'plugins:registry',
-    startEvent: 'PLUGINS_REGISTRY_STARTED',
-    finishEvent: 'PLUGINS_REGISTRY_FINISHED',
+    command: 'marketplace:registry',
+    startEvent: 'MARKETPLACE_REGISTRY_STARTED',
+    finishEvent: 'MARKETPLACE_REGISTRY_FINISHED',
   },
   async handler(ctx, argv, flags) {
     const cwd = getContextCwd(ctx);

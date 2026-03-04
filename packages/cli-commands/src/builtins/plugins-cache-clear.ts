@@ -18,16 +18,16 @@ type PluginsCacheClearResult = CommandResult & {
 export const pluginsCacheClear = defineSystemCommand<PluginsCacheClearFlags, PluginsCacheClearResult>({
   name: 'clear-cache',
   description: 'Clear CLI plugin discovery cache',
-  category: 'plugins',
-  examples: ['kb plugins clear-cache', 'kb plugins clear-cache --deep'],
+  category: 'marketplace',
+  examples: ['kb marketplace clear-cache', 'kb marketplace clear-cache --deep'],
   flags: {
     deep: { type: 'boolean', description: 'Also clear Node.js module cache' },
     json: { type: 'boolean', description: 'Output in JSON format' },
   },
   analytics: {
-    command: 'plugins:clear-cache',
-    startEvent: 'PLUGINS_CACHE_CLEAR_STARTED',
-    finishEvent: 'PLUGINS_CACHE_CLEAR_FINISHED',
+    command: 'marketplace:clear-cache',
+    startEvent: 'MARKETPLACE_CACHE_CLEAR_STARTED',
+    finishEvent: 'MARKETPLACE_CACHE_CLEAR_FINISHED',
   },
   async handler(ctx, _argv, flags) {
     const deep = flags.deep;

@@ -1,5 +1,5 @@
 /**
- * plugins:doctor command - Diagnose plugin issues
+ * marketplace:doctor command - Diagnose plugin issues
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
@@ -37,18 +37,18 @@ type PluginsDoctorFlags = {
 export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResult>({
   name: 'doctor',
   description: 'Diagnose plugin issues and suggest fixes',
-  category: 'plugins',
-  examples: generateExamples('doctor', 'plugins', [
-    { flags: {} },  // kb plugins doctor
-    { flags: { json: true } },  // kb plugins doctor --json
+  category: 'marketplace',
+  examples: generateExamples('doctor', 'marketplace', [
+    { flags: {} },  // kb marketplace doctor
+    { flags: { json: true } },  // kb marketplace doctor --json
   ]),
   flags: {
     json: { type: 'boolean', description: 'Output in JSON format' },
   },
   analytics: {
-    command: 'plugins:doctor',
-    startEvent: 'PLUGINS_DOCTOR_STARTED',
-    finishEvent: 'PLUGINS_DOCTOR_FINISHED',
+    command: 'marketplace:doctor',
+    startEvent: 'MARKETPLACE_DOCTOR_STARTED',
+    finishEvent: 'MARKETPLACE_DOCTOR_FINISHED',
   },
   async handler(ctx, argv, _flags): Promise<DoctorResult> {
     const targetPlugin = argv[0];
@@ -243,8 +243,8 @@ export const pluginsDoctor = defineSystemCommand<PluginsDoctorFlags, DoctorResul
     }
 
     const nextStepsItems = [
-      `kb plugins enable <name>  ${ctx.ui.colors.muted('Enable a disabled plugin')}`,
-      `kb plugins clear-cache  ${ctx.ui.colors.muted('Clear cache and rediscover')}`,
+      `kb marketplace enable <name>  ${ctx.ui.colors.muted('Enable a disabled plugin')}`,
+      `kb marketplace clear-cache  ${ctx.ui.colors.muted('Clear cache and rediscover')}`,
     ];
 
     const sections = [

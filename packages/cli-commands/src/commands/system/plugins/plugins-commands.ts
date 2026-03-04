@@ -1,5 +1,5 @@
 /**
- * plugins:commands command - Show all plugin commands with real invocation syntax
+ * marketplace:commands command - Show all plugin commands with real invocation syntax
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
@@ -29,8 +29,8 @@ type GroupedCommands = Record<string, Command[]>;
 export const pluginsCommands = defineSystemCommand<PluginsCommandsFlags, PluginsCommandsResult>({
   name: 'commands',
   description: 'Show all plugin commands with their real invocation syntax',
-  category: 'plugins',
-  examples: generateExamples('commands', 'plugins', [
+  category: 'marketplace',
+  examples: generateExamples('commands', 'marketplace', [
     { flags: {} },
     { flags: { plugin: '@kb-labs/mind' } },
     { flags: { sort: 'count' } },
@@ -201,10 +201,10 @@ export const pluginsCommands = defineSystemCommand<PluginsCommandsFlags, Plugins
     sections.push({
       header: 'Next Steps',
       items: [
-        `kb plugins commands --plugin <name>  ${safeColors.muted('Filter by plugin')}`,
-        `kb plugins commands --sort <order>  ${safeColors.muted('Sort: alpha, count, type')}`,
-        `kb plugins commands --json  ${safeColors.muted('Get machine-readable output')}`,
-        `kb plugins list  ${safeColors.muted('Show installed plugins')}`,
+        `kb marketplace commands --plugin <name>  ${safeColors.muted('Filter by plugin')}`,
+        `kb marketplace commands --sort <order>  ${safeColors.muted('Sort: alpha, count, type')}`,
+        `kb marketplace commands --json  ${safeColors.muted('Get machine-readable output')}`,
+        `kb marketplace list  ${safeColors.muted('Show installed plugins')}`,
       ],
     });
 

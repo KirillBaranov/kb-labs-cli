@@ -1,5 +1,5 @@
 /**
- * plugins:scaffold command - Generate plugin template
+ * marketplace:scaffold command - Generate plugin template
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
@@ -22,9 +22,9 @@ type PluginsScaffoldFlags = {
 export const pluginsScaffold = defineSystemCommand<PluginsScaffoldFlags, PluginsScaffoldResult>({
   name: 'scaffold',
   description: 'Generate a new KB CLI plugin template',
-  category: 'plugins',
-  examples: generateExamples('scaffold', 'plugins', [
-    { flags: {} },  // kb plugins scaffold (requires <name> arg)
+  category: 'marketplace',
+  examples: generateExamples('scaffold', 'marketplace', [
+    { flags: {} },  // kb marketplace scaffold (requires <name> arg)
     { flags: { format: 'cjs' } },
   ]),
   flags: {
@@ -36,9 +36,9 @@ export const pluginsScaffold = defineSystemCommand<PluginsScaffoldFlags, Plugins
     } as Omit<StringFlagSchema, 'name'>,
   },
   analytics: {
-    command: 'plugins:scaffold',
-    startEvent: 'PLUGINS_SCAFFOLD_STARTED',
-    finishEvent: 'PLUGINS_SCAFFOLD_FINISHED',
+    command: 'marketplace:scaffold',
+    startEvent: 'MARKETPLACE_SCAFFOLD_STARTED',
+    finishEvent: 'MARKETPLACE_SCAFFOLD_FINISHED',
   },
   async handler(ctx, argv, flags) {
     if (argv.length === 0) {
@@ -271,7 +271,7 @@ pnpm build
 pnpm dev
 
 # Link for local development
-kb plugins link ./${pluginName}
+kb marketplace link ./${pluginName}
 \`\`\`
 `;
 
@@ -308,7 +308,7 @@ dist
           `  ${ctx.ui.colors.info(`cd ${pluginName}`)}`,
           `  ${ctx.ui.colors.info('pnpm install')}`,
           `  ${ctx.ui.colors.info('pnpm build')}`,
-          `  ${ctx.ui.colors.info(`kb plugins link ./${pluginName}`)}`,
+          `  ${ctx.ui.colors.info(`kb marketplace link ./${pluginName}`)}`,
           `  ${ctx.ui.colors.info(`kb ${pluginName} hello`)}`,
           '',
           ctx.ui.colors.muted('See docs/plugin-development.md for more details'),

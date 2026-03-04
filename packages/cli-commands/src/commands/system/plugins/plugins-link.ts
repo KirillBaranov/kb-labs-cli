@@ -1,5 +1,5 @@
 /**
- * plugins:link command - Link a local plugin for development
+ * marketplace:link command - Link a local plugin for development
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
@@ -22,15 +22,15 @@ type PluginsLinkFlags = Record<string, never>;
 export const pluginsLink = defineSystemCommand<PluginsLinkFlags, PluginsLinkResult>({
   name: 'link',
   description: 'Link a local plugin for development',
-  category: 'plugins',
-  examples: generateExamples('link', 'plugins', [
-    { flags: {} },  // kb plugins link (requires <path> arg)
+  category: 'marketplace',
+  examples: generateExamples('link', 'marketplace', [
+    { flags: {} },  // kb marketplace link (requires <path> arg)
   ]),
   flags: {},
   analytics: {
-    command: 'plugins:link',
-    startEvent: 'PLUGINS_LINK_STARTED',
-    finishEvent: 'PLUGINS_LINK_FINISHED',
+    command: 'marketplace:link',
+    startEvent: 'MARKETPLACE_LINK_STARTED',
+    finishEvent: 'MARKETPLACE_LINK_FINISHED',
   },
   async handler(ctx, argv, _flags) {
     if (argv.length === 0) {

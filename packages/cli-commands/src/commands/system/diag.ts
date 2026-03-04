@@ -85,7 +85,7 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
       const shadowed = manifests.filter(m => m.shadowed).length;
       
       diagnostics.push({
-        category: 'plugins',
+        category: 'marketplace',
         status: disabled > 0 ? 'warning' : 'ok',
         message: `Found ${discovered.length} packages, ${enabled} enabled, ${disabled} unavailable, ${shadowed} shadowed`,
         details: {
@@ -98,7 +98,7 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
       });
     } catch (err: any) {
       diagnostics.push({
-        category: 'plugins',
+        category: 'marketplace',
         status: 'error',
         message: `Discovery failed: ${err.message}`,
         details: { error: err.message },
@@ -282,10 +282,10 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
       // Next steps
       const nextSteps: string[] = [];
       if (hasErrors) {
-        nextSteps.push(`kb plugins doctor  ${safeColors.muted('Diagnose plugin issues')}`);
+        nextSteps.push(`kb marketplace doctor  ${safeColors.muted('Diagnose plugin issues')}`);
       }
       if (hasWarnings) {
-        nextSteps.push(`kb plugins ls  ${safeColors.muted('List all plugins')}`);
+        nextSteps.push(`kb marketplace list  ${safeColors.muted('List all plugins')}`);
       }
       nextSteps.push(`kb diagnose  ${safeColors.muted('Quick environment check')}`);
 

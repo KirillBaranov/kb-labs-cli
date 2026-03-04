@@ -75,7 +75,7 @@ async function validateManifestAgainstContracts(
 export const pluginValidate = defineSystemCommand<PluginValidateFlags, PluginValidateResult>({
   name: 'plugin:validate',
   description: 'Validate plugin manifest and contracts',
-  category: 'plugins',
+  category: 'marketplace',
   flags: {
     manifest: {
       type: 'string',

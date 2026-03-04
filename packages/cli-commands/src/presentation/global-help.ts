@@ -210,10 +210,10 @@ export function renderGlobalHelpNew(registry: {
     );
   }
 
-  const pluginsGroup = systemGroups.find((g: CommandGroup) => g.name === "system:plugins");
-  if (pluginsGroup) {
+  const marketplaceGroup = systemGroups.find((g: CommandGroup) => g.name === "marketplace");
+  if (marketplaceGroup) {
     nextStepsItems.push(
-      `${colors.cyan("kb plugins")}  ${colors.dim("List and manage plugins")}`,
+      `${colors.cyan("kb marketplace")}  ${colors.dim("Open marketplace commands")}`,
     );
   }
 
@@ -243,22 +243,23 @@ export function renderPluginsHelp(registry: {
     .list()
     .filter(
       (cmd) =>
-        cmd.name?.startsWith("plugins:") || cmd.category === "system",
+        cmd.name?.startsWith("marketplace:") || cmd.category === "system",
     );
 
   const sections: SectionContent[] = [];
 
   // Plugin Management Commands section
   const commandMap: Record<string, string> = {
-    "plugins:ls": "List all discovered plugins",
-    "plugins:enable": "Enable a plugin",
-    "plugins:disable": "Disable a plugin",
-    "plugins:link": "Link a local plugin for development",
-    "plugins:unlink": "Unlink a local plugin",
-    "plugins:doctor": "Diagnose plugin issues",
-    "plugins:watch": "Watch for manifest changes and hot-reload",
-    "plugins:scaffold": "Generate a new plugin template",
-    "plugins:clear-cache": "Clear plugin discovery cache",
+    "marketplace:install": "Install package(s) from marketplace",
+    "marketplace:update": "Update package(s) from marketplace",
+    "marketplace:list": "List all discovered plugins",
+    "marketplace:enable": "Enable a plugin",
+    "marketplace:disable": "Disable a plugin",
+    "marketplace:link": "Link a local plugin for development",
+    "marketplace:unlink": "Unlink a local plugin",
+    "marketplace:doctor": "Diagnose plugin issues",
+    "marketplace:scaffold": "Generate a new plugin template",
+    "marketplace:clear-cache": "Clear plugin discovery cache",
   };
 
   const maxLength = Math.max(
@@ -277,10 +278,10 @@ export function renderPluginsHelp(registry: {
 
   // Examples section
   const examples = [
-    `kb plugins ls                      ${colors.dim("List all plugins")}`,
-    `kb plugins enable @kb-labs/devlink-cli  ${colors.dim("Enable a plugin")}`,
-    `kb plugins doctor                 ${colors.dim("Diagnose plugin issues")}`,
-    `kb plugins scaffold my-plugin      ${colors.dim("Generate plugin template")}`,
+    `kb marketplace list                    ${colors.dim("List all plugins")}`,
+    `kb marketplace enable @kb-labs/devlink-cli  ${colors.dim("Enable a plugin")}`,
+    `kb marketplace doctor                 ${colors.dim("Diagnose plugin issues")}`,
+    `kb marketplace scaffold my-plugin      ${colors.dim("Generate plugin template")}`,
   ];
 
   sections.push({
@@ -291,7 +292,7 @@ export function renderPluginsHelp(registry: {
   // Next steps
   sections.push({
     header: "Next Steps",
-    items: [colors.dim("Use 'kb plugins <command> --help' for detailed help")],
+    items: [colors.dim("Use 'kb marketplace <command> --help' for detailed help")],
   });
 
   return sideBorderBox({
@@ -301,4 +302,3 @@ export function renderPluginsHelp(registry: {
     timing: tracker.total(),
   });
 }
-

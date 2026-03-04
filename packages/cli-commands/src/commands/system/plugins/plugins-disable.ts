@@ -1,5 +1,5 @@
 /**
- * plugins:disable command - Disable a plugin
+ * marketplace:disable command - Disable a plugin
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
@@ -17,15 +17,15 @@ type PluginsDisableFlags = Record<string, never>;
 export const pluginsDisable = defineSystemCommand<PluginsDisableFlags, PluginsDisableResult>({
   name: 'disable',
   description: 'Disable a plugin',
-  category: 'plugins',
-  examples: generateExamples('disable', 'plugins', [
-    { flags: {} },  // kb plugins disable (requires <package> arg)
+  category: 'marketplace',
+  examples: generateExamples('disable', 'marketplace', [
+    { flags: {} },  // kb marketplace disable (requires <package> arg)
   ]),
   flags: {},
   analytics: {
-    command: 'plugins:disable',
-    startEvent: 'PLUGINS_DISABLE_STARTED',
-    finishEvent: 'PLUGINS_DISABLE_FINISHED',
+    command: 'marketplace:disable',
+    startEvent: 'MARKETPLACE_DISABLE_STARTED',
+    finishEvent: 'MARKETPLACE_DISABLE_FINISHED',
   },
   async handler(ctx, argv, _flags) {
     if (argv.length === 0) {
@@ -50,7 +50,7 @@ export const pluginsDisable = defineSystemCommand<PluginsDisableFlags, PluginsDi
   },
   formatter(result, ctx, _flags) {
     ctx.ui.info(result.message ?? 'Plugin disabled');
-    ctx.ui.info(`Run 'kb plugins ls' to see updated status`);
+    ctx.ui.info(`Run 'kb marketplace list' to see updated status`);
   },
 });
 
