@@ -75,7 +75,7 @@ function renderProductLimits(
   const commands = registry.getCommandsByGroup(group);
   if (commands.length === 0) {
     renderError(
-      `Unknown product '${group}'. Use 'kb plugins' to list available namespaces.`,
+      `Unknown product '${group}'. Use 'kb marketplace' to list available namespaces.`,
       presenter,
       asJson,
     );
