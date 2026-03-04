@@ -8,3 +8,5 @@ export { pluginsRegistry } from './plugins-registry';
 export { pluginsDoctor } from './plugins-doctor';
 export { pluginsScaffold } from './plugins-scaffold';
 export { pluginValidate } from './plugins-validate';
+export { marketplaceInstall } from './marketplace-install';
+export { marketplaceUpdate } from './marketplace-update';
