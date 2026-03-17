@@ -7,6 +7,7 @@ export default defineConfig({
     index: "src/index.ts",
     public: "src/public/index.ts",
     "v3/index": "src/v3/index.ts",
+    "gateway/index": "src/gateway/index.ts",
   },
   tsconfig: "tsconfig.build.json", // Use build-specific tsconfig without paths
   dts: true, // Re-enabled for V3 migration

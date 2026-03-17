@@ -7,13 +7,12 @@ type HelloFlags = {
 
 type HelloResult = CommandResult & {
   message: string;
-  who: string;
 };
 
 export const hello = defineSystemCommand<HelloFlags, HelloResult>({
   name: 'hello',
-  description: 'Print a friendly greeting',
-  longDescription: 'Prints a simple greeting message for testing CLI functionality',
+  description: 'Print Hello World',
+  longDescription: 'Prints "Hello World" — a simple smoke-test for CLI functionality',
   category: 'info',
   examples: generateExamples('hello', 'kb', [
     { flags: {} },
@@ -26,27 +25,17 @@ export const hello = defineSystemCommand<HelloFlags, HelloResult>({
     startEvent: 'HELLO_STARTED',
     finishEvent: 'HELLO_FINISHED',
   },
-  async handler(ctx, argv, flags) {
-    const who = (ctx as any)?.user ?? 'KB Labs';
-    const message = `Hello, ${who}!`;
+  async handler(ctx, _argv, flags) {
+    const message = 'Hello World';
 
-    ctx.platform?.logger?.info('Hello command executed', { who });
+    ctx.platform?.logger?.info('Hello command executed');
 
-    // Output via ctx.ui (pure PluginContextV3)
     if (!flags.json) {
       ctx.ui?.write(`${message}\n`);
     } else {
-      ctx.ui?.json({
-        message,
-        who,
-        status: 'ready',
-      });
+      ctx.ui?.json({ message, status: 'ready' });
     }
 
-    return {
-      ok: true,
-      message,
-      who,
-    };
+    return { ok: true, message };
   },
 });

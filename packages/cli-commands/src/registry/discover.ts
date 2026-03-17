@@ -1144,10 +1144,13 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
 
       log('debug', `[plugins][cache] hit age=${cacheAge}ms ttl=${ttlMs}ms validateHash=${enforceHashValidation}`);
 
+      let staleCount = 0;
       for (const entry of Object.values(cached.packages) as PackageCacheEntry[]) {
         const stale = await isPackageCacheStale(entry, { validateHash: enforceHashValidation });
         if (!stale) {
           freshResults.push(entry.result);
+        } else {
+          staleCount += 1;
         }
       }
       const hasNewWorkspacePackages = await detectNewWorkspacePackages(
@@ -1155,7 +1158,7 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
         cached.packages,
       );
 
-      if (freshResults.length > 0 && !hasNewWorkspacePackages) {
+      if (staleCount === 0 && freshResults.length > 0 && !hasNewWorkspacePackages) {
         const totalTime = Date.now() - startTime;
         const sourceCounts = freshResults.reduce((acc, r) => {
           acc[r.source] = (acc[r.source] || 0) + 1;
@@ -1169,6 +1172,9 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
 
       if (hasNewWorkspacePackages) {
         log('debug', '[plugins][cache] invalidated: new workspace packages detected');
+      }
+      if (staleCount > 0) {
+        log('debug', `[plugins][cache] invalidated: ${staleCount} stale package(s) detected`);
       }
     }
   }
@@ -1255,4 +1261,3 @@ export async function discoverManifestsByNamespace(
     });
   });
 }
-

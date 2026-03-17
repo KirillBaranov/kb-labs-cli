@@ -5,6 +5,7 @@ import {
   marketplaceGroup,
   docsGroup,
   logsGroup,
+  authGroup,
 } from "../commands/system/groups";
 import { registerManifests, disposeAllPlugins, preflightManifests } from "../registry/register";
 import { PluginRegistry } from "@kb-labs/cli-core";
@@ -38,6 +39,7 @@ export async function registerBuiltinCommands(
   registry.registerGroup(marketplaceGroup);
   registry.registerGroup(docsGroup);
   registry.registerGroup(logsGroup);
+  registry.registerGroup(authGroup);
 
   try {
     const cwd = getContextCwd({ cwd: input.cwd });

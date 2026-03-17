@@ -23,6 +23,12 @@
       "import": "./dist/v3/index.js",
       "require": "./dist/v3/index.cjs",
       "default": "./dist/v3/index.js"
+    },
+    "./gateway": {
+      "types": "./dist/gateway/index.d.ts",
+      "import": "./dist/gateway/index.js",
+      "require": "./dist/gateway/index.cjs",
+      "default": "./dist/gateway/index.js"
     }
   },
   "files": [

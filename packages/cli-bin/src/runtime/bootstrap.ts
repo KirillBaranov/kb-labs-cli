@@ -28,6 +28,7 @@ import {
 import { handleLimitFlag } from "./limits";
 import { getDefaultMiddlewares } from "./middlewares";
 import { tryExecuteV3, createPluginContextV3ForSystemCommand } from "./v3-adapter";
+import { tryResolveGateway, executeViaGateway } from "./gateway-executor";
 import { loadEnvFile } from "./env-loader";
 import { initializePlatform } from "./platform-init";
 import { resolveVersion } from "./helpers/version";
@@ -490,7 +491,7 @@ export async function executeCli(
       }
     }
 
-    return await runtime.middleware.execute(context, async () => {
+    return runtime.middleware.execute(context, async () => {
       // Get command with type information for secure routing
       const result = findCommandWithType(normalizedCmdPath);
 
@@ -513,11 +514,24 @@ export async function executeCli(
       }
 
       if (result.type === 'plugin') {
-        // Plugin command - execute in subprocess via V3 adapter
-        const manifestCmd = registryStore.getManifestCommand(normalizedCmdPath.join(":"));
+        const commandId = normalizedCmdPath.join(":");
+        const manifestCmd = registryStore.getManifestCommand(commandId);
+
+        // Thin client mode: try Gateway first (if credentials exist)
+        const gatewayClient = await tryResolveGateway();
+        if (gatewayClient) {
+          return executeViaGateway(gatewayClient, {
+            commandId,
+            argv: actualRest,
+            flags: { ...global, ...flagsObj },
+            manifestCmd,
+          });
+        }
+
+        // Local execution: V3 adapter
         const v3ExitCode = await tryExecuteV3({
           context,
-          commandId: normalizedCmdPath.join(":"),
+          commandId,
           argv: actualRest,
           flags: { ...global, ...flagsObj },
           manifestCmd,
@@ -530,7 +544,7 @@ export async function executeCli(
         }
 
         // V3 execution unavailable - this is an error
-        throw new Error(`Plugin command ${normalizedCmdPath.join(":")} is not available for execution. Ensure the command has a handlerPath in its manifest.`);
+        throw new Error(`Plugin command ${commandId} is not available for execution. Ensure the command has a handlerPath in its manifest.`);
       }
 
       // Unknown type - shouldn't happen

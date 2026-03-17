@@ -15,6 +15,7 @@ import {
 import { pluginsCacheClear } from '../../builtins/plugins-cache-clear';
 import { docsGenerateCliReference } from './docs-generate-cli-reference';
 import { logsDiagnose, logsContext, logsSummarize, logsQuery, logsSearch, logsGet, logsStats } from './logs';
+import { authLogin, authLogout, authStatus, authCreateServiceAccount } from './auth';
 
 /**
  * Info Commands Group
@@ -67,4 +68,15 @@ export const logsGroup = defineSystemCommandGroup('logs', 'Log viewing and analy
   logsSearch,
   logsGet,
   logsStats,
+]);
+
+/**
+ * Auth Commands Group
+ * Gateway authentication and credential management
+ */
+export const authGroup = defineSystemCommandGroup('auth', 'Gateway authentication commands', [
+  authLogin,
+  authLogout,
+  authStatus,
+  authCreateServiceAccount,
 ]);

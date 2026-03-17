@@ -1,3 +1,23 @@
+/**
+ * bin.ts — CLI entry point for the `kb` command.
+ *
+ * This is the first module executed when the CLI binary is invoked. It is
+ * responsible for environment bootstrapping that must happen before any other
+ * modules are imported:
+ *
+ *  1. Log level    — defaults KB_LOG_LEVEL to "silent" so that no log output
+ *                    leaks unless the user passes --debug or sets LOG_LEVEL /
+ *                    KB_LOG_LEVEL explicitly.
+ *  2. Output mode  — sets KB_OUTPUT_MODE to "json" when --json is present so
+ *                    that lazily-initialised sinks (e.g. ConsoleSink) are never
+ *                    created when machine-readable JSON output is requested.
+ *
+ * After bootstrapping, it imports and calls `run()` from the CLI index with
+ * the raw process arguments (argv[2..]), then ensures the platform is
+ * gracefully shut down via `platform.shutdown()` before the process exits.
+ * If `run()` returns a numeric exit code, that code is forwarded to
+ * `process.exit()` so the shell receives the correct status.
+ */
 
 // CRITICAL: Set default log level BEFORE any imports to prevent log spam
 // This must happen before auto-init in lazy-loaded loggers
