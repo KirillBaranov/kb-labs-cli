@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./registry": {
+      "types": "./dist/registry/index.d.ts",
+      "default": "./dist/registry/index.js"
     }
   },
   "files": [
@@ -31,22 +35,22 @@
     "@kb-labs/cli-api": "workspace:*",
     "@kb-labs/cli-contracts": "workspace:*",
     "@kb-labs/cli-core": "workspace:*",
-    "@kb-labs/core-platform": "workspace:*",
-    "@kb-labs/core-ipc": "workspace:*",
-    "@kb-labs/core-resource-broker": "workspace:*",
-    "@kb-labs/core-runtime": "workspace:*",
-    "@kb-labs/core-state-broker": "workspace:*",
-    "@kb-labs/core-sys": "workspace:*",
-    "@kb-labs/plugin-contracts": "workspace:*",
-    "@kb-labs/plugin-execution": "workspace:*",
-    "@kb-labs/plugin-runtime": "workspace:*",
-    "@kb-labs/shared-cli-ui": "workspace:*",
-    "@kb-labs/shared-command-kit": "workspace:*",
-    "@kb-labs/workflow-artifacts": "workspace:*",
-    "@kb-labs/workflow-constants": "workspace:*",
-    "@kb-labs/workflow-contracts": "workspace:*",
-    "@kb-labs/workflow-engine": "workspace:*",
-    "@kb-labs/workflow-runtime": "workspace:*",
+    "@kb-labs/core-platform": "link:../../../kb-labs-core/packages/core-platform",
+    "@kb-labs/core-ipc": "link:../../../kb-labs-core/packages/core-ipc",
+    "@kb-labs/core-resource-broker": "link:../../../kb-labs-core/packages/core-resource-broker",
+    "@kb-labs/core-runtime": "link:../../../kb-labs-core/packages/core-runtime",
+    "@kb-labs/core-state-broker": "link:../../../kb-labs-core/packages/core-state-broker",
+    "@kb-labs/core-sys": "link:../../../kb-labs-core/packages/core-sys",
+    "@kb-labs/plugin-contracts": "link:../../../../infra/kb-labs-plugin/packages/plugin-contracts",
+    "@kb-labs/plugin-execution": "link:../../../../infra/kb-labs-plugin/packages/plugin-execution",
+    "@kb-labs/plugin-runtime": "link:../../../../infra/kb-labs-plugin/packages/plugin-runtime",
+    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/shared-cli-ui",
+    "@kb-labs/shared-command-kit": "link:../../../kb-labs-shared/packages/shared-command-kit",
+    "@kb-labs/workflow-artifacts": "link:../../../kb-labs-workflow/packages/workflow-artifacts",
+    "@kb-labs/workflow-constants": "link:../../../kb-labs-workflow/packages/workflow-constants",
+    "@kb-labs/workflow-contracts": "link:../../../kb-labs-workflow/packages/workflow-contracts",
+    "@kb-labs/workflow-engine": "link:../../../kb-labs-workflow/packages/workflow-engine",
+    "@kb-labs/workflow-runtime": "link:../../../kb-labs-workflow/packages/workflow-runtime",
     "ajv": "^8.17.1",
     "glob": "^11.0.0",
     "yaml": "^2.8.0",
@@ -61,7 +65,7 @@
     "pathe": "^1.1.2"
   },
   "devDependencies": {
-    "@kb-labs/devkit": "workspace:*",
+    "@kb-labs/devkit": "link:../../../../infra/kb-labs-devkit",
     "@types/node": "^24.3.3",
     "@types/picomatch": "^4",
     "rimraf": "^6.0.1",

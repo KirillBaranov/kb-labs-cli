@@ -88,70 +88,70 @@
         "../kb-labs-core/packages/core-sys/src/*"
       ],
       "@kb-labs/devlink-core": [
-        "../kb-labs-devlink/packages/devlink-core/src/index.ts"
+        "../../plugins/kb-labs-devlink/packages/devlink-core/src/index.ts"
       ],
       "@kb-labs/devlink-core/*": [
-        "../kb-labs-devlink/packages/devlink-core/src/*"
+        "../../plugins/kb-labs-devlink/packages/devlink-core/src/*"
       ],
       "@kb-labs/mind-cli": [
-        "../kb-labs-mind/packages/mind-cli/src/index.ts"
+        "../../plugins/kb-labs-mind/packages/mind-cli/src/index.ts"
       ],
       "@kb-labs/mind-cli/*": [
-        "../kb-labs-mind/packages/mind-cli/src/*"
+        "../../plugins/kb-labs-mind/packages/mind-cli/src/*"
       ],
       "@kb-labs/mind-core": [
-        "../kb-labs-mind/packages/mind-core/src/index.ts"
+        "../../plugins/kb-labs-mind/packages/mind-core/src/index.ts"
       ],
       "@kb-labs/mind-core/*": [
-        "../kb-labs-mind/packages/mind-core/src/*"
+        "../../plugins/kb-labs-mind/packages/mind-core/src/*"
       ],
       "@kb-labs/mind-indexer": [
-        "../kb-labs-mind/packages/mind-indexer/src/index.ts"
+        "../../plugins/kb-labs-mind/packages/mind-indexer/src/index.ts"
       ],
       "@kb-labs/mind-indexer/*": [
-        "../kb-labs-mind/packages/mind-indexer/src/*"
+        "../../plugins/kb-labs-mind/packages/mind-indexer/src/*"
       ],
       "@kb-labs/mind-types": [
-        "../kb-labs-mind/packages/mind-types/src/index.ts"
+        "../../plugins/kb-labs-mind/packages/mind-types/src/index.ts"
       ],
       "@kb-labs/mind-types/*": [
-        "../kb-labs-mind/packages/mind-types/src/*"
+        "../../plugins/kb-labs-mind/packages/mind-types/src/*"
       ],
       "@kb-labs/plugin-contracts": [
-        "../kb-labs-plugin/packages/plugin-contracts/src/index.ts"
+        "../../infra/kb-labs-plugin/packages/plugin-contracts/src/index.ts"
       ],
       "@kb-labs/plugin-contracts/*": [
-        "../kb-labs-plugin/packages/plugin-contracts/src/*"
+        "../../infra/kb-labs-plugin/packages/plugin-contracts/src/*"
       ],
       "@kb-labs/plugin-execution": [
-        "../kb-labs-plugin/packages/plugin-execution/src/index.ts"
+        "../../infra/kb-labs-plugin/packages/plugin-execution/src/index.ts"
       ],
       "@kb-labs/plugin-execution-factory": [
-        "../kb-labs-plugin/packages/plugin-execution-factory/src/index.ts"
+        "../../infra/kb-labs-plugin/packages/plugin-execution-factory/src/index.ts"
       ],
       "@kb-labs/plugin-execution-factory/*": [
-        "../kb-labs-plugin/packages/plugin-execution-factory/src/*"
+        "../../infra/kb-labs-plugin/packages/plugin-execution-factory/src/*"
       ],
       "@kb-labs/plugin-execution/*": [
-        "../kb-labs-plugin/packages/plugin-execution/src/*"
+        "../../infra/kb-labs-plugin/packages/plugin-execution/src/*"
       ],
       "@kb-labs/plugin-runtime": [
-        "../kb-labs-plugin/packages/plugin-runtime/src/index.ts"
+        "../../infra/kb-labs-plugin/packages/plugin-runtime/src/index.ts"
       ],
       "@kb-labs/plugin-runtime/*": [
-        "../kb-labs-plugin/packages/plugin-runtime/src/*"
+        "../../infra/kb-labs-plugin/packages/plugin-runtime/src/*"
       ],
       "@kb-labs/release-manager-cli": [
-        "../kb-labs-release-manager/packages/release-manager-cli/src/index.ts"
+        "../../plugins/kb-labs-release-manager/packages/release-manager-cli/src/index.ts"
       ],
       "@kb-labs/release-manager-cli/*": [
-        "../kb-labs-release-manager/packages/release-manager-cli/src/*"
+        "../../plugins/kb-labs-release-manager/packages/release-manager-cli/src/*"
       ],
       "@kb-labs/release-manager-core": [
-        "../kb-labs-release-manager/packages/release-manager-core/src/index.ts"
+        "../../plugins/kb-labs-release-manager/packages/release-manager-core/src/index.ts"
       ],
       "@kb-labs/release-manager-core/*": [
-        "../kb-labs-release-manager/packages/release-manager-core/src/*"
+        "../../plugins/kb-labs-release-manager/packages/release-manager-core/src/*"
       ],
       "@kb-labs/shared-cli-ui": [
         "../kb-labs-shared/packages/shared-cli-ui/src/index.ts"
