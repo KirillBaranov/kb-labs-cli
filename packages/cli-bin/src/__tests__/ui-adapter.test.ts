@@ -11,9 +11,10 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { SystemContext } from '@kb-labs/cli-core';
+import { noopUI } from '@kb-labs/plugin-contracts';
+import { setJsonMode } from '@kb-labs/shared-cli-ui';
 
-// We'll test the createUIFacade function indirectly through v3-adapter
-// by importing and calling tryExecuteV3, but for now we'll mock the internal createUIFacade
+// Tests for createCLIUIFacade (from plugin-executor) and createJsonModeUI logic
 
 describe('UI Adapter', () => {
   let mockSystemContext: SystemContext;
@@ -55,7 +56,7 @@ describe('UI Adapter', () => {
 
   describe('UIFacade Creation', () => {
     it('should create UIFacade with all required methods', () => {
-      // Mock the createUIFacade function (normally internal to v3-adapter)
+      // Mock a minimal UIFacade (createCLIUIFacade is tested through integration)
       const createUIFacade = (_context: SystemContext) => ({
         colors: {} as any,
         write: (text: string) => process.stdout.write(text),
@@ -540,6 +541,69 @@ describe('UI Adapter', () => {
       ui.error('Test error string');
 
       expect(mockError).toHaveBeenCalledWith('Test error string');
+    });
+  });
+
+  describe('JSON Mode UI (createJsonModeUI)', () => {
+    afterEach(() => {
+      setJsonMode(false);
+    });
+
+    it('all UI methods except json() are no-ops in json mode', () => {
+      // Replicate the createJsonModeUI logic from plugin-executor
+      const baseJson = vi.fn();
+      const base = {
+        ...noopUI,
+        json: baseJson,
+      };
+      const jsonModeUI = {
+        ...noopUI,
+        colors: base.colors,
+        symbols: base.symbols,
+        json: base.json,
+      };
+
+      // These should all be no-ops (from noopUI)
+      expect(() => jsonModeUI.info('hello')).not.toThrow();
+      expect(() => jsonModeUI.success('ok')).not.toThrow();
+      expect(() => jsonModeUI.warn('warn')).not.toThrow();
+      expect(() => jsonModeUI.error('err')).not.toThrow();
+      expect(() => jsonModeUI.write('text')).not.toThrow();
+      expect(() => jsonModeUI.sideBox({ title: 'T', sections: [] })).not.toThrow();
+      expect(() => jsonModeUI.newline()).not.toThrow();
+      expect(() => jsonModeUI.divider()).not.toThrow();
+
+      // json() must be the real one
+      jsonModeUI.json({ ok: true });
+      expect(baseJson).toHaveBeenCalledWith({ ok: true });
+    });
+
+    it('json() writes to stdout', () => {
+      const write = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+      const realJson = (data: unknown) => {
+        process.stdout.write(JSON.stringify(data) + '\n');
+      };
+      const jsonModeUI = { ...noopUI, json: realJson };
+
+      jsonModeUI.json({ packages: [], strategy: 'semver' });
+
+      expect(write).toHaveBeenCalledWith(expect.stringContaining('"strategy"'));
+      write.mockRestore();
+    });
+
+    it('sideBox and info produce no stdout output in json mode', () => {
+      const write = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const jsonModeUI = { ...noopUI };
+      jsonModeUI.sideBox({ title: 'T', sections: [{ items: ['line'] }] });
+      jsonModeUI.info('message');
+
+      expect(write).not.toHaveBeenCalled();
+      expect(log).not.toHaveBeenCalled();
+
+      write.mockRestore();
+      log.mockRestore();
     });
   });
 

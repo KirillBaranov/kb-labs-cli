@@ -14,9 +14,9 @@ import {
 } from '@kb-labs/core-runtime';
 import { findNearestConfig, readJsonWithDiagnostics } from '@kb-labs/core-config';
 import path from 'node:path';
-import { sideBorderBox, safeColors, safeSymbols } from '@kb-labs/shared-cli-ui';
-import type { UIFacade, MessageOptions, Spinner } from '@kb-labs/plugin-contracts';
 import { noopUI } from '@kb-labs/plugin-contracts';
+import type { UIFacade } from '@kb-labs/plugin-contracts';
+import { createCLIUIFacade } from './ui-facade';
 
 const CLI_LIFECYCLE_HOOK_ID = 'cli-runtime';
 let lifecycleHooksRegistered = false;
@@ -65,134 +65,14 @@ function ensureLifecycleHooksRegistered(): void {
 
 /**
  * Create CLI-specific UI provider.
- * Returns beautiful UI for CLI host, noopUI for other hosts (REST, workflow, etc.)
+ * Returns rich UI for CLI host, noopUI for other hosts (REST, workflow, etc.)
  */
 function createCLIUIProvider(): (hostType: string) => UIFacade {
   return (hostType: string): UIFacade => {
-    // Only provide rich UI for CLI host
     if (hostType !== 'cli') {
       return noopUI;
     }
-
-    // Create rich CLI UI with sideBorderBox
-    return {
-      colors: safeColors,
-      symbols: safeSymbols,
-      write: (text: string) => {
-        // Add newline if text doesn't end with one
-        const output = text.endsWith('\n') ? text : text + '\n';
-        process.stdout.write(output);
-      },
-      info: (msg: string, options?: MessageOptions) => {
-        // Convert OutputSection[] to SectionContent[] for sideBorderBox
-        const sections = options?.sections?.map(s => ({
-          header: s.header,
-          items: s.items
-        })) || [{ items: [msg] }];
-
-        const boxOutput = sideBorderBox({
-          title: options?.title || 'Info',
-          sections,
-          status: 'info',
-          timing: options?.timing,
-        });
-        console.log(boxOutput);
-      },
-      success: (msg: string, options?: MessageOptions) => {
-        // Convert OutputSection[] to SectionContent[] for sideBorderBox
-        const sections = options?.sections?.map(s => ({
-          header: s.header,
-          items: s.items
-        })) || [{ items: [msg] }];
-
-        const boxOutput = sideBorderBox({
-          title: options?.title || 'Success',
-          sections,
-          status: 'success',
-          timing: options?.timing,
-        });
-        console.log(boxOutput);
-      },
-      warn: (msg: string, options?: MessageOptions) => {
-        // Convert OutputSection[] to SectionContent[] for sideBorderBox
-        const sections = options?.sections?.map(s => ({
-          header: s.header,
-          items: s.items
-        })) || [{ items: [msg] }];
-
-        const boxOutput = sideBorderBox({
-          title: options?.title || 'Warning',
-          sections,
-          status: 'warning',
-          timing: options?.timing,
-        });
-        console.log(boxOutput);
-      },
-      error: (err: Error | string, options?: MessageOptions) => {
-        const message = err instanceof Error ? err.message : err;
-
-        // Convert OutputSection[] to SectionContent[] for sideBorderBox
-        const sections = options?.sections?.map(s => ({
-          header: s.header,
-          items: s.items
-        })) || [{ items: [message] }];
-
-        const boxOutput = sideBorderBox({
-          title: options?.title || 'Error',
-          sections,
-          status: 'error',
-          timing: options?.timing,
-        });
-        console.error(boxOutput);
-      },
-      debug: (msg: string) => {
-        console.debug(msg);
-      },
-      spinner: (_text: string): Spinner => {
-        // No spinner for now, return no-op
-        return {
-          update: () => {},
-          succeed: () => {},
-          fail: () => {},
-          stop: () => {},
-        };
-      },
-      table: (data: Record<string, unknown>[], _columns?) => {
-        console.table(data);
-      },
-      json: (data: unknown) => {
-        console.log(JSON.stringify(data, null, 2));
-      },
-      newline: () => {
-        console.log();
-      },
-      divider: () => {
-        console.log('─'.repeat(process.stdout.columns || 80));
-      },
-      box: (content: string, title?: string) => {
-        const boxOutput = sideBorderBox({
-          title: title || '',
-          sections: [{ items: content.split('\n') }],
-          status: 'info',
-        });
-        console.log(boxOutput);
-      },
-      sideBox: (options) => {
-        const boxOutput = sideBorderBox({
-          title: options.title,
-          sections: options.sections ?? [],
-          status: options.status,
-          timing: options.timing,
-        });
-        console.log(boxOutput);
-      },
-      confirm: async (_message: string) => {
-        return true;
-      },
-      prompt: async (_message: string, _options?) => {
-        return '';
-      },
-    };
+    return createCLIUIFacade();
   };
 }
 

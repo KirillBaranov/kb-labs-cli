@@ -160,7 +160,7 @@ describe('V3 Manifest Field', () => {
 
     (mockManifest as any).manifestV2 = mockV3Manifest;
 
-    // Simulate v3-adapter.ts logic
+    // Simulate plugin-executor.ts logic
     const command: RegisteredCommand = {
       manifest: mockManifest,
       // v3Manifest not set in this case

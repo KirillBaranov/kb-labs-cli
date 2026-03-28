@@ -4,8 +4,8 @@ import type { RegisteredCommand } from "./types";
 /**
  * Convert RegisteredCommand to Command adapter
  *
- * This is a minimal adapter - actual execution happens in bootstrap.ts via tryExecuteV3.
- * The run() function here is never called for V3 commands.
+ * This is a minimal adapter - actual execution happens in bootstrap.ts via executePlugin().
+ * The run() function here is never called for plugin commands.
  */
 function manifestToCommand(registered: RegisteredCommand): Command {
   return {
@@ -17,8 +17,8 @@ function manifestToCommand(registered: RegisteredCommand): Command {
     flags: registered.manifest.flags,
     examples: registered.manifest.examples,
     async run() {
-      // This should never be called - V3 commands are executed via tryExecuteV3() in bootstrap.ts
-      throw new Error(`Command ${registered.manifest.id} should be executed via V3 adapter, not via legacy run() path.`);
+      // This should never be called - plugin commands are executed via executePlugin() in bootstrap.ts
+      throw new Error(`Command ${registered.manifest.id} should be executed via plugin-executor, not via legacy run() path.`);
     },
   };
 }
@@ -362,7 +362,7 @@ export function findCommand(nameOrPath: string | string[]) {
  *
  * Use this in bootstrap.ts to determine execution path:
  * - type='system' → execute via cmd.run() in-process
- * - type='plugin' → execute via tryExecuteV3() in subprocess
+ * - type='plugin' → execute via executePlugin() in plugin-executor
  */
 export function findCommandWithType(nameOrPath: string | string[]): CommandLookupResult | undefined {
   return registry.getWithType(nameOrPath);

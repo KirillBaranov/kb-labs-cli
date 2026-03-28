@@ -30,7 +30,7 @@ Before this ADR, the CLI used a unified routing mechanism where ALL commands wen
 // BEFORE (INSECURE):
 const cmd = findCommand(cmdPath);
 const manifestCmd = registry.getManifestCommand(cmdPath);
-const v3ExitCode = await tryExecuteV3({ manifestCmd, ... });
+const v3ExitCode = await executePlugin({ manifestCmd, ... });
 ```
 
 **Security vulnerabilities:**
@@ -168,9 +168,9 @@ if (result.type === 'system') {
 }
 
 if (result.type === 'plugin') {
-  // Plugin command - execute in subprocess via V3 adapter
+  // Plugin command - execute in subprocess via plugin-executor
   const manifestCmd = registry.getManifestCommand(commandId);
-  const v3ExitCode = await tryExecuteV3({
+  const v3ExitCode = await executePlugin({
     context,
     commandId,
     argv,
@@ -183,7 +183,7 @@ if (result.type === 'plugin') {
 
 **Execution guarantees:**
 - `type='system'` → **always** executes via `cmd.run()` in-process
-- `type='plugin'` → **always** executes via `tryExecuteV3()` in subprocess
+- `type='plugin'` → **always** executes via `executePlugin()` in plugin-executor
 - No conditional checks that can be bypassed
 - Type determined by **registration method**, not runtime properties
 
@@ -223,7 +223,7 @@ loader: async () => ({
 **Defense:**
 1. Plugin registered via `registerManifest()` → goes to `pluginCommands`
 2. `getWithType()` checks `pluginCommands` → returns `type='plugin'`
-3. Bootstrap routes to `tryExecuteV3()` (subprocess)
+3. Bootstrap routes to `executePlugin()` (subprocess)
 4. `run()` method in loader is **never called** by parent process
 5. Executes in subprocess with sandbox restrictions
 
@@ -317,7 +317,7 @@ Map.prototype.has = function() { return false; };
    - Changed from `findCommand()` to `findCommandWithType()`
    - Added routing based on `type` field
    - `type='system'` → `cmd.run()` in-process
-   - `type='plugin'` → `tryExecuteV3()` in subprocess
+   - `type='plugin'` → `executePlugin()` in subprocess
 
 ### Testing
 

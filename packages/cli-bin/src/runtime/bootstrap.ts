@@ -27,7 +27,7 @@ import {
 } from "@kb-labs/cli-runtime";
 import { handleLimitFlag } from "./limits";
 import { getDefaultMiddlewares } from "./middlewares";
-import { tryExecuteV3, createPluginContextV3ForSystemCommand } from "./v3-adapter";
+import { executePlugin, createSystemCommandContext } from "./plugin-executor";
 import { tryResolveGateway, executeViaGateway } from "./gateway-executor";
 import { loadEnvFile } from "./env-loader";
 import { initializePlatform } from "./platform-init";
@@ -105,10 +105,9 @@ export async function executeCli(
   argv: string[],
   options: CliRuntimeOptions = {},
 ): Promise<number | void> {
-  try {
   const cwd = options.cwd ?? process.cwd();
 
-  // Загружаем .env файл если есть (не перезаписываем существующие переменные)
+  // Load .env file if present (does not override existing env vars)
   loadEnvFile(cwd);
 
   // Initialize platform adapters from kb.config.json (before any plugin execution)
@@ -504,7 +503,7 @@ export async function executeCli(
         // System command - execute in-process via cmd.run()
         if ('run' in result.cmd) {
           // Convert SystemContext → PluginContextV3 for system commands
-          const v3Context = createPluginContextV3ForSystemCommand(context, platform);
+          const v3Context = createSystemCommandContext(context, platform);
           const exitCode = await result.cmd.run(v3Context, actualRest, { ...global, ...flagsObj });
           return typeof exitCode === 'number' ? exitCode : 0;
         }
@@ -528,8 +527,8 @@ export async function executeCli(
           });
         }
 
-        // Local execution: V3 adapter
-        const v3ExitCode = await tryExecuteV3({
+        // Local execution: plugin executor
+        const pluginExitCode = await executePlugin({
           context,
           commandId,
           argv: actualRest,
@@ -538,12 +537,10 @@ export async function executeCli(
           platform,
         });
 
-        // If V3 execution succeeded, return its exit code
-        if (v3ExitCode !== undefined) {
-          return v3ExitCode;
+        if (pluginExitCode !== undefined) {
+          return pluginExitCode;
         }
 
-        // V3 execution unavailable - this is an error
         throw new Error(`Plugin command ${commandId} is not available for execution. Ensure the command has a handlerPath in its manifest.`);
       }
 
@@ -552,9 +549,6 @@ export async function executeCli(
     });
   } catch (error: unknown) {
     return handleExecutionError(error, presenter);
-  }
-  } catch (outerError: unknown) {
-    throw outerError;
   }
 }
 

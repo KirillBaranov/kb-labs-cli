@@ -6,7 +6,7 @@
  * 2. Receive correct PluginContextV3 context
  * 3. Handle flags and argv correctly
  * 4. Return correct exit codes
- * 5. Don't route to v3-adapter (no subprocess)
+ * 5. Don't route to plugin-executor (no subprocess)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -341,7 +341,7 @@ describe('Bootstrap System Commands', () => {
   });
 
   describe('System vs Plugin Command Routing', () => {
-    it('should NOT route system commands to v3-adapter', async () => {
+    it('should NOT route system commands to plugin-executor', async () => {
       mockCommandRegistry.resolveCommand.mockReturnValue({
         type: 'system', // System command
         cmd: mockSystemCommand,
@@ -385,9 +385,8 @@ describe('Bootstrap System Commands', () => {
       // System command should execute directly, not via subprocess
     });
 
-    it('should route plugin commands to v3-adapter (not tested here)', () => {
-      // This test is a placeholder to document that plugin commands
-      // go through tryExecuteV3() - tested separately in v3-adapter tests
+    it('should route plugin commands to plugin-executor (not tested here)', () => {
+      // Plugin commands go through executePlugin() in plugin-executor.ts
       expect(true).toBe(true);
     });
   });
