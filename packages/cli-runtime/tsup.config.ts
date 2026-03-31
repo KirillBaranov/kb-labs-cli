@@ -5,8 +5,8 @@ export default defineConfig({
   ...nodePreset,
   entry: {
     index: "src/index.ts",
+    "gateway/index": "src/gateway/index.ts",
+    "v3/index": "src/v3/index.ts",
   },
-  tsconfig: "tsconfig.build.json", // Use build-specific tsconfig without paths
-  // nodePreset already includes all @kb-labs packages as external
+  tsconfig: "tsconfig.build.json",
 });
-

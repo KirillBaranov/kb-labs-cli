@@ -1,19 +1,29 @@
 /**
  * marketplace:link command - Link a local plugin for development
+ *
+ * Registers the plugin in .kb/marketplace.lock with source: 'local'.
+ * No file watching — run `kb registry refresh` after manifest changes.
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '../../../utils/generate-examples';
-import { linkPlugin } from '../../../registry/plugins-state';
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
+import {
+  addToMarketplaceLock,
+  createMarketplaceEntry,
+  extractEntityKinds,
+  loadManifest,
+  DiagnosticCollector,
+} from '@kb-labs/core-discovery';
+import { computePackageIntegrity } from '@kb-labs/core-registry';
 
 type PluginsLinkResult = CommandResult & {
   packageName?: string;
   absPath?: string;
   hasManifest?: boolean;
-  configUpdated?: boolean;
+  provides?: string[];
   message?: string;
 };
 
@@ -24,7 +34,7 @@ export const pluginsLink = defineSystemCommand<PluginsLinkFlags, PluginsLinkResu
   description: 'Link a local plugin for development',
   category: 'marketplace',
   examples: generateExamples('link', 'marketplace', [
-    { flags: {} },  // kb marketplace link (requires <path> arg)
+    { flags: {} },
   ]),
   flags: {},
   analytics: {
@@ -37,74 +47,60 @@ export const pluginsLink = defineSystemCommand<PluginsLinkFlags, PluginsLinkResu
       throw new Error('Please specify a plugin path to link');
     }
 
-    const pluginPath = argv[0];
-    if (!pluginPath) {
-      throw new Error('Please specify a plugin path to link');
-    }
+    const pluginPath = argv[0]!;
     const cwd = getContextCwd(ctx);
     const absPath = path.resolve(cwd, pluginPath);
 
-    ctx.platform?.logger?.info('Linking plugin', { pluginPath, absPath });
-
-    // Check if path exists and has package.json
+    // Validate package exists
     const pkgJsonPath = path.join(absPath, 'package.json');
     await fs.access(pkgJsonPath);
-
     const pkgJson = JSON.parse(await fs.readFile(pkgJsonPath, 'utf8'));
+    const packageName: string = pkgJson.name ?? path.basename(absPath);
 
-    // Check if it's a plugin
-    const hasManifest = pkgJson.kb?.commandsManifest || pkgJson.exports?.['./kb/commands'];
+    // Load manifest
+    const diag = new DiagnosticCollector();
+    const manifest = await loadManifest(absPath, diag);
+    const hasManifest = manifest !== null;
+
     if (!hasManifest) {
-      ctx.platform?.logger?.warn('Plugin may not be valid', { packageName: pkgJson.name, pluginPath });
+      ctx.platform?.logger?.warn('No ManifestV3 found — plugin may not be discoverable', {
+        packageName, pluginPath,
+        diagnostics: diag.getEvents(),
+      });
     }
 
-    await linkPlugin(cwd, absPath);
+    // Compute integrity & entity kinds
+    const integrity = await computePackageIntegrity(absPath);
+    const provides = manifest ? extractEntityKinds(manifest) : [];
 
-    ctx.platform?.logger?.info('Plugin linked', { packageName: pkgJson.name, absPath });
-
-    // Also update kb.config.json if it exists
-    let configUpdated = false;
-    try {
-      const configPath = path.join(cwd, '.kb', 'kb.config.json');
-      const config = JSON.parse(await fs.readFile(configPath, 'utf8'));
-
-      if (!config.plugins) {
-        config.plugins = {};
-      }
-      if (!config.plugins.linked) {
-        config.plugins.linked = [];
-      }
-
-      if (!config.plugins.linked.includes(pkgJson.name)) {
-        config.plugins.linked.push(pkgJson.name);
-        await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf8');
-        configUpdated = true;
-      }
-    } catch {
-      // Config doesn't exist or can't update, that's ok
-    }
+    // Write to marketplace.lock with source: 'local'
+    const entry = createMarketplaceEntry({
+      version: pkgJson.version ?? '0.0.0',
+      integrity,
+      resolvedPath: path.relative(cwd, absPath),
+      source: 'local',
+      provides,
+    });
+    await addToMarketplaceLock(cwd, packageName, entry);
 
     return {
       ok: true,
-      packageName: pkgJson.name || pluginPath,
+      packageName,
       absPath,
-      hasManifest: !!hasManifest,
-      configUpdated,
-      message: `Linked ${pkgJson.name || pluginPath} from ${absPath}`,
+      hasManifest,
+      provides,
+      message: `Linked ${packageName} from ${absPath}`,
     };
   },
   formatter(result, ctx, _flags) {
     if (!result.hasManifest) {
-      ctx.ui.warn(
-        `Package ${result.packageName ?? 'unknown'} doesn't appear to be a KB CLI plugin`,
-      );
-      ctx.ui.info('Add "kb.commandsManifest" or "exports["./kb/commands"]" to package.json');
+      ctx.ui.warn(`No ManifestV3 found in ${result.packageName ?? 'unknown'}`);
+      ctx.ui.info('Add kb.plugin.json or set kbLabs.manifest in package.json');
     }
-    ctx.ui.info(result.message ?? 'Plugin linked');
-    if (result.configUpdated) {
-      ctx.ui.info(`Added ${result.packageName ?? 'unknown'} to kb.config.json plugins.linked`);
+    ctx.ui.success(result.message ?? 'Plugin linked');
+    if (result.provides?.length) {
+      ctx.ui.info(`Provides: ${result.provides.join(', ')}`);
     }
-    ctx.ui.info(`The plugin will be discovered on next CLI run`);
+    ctx.ui.info('Entry written to .kb/marketplace.lock');
   },
 });
-

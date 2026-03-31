@@ -1,9 +1,10 @@
 import type { Presenter } from "@kb-labs/cli-contracts";
-import { createContext, type Logger, type SystemContext } from "@kb-labs/cli-core";
+import { createContext, type SystemContext } from "../cli-context.js";
+import type { ILogger } from "@kb-labs/core-platform";
 
 export interface RuntimeContextOptions {
   presenter: Presenter;
-  logger?: Logger;
+  logger?: ILogger;
   env?: NodeJS.ProcessEnv;
   cwd?: string;
   repoRoot?: string;

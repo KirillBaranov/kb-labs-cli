@@ -6,10 +6,8 @@ export default defineConfig({
   ...nodePreset,
   resolve: {
     alias: {
-      "@kb-labs/cli-core": resolve(__dirname, "./packages/cli-core/src"),
       "@kb-labs/cli-commands": resolve(__dirname, "./packages/cli-commands/src"),
       "@kb-labs/cli-runtime": resolve(__dirname, "./packages/cli-runtime/src"),
-      "@kb-labs/cli-api": resolve(__dirname, "./packages/cli-api/src"),
       "@kb-labs/cli-contracts": resolve(__dirname, "./packages/cli-contracts/src"),
       "@kb-labs/cli-bin": resolve(__dirname, "./packages/cli-bin/src"),
       "@kb-labs/shared-cli-ui": resolve(

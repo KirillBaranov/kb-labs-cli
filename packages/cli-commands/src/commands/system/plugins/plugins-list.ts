@@ -6,7 +6,7 @@ import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command
 import { generateExamples } from '../../../utils/generate-examples';
 import type { RegisteredCommand } from '../../../registry/types';
 import { registry } from '../../../registry/service';
-import { PluginRegistry } from '@kb-labs/cli-core';
+import { createRegistry } from '@kb-labs/core-registry';
 import { formatTable, type TableColumn, type SectionContent, safeColors } from '@kb-labs/shared-cli-ui';
 import { loadPluginsState, isPluginEnabled } from '../../../registry/plugins-state';
 import { promises as fs } from 'node:fs';
@@ -74,20 +74,14 @@ export const pluginsList = defineSystemCommand<PluginsListFlags, PluginsListResu
   async handler(ctx, _argv, _flags) {
     const cwd = getContextCwd(ctx);
 
-      
-      // Use new DiscoveryManager via PluginRegistry
-      const pluginRegistry = new PluginRegistry({
-        strategies: ['workspace', 'pkg', 'dir', 'file'],
-        roots: [cwd],
-      });
-      await pluginRegistry.refresh();
-      
+      const entityRegistry = await createRegistry({ root: cwd });
+
       const manifests = registry.listManifests();
       const productGroups = registry.listProductGroups();
       const state = await loadPluginsState(cwd);
-      
-      // Also get plugins from new registry for comparison
-      const _newRegistryPlugins = pluginRegistry.list();
+
+      const _registryPlugins = entityRegistry.listPlugins();
+      await entityRegistry.dispose();
       
       // Group by package name
       const packages = new Map<string, {

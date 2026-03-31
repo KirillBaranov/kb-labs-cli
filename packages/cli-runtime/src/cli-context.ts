@@ -3,7 +3,7 @@
 
 import type { Presenter } from "@kb-labs/cli-contracts";
 import type { Output } from "@kb-labs/core-sys/output";
-import type { Logger as CoreLogger } from "./platform-logger.js";
+import type { ILogger } from "@kb-labs/core-platform";
 import { createId } from "@kb-labs/plugin-runtime";
 import path from "node:path";
 import { existsSync } from "node:fs";
@@ -39,7 +39,7 @@ export interface SystemContext {
   /** Output presenter */
   presenter: Presenter;
   /** Logger (optional) */
-  logger?: CoreLogger;
+  logger?: ILogger;
   /** Output adapter (optional) */
   output?: Output;
   /** Configuration (optional) */
@@ -54,7 +54,7 @@ export interface SystemContext {
 
 export interface CreateContextOptions {
   presenter: Presenter;
-  logger?: CoreLogger;
+  logger?: ILogger;
   output?: Output;
   env?: NodeJS.ProcessEnv;
   cwd?: string;

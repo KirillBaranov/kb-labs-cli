@@ -1,6 +1,6 @@
-import { getLogger } from '@kb-labs/cli-core';
+import { platform } from '@kb-labs/core-runtime';
 
-const log = getLogger('cli:shutdown');
+const log = platform.logger.child({ module: 'cli:shutdown' });
 
 type ShutdownHook = () => void | Promise<void>;
 

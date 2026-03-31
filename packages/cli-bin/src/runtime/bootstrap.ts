@@ -7,7 +7,7 @@ import {
   mapCliErrorToExitCode,
   colors,
   type ExecutionLimits,
-} from "@kb-labs/cli-core";
+} from "@kb-labs/cli-runtime";
 import {
   findCommand,
   findCommandWithType,

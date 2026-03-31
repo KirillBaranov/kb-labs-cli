@@ -1,4 +1,4 @@
-import { createCliAPI } from '@kb-labs/cli-api';
+import { createRegistry } from '@kb-labs/core-registry';
 import { generateExamples } from '../../utils/generate-examples';
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 
@@ -36,8 +36,8 @@ export const health = defineSystemCommand<HealthFlags, HealthResult>({
     finishEvent: 'HEALTH_FINISHED',
   },
   async handler(ctx, _argv, _flags) {
-    const cliApi = await createCliAPI({
-      cache: { inMemory: true, ttlMs: 5000 },
+    const cliApi = await createRegistry({
+      cache: { ttlMs: 5000 },
     });
 
     try {

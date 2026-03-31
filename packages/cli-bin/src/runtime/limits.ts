@@ -1,7 +1,7 @@
 import type { CliCommandDecl, ManifestV3, PermissionSpec } from "@kb-labs/plugin-contracts";
 import type { RegisteredCommand } from "@kb-labs/cli-commands";
 import { box, keyValue } from "@kb-labs/shared-cli-ui";
-import { colors } from "@kb-labs/cli-core";
+import { colors } from "@kb-labs/cli-runtime";
 
 export interface LimitPresenter {
   write?: (msg: string) => void;

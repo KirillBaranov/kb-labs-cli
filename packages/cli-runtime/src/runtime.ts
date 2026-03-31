@@ -1,4 +1,5 @@
-import type { ExecutionLimits, SystemContext } from "@kb-labs/cli-core";
+import type { ExecutionLimits } from "./lifecycle/lifecycle-manager.js";
+import type { SystemContext } from "./cli-context.js";
 
 import {
   MiddlewareManager,

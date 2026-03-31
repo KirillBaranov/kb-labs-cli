@@ -1,9 +1,13 @@
 /**
- * @module @kb-labs/cli-core/lifecycle/lifecycle-manager
+ * @module @kb-labs/cli-runtime/lifecycle/lifecycle-manager
  * Plugin lifecycle management
  */
 
-import type { PluginRegistry } from "../registry/plugin-registry";
+import type { ManifestV3 } from '@kb-labs/plugin-contracts';
+
+export interface IManifestProvider {
+  getManifest(pluginId: string): ManifestV3 | null;
+}
 
 /**
  * Plugin lifecycle interface
@@ -44,7 +48,7 @@ export class LifecycleManager {
   private loadedHooks: Map<string, PluginLifecycle> = new Map();
 
   constructor(
-    private registry: PluginRegistry,
+    private registry: IManifestProvider,
     private context: CliContext,
     private limits: ExecutionLimits,
   ) {}
@@ -53,7 +57,7 @@ export class LifecycleManager {
    * Invoke onLoad hook
    */
   async invokeLoad(pluginId: string): Promise<void> {
-    const manifest = this.registry.getManifestV3(pluginId);
+    const manifest = this.registry.getManifest(pluginId);
     if (!manifest?.lifecycle?.onLoad) {
       return;
     }

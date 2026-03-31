@@ -8,10 +8,11 @@ import {
   authGroup,
 } from "../commands/system/groups";
 import { registerManifests, disposeAllPlugins, preflightManifests } from "../registry/register";
-import { PluginRegistry } from "@kb-labs/cli-core";
+import { type IEntityRegistry } from "@kb-labs/core-registry";
 import { registerShutdownHook } from "./shutdown";
 import { getContextCwd } from "@kb-labs/shared-cli-ui";
-import { type Logger, createNoOpLogger } from "@kb-labs/cli-core";
+import type { ILogger } from "@kb-labs/core-platform";
+import { platform } from "@kb-labs/core-runtime";
 
 let _registered = false;
 const registeredCommands: any[] = [];
@@ -19,13 +20,13 @@ const registeredCommands: any[] = [];
 export interface RegisterBuiltinCommandsInput {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
-  logger?: Logger;
+  logger?: ILogger;
 }
 
 export async function registerBuiltinCommands(
   input: RegisterBuiltinCommandsInput = {},
 ) {
-  const log = input.logger ?? createNoOpLogger();
+  const log = input.logger ?? platform.logger;
 
   if (_registered) {
     return;
@@ -89,15 +90,6 @@ export async function registerBuiltinCommands(
       registry.markPartial(false);
     }
 
-    const pluginRegistry = new PluginRegistry({
-      strategies: ['workspace', 'pkg', 'dir', 'file'],
-    });
-    await pluginRegistry.refresh();
-    const plugins = pluginRegistry.list();
-
-    if (plugins.length > 0) {
-      log.info(`Discovered ${plugins.length} plugins via cli-core`);
-    }
   } catch (err: any) {
     log.warn(`Discovery failed: ${err.message}`);
     registry.markPartial(true);

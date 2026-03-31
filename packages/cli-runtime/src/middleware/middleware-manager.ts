@@ -3,7 +3,7 @@
  * Middleware chain management
  */
 
-import type { ExecutionLimits } from "@kb-labs/cli-core";
+import type { ExecutionLimits } from "../lifecycle/lifecycle-manager.js";
 
 export type CommandMiddleware<T = unknown> = (
   ctx: any,

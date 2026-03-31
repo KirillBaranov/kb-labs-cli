@@ -4,8 +4,8 @@
  * Executes plugin commands via the V3 execution pipeline.
  */
 
-import type { SystemContext } from '@kb-labs/cli-core';
-import { executeCommandV3 } from '@kb-labs/cli-core/v3';
+import type { SystemContext } from '@kb-labs/cli-runtime';
+import { executeCommandV3 } from '@kb-labs/cli-runtime/v3';
 import type { UIFacade, PlatformServices } from '@kb-labs/plugin-contracts';
 import { getHandlerPermissions, noopTraceContext, noopUI } from '@kb-labs/plugin-contracts';
 import type { PlatformContainer } from '@kb-labs/core-runtime';

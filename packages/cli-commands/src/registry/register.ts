@@ -6,7 +6,9 @@
 import Ajv from 'ajv';
 import type { CommandManifest, DiscoveryResult, RegisteredCommand } from './types';
 import { checkRequires } from './availability';
-import { getLogLevel, type Logger, createNoOpLogger } from '@kb-labs/cli-core';
+import type { ILogger } from '@kb-labs/core-platform';
+import { platform } from '@kb-labs/core-runtime';
+import { getLogLevel } from '@kb-labs/cli-runtime';
 
 export interface RegisterManifestsOptions {
   cwd?: string;
@@ -143,8 +145,8 @@ function generateWhitespaceAliases(id: string): string[] {
 /**
  * Normalize aliases: ensure they're valid and add whitespace variants
  */
-function normalizeAliases(manifest: CommandManifest, logger?: Logger): string[] {
-  const log = logger ?? createNoOpLogger();
+function normalizeAliases(manifest: CommandManifest, logger?: ILogger): string[] {
+  const log = logger ?? platform.logger;
   const aliases = new Set<string>();
   const _namespace = manifest.namespace || manifest.group;
 
@@ -247,9 +249,9 @@ export interface ManifestRegistrationResult {
 
 export function preflightManifests(
   discoveryResults: DiscoveryResult[],
-  logger?: Logger
+  logger?: ILogger
 ): { valid: DiscoveryResult[]; skipped: SkippedManifest[] } {
-  const log = logger ?? createNoOpLogger();
+  const log = logger ?? platform.logger;
   const valid: DiscoveryResult[] = [];
   const skipped: SkippedManifest[] = [];
 
@@ -289,9 +291,9 @@ export function preflightManifests(
 export async function registerManifests(
   discoveryResults: DiscoveryResult[],
   registry: any, // CommandRegistry interface
-  options: RegisterManifestsOptions & { logger?: Logger } = {}
+  options: RegisterManifestsOptions & { logger?: ILogger } = {}
 ): Promise<ManifestRegistrationResult> {
-  const log = options.logger ?? createNoOpLogger();
+  const log = options.logger ?? platform.logger;
   const registered: RegisteredCommand[] = [];
   const skipped: SkippedManifest[] = [];
   const globalIds = new Map<string, RegisteredCommand>();
@@ -479,8 +481,8 @@ export async function registerManifests(
 /**
  * Dispose all plugins by calling their dispose hooks
  */
-export async function disposeAllPlugins(registry: any, logger?: Logger): Promise<void> {
-  const log = logger ?? createNoOpLogger();
+export async function disposeAllPlugins(registry: any, logger?: ILogger): Promise<void> {
+  const log = logger ?? platform.logger;
   const manifests = registry.listManifests();
   const disposePromises: Promise<void>[] = [];
 

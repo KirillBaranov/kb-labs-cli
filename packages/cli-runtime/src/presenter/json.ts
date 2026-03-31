@@ -1,5 +1,5 @@
 import type { Presenter } from "./types";
-import type { SystemContext } from "../context";
+import type { SystemContext } from "../cli-context";
 
 export function createJsonPresenter(): Presenter & {
   setContext(context: SystemContext): void;

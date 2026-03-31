@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { SystemContext } from '@kb-labs/cli-core';
+import type { SystemContext } from '@kb-labs/cli-runtime';
 import { noopUI } from '@kb-labs/plugin-contracts';
 import { setJsonMode } from '@kb-labs/shared-cli-ui';
 

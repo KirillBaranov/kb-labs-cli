@@ -34,7 +34,6 @@
   },
   "dependencies": {
     "@kb-labs/cli-commands": "workspace:*",
-    "@kb-labs/cli-core": "workspace:*",
     "@kb-labs/cli-runtime": "workspace:*",
     "@kb-labs/core-config": "link:../../../kb-labs-core/packages/core-config",
     "@kb-labs/core-runtime": "link:../../../kb-labs-core/packages/core-runtime",

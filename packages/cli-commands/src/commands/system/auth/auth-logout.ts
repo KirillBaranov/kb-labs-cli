@@ -3,7 +3,7 @@
  */
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
-import { CredentialsManager } from '@kb-labs/cli-core/gateway';
+import { CredentialsManager } from '@kb-labs/cli-runtime/gateway';
 
 type LogoutFlags = {
   json: { type: 'boolean'; description: string };

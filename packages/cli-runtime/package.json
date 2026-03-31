@@ -1,7 +1,7 @@
 {
   "name": "@kb-labs/cli-runtime",
-  "version": "1.1.0",
-  "description": "CLI runtime - command execution, middleware, formatters",
+  "version": "2.0.0",
+  "description": "CLI runtime — command execution, middleware, formatters, presenters, gateway, lifecycle",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -9,6 +9,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./gateway": {
+      "types": "./dist/gateway/index.d.ts",
+      "default": "./dist/gateway/index.js"
+    },
+    "./v3": {
+      "types": "./dist/v3/index.d.ts",
+      "default": "./dist/v3/index.js"
     }
   },
   "files": [
@@ -27,9 +35,15 @@
   },
   "dependencies": {
     "@kb-labs/cli-contracts": "workspace:*",
-    "@kb-labs/cli-core": "workspace:*",
+    "@kb-labs/core-contracts": "link:../../../kb-labs-core/packages/core-contracts",
+    "@kb-labs/core-platform": "link:../../../kb-labs-core/packages/core-platform",
+    "@kb-labs/core-runtime": "link:../../../kb-labs-core/packages/core-runtime",
     "@kb-labs/core-sys": "link:../../../kb-labs-core/packages/core-sys",
+    "@kb-labs/plugin-contracts": "link:../../../../infra/kb-labs-plugin/packages/plugin-contracts",
+    "@kb-labs/plugin-runtime": "link:../../../../infra/kb-labs-plugin/packages/plugin-runtime",
+    "@kb-labs/plugin-execution-factory": "link:../../../../infra/kb-labs-plugin/packages/plugin-execution-factory",
     "cli-table3": "^0.6.5",
+    "colorette": "^2.0.20",
     "yaml": "^2.8.0"
   },
   "devDependencies": {
