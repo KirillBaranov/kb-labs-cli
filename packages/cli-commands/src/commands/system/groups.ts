@@ -10,8 +10,9 @@ import { diag } from './diag';
 import {
   pluginsList, pluginsCommands, pluginsEnable, pluginsDisable,
   pluginsLink, pluginsUnlink, pluginsRegistry, pluginsDoctor,
-  pluginsScaffold, pluginValidate, marketplaceInstall, marketplaceUpdate,
+  pluginsScaffold, pluginValidate, marketplaceInstall, marketplaceUninstall, marketplaceUpdate,
 } from './plugins';
+import { registryDiagnostics } from './registry-diagnostics';
 import { pluginsCacheClear } from '../../builtins/plugins-cache-clear';
 import { docsGenerateCliReference } from './docs-generate-cli-reference';
 import { logsDiagnose, logsContext, logsSummarize, logsQuery, logsSearch, logsGet, logsStats } from './logs';
@@ -34,6 +35,7 @@ export const infoGroup = defineSystemCommandGroup('info', 'System information co
  */
 export const marketplaceGroup = defineSystemCommandGroup('marketplace', 'Marketplace management commands', [
   marketplaceInstall,
+  marketplaceUninstall,
   marketplaceUpdate,
   pluginsList,
   pluginsCommands,
@@ -68,6 +70,18 @@ export const logsGroup = defineSystemCommandGroup('logs', 'Log viewing and analy
   logsSearch,
   logsGet,
   logsStats,
+]);
+
+/**
+ * Auth Commands Group
+ * Gateway authentication and credential management
+ */
+/**
+ * Registry Commands Group
+ * Entity registry diagnostics and management
+ */
+export const registryGroup = defineSystemCommandGroup('registry', 'Entity registry commands', [
+  registryDiagnostics,
 ]);
 
 /**

@@ -3,6 +3,7 @@ import type { RegisteredCommand } from "../registry/types";
 import {
   infoGroup,
   marketplaceGroup,
+  registryGroup,
   docsGroup,
   logsGroup,
   authGroup,
@@ -38,6 +39,7 @@ export async function registerBuiltinCommands(
   // Register system command groups (migrated commands)
   registry.registerGroup(infoGroup);
   registry.registerGroup(marketplaceGroup);
+  registry.registerGroup(registryGroup);
   registry.registerGroup(docsGroup);
   registry.registerGroup(logsGroup);
   registry.registerGroup(authGroup);
