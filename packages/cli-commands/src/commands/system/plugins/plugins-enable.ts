@@ -4,7 +4,7 @@
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '../../../utils/generate-examples';
-import { enablePlugin } from '../../../registry/plugins-state';
+import { enablePlugin } from '@kb-labs/core-registry';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
 
 type PluginsEnableResult = CommandResult & {

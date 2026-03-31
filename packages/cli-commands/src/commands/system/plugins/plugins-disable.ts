@@ -4,7 +4,7 @@
 
 import { defineSystemCommand, type CommandResult } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '../../../utils/generate-examples';
-import { disablePlugin } from '../../../registry/plugins-state';
+import { disablePlugin } from '@kb-labs/core-registry';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';
 
 type PluginsDisableResult = CommandResult & {

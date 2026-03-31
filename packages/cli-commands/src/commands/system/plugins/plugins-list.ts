@@ -8,7 +8,7 @@ import type { RegisteredCommand } from '../../../registry/types';
 import { registry } from '../../../registry/service';
 import { createRegistry } from '@kb-labs/core-registry';
 import { formatTable, type TableColumn, type SectionContent, safeColors } from '@kb-labs/shared-cli-ui';
-import { loadPluginsState, isPluginEnabled } from '../../../registry/plugins-state';
+import { loadPluginsState, isPluginEnabled } from '@kb-labs/core-registry';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd } from '@kb-labs/shared-cli-ui';

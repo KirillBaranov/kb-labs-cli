@@ -6,7 +6,7 @@ import { defineSystemCommand } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '../../utils/generate-examples';
 import { registry } from '../../registry/service';
 import { discoverManifests } from '../../registry/discover';
-import { loadPluginsState } from '../../registry/plugins-state';
+import { loadPluginsState } from '@kb-labs/core-registry';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd, safeColors, safeSymbols } from '@kb-labs/shared-cli-ui';

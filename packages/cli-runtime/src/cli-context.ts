@@ -23,9 +23,14 @@ function detectRepoRoot(start: string): string {
 }
 
 /**
- * System command context
- * Simple context for built-in CLI commands (kb plugins list, kb workflow run, etc.)
- * NOT a plugin context - no permissions, no sandbox, no platform services overhead.
+ * Full CLI runtime context.
+ *
+ * Structurally compatible with cli-contracts' SystemContext (which is the
+ * minimal contract for command handlers) but includes runtime-specific fields:
+ * requestId, presenter, logger, verbosity, jsonMode.
+ *
+ * The Output type here is the full Output from core-sys (with progress,
+ * spinner, json, etc.), not the simple one from cli-contracts.
  */
 export interface SystemContext {
   /** Request ID for tracing */
@@ -38,13 +43,13 @@ export interface SystemContext {
   env: NodeJS.ProcessEnv;
   /** Output presenter */
   presenter: Presenter;
-  /** Logger (optional) */
+  /** Logger */
   logger?: ILogger;
-  /** Output adapter (optional) */
-  output?: Output;
-  /** Configuration (optional) */
+  /** Output adapter (full core-sys Output) */
+  output: Output;
+  /** Configuration */
   config?: Record<string, any>;
-  /** Profile ID (optional) */
+  /** Profile ID */
   profileId?: string;
   /** Verbosity level */
   verbosity: "quiet" | "normal" | "verbose";
@@ -55,7 +60,7 @@ export interface SystemContext {
 export interface CreateContextOptions {
   presenter: Presenter;
   logger?: ILogger;
-  output?: Output;
+  output: Output;
   env?: NodeJS.ProcessEnv;
   cwd?: string;
   repoRoot?: string;
