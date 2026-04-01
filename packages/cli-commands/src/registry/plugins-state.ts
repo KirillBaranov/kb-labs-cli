@@ -201,8 +201,9 @@ export async function computePackageIntegrity(pkgRoot: string): Promise<string> 
  */
 export async function clearCache(cwd: string, options?: { deep?: boolean }): Promise<{ files: string[]; modules?: string[] }> {
   const cleared: string[] = [];
+
+  // 1. Clear .kb/cache/ manifest/plugin files
   const cacheDir = path.join(cwd, '.kb', 'cache');
-  
   try {
     const entries = await fs.readdir(cacheDir);
     for (const entry of entries) {
@@ -215,12 +216,31 @@ export async function clearCache(cwd: string, options?: { deep?: boolean }): Pro
   } catch {
     // Cache dir doesn't exist
   }
-  
-  // Deep clearing: clear Node.js module cache for dynamic imports
+
+  // 2. Clear .kb/marketplace.manifests.json (marketplace manifest cache)
+  const manifestsCachePath = path.join(cwd, '.kb', 'marketplace.manifests.json');
+  try {
+    await fs.unlink(manifestsCachePath);
+    cleared.push('marketplace.manifests.json');
+  } catch {
+    // File doesn't exist
+  }
+
+  // 3. Clear .kb/cache/cli-manifests.json (CLI discovery cache)
+  const cliManifestsPath = path.join(cwd, '.kb', 'cache', 'cli-manifests.json');
+  try {
+    await fs.unlink(cliManifestsPath);
+    if (!cleared.includes('cli-manifests.json')) {
+      cleared.push('cli-manifests.json');
+    }
+  } catch {
+    // File doesn't exist
+  }
+
+  // 4. Deep clearing: clear Node.js module cache for dynamic imports
   const modulesCleared: string[] = [];
   if (options?.deep) {
     try {
-      // Clear require cache for plugin-related modules
       const cache = require.cache;
       for (const key in cache) {
         if (key.includes('plugin') || key.includes('manifest') || key.includes('@kb-labs')) {
@@ -232,7 +252,7 @@ export async function clearCache(cwd: string, options?: { deep?: boolean }): Pro
       // Module cache clearing failed (ESM context)
     }
   }
-  
+
   return {
     files: cleared,
     ...(options?.deep ? { modules: modulesCleared } : {}),
