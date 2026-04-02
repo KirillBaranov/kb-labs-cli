@@ -9,7 +9,6 @@ import {
   authGroup,
 } from "../commands/system/groups";
 import { registerManifests, disposeAllPlugins, preflightManifests } from "../registry/register";
-import { type IEntityRegistry } from "@kb-labs/core-registry";
 import { registerShutdownHook } from "./shutdown";
 import { getContextCwd } from "@kb-labs/shared-cli-ui";
 import type { ILogger } from "@kb-labs/core-platform";
