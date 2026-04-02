@@ -3,12 +3,6 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@kb-labs/cli-api": [
-        "packages/cli-api/src/index.ts"
-      ],
-      "@kb-labs/cli-api/*": [
-        "packages/cli-api/src/*"
-      ],
       "@kb-labs/cli-commands": [
         "packages/cli-commands/src/index.ts"
       ],
@@ -20,12 +14,6 @@
       ],
       "@kb-labs/cli-contracts/*": [
         "packages/cli-contracts/src/*"
-      ],
-      "@kb-labs/cli-core": [
-        "packages/cli-core/src/index.ts"
-      ],
-      "@kb-labs/cli-core/*": [
-        "packages/cli-core/src/*"
       ],
       "@kb-labs/cli-runtime": [
         "packages/cli-runtime/src/index.ts"
@@ -45,6 +33,12 @@
       "@kb-labs/core-contracts/*": [
         "../kb-labs-core/packages/core-contracts/src/*"
       ],
+      "@kb-labs/core-discovery": [
+        "../kb-labs-core/packages/core-discovery/src/index.ts"
+      ],
+      "@kb-labs/core-discovery/*": [
+        "../kb-labs-core/packages/core-discovery/src/*"
+      ],
       "@kb-labs/core-ipc": [
         "../kb-labs-core/packages/core-ipc/src/index.ts"
       ],
@@ -56,6 +50,12 @@
       ],
       "@kb-labs/core-platform/*": [
         "../kb-labs-core/packages/core-platform/src/*"
+      ],
+      "@kb-labs/core-registry": [
+        "../kb-labs-core/packages/core-registry/src/index.ts"
+      ],
+      "@kb-labs/core-registry/*": [
+        "../kb-labs-core/packages/core-registry/src/*"
       ],
       "@kb-labs/core-resource-broker": [
         "../kb-labs-core/packages/core-resource-broker/src/index.ts"
@@ -92,6 +92,24 @@
       ],
       "@kb-labs/devlink-core/*": [
         "../../plugins/kb-labs-devlink/packages/devlink-core/src/*"
+      ],
+      "@kb-labs/marketplace-contracts": [
+        "../kb-labs-marketplace/packages/marketplace-contracts/src/index.ts"
+      ],
+      "@kb-labs/marketplace-contracts/*": [
+        "../kb-labs-marketplace/packages/marketplace-contracts/src/*"
+      ],
+      "@kb-labs/marketplace-core": [
+        "../kb-labs-marketplace/packages/marketplace-core/src/index.ts"
+      ],
+      "@kb-labs/marketplace-core/*": [
+        "../kb-labs-marketplace/packages/marketplace-core/src/*"
+      ],
+      "@kb-labs/marketplace-npm": [
+        "../kb-labs-marketplace/packages/marketplace-npm/src/index.ts"
+      ],
+      "@kb-labs/marketplace-npm/*": [
+        "../kb-labs-marketplace/packages/marketplace-npm/src/*"
       ],
       "@kb-labs/mind-cli": [
         "../../plugins/kb-labs-mind/packages/mind-cli/src/index.ts"
