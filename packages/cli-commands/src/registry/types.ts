@@ -10,6 +10,7 @@ export interface CommandManifest {
   id: string;                // "mind:pack" (must be namespace:command)
   aliases?: string[];        // ["mind-pack", "m:pack"]
   group: string;             // "mind" (namespace)
+  subgroup?: string;         // "plugins" (nested group within parent)
   describe: string;
   longDescription?: string;
   requires?: string[];       // ["@kb-labs/mind-pack@^1.0.0"] (semver ranges)

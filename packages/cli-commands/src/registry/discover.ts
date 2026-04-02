@@ -414,6 +414,7 @@ async function loadManifest(manifestPath: string, pkgName: string, pkgRoot?: str
       manifestVersion: '1.0' as const,
       id: commandId,
       group: cmd.group || namespace,
+      subgroup: cmd.subgroup,
       describe: cmd.describe || '',
       longDescription: cmd.longDescription,
       aliases: cmd.aliases,

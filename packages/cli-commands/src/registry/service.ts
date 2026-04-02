@@ -76,6 +76,26 @@ class InMemoryRegistry implements CommandRegistry {
         this.byName.set(alias, cmd);
       }
     }
+
+    // Register subgroups (e.g., marketplace → plugins, adapters)
+    if (group.subgroups) {
+      for (const sub of group.subgroups) {
+        const subName = `${group.name} ${sub.name}`;
+        this.groups.set(subName, sub);
+        this.byName.set(subName, sub);
+
+        for (const cmd of sub.commands) {
+          const fullName = `${group.name} ${sub.name} ${cmd.name}`;
+          this.systemCommands.set(fullName, cmd);
+          this.byName.set(fullName, cmd);
+
+          for (const alias of cmd.aliases || []) {
+            this.systemCommands.set(alias, cmd);
+            this.byName.set(alias, cmd);
+          }
+        }
+      }
+    }
   }
 
   registerManifest(cmd: RegisteredCommand): void {
@@ -118,9 +138,43 @@ class InMemoryRegistry implements CommandRegistry {
       }
 
       // Register with full group + command format for invocation
-      if (cmd.manifest.group) {
+      if (cmd.manifest.group && cmd.manifest.subgroup) {
+        // 3-part path: "marketplace plugins list"
+        const fullPath = `${cmd.manifest.group} ${cmd.manifest.subgroup} ${cmd.manifest.id}`;
+        const colonPath = `${cmd.manifest.group}:${cmd.manifest.subgroup}:${cmd.manifest.id}`;
+        this.byName.set(fullPath, commandAdapter);
+        this.byName.set(colonPath, commandAdapter);
+        this.manifests.set(fullPath, cmd);
+        this.manifests.set(colonPath, cmd);
+        this.pluginCommands.set(fullPath, cmd);
+        this.pluginCommands.set(colonPath, cmd);
+
+        // Also register 2-part: "marketplace list" (without subgroup, for discoverability)
+        const twoPartName = `${cmd.manifest.group} ${cmd.manifest.id}`;
+        if (!this.byName.has(twoPartName)) {
+          this.byName.set(twoPartName, commandAdapter);
+        }
+
+        // Synthetic subgroup for help display
+        const subgroupKey = `${cmd.manifest.group} ${cmd.manifest.subgroup}`;
+        if (!this.groups.has(subgroupKey)) {
+          this.groups.set(subgroupKey, {
+            name: subgroupKey,
+            describe: cmd.manifest.subgroup,
+            commands: [],
+          });
+          this.byName.set(subgroupKey, this.groups.get(subgroupKey)!);
+        }
+        (this.groups.get(subgroupKey)! as any).commands.push(commandAdapter);
+      } else if (cmd.manifest.group) {
         const fullName = `${cmd.manifest.group} ${cmd.manifest.id}`;
+        const colonName = `${cmd.manifest.group}:${cmd.manifest.id}`;
         this.byName.set(fullName, commandAdapter);
+        this.byName.set(colonName, commandAdapter);
+        this.manifests.set(fullName, cmd);
+        this.manifests.set(colonName, cmd);
+        this.pluginCommands.set(fullName, cmd);
+        this.pluginCommands.set(colonName, cmd);
       }
 
       if (cmd.manifest.aliases) {
