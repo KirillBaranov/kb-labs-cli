@@ -48,10 +48,23 @@ export async function executePlugin(
   }
 
   // Find CLI command definition
-  const cliCommand = pluginManifest.cli?.commands?.find((c: any) => c.id === commandId);
+  // commandId may be full path like "marketplace:plugins:list" — match by id, or by group:subgroup:id
+  const cliCommand = pluginManifest.cli?.commands?.find((c: any) => {
+    if (c.id === commandId) {return true;}
+    // Match group:id or group:subgroup:id
+    const parts = commandId.split(':');
+    const bareId = parts[parts.length - 1];
+    if (c.subgroup && parts.length === 3) {
+      return c.group === parts[0] && c.subgroup === parts[1] && c.id === parts[2];
+    }
+    if (c.group && parts.length === 2) {
+      return c.group === parts[0] && c.id === parts[1];
+    }
+    return c.id === bareId;
+  });
 
-  // Resolve handler path
-  const handlerRelativePath = cliCommand?.handlerPath;
+  // Resolve handler path (try handler first, fallback to handlerPath)
+  const handlerRelativePath = cliCommand?.handlerPath ?? cliCommand?.handler?.split('#')[0];
   if (!handlerRelativePath) {
     return undefined;
   }
@@ -110,11 +123,11 @@ export async function executePlugin(
 
       return exitCode;
     } finally {
-      if (jsonMode) setJsonMode(false);
+      if (jsonMode) {setJsonMode(false);}
     }
 
   } catch (error) {
-    context.logger?.error('[plugin-executor] Plugin execution failed', {
+    context.logger?.error('[plugin-executor] Plugin execution failed', undefined, {
       error: error instanceof Error ? error.message : String(error),
     });
     return undefined;

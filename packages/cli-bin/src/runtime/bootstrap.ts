@@ -34,7 +34,6 @@ import { initializePlatform } from "./platform-init";
 import { resolveVersion } from "./helpers/version";
 import { normalizeCmdPath } from "./helpers/cmd-path";
 import { shouldShowLimits } from "./helpers/flags";
-import { randomUUID } from "node:crypto";
 import type { PlatformContainer } from "@kb-labs/core-runtime";
 
 type ILogger = PlatformContainer["logger"];
@@ -65,8 +64,6 @@ export interface CliRuntimeOptions {
   runtimeMiddlewares?: MiddlewareConfig[];
   runtimeFormatters?: OutputFormatter[];
 }
-
-const _DEFAULT_VERSION = "0.1.0";
 
 type LegacyLikeLogger = {
   debug(msg: string, meta?: Record<string, unknown>): void;
@@ -148,113 +145,19 @@ export async function executeCli(
   // Parse args EARLY to know about --debug flag before discovery
   const { cmdPath, rest, global, flagsObj } = parse(argv);
 
-  // Set log level based on --debug flag or explicit --log-level
-  // This must happen BEFORE registerCommands/discovery
-  // Default to 'silent' to completely suppress logs (user can use --debug for full logs)
-  const rawLevel = String(global.logLevel ?? env.KB_LOG_LEVEL ?? 'silent').toLowerCase();
-  const validLevels = ['trace', 'debug', 'info', 'warn', 'error', 'silent'] as const;
-  type LogLevel = typeof validLevels[number];
-  const logLevel: LogLevel = global.debug
-    ? 'debug'
-    : (validLevels.includes(rawLevel as LogLevel) ? rawLevel as LogLevel : 'silent');
+  applyLogLevel(global.debug, global.logLevel, env.KB_LOG_LEVEL);
 
-  // Set env vars BEFORE any logger initialization (including auto-init)
-  // This ensures that even lazy-loaded loggers respect the correct level
-  if (!process.env.LOG_LEVEL && !process.env.KB_LOG_LEVEL) {
-    process.env.KB_LOG_LEVEL = logLevel;
-  }
-
-  // Set DEBUG_SANDBOX env var so child processes and CliAPI know about debug mode
-  if (global.debug) {
-    process.env.DEBUG_SANDBOX = '1';
-  }
-
-  const cliRequestId = `cli-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-  const cliTraceId = `trace-${randomUUID()}`;
-  const cliSpanId = `span-${randomUUID()}`;
-  const cliInvocationId = `inv-${randomUUID()}`;
-
-  // Use platform logger as primary runtime logger (persistent, extensions-aware)
-  const platformCliLogger = platform.logger.child({
-    layer: "cli",
-    cwd,
-    version,
-    requestId: cliRequestId,
-    reqId: cliRequestId,
-    traceId: cliTraceId,
-    spanId: cliSpanId,
-    invocationId: cliInvocationId,
-    argv,
-  });
-  const cliLogger = adaptPlatformLogger(platformCliLogger);
-  platformCliLogger.info("CLI invocation started", {
-    commandPath: cmdPath.join(" "),
-    argsCount: argv.length,
-    jsonMode: Boolean(global.json),
-    quietMode: Boolean(global.quiet),
-    debugMode: Boolean(global.debug),
-  });
+  const cliLogger = createCliLogger(platform, cwd, version, argv, cmdPath, global);
 
   const registerCommands =
     options.registerBuiltinCommands ?? registerBuiltinCommands;
   // Pass logger to registerCommands so it can pass to discovery and registration
   await registerCommands({ cwd, env, logger: cliLogger });
 
-  // Try to find command by progressively shorter paths
-  // e.g., ["mind", "sync", "add"] -> try ["mind", "sync", "add"], then ["mind", "sync"], then ["mind"]
-  let normalizedCmdPath = normalizeCmdPath(cmdPath);
-  let actualRest = rest;
-  let cmd = find(normalizedCmdPath);
-
-
-  // If command not found and path has 2 parts, try to find as group + command
-  // e.g., ["plugins", "clear-cache"] -> group "plugins" + command "clear-cache"
-  if (!cmd && cmdPath.length === 2) {
-    const [groupName, commandName] = cmdPath;
-    if (!groupName) { return 1; }
-
-    // Find group (e.g., "plugins")
-    const maybeGroup = find([groupName]);
-
-    if (maybeGroup && typeof maybeGroup === 'object' && 'commands' in maybeGroup && Array.isArray((maybeGroup as any).commands)) {
-      // Search through group's commands for matching name or alias
-      for (const groupCmd of maybeGroup.commands) {
-        if (groupCmd.name === commandName || (commandName && groupCmd.aliases?.includes(commandName))) {
-          cmd = groupCmd;
-          normalizedCmdPath = [groupCmd.name];
-          break;
-        }
-      }
-    }
-  }
-
-  // If command not found and cmdPath has more than 2 elements, try manifest command with colons
-  // This handles nested commands like "agent trace stats" → "agent:trace:stats"
-  if (!cmd && cmdPath.length > 2) {
-    // First try to find as manifest command (e.g., agent:trace:stats)
-    const maybeManifestId = cmdPath.join(":");
-    const manifestCmd = registryStore.getManifestCommand(maybeManifestId);
-
-    if (manifestCmd && manifestCmd.available && !manifestCmd.shadowed) {
-      // Found manifest command! Use it as cmd
-      // We'll handle this via V3 adapter later in execution
-      cmd = manifestCmd as any; // Will be processed by findCommandWithType
-      normalizedCmdPath = cmdPath;
-    } else {
-      // Fall back to trying shorter paths
-      for (let i = cmdPath.length - 1; i >= 1; i--) {
-        const shorterPath = cmdPath.slice(0, i);
-        const remainingArgs = cmdPath.slice(i);
-        normalizedCmdPath = normalizeCmdPath(shorterPath);
-        cmd = find(normalizedCmdPath);
-        if (cmd) {
-          // Found command at shorter path, prepend remaining args to rest
-          actualRest = [...remainingArgs, ...rest];
-          break;
-        }
-      }
-    }
-  }
+  const resolved = resolveCommand(cmdPath, rest, find, registryStore);
+  if (resolved === null) { return 1; }
+  const { cmd: resolvedCmd, normalizedCmdPath, actualRest } = resolved;
+  let cmd = resolvedCmd;
   
   const presenter = global.json
     ? jsonPresenterFactory()
@@ -301,141 +204,350 @@ export async function executeCli(
 
   const runtimeInitOptions: RuntimeInitOptions = {
     presenter,
+    output,
     env,
     cwd,
-    context: cliContext, // Pass context with output and logger
+    context: cliContext,
     executionLimits: options.runtimeExecutionLimits,
     middlewares: runtimeMiddlewares,
     formatters: options.runtimeFormatters,
   };
-  if (global.help && cmdPath.length === 0) {
-    if (global.json) {
-      presenter.json({
-        ok: false,
-        error: {
-          code: "CMD_NOT_FOUND",
-          message: "Use text mode for help display",
-        },
-      });
-    } else {
-      presenter.write(renderGlobalHelpNew(registryStore));
+  const earlyExit = handleEarlyExits({
+    global, version, cmdPath, normalizedCmdPath, flagsObj,
+    presenter, registryStore, find,
+  });
+  if (earlyExit !== null) { return earlyExit; }
+
+  // Refresh cmd after early-exit checks (may have found via find())
+  if (!cmd) { cmd = find(normalizedCmdPath); }
+
+  const cmdExit = handleCommandNotFound(cmd, normalizedCmdPath, presenter, global);
+  if (cmdExit !== null) { return cmdExit; }
+
+  return runCommand({
+    runtimeFactory,
+    runtimeInitOptions,
+    cliContext,
+    global,
+    flagsObj,
+    cmdPath,
+    normalizedCmdPath,
+    actualRest,
+    presenter,
+    registryStore,
+    platform,
+  });
+}
+
+interface RunCommandParams {
+  runtimeFactory: (opts: RuntimeInitOptions) => Promise<CliRuntimeInstance>;
+  runtimeInitOptions: RuntimeInitOptions;
+  cliContext: CliExecutionContext;
+  global: ReturnType<typeof parseArgs>['global'];
+  flagsObj: ReturnType<typeof parseArgs>['flagsObj'];
+  cmdPath: string[];
+  normalizedCmdPath: string[];
+  actualRest: string[];
+  presenter: any;
+  registryStore: typeof registry;
+  platform: PlatformContainer;
+}
+
+async function runCommand(p: RunCommandParams): Promise<number> {
+  try {
+    const runtime = await p.runtimeFactory(p.runtimeInitOptions);
+    const context = p.cliContext;
+
+    if (p.global.json && typeof (p.presenter as any).setContext === 'function') {
+      (p.presenter as any).setContext(context);
     }
-    return 0;
+
+    if (p.global.help && p.cmdPath.length > 0) {
+      const manifestCmd = p.registryStore.getManifestCommand(p.normalizedCmdPath.join(":"));
+      if (manifestCmd) {
+        renderManifestHelp(manifestCmd, p.presenter, p.global.json);
+        return 0;
+      }
+    }
+
+    return runtime.middleware.execute(context, () =>
+      dispatchCommand(p, context),
+    );
+  } catch (error: unknown) {
+    return handleExecutionError(error, p.presenter);
+  }
+}
+
+function renderManifestHelp(manifestCmd: any, presenter: any, json: boolean | undefined): void {
+  if (json) {
+    presenter.json({
+      ok: true,
+      command: manifestCmd.manifest.id,
+      manifest: {
+        describe: manifestCmd.manifest.describe,
+        longDescription: manifestCmd.manifest.longDescription,
+        flags: manifestCmd.manifest.flags,
+        examples: manifestCmd.manifest.examples,
+        aliases: manifestCmd.manifest.aliases,
+      },
+    });
+  } else {
+    presenter.write(renderManifestCommandHelp(manifestCmd));
+  }
+}
+
+async function dispatchCommand(p: RunCommandParams, context: CliExecutionContext): Promise<number> {
+  const result = findCommandWithType(p.normalizedCmdPath);
+  if (!result) {
+    throw new Error(`Command ${p.normalizedCmdPath.join(":")} not found in registry`);
   }
 
-  if (global.version) {
-    if (global.json) {
-      presenter.json({
-        ok: true,
-        version,
-      });
-    } else {
-      presenter.write(version);
+  if (result.type === 'system') {
+    if (!('run' in result.cmd)) {
+      throw new Error(`System command ${p.normalizedCmdPath.join(":")} missing run() method`);
     }
-    return 0;
+    const v3Context = createSystemCommandContext(context, p.platform);
+    const exitCode = await result.cmd.run(v3Context, p.actualRest, { ...p.global, ...p.flagsObj });
+    return typeof exitCode === 'number' ? exitCode : 0;
   }
 
-  const limitRequested = shouldShowLimits(flagsObj);
+  if (result.type === 'plugin') {
+    return dispatchPlugin(p, context);
+  }
 
-  if (limitRequested) {
-    return handleLimitFlag({
-      cmdPath: normalizedCmdPath,
-      presenter,
-      registry: registryStore,
-      asJson: Boolean(global.json),
+  throw new Error(`Unknown command type: ${result.type}`);
+}
+
+async function dispatchPlugin(p: RunCommandParams, context: CliExecutionContext): Promise<number> {
+  const commandId = p.normalizedCmdPath.join(":");
+  const manifestCmd = p.registryStore.getManifestCommand(commandId);
+
+  const gatewayClient = await tryResolveGateway();
+  if (gatewayClient) {
+    return executeViaGateway(gatewayClient, {
+      commandId,
+      argv: p.actualRest,
+      flags: { ...p.global, ...p.flagsObj },
+      manifestCmd,
     });
   }
 
-  // Help for manifest commands with colon-separated IDs (e.g., product:setup:rollback)
-  // Resolve BEFORE attempting to find the command, so that 'kb product:sub:cmd --help'
-  // renders help even if the runtime treats it as a multi-part path.
-  if (global.help && normalizedCmdPath.length > 0) {
-    const maybeId = normalizedCmdPath.join(":");
-    const manifestCmd = registryStore.getManifestCommand(maybeId);
-    if (manifestCmd) {
-      if (global.json) {
-        presenter.json({
-          ok: true,
-          command: manifestCmd.manifest.id,
-          manifest: {
-            describe: manifestCmd.manifest.describe,
-            longDescription: manifestCmd.manifest.longDescription,
-            flags: manifestCmd.manifest.flags,
-            examples: manifestCmd.manifest.examples,
-            aliases: manifestCmd.manifest.aliases,
-          },
-        });
-      } else {
-        presenter.write(renderManifestCommandHelp(manifestCmd));
-      }
-      return 0;
-    }
-  }
+  const pluginExitCode = await executePlugin({
+    context,
+    commandId,
+    argv: p.actualRest,
+    flags: { ...p.global, ...p.flagsObj },
+    manifestCmd,
+    platform: p.platform,
+  });
 
-  // Command already found above if cmdPath.length > 2, otherwise find it now
-  if (!cmd) {
-    cmd = find(normalizedCmdPath);
-  }
+  if (pluginExitCode !== undefined) { return pluginExitCode; }
 
-  // Handle system groups (e.g., "kb system" shows all system:* groups)
-  if (cmdPath.length === 1 && cmdPath[0] && !cmd) {
-    const groupPrefix = cmdPath[0];
-    const matchingGroups = registryStore.getGroupsByPrefix?.(groupPrefix);
+  throw new Error(`Plugin command ${commandId} is not available for execution. Ensure the command has a handlerPath in its manifest.`);
+}
 
-    if (matchingGroups && matchingGroups.length > 0) {
-      if (global.json) {
-        presenter.json({
-          ok: true,
-          groups: matchingGroups.map(g => ({
-            name: g.name,
-            describe: g.describe,
-            commands: g.commands.map(c => ({ name: c.name, describe: c.describe }))
-          }))
-        });
-      } else {
-        const lines: string[] = [];
-        lines.push(colors.bold(`${groupPrefix} groups:`));
-        lines.push('');
+interface ResolvedCommand {
+  cmd: any;
+  normalizedCmdPath: string[];
+  actualRest: string[];
+}
 
-        for (const group of matchingGroups) {
-          lines.push(`  ${colors.cyan(group.name.padEnd(20))}  ${colors.dim(group.describe ?? '')}`);
+function resolveCommand(
+  cmdPath: string[],
+  rest: string[],
+  find: typeof findCommand,
+  registryStore: typeof registry,
+): ResolvedCommand | null {
+  let normalizedCmdPath = normalizeCmdPath(cmdPath);
+  let actualRest = rest;
+  let cmd = find(normalizedCmdPath);
+
+  if (!cmd && cmdPath.length === 2) {
+    const [groupName, commandName] = cmdPath;
+    if (!groupName) { return null; }
+    const maybeGroup = find([groupName]);
+    if (maybeGroup && typeof maybeGroup === 'object' && 'commands' in maybeGroup && Array.isArray((maybeGroup as any).commands)) {
+      for (const groupCmd of maybeGroup.commands) {
+        if (groupCmd.name === commandName || (commandName && groupCmd.aliases?.includes(commandName))) {
+          cmd = groupCmd;
+          normalizedCmdPath = [groupCmd.name];
+          break;
         }
-
-        lines.push('');
-        lines.push(colors.dim(`Use 'kb ${groupPrefix}:<group> --help' to see commands for a specific group.`));
-        presenter.write(lines.join('\n'));
       }
+    }
+  }
+
+  if (!cmd && cmdPath.length > 2) {
+    const maybeManifestId = cmdPath.join(":");
+    const manifestCmd = registryStore.getManifestCommand(maybeManifestId);
+    if (manifestCmd && manifestCmd.available && !manifestCmd.shadowed) {
+      cmd = manifestCmd as any;
+      normalizedCmdPath = cmdPath;
+    } else {
+      for (let i = cmdPath.length - 1; i >= 1; i--) {
+        const shorterPath = cmdPath.slice(0, i);
+        const remainingArgs = cmdPath.slice(i);
+        normalizedCmdPath = normalizeCmdPath(shorterPath);
+        cmd = find(normalizedCmdPath);
+        if (cmd) {
+          actualRest = [...remainingArgs, ...rest];
+          break;
+        }
+      }
+    }
+  }
+
+  return { cmd, normalizedCmdPath, actualRest };
+}
+
+interface EarlyExitParams {
+  global: ReturnType<typeof parseArgs>['global'];
+  version: string;
+  cmdPath: string[];
+  normalizedCmdPath: string[];
+  flagsObj: ReturnType<typeof parseArgs>['flagsObj'];
+  presenter: any;
+  registryStore: typeof registry;
+  find: typeof findCommand;
+}
+
+type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
+const VALID_LOG_LEVELS: LogLevel[] = ['trace', 'debug', 'info', 'warn', 'error', 'silent'];
+
+function resolveLogLevel(debug: unknown, logLevelFlag: unknown, envLevel: string | undefined): LogLevel {
+  if (debug) { return 'debug'; }
+  const raw = String(logLevelFlag ?? envLevel ?? 'silent').toLowerCase();
+  return (VALID_LOG_LEVELS.includes(raw as LogLevel) ? raw as LogLevel : 'silent');
+}
+
+function applyLogLevel(debug: unknown, logLevelFlag: unknown, envLevel: string | undefined): void {
+  const logLevel = resolveLogLevel(debug, logLevelFlag, envLevel);
+  if (!process.env.LOG_LEVEL && !process.env.KB_LOG_LEVEL) {
+    process.env.KB_LOG_LEVEL = logLevel;
+  }
+  if (debug) { process.env.DEBUG_SANDBOX = '1'; }
+}
+
+function createCliLogger(
+  platform: PlatformContainer,
+  cwd: string,
+  version: string,
+  argv: string[],
+  cmdPath: string[],
+  global: { json?: unknown; quiet?: unknown; debug?: unknown },
+): ILogger {
+  const requestId = `cli-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const logger = platform.logger.child({
+    layer: 'cli',
+    cwd,
+    version,
+    requestId,
+    reqId: requestId,
+    traceId: `trace-${crypto.randomUUID()}`,
+    spanId: `span-${crypto.randomUUID()}`,
+    invocationId: `inv-${crypto.randomUUID()}`,
+    argv,
+  });
+  logger.info('CLI invocation started', {
+    commandPath: cmdPath.join(' '),
+    argsCount: argv.length,
+    jsonMode: Boolean(global.json),
+    quietMode: Boolean(global.quiet),
+    debugMode: Boolean(global.debug),
+  });
+  return logger;
+}
+
+function handleEarlyExits(p: EarlyExitParams): number | null {
+  if (p.global.help && p.cmdPath.length === 0) {
+    if (p.global.json) {
+      p.presenter.json({ ok: false, error: { code: "CMD_NOT_FOUND", message: "Use text mode for help display" } });
+    } else {
+      p.presenter.write(renderGlobalHelpNew(p.registryStore));
+    }
+    return 0;
+  }
+
+  if (p.global.version) {
+    if (p.global.json) {
+      p.presenter.json({ ok: true, version: p.version });
+    } else {
+      p.presenter.write(p.version);
+    }
+    return 0;
+  }
+
+  if (shouldShowLimits(p.flagsObj)) {
+    return handleLimitFlag({
+      cmdPath: p.normalizedCmdPath,
+      presenter: p.presenter,
+      registry: p.registryStore,
+      asJson: Boolean(p.global.json),
+    });
+  }
+
+  if (p.global.help && p.normalizedCmdPath.length > 0) {
+    const maybeId = p.normalizedCmdPath.join(":");
+    const manifestCmd = p.registryStore.getManifestCommand(maybeId);
+    if (manifestCmd) {
+      renderManifestHelp(manifestCmd, p.presenter, p.global.json);
       return 0;
     }
   }
 
-  if (cmdPath.length === 1 && cmdPath[0]) {
-    const productCommands = registryStore.getCommandsByGroup(cmdPath[0]);
+  if (p.cmdPath.length === 1 && p.cmdPath[0]) {
+    const groupPrefix = p.cmdPath[0];
+    const matchingGroups = p.registryStore.getGroupsByPrefix?.(groupPrefix);
+    if (matchingGroups && matchingGroups.length > 0) {
+      renderGroupsHelp(groupPrefix, matchingGroups, p.presenter, p.global.json);
+      return 0;
+    }
+
+    const productCommands = p.registryStore.getCommandsByGroup(p.cmdPath[0]);
     if (productCommands.length > 0) {
-      if (global.json) {
-        presenter.json({
-          ok: false,
-          error: {
-            code: "CMD_NOT_FOUND",
-            message: `Product '${cmdPath[0]}' requires a subcommand`,
-          },
-        });
+      if (p.global.json) {
+        p.presenter.json({ ok: false, error: { code: "CMD_NOT_FOUND", message: `Product '${p.cmdPath[0]}' requires a subcommand` } });
       } else {
-        presenter.write(renderProductHelp(cmdPath[0], productCommands));
+        p.presenter.write(renderProductHelp(p.cmdPath[0], productCommands));
       }
       return 0;
     }
   }
 
+  return null;
+}
+
+function renderGroupsHelp(groupPrefix: string, matchingGroups: any[], presenter: any, json: boolean | undefined): void {
+  if (json) {
+    presenter.json({
+      ok: true,
+      groups: matchingGroups.map((g: any) => ({
+        name: g.name,
+        describe: g.describe,
+        commands: g.commands.map((c: any) => ({ name: c.name, describe: c.describe }))
+      }))
+    });
+  } else {
+    const lines: string[] = [colors.bold(`${groupPrefix} groups:`), ''];
+    for (const group of matchingGroups) {
+      lines.push(`  ${colors.cyan(group.name.padEnd(20))}  ${colors.dim(group.describe ?? '')}`);
+    }
+    lines.push('');
+    lines.push(colors.dim(`Use 'kb ${groupPrefix}:<group> --help' to see commands for a specific group.`));
+    presenter.write(lines.join('\n'));
+  }
+}
+
+function handleCommandNotFound(
+  cmd: any,
+  normalizedCmdPath: string[],
+  presenter: any,
+  global: ReturnType<typeof parseArgs>['global'],
+): number | null {
   if (!cmd) {
-    const msg = `Unknown command: ${
-      normalizedCmdPath.join(" ") || "(none)"
-    }`;
+    const msg = `Unknown command: ${normalizedCmdPath.join(" ") || "(none)"}`;
     if (global.json) {
-      presenter.json({
-        ok: false,
-        error: { code: "CMD_NOT_FOUND", message: msg },
-      });
+      presenter.json({ ok: false, error: { code: "CMD_NOT_FOUND", message: msg } });
     } else {
       presenter.error(msg);
     }
@@ -444,112 +556,14 @@ export async function executeCli(
 
   if (typeof cmd === 'object' && cmd !== null && 'commands' in cmd && Array.isArray((cmd as any).commands)) {
     if (global.json) {
-      presenter.json({
-        ok: false,
-        error: {
-          code: "CMD_NOT_FOUND",
-          message: `Group '${(cmd as any).name}' requires a subcommand`,
-        },
-      });
+      presenter.json({ ok: false, error: { code: "CMD_NOT_FOUND", message: `Group '${(cmd as any).name}' requires a subcommand` } });
     } else {
       presenter.write(renderGroupHelp(cmd as any));
     }
     return 0;
   }
 
-  try {
-    const runtime = await runtimeFactory(runtimeInitOptions);
-    // Use cliContext instead of runtime.context because runtime.context doesn't have output
-    const context = cliContext;
-
-    if (global.json && typeof (presenter as any).setContext === 'function') {
-      (presenter as any).setContext(context);
-    }
-
-    if (global.help && cmdPath.length > 0) {
-      const manifestCmd = registryStore.getManifestCommand(
-        normalizedCmdPath.join(":"),
-      );
-      if (manifestCmd) {
-        if (global.json) {
-          presenter.json({
-            ok: true,
-            command: manifestCmd.manifest.id,
-            manifest: {
-              describe: manifestCmd.manifest.describe,
-              longDescription: manifestCmd.manifest.longDescription,
-              flags: manifestCmd.manifest.flags,
-              examples: manifestCmd.manifest.examples,
-              aliases: manifestCmd.manifest.aliases,
-            },
-          });
-        } else {
-          presenter.write(renderManifestCommandHelp(manifestCmd));
-        }
-        return 0;
-      }
-    }
-
-    return runtime.middleware.execute(context, async () => {
-      // Get command with type information for secure routing
-      const result = findCommandWithType(normalizedCmdPath);
-
-      if (!result) {
-        throw new Error(`Command ${normalizedCmdPath.join(":")} not found in registry`);
-      }
-
-      // Route based on command type
-      if (result.type === 'system') {
-        // System command - execute in-process via cmd.run()
-        if ('run' in result.cmd) {
-          // Convert SystemContext → PluginContextV3 for system commands
-          const v3Context = createSystemCommandContext(context, platform);
-          const exitCode = await result.cmd.run(v3Context, actualRest, { ...global, ...flagsObj });
-          return typeof exitCode === 'number' ? exitCode : 0;
-        }
-
-        // Shouldn't happen - system commands must have run()
-        throw new Error(`System command ${normalizedCmdPath.join(":")} missing run() method`);
-      }
-
-      if (result.type === 'plugin') {
-        const commandId = normalizedCmdPath.join(":");
-        const manifestCmd = registryStore.getManifestCommand(commandId);
-
-        // Thin client mode: try Gateway first (if credentials exist)
-        const gatewayClient = await tryResolveGateway();
-        if (gatewayClient) {
-          return executeViaGateway(gatewayClient, {
-            commandId,
-            argv: actualRest,
-            flags: { ...global, ...flagsObj },
-            manifestCmd,
-          });
-        }
-
-        // Local execution: plugin executor
-        const pluginExitCode = await executePlugin({
-          context,
-          commandId,
-          argv: actualRest,
-          flags: { ...global, ...flagsObj },
-          manifestCmd,
-          platform,
-        });
-
-        if (pluginExitCode !== undefined) {
-          return pluginExitCode;
-        }
-
-        throw new Error(`Plugin command ${commandId} is not available for execution. Ensure the command has a handlerPath in its manifest.`);
-      }
-
-      // Unknown type - shouldn't happen
-      throw new Error(`Unknown command type: ${result.type}`);
-    });
-  } catch (error: unknown) {
-    return handleExecutionError(error, presenter);
-  }
+  return null;
 }
 
 function handleExecutionError(

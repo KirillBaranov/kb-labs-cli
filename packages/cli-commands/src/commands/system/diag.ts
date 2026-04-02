@@ -6,7 +6,7 @@ import { defineSystemCommand } from '@kb-labs/shared-command-kit';
 import { generateExamples } from '../../utils/generate-examples';
 import { registry } from '../../registry/service';
 import { discoverManifests } from '../../registry/discover';
-import { loadPluginsState } from '@kb-labs/core-registry';
+import { readMarketplaceLock, DiagnosticCollector } from '@kb-labs/core-discovery';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getContextCwd, safeColors, safeSymbols } from '@kb-labs/shared-cli-ui';
@@ -142,29 +142,31 @@ export const diag = defineSystemCommand<DiagFlags, DiagResult>({
       });
     }
 
-    // 4. Plugins state check
+    // 4. Marketplace lock check
     try {
-      const state = await loadPluginsState(cwd);
-      const enabledCount = state.enabled.length;
-      const disabledCount = state.disabled.length;
-      const linkedCount = state.linked.length;
-      
-      diagnostics.push({
-        category: 'plugins-state',
-        status: 'ok',
-        message: `${enabledCount} enabled, ${disabledCount} disabled, ${linkedCount} linked`,
-        details: {
-          enabled: enabledCount,
-          disabled: disabledCount,
-          linked: linkedCount,
-          permissions: Object.keys(state.permissions).length,
-        },
-      });
+      const lock = await readMarketplaceLock(cwd, new DiagnosticCollector());
+      if (lock) {
+        const entries = Object.entries(lock.installed);
+        const enabledCount = entries.filter(([, e]) => e.enabled !== false).length;
+        const disabledCount = entries.length - enabledCount;
+        diagnostics.push({
+          category: 'marketplace-lock',
+          status: 'ok',
+          message: `${entries.length} installed (${enabledCount} enabled, ${disabledCount} disabled)`,
+          details: { total: entries.length, enabled: enabledCount, disabled: disabledCount },
+        });
+      } else {
+        diagnostics.push({
+          category: 'marketplace-lock',
+          status: 'warning',
+          message: 'No marketplace.lock found — no plugins installed via marketplace',
+        });
+      }
     } catch (err: any) {
       diagnostics.push({
-        category: 'plugins-state',
+        category: 'marketplace-lock',
         status: 'error',
-        message: `State check failed: ${err.message}`,
+        message: `Marketplace lock check failed: ${err.message}`,
         details: { error: err.message },
       });
     }

@@ -19,6 +19,7 @@ import type { UIFacade } from '@kb-labs/plugin-contracts';
 import { createCLIUIFacade } from './ui-facade';
 
 const CLI_LIFECYCLE_HOOK_ID = 'cli-runtime';
+const LOG_SERVICE = 'platform-init';
 let lifecycleHooksRegistered = false;
 
 function lifecycleLogger() {
@@ -117,7 +118,7 @@ export async function initializePlatform(cwd: string): Promise<PlatformInitResul
       const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
       platform.logger.debug('No kb.config.json found, using NoOp adapters', {
         layer: 'cli',
-        service: 'platform-init',
+        service: LOG_SERVICE,
       });
       return { platform, platformConfig: fallbackConfig };
     }
@@ -130,7 +131,7 @@ export async function initializePlatform(cwd: string): Promise<PlatformInitResul
       const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
       platform.logger.warn('Failed to read kb.config.json, using NoOp adapters', {
         layer: 'cli',
-        service: 'platform-init',
+        service: LOG_SERVICE,
         errors: result.diagnostics.map(d => d.message),
       });
       return { platform, platformConfig: fallbackConfig };
@@ -143,7 +144,7 @@ export async function initializePlatform(cwd: string): Promise<PlatformInitResul
       const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
       platform.logger.debug('No platform config in kb.config.json, using NoOp adapters', {
         layer: 'cli',
-        service: 'platform-init',
+        service: LOG_SERVICE,
       });
       return { platform, platformConfig: fallbackConfig, rawConfig: result.data };
     }
