@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/cli",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "KB Labs CLI tool for project management and automation",
   "files": [
     "packages/*/dist",
