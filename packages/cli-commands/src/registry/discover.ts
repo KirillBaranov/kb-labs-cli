@@ -100,6 +100,7 @@ function ensureManifestLoader(manifest: CommandManifest): void {
 export const __test = {
   ensureManifestLoader,
   createManifestV3Loader,
+  // resetInProcCache is exported directly (not via __test) since it's part of the public API
 };
 
 /** Create a synthetic manifest marking package as unavailable with actionable hint */
@@ -130,6 +131,11 @@ function createUnavailableManifest(pkgName: string, error: any): CommandManifest
       throw new Error(`Cannot load ${pkgName} CLI manifest. ${rawMsg}`);
     }
   } as any;
+  // Mark as synthetic so saveCache can skip it — synthetic manifests must never
+  // be persisted to disk because they represent transient load failures.
+  // Caching them would make the error "stick" until the TTL expires even after
+  // the underlying problem (missing build artifact, broken dep) is resolved.
+  (manifest as any)._synthetic = true;
   return manifest;
 }
 
@@ -140,6 +146,15 @@ const IN_PROC_CACHE_TTL_MS = 60_000;
 const DISK_CACHE_TTL_MS = 5 * 60_000;
 
 let inProcDiscoveryCache: { timestamp: number; results: DiscoveryResult[] } | null = null;
+
+/**
+ * Reset the in-process discovery cache.
+ * Call this after clearing the disk cache so the next discoverManifests() call
+ * in the same process performs a fresh scan rather than serving stale results.
+ */
+export function resetInProcCache(): void {
+  inProcDiscoveryCache = null;
+}
 
 /**
  * Compute SHA256 hash of manifest file content
@@ -716,18 +731,18 @@ async function discoverNodeModules(cwd: string): Promise<DiscoveryResult[]> {
     const scanPromises: Promise<void>[] = [];
     
     for (const entry of entries) {
-      if (!entry.isDirectory()) {continue;}
-      
+      if (!entry.isDirectory() && !entry.isSymbolicLink()) {continue;}
+
       const scanEntry = async () => {
         let pkgRoot: string;
         let pkg: any;
-        
+
         if (entry.name.startsWith('@')) {
           // Scoped package: @scope/name
           const scopeDir = path.join(nmDir, entry.name);
           try {
             const scopedDirs = await fs.readdir(scopeDir, { withFileTypes: true });
-            for (const scopedEntry of scopedDirs.filter(d => d.isDirectory())) {
+            for (const scopedEntry of scopedDirs.filter(d => d.isDirectory() || d.isSymbolicLink())) {
               pkgRoot = path.join(scopeDir, scopedEntry.name);
               pkg = await readPackageJson(path.join(pkgRoot, PACKAGE_JSON));
               
@@ -1031,6 +1046,18 @@ async function saveCache(cwd: string, results: DiscoveryResult[]): Promise<void>
   
   // Process each result into package cache entries
   for (const result of results) {
+    // Skip results that contain only synthetic unavailable manifests.
+    // Synthetic manifests represent transient load failures (missing build
+    // artifacts, broken deps) and must not be persisted — caching them would
+    // lock the error state until the TTL expires even after the root cause is
+    // fixed.
+    const allSynthetic = result.manifests.length > 0 &&
+      result.manifests.every((m) => (m as any)._synthetic === true);
+    if (allSynthetic) {
+      log('debug', `[plugins][cache] Skipping synthetic unavailable manifest for ${result.packageName}`);
+      continue;
+    }
+
     try {
       const manifestHash = await computeManifestHash(result.manifestPath);
       
@@ -1106,10 +1133,24 @@ async function saveCache(cwd: string, results: DiscoveryResult[]): Promise<void>
 }
 
 /**
- * Main discovery function
- * Discovers command manifests from workspace, current package, and node_modules
+ * Main discovery function — discovers command manifests from workspace,
+ * current package, and `node_modules`.
+ *
+ * @param cwd      Project cwd. Used for workspace discovery (monorepo dev mode)
+ *                 and for the disk cache location.
+ * @param noCache  Bypass both the in-process and disk caches.
+ * @param options  Extra options:
+ *   - `platformRoot`: When provided, `discoverNodeModules` scans
+ *     `<platformRoot>/node_modules` instead of `<cwd>/node_modules`. This is
+ *     required in installed mode, where the KB Labs platform lives in a
+ *     different directory from the user's project. In dev mode `platformRoot`
+ *     typically equals `cwd` and the two paths coincide.
  */
-export async function discoverManifests(cwd: string, noCache = false): Promise<DiscoveryResult[]> {
+export async function discoverManifests(
+  cwd: string,
+  noCache = false,
+  options: { platformRoot?: string } = {},
+): Promise<DiscoveryResult[]> {
   const startTime = Date.now();
   const timings: Record<string, number> = {};
 
@@ -1201,9 +1242,13 @@ export async function discoverManifests(cwd: string, noCache = false): Promise<D
     }
   }
   
-  // Discover from node_modules
+  // Discover from node_modules. In installed mode the platform lives in a
+  // different directory from the user's project, so we scan at platformRoot
+  // when it's provided. In dev mode platformRoot === cwd and the behavior is
+  // identical to the previous code path.
   const nmStart = Date.now();
-  const installed = await discoverNodeModules(cwd);
+  const nodeModulesRoot = options.platformRoot ?? cwd;
+  const installed = await discoverNodeModules(nodeModulesRoot);
   timings.nodeModules = Date.now() - nmStart;
   if (installed.length > 0) {
     log('info', `Discovered ${installed.length} installed packages with CLI manifests`);

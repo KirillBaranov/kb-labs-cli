@@ -6,6 +6,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { resetInProcCache } from './discover';
 
 export interface PluginState {
   enabled: string[];         // Package names that are explicitly enabled
@@ -237,7 +238,11 @@ export async function clearCache(cwd: string, options?: { deep?: boolean }): Pro
     // File doesn't exist
   }
 
-  // 4. Deep clearing: clear Node.js module cache for dynamic imports
+  // 4. Reset in-process discovery cache so the next discoverManifests() call in
+  //    the same process performs a fresh scan instead of serving stale results.
+  resetInProcCache();
+
+  // 5. Deep clearing: clear Node.js module cache for dynamic imports
   const modulesCleared: string[] = [];
   if (options?.deep) {
     try {
