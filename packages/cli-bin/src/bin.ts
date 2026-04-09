@@ -36,10 +36,15 @@ if (process.argv.includes('--json')) {
 import { run } from "./index";
 import { platform } from "@kb-labs/core-runtime";
 
+// Captured at module load so that `resolvePlatformRoot` can walk up from the
+// physical location of this bin.js file — the most reliable way to locate
+// `node_modules/@kb-labs/*` in installed mode (independent of process.cwd()).
+const BIN_MODULE_URL = import.meta.url;
+
 (async () => {
   let code: number | void;
   try {
-    code = await run(process.argv.slice(2));
+    code = await run(process.argv.slice(2), { moduleUrl: BIN_MODULE_URL });
   } finally {
     try {
       await platform.shutdown();

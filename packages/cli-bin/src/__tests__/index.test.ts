@@ -31,7 +31,13 @@ describe("CLI run function", () => {
 
     const result = await run(["--help"]);
 
-    expect(executeCliMock).toHaveBeenCalledWith(["--help"]);
+    // run() now forwards a second options arg carrying moduleUrl (undefined
+    // when none was passed). The runtime reads moduleUrl for platformRoot
+    // resolution.
+    expect(executeCliMock).toHaveBeenCalledWith(
+      ["--help"],
+      { moduleUrl: undefined },
+    );
     expect(result).toBe(0);
   });
 

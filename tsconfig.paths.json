@@ -93,24 +93,6 @@
       "@kb-labs/devlink-core/*": [
         "../../plugins/kb-labs-devlink/packages/devlink-core/src/*"
       ],
-      "@kb-labs/marketplace-contracts": [
-        "../kb-labs-marketplace/packages/marketplace-contracts/src/index.ts"
-      ],
-      "@kb-labs/marketplace-contracts/*": [
-        "../kb-labs-marketplace/packages/marketplace-contracts/src/*"
-      ],
-      "@kb-labs/marketplace-core": [
-        "../kb-labs-marketplace/packages/marketplace-core/src/index.ts"
-      ],
-      "@kb-labs/marketplace-core/*": [
-        "../kb-labs-marketplace/packages/marketplace-core/src/*"
-      ],
-      "@kb-labs/marketplace-npm": [
-        "../kb-labs-marketplace/packages/marketplace-npm/src/index.ts"
-      ],
-      "@kb-labs/marketplace-npm/*": [
-        "../kb-labs-marketplace/packages/marketplace-npm/src/*"
-      ],
       "@kb-labs/mind-cli": [
         "../../plugins/kb-labs-mind/packages/mind-cli/src/index.ts"
       ],

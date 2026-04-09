@@ -7,6 +7,7 @@ import {
   docsGroup,
   logsGroup,
   authGroup,
+  platformGroup,
 } from "../commands/system/groups";
 import { registerManifests, disposeAllPlugins, preflightManifests } from "../registry/register";
 import { registerShutdownHook } from "./shutdown";
@@ -21,6 +22,14 @@ export interface RegisterBuiltinCommandsInput {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
   logger?: ILogger;
+  /**
+   * Where the KB Labs platform is installed (parent of
+   * `node_modules/@kb-labs/*`). Forwarded to `discoverManifests` so that
+   * plugin discovery scans the platform `node_modules` regardless of where
+   * the CLI is invoked from. When omitted, falls back to `cwd` — this keeps
+   * dev-mode behavior unchanged.
+   */
+  platformRoot?: string;
 }
 
 export async function registerBuiltinCommands(
@@ -42,6 +51,7 @@ export async function registerBuiltinCommands(
   registry.registerGroup(docsGroup);
   registry.registerGroup(logsGroup);
   registry.registerGroup(authGroup);
+  registry.registerGroup(platformGroup);
 
   try {
     const cwd = getContextCwd({ cwd: input.cwd });
@@ -49,7 +59,9 @@ export async function registerBuiltinCommands(
     const noCache =
       process.argv.includes("--no-cache") || env.KB_PLUGIN_NO_CACHE === "1";
     const { discoverManifests } = await import('../registry/discover');
-    const discovered = await discoverManifests(cwd, noCache);
+    const discovered = await discoverManifests(cwd, noCache, {
+      platformRoot: input.platformRoot,
+    });
 
     if (discovered.length > 0) {
       log.info(`Discovered ${discovered.length} packages with CLI manifests`);

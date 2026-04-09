@@ -15,6 +15,7 @@ import { pluginsCacheClear } from '../../builtins/plugins-cache-clear';
 import { docsGenerateCliReference } from './docs-generate-cli-reference';
 import { logsDiagnose, logsContext, logsSummarize, logsQuery, logsSearch, logsGet, logsStats } from './logs';
 import { authLogin, authLogout, authStatus, authCreateServiceAccount } from './auth';
+import { platformSyncCommand } from './platform/sync';
 
 /**
  * Info Commands Group
@@ -68,4 +69,16 @@ export const authGroup = defineSystemCommandGroup('auth', 'Gateway authenticatio
   authLogout,
   authStatus,
   authCreateServiceAccount,
+]);
+
+/**
+ * Platform Commands Group
+ *
+ * Lifecycle commands for the platform itself: provisioning, validation,
+ * and (in the future) info/doctor. These are distinct from:
+ *   - `kb marketplace` — user-facing install/discovery
+ *   - `kb dev`          — local service management
+ */
+export const platformGroup = defineSystemCommandGroup('platform', 'Platform lifecycle commands', [
+  platformSyncCommand,
 ]);

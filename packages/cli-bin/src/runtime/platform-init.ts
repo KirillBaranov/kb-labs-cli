@@ -1,10 +1,17 @@
 /**
  * Platform initialization for KB Labs CLI.
- * Loads adapters from kb.config.json and initializes the platform singleton.
+ *
+ * Thin wrapper around `loadPlatformConfig` + `initPlatform` from
+ * `@kb-labs/core-runtime`. The shared loader is responsible for resolving
+ * `platformRoot` and `projectRoot`, loading the `.env` file, reading both
+ * platform defaults and project config, and deep-merging them. This file
+ * only adds CLI-specific concerns: the UI provider, lifecycle hooks, and
+ * NoOp fallback on failure.
  */
 
 import {
   initPlatform,
+  loadPlatformConfig,
   platform,
   type PlatformConfig,
   type PlatformContainer,
@@ -12,8 +19,6 @@ import {
   type PlatformLifecycleHooks,
   type PlatformLifecyclePhase,
 } from '@kb-labs/core-runtime';
-import { findNearestConfig, readJsonWithDiagnostics } from '@kb-labs/core-config';
-import path from 'node:path';
 import { noopUI } from '@kb-labs/plugin-contracts';
 import type { UIFacade } from '@kb-labs/plugin-contracts';
 import { createCLIUIFacade } from './ui-facade';
@@ -78,101 +83,94 @@ function createCLIUIProvider(): (hostType: string) => UIFacade {
 }
 
 export interface PlatformInitResult {
-  platform: PlatformContainer; // The initialized platform instance
+  /** The initialized platform singleton. */
+  platform: PlatformContainer;
+  /** The merged effective platform config. */
   platformConfig: PlatformConfig;
-  rawConfig?: any; // Full kb.config.json for ctx.config extraction
-}
-
-function resolvePlatformRootFromConfigPath(configPath: string): string {
-  const configDir = path.dirname(configPath);
-  if (path.basename(configDir) === '.kb') {
-    return path.dirname(configDir);
-  }
-  return configDir;
+  /** Full raw project config (for `useConfig()` access). */
+  rawConfig?: Record<string, unknown>;
+  /** Where the KB Labs platform code lives (node_modules/@kb-labs/*). */
+  platformRoot: string;
+  /** Where the user's `.kb/kb.config.json` lives. */
+  projectRoot: string;
 }
 
 /**
- * Initialize platform adapters from kb.config.json.
- * Falls back to NoOp adapters if config not found.
- * @returns The platform config and raw config that was loaded
+ * Initialize the platform for the CLI process.
+ *
+ * @param cwd        Starting directory for project-root discovery
+ *                   (typically `process.cwd()`).
+ * @param moduleUrl  `import.meta.url` of the CLI binary — lets us locate
+ *                   the platform installation in installed mode without
+ *                   guessing `..` levels. Optional in dev mode.
  */
-export async function initializePlatform(cwd: string): Promise<PlatformInitResult> {
+export async function initializePlatform(
+  cwd: string,
+  moduleUrl?: string,
+): Promise<PlatformInitResult> {
   ensureLifecycleHooksRegistered();
 
-  // Create CLI-specific UI provider
   const uiProvider = createCLIUIProvider();
 
   try {
-    // Try to find kb.config.json
-    const { path: configPath } = await findNearestConfig({
+    const {
+      platformConfig,
+      rawConfig,
+      platformRoot,
+      projectRoot,
+      sources,
+    } = await loadPlatformConfig({
+      moduleUrl,
       startDir: cwd,
-      filenames: [
-        '.kb/kb.config.json',
-        'kb.config.json',
-      ],
     });
 
-    if (!configPath) {
-      // Initialize with empty config (all NoOp adapters)
-      const fallbackConfig = { adapters: {} };
-      const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
-      platform.logger.debug('No kb.config.json found, using NoOp adapters', {
-        layer: 'cli',
-        service: LOG_SERVICE,
-      });
-      return { platform, platformConfig: fallbackConfig };
-    }
+    // Relative adapter paths (e.g. ".kb/database/kb.sqlite") must resolve
+    // against the project root — this is where the user's .kb/ lives.
+    const platformInstance = await initPlatform(
+      platformConfig,
+      projectRoot,
+      uiProvider,
+    );
 
-    // Read config
-    const result = await readJsonWithDiagnostics<{ platform?: PlatformConfig }>(configPath);
-    const platformRoot = resolvePlatformRootFromConfigPath(configPath);
-    if (!result.ok) {
-      const fallbackConfig = { adapters: {} };
-      const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
-      platform.logger.warn('Failed to read kb.config.json, using NoOp adapters', {
-        layer: 'cli',
-        service: LOG_SERVICE,
-        errors: result.diagnostics.map(d => d.message),
-      });
-      return { platform, platformConfig: fallbackConfig };
-    }
-
-    // Extract platform config
-    const platformConfig = result.data.platform;
-    if (!platformConfig) {
-      const fallbackConfig = { adapters: {} };
-      const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
-      platform.logger.debug('No platform config in kb.config.json, using NoOp adapters', {
-        layer: 'cli',
-        service: LOG_SERVICE,
-      });
-      return { platform, platformConfig: fallbackConfig, rawConfig: result.data };
-    }
-
-    // Initialize platform with config rooted at config location.
-    // This guarantees all relative adapter paths (like ".kb/database/kb.sqlite")
-    // resolve to the same monorepo root even when CLI runs from subdirectories.
-    const platform = await initPlatform(platformConfig, platformRoot, uiProvider);
-
-    platform.logger.info('Platform adapters initialized', {
+    platformInstance.logger.info('Platform adapters initialized', {
       layer: 'cli',
-      service: 'platform-init',
-      configPath,
+      service: LOG_SERVICE,
       platformRoot,
+      projectRoot,
+      sources,
       adapters: Object.keys(platformConfig.adapters ?? {}),
       hasAdapterOptions: !!platformConfig.adapterOptions,
     });
-    return { platform, platformConfig, rawConfig: result.data };
 
+    return {
+      platform: platformInstance,
+      platformConfig,
+      rawConfig,
+      platformRoot,
+      projectRoot,
+    };
   } catch (error) {
-    // Fallback to NoOp adapters on error
-    const fallbackConfig = { adapters: {} };
-    const platform = await initPlatform(fallbackConfig, cwd, uiProvider);
-    platform.logger.warn('Platform initialization failed, using NoOp adapters', {
-      layer: 'cli',
-      service: 'platform-init',
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return { platform, platformConfig: fallbackConfig };
+    // Fallback: start with empty config + NoOp adapters so the CLI can still
+    // run commands that don't need real adapters (e.g. `kb --help`).
+    const fallbackConfig: PlatformConfig = { adapters: {} };
+    const platformInstance = await initPlatform(
+      fallbackConfig,
+      cwd,
+      uiProvider,
+    );
+    platformInstance.logger.warn(
+      'Platform initialization failed, using NoOp adapters',
+      {
+        layer: 'cli',
+        service: LOG_SERVICE,
+        error: error instanceof Error ? error.message : String(error),
+      },
+    );
+    return {
+      platform: platformInstance,
+      platformConfig: fallbackConfig,
+      platformRoot: cwd,
+      projectRoot: cwd,
+    };
   }
 }

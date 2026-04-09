@@ -46,8 +46,14 @@ export interface CliRuntimeOptions {
   env?: NodeJS.ProcessEnv;
   version?: string;
   cwd?: string;
+  /**
+   * `import.meta.url` of the CLI entrypoint (`bin.ts`). Used to locate the
+   * installed platform root reliably. Passed through to `initializePlatform`
+   * and ultimately to `resolvePlatformRoot` in `@kb-labs/core-workspace`.
+   */
+  moduleUrl?: string;
   registerBuiltinCommands?: (
-    input: { cwd: string; env: NodeJS.ProcessEnv },
+    input: { cwd: string; env: NodeJS.ProcessEnv; platformRoot?: string },
   ) => Promise<void> | void;
   parseArgs?: typeof parseArgs;
   findCommand?: typeof findCommand;
@@ -104,11 +110,22 @@ export async function executeCli(
 ): Promise<number | void> {
   const cwd = options.cwd ?? process.cwd();
 
-  // Load .env file if present (does not override existing env vars)
+  // Load .env file if present (does not override existing env vars).
+  // Note: initializePlatform also loads .env via loadPlatformConfig, but
+  // we keep this call as well because it reads from project cwd before we
+  // even know where the platform root is. Duplicate loads are harmless —
+  // loadEnvFile never overrides existing vars.
   loadEnvFile(cwd);
 
-  // Initialize platform adapters from kb.config.json (before any plugin execution)
-  const { platform, platformConfig, rawConfig } = await initializePlatform(cwd);
+  // Initialize platform adapters from kb.config.json (before any plugin execution).
+  // The moduleUrl lets the platform-root resolver locate node_modules/@kb-labs/*
+  // in installed mode (where bin.js lives inside the platform installation).
+  const {
+    platform,
+    platformConfig,
+    rawConfig,
+    platformRoot,
+  } = await initializePlatform(cwd, options.moduleUrl);
 
   // Store platformConfig globally so CLI adapter can pass it to ExecutionContext
   (globalThis as any).__KB_PLATFORM_CONFIG__ = platformConfig;
@@ -151,8 +168,10 @@ export async function executeCli(
 
   const registerCommands =
     options.registerBuiltinCommands ?? registerBuiltinCommands;
-  // Pass logger to registerCommands so it can pass to discovery and registration
-  await registerCommands({ cwd, env, logger: cliLogger });
+  // Pass logger to registerCommands so it can pass to discovery and registration.
+  // Pass platformRoot so that plugin discovery scans node_modules at the
+  // platform installation, not at the user's cwd (see discover.ts).
+  await registerCommands({ cwd, env, logger: cliLogger, platformRoot });
 
   const resolved = resolveCommand(cmdPath, rest, find, registryStore);
   if (resolved === null) { return 1; }

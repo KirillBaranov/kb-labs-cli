@@ -110,7 +110,7 @@ describe('Platform Initialization (Real)', () => {
 
       expect(result.platformConfig).toEqual({ adapters: {} });
       expect(result.rawConfig).toBeDefined();
-      expect(result.rawConfig.someOtherField).toBe('value');
+      expect(result.rawConfig!.someOtherField).toBe('value');
     });
 
     it('should handle file read errors gracefully', async () => {
@@ -178,8 +178,8 @@ describe('Platform Initialization (Real)', () => {
       const result = await initializePlatform(testDir);
 
       expect(result.rawConfig).toBeDefined();
-      expect(result.rawConfig.customField).toBe('customValue');
-      expect(result.rawConfig.nested).toEqual({ data: 123 });
+      expect(result.rawConfig!.customField).toBe('customValue');
+      expect(result.rawConfig!.nested).toEqual({ data: 123 });
     });
   });
 
