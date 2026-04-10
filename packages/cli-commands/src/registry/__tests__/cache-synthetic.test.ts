@@ -125,12 +125,12 @@ describe("resetInProcCache export", () => {
 
     vi.mocked(readFile).mockImplementation(async (p: any) => {
       const ps = String(p);
-      if (ps.endsWith("pnpm-workspace.yaml")) return "packages:\n  - 'packages/*'";
-      if (ps.endsWith("package.json")) return pkgJson;
-      if (ps.endsWith("pnpm-lock.yaml")) throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
-      if (ps.endsWith("kb.config.json")) throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
-      if (ps.endsWith("plugins.json")) throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
-      if (ps.endsWith("cli-manifests.json")) throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+      if (ps.endsWith("pnpm-workspace.yaml")) {return "packages:\n  - 'packages/*'";}
+      if (ps.endsWith("package.json")) {return pkgJson;}
+      if (ps.endsWith("pnpm-lock.yaml")) {throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });}
+      if (ps.endsWith("kb.config.json")) {throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });}
+      if (ps.endsWith("plugins.json")) {throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });}
+      if (ps.endsWith("cli-manifests.json")) {throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });}
       return "{}";
     });
 
@@ -203,13 +203,13 @@ describe("saveCache — skips synthetic manifests", () => {
     let callCount = 0;
     vi.mocked(readFile).mockImplementation(async (p: any) => {
       const ps = String(p);
-      if (ps.endsWith("pnpm-workspace.yaml")) return "packages:\n  - 'packages/*'";
-      if (ps.includes("pnpm-lock")) throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
-      if (ps.includes("kb.config")) throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
-      if (ps.includes("plugins.json")) throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
-      if (ps.includes("cli-manifests.json")) throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
-      if (ps.includes("qa-plugin") && ps.endsWith("package.json")) return realPkg;
-      if (ps.includes("broken-plugin") && ps.endsWith("package.json")) return brokenPkg;
+      if (ps.endsWith("pnpm-workspace.yaml")) {return "packages:\n  - 'packages/*'";}
+      if (ps.includes("pnpm-lock")) {throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });}
+      if (ps.includes("kb.config")) {throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });}
+      if (ps.includes("plugins.json")) {throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });}
+      if (ps.includes("cli-manifests.json")) {throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });}
+      if (ps.includes("qa-plugin") && ps.endsWith("package.json")) {return realPkg;}
+      if (ps.includes("broken-plugin") && ps.endsWith("package.json")) {return brokenPkg;}
       callCount++;
       return "{}";
     });
